@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+shopt -s extglob
+set -o errtrace
+set -o errexit
+set -o pipefail
+
+rvm_install_initialize()
+{
+  BASH_MIN_VERSION="3.2.25"
+  if
+    [[ -n "${BASH_VERSION:-}" &&
+      "$(\printf "%b" "${BASH_VERSION:-}\n${BASH_MIN_VERSION}\n" | LC_ALL=C \sort -t"." -k1,1n -k2,2n -k3,3n | \head -n1)" != "${BASH_MIN_VERSION}"
+    ]]
+  then
+    echo "BASH ${BASH_MIN_VERSION} required (you have $BASH_VERSION)"
+    exit 1
+  fi
+
+}
+
+log()  { printf "%b\n" "$*"; }
+warn() { log "WARN: $*" >&2 ; }
+fail() { fail_with_code 1 "$*" ; }
+fail_with_code() { code="$1" ; shift ; log "\nERROR: $*\n" >&2 ; exit "$code" ; }
+
+iod_install_commands_setup()
+{
+  \which docker >/dev/null 2>&1 || sudo apt update && apt install docker.io -y
+}
+
+usage()
+{
+  printf "%b" "
+
+Usage
+
+  iod-installer
+
+"
+}
+
+iod_install_commands_setup
+
+sudo docker run -d --name ianseodb -e MARIADB_USER=ianseo \
+  -e MARIADB_DATABASE=ianseo -e MARIADB_PASSWORD=ianseo \
+  -e MARIADB_ROOT_PASSWORD=ianseo mariadb:10
+
+sudo docker run -d --name ianseo --link ianseodb:mysql -p 8080:80 arqueria/ianseo
