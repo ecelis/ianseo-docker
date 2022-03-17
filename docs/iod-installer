@@ -24,9 +24,15 @@ warn() { log "WARN: $*" >&2 ; }
 fail() { fail_with_code 1 "$*" ; }
 fail_with_code() { code="$1" ; shift ; log "\nERROR: $*\n" >&2 ; exit "$code" ; }
 
+iod_install_docker() {
+  sudo apt update
+  sudo apt install docker.io -y
+  sudo usermod -aG docker $USER
+}
+
 iod_install_commands_setup()
 {
-  \which docker >/dev/null 2>&1 || sudo apt update && apt install docker.io -y
+  \which docker >/dev/null 2>&1 || iod_install_docker
 }
 
 usage()
