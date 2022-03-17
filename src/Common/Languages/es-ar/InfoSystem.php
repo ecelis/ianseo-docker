@@ -1,0 +1,35 @@
+<?php
+$lang['ByClub']='Por país/club';
+$lang['ByEvent']='Por Prueba';
+$lang['ByName']='Por nombre';
+$lang['ByTarget']='Por contención';
+$lang['ClassDiv']='Categoría';
+$lang['CompleteSchedule']='Ver programación completa';
+$lang['DivClas']='Divisiones y Clases';
+$lang['Eliminations']='Eliminatorias';
+$lang['Eliminations_1']='1er. Serie Eliminatoria';
+$lang['Eliminations_2']='2da. Serie Eliminatoria';
+$lang['HomeButton']='Inicio';
+$lang['Individual']='Individual';
+$lang['Matches']='Encuentros';
+$lang['NewContent']='Nuevos datos disponibles';
+$lang['NoDataDisplay']='Sin datos para mostrar';
+$lang['NotYetDefined']='-aún no definido-';
+$lang['OfficialBiography']='Biografía Oficial';
+$lang['OlympicFont']='Nombre de la Fuente Olímpica';
+$lang['OlympicFont-use']='Usar la Fuente Olímpica';
+$lang['OtherInfo']='Otras informaciones';
+$lang['Qualification']='Serie Clasificatoria';
+$lang['Rankings']='Elim. Individual y Serie Final';
+$lang['RankingsTeam']='Series Eliminatorias y Finales por Equipos';
+$lang['Record-CR-AAF']='Record de Asia';
+$lang['Record-CR-COPARCO']='Record Americano';
+$lang['Record-CR-EMAU']='Record Europeo';
+$lang['Record-CR-FAA']='Record Africano';
+$lang['Record-OR-WA']='Record Olímpico';
+$lang['Record-WR-WA']='Record Mundial';
+$lang['Teams']='Equipos';
+$lang['TypeName']='Escriba el nombre para buscar';
+$lang['ViewIndividualResults']='Ver Resultados Individuales';
+$lang['ViewTeamResults']='Ver Resultados por Equipos';
+?>

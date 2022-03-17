@@ -1,0 +1,163 @@
+body {padding:0 !important;}
+
+#OverAllMenu {display:none;}
+
+[onclick] {cursor: pointer}
+
+#ToggleMenu {
+    position:absolute;
+    overflow:hidden;
+    top:0px;
+    left:0px;
+    width:10px;
+    height:10px;
+    z-index:99;
+    padding:5px;
+    cursor: pointer;
+}
+
+#OppLeft,
+#OppRight {
+    font-size:1.5vw;
+    white-space: nowrap;
+    font-weight:bold;
+}
+#Event {
+    font-size: 1vw;
+    white-space: nowrap;
+}
+#OppLeftContainer {
+    flex: 0 0 44vw;
+}
+#OppRightContainer {
+    flex: 0 0 44vw;
+}
+#EventContainer {
+    flex: 0 0 10vw;
+}
+
+#CoachLeft,
+#CoachRight,
+.judges,
+.records {
+    padding-left: 2.5vw;
+}
+.oldrecord {
+    padding-left: 2.75vw;
+    font-size: 0.9rem;
+}
+
+#CoachL,
+#CoachR,
+.judge {
+    font-weight:bold;
+}
+
+
+#ScoreLeft,
+#ScoreRight {
+    vertical-align: bottom;
+    padding-bottom: 5px;
+    font-size:2.5vw;
+}
+
+#ScoreLeft.reduced,
+#ScoreRight.reduced {
+    vertical-align: bottom;
+    padding-bottom: 5px;
+    font-size:1.75vw;
+}
+
+
+#ScoreLeft div,
+#ScoreRight div {
+    border-radius: 0.5em;
+    margin-left:0.25em;
+    min-width:2em;
+}
+
+#TgtLeft,
+#TgtRight {
+    padding:0;
+}
+
+.card {
+    height:100vh;
+}
+
+.btnViewMenu {
+    font-size: 1.1vw;
+    padding: 0.5em;
+}
+
+.Flag {height:1.75vw;width:auto;margin:0 1vmin;}
+
+circle {
+    -moz-transition: transform 2s ease-in-out 0s;
+    -webkit-transition: transform 2s ease-in-out 0s;
+    -o-transition: transform 2s ease-in-out 0s;
+    transition: transform 2s ease-in-out 0s;
+
+    transform: scale(1);
+
+}
+
+.whiteBg {
+    background-color: white;
+}
+
+.closestText {
+    font-weight: bold;
+}
+
+.bioBox {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+}
+
+.winner {
+    background-color: #c6f5d0;
+}
+
+@-webkit-keyframes blackWhite {
+    0% { opacity: 1;}
+    100% { opacity: 0;}
+}
+
+.svgLastArrow {
+    -webkit-animation: blackWhite 10s ;
+    -webkit-animation-iteration-count: initial;
+    -webkit-animation-duration: 10s;
+}
+
+.ceremonies {
+    margin-left: 2vh;
+    margin-right: 2vh;
+}
+
+.ceremoniesDiv {
+    text-align: left;
+    padding-top: 2vh;
+    padding-bottom: 0vh;
+}
+
+hr.spacer {
+    border: 2px #808080 solid;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+.ceremoniesHighLight {
+    text-align: center;
+    font-weight: bold;
+}
+
+.arrowDist {
+    font-size: 80%;
+}
+
+.hidden {
+    display: none;
+}
