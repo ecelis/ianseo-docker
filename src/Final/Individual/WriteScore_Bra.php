@@ -217,20 +217,48 @@ function setTieWinner($ee, $winner, $loser, $SoArrows, $WinLose=1, $TieValue=1, 
 	safe_w_sql("UPDATE Finals SET FinTie=$TieValue, FinWinLose=$WinLose, FinTbClosest=$Closest, FinIrmType=0, FinDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " WHERE FinTournament={$_SESSION['TourId']} AND FinEvent='$ee' AND FinMatchNo=$winner");
 
 	// calculate the TbDecoded
-	$q=safe_r_sql("select FinMatchNo, FinTiebreak, FinTbClosest from Finals WHERE FinTournament={$_SESSION['TourId']} AND FinEvent='$ee' AND FinMatchNo in ($winner, $loser)");
-	while($r=safe_fetch($q)) {
-		$TbDecoded=array();
-		$tiebreak=rtrim($r->FinTiebreak);
+	$q=safe_r_sql("select f1.FinMatchNo as MatchNo1, f1.FinTiebreak as TieBreak1, f1.FinTbClosest as Closest1, f1.FinWinLose as Winner1,
+			f2.FinMatchNo as MatchNo2, f2.FinTiebreak as TieBreak2, f2.FinTbClosest as Closest2, f2.FinWinLose as Winner2
+		from Finals f1 
+		inner join Finals f2 on f2.FinTournament=f1.FinTournament and f2.FinEvent=f1.FinEvent and f2.FinMatchNo=f1.FinMatchNo+1
+		WHERE f1.FinTournament={$_SESSION['TourId']} AND f1.FinEvent='$ee' AND f1.FinMatchNo = ".min($winner, $loser));
+	if($r=safe_fetch($q)) {
+		$TbDecoded1=array();
+		$TbDecoded2=array();
+		$tiebreak=rtrim($r->TieBreak1);
 		$idx=0;
 		while($SoEnd=substr($tiebreak, $idx, $SoArrows)) {
 			if($SoArrows>1) {
-				$TbDecoded[]=ValutaArrowString($SoEnd);
+				$TbDecoded1[]=ValutaArrowString($SoEnd);
 			} else {
-				$TbDecoded[]=DecodeFromLetter($SoEnd);
+				$TbDecoded1[]=DecodeFromLetter($SoEnd);
+			}
+			$idx+=$SoArrows;
+		}
+		$tiebreak=rtrim($r->TieBreak2);
+		$idx=0;
+		while($SoEnd=substr($tiebreak, $idx, $SoArrows)) {
+			if($SoArrows>1) {
+				$TbDecoded2[]=ValutaArrowString($SoEnd);
+			} else {
+				$TbDecoded2[]=DecodeFromLetter($SoEnd);
 			}
 			$idx+=$SoArrows;
 		}
 
-		safe_w_sql("update Finals set FinTbDecoded='" . ($TbDecoded ? implode(",",$TbDecoded).($r->FinTbClosest ? '+' : '') : '') . "' where FinTournament={$_SESSION['TourId']} AND FinEvent='$ee' AND FinMatchNo = $r->FinMatchNo");
+		// check if the tiebreaks are the same
+		if($TbDecoded1==$TbDecoded2 and $WinLose) {
+			// the closest is the winner!
+			if($r->Closest1==$r->Closest2) {
+				if($winner==$r->Winner1) {
+					$r->Closest1=1;
+				} else {
+					$r->Closest2=1;
+				}
+			}
+		}
+
+		safe_w_sql("update Finals set FinTbDecoded='" . ($TbDecoded1 ? implode(",",$TbDecoded1).($r->Closest1 ? '+' : '') : '') . "' where FinTournament={$_SESSION['TourId']} AND FinEvent='$ee' AND FinMatchNo = $r->MatchNo1");
+		safe_w_sql("update Finals set FinTbDecoded='" . ($TbDecoded2 ? implode(",",$TbDecoded2).($r->Closest2 ? '+' : '') : '') . "' where FinTournament={$_SESSION['TourId']} AND FinEvent='$ee' AND FinMatchNo = $r->MatchNo2");
 	}
 }

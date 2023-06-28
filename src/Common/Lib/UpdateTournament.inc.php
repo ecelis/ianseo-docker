@@ -1022,10 +1022,11 @@ function UpdateTournament($Gara) {
 			foreach($Gara['Flags'] as $key=>$Flag) {
 				if(!empty($Flag['FlPNG'])) {
 					$tmpnam=tempnam('/tmp', 'img');
-					$img=imagecreatefromstring(base64_decode($Flag['FlPNG']));
-					imagejpeg($img, $tmpnam, 95);
-					$Gara['Flags'][$key]['FlJPG'] = base64_encode(file_get_contents($tmpnam));
-					unset($Gara['Flags'][$key]['FlPNG']);
+					if($img=imagecreatefromstring(base64_decode($Flag['FlPNG']))) {
+						imagejpeg($img, $tmpnam, 95);
+						$Gara['Flags'][$key]['FlJPG'] = base64_encode(file_get_contents($tmpnam));
+						unset($Gara['Flags'][$key]['FlPNG']);
+					}
 				}
 			}
 		}

@@ -144,29 +144,29 @@ foreach($SessionMatches as $vSes => $items) {
             $pdf->Cell(9, CellH + $ExtraLineHeight, $rankData["sections"][$eventCode]["phases"][key($rankData["sections"][$eventCode]["phases"])]["meta"]["phaseName"], 1, 0, 'L', 0);
 
             $Name = (empty($item['odfPath']) or $item[$isTeam ? "countryName" : "athlete"]) ? $item[$isTeam ? "countryName" : "athlete"] : $item['odfPath'];
-            $pdf->Cell(10, CellH + $ExtraLineHeight, $item["qualRank"], 1, 0, 'R', 0);
+            $pdf->Cell(10, CellH + $ExtraLineHeight, ($item["qualRank"] ?? ''), 1, 0, 'R', 0);
             $pdf->Cell(37, CellH, $Name, $AthlBorder, 0, 'L', 0);
-            $pdf->Cell(8, CellH + $ExtraLineHeight, $item["countryCode"], 1, 0, 'L', 0);
+            $pdf->Cell(8, CellH + $ExtraLineHeight, ($item["countryCode"] ?? ''), 1, 0, 'L', 0);
 
             $Name = (empty($item['oppOdfPath']) or $item[$isTeam ? "oppCountryName" : "oppAthlete"]) ? $item[$isTeam ? "oppCountryName" : "oppAthlete"] : $item['oppOdfPath'];
-            $pdf->Cell(10, CellH + $ExtraLineHeight, $item["oppQualRank"], 1, 0, 'R', 0);
+            $pdf->Cell(10, CellH + $ExtraLineHeight, ($item["oppQualRank"] ?? ''), 1, 0, 'R', 0);
             $pdf->Cell(37, CellH, $Name, $AthlBorder, 0, 'L', 0);
-            $pdf->Cell(8, CellH + $ExtraLineHeight, $item["oppCountryCode"], 1, 1, 'L', 0);
+            $pdf->Cell(8, CellH + $ExtraLineHeight, ($item["oppCountryCode"] ?? ''), 1, 1, 'L', 0);
 
             if ($isTeam and $PrintNames) {
                 $OrgX = $pdf->getX() + 93;
                 $Font = $pdf->getFontSizePt();
                 $pdf->SetFontSize(8);
-                if (!empty($rankData["sections"][$eventCode]['athletes'][$item['teamId']][0])) {
-                    foreach ($rankData["sections"][$eventCode]['athletes'][$item['teamId']][0] as $k => $Component) {
+                if (!empty($rankData["sections"][$eventCode]['athletes'][$item['teamId']][$item['subTeam']])) {
+                    foreach ($rankData["sections"][$eventCode]['athletes'][$item['teamId']][$item['subTeam']] as $k => $Component) {
                         $pdf->setxy($OrgX, 3 * $k + $OrgY + 6);
                         $pdf->Cell(34, 3, $Component['athlete'], '', 0, 'L', 0);
                     }
                 }
                 $pdf->Line($OrgX - 3, $OrgY + CellH + $ExtraLineHeight, $OrgX + 34, $OrgY + CellH + $ExtraLineHeight);
                 $OrgX += 55;
-                if (!empty($rankData["sections"][$eventCode]['athletes'][$item['oppTeamId']][0])) {
-                    foreach ($rankData["sections"][$eventCode]['athletes'][$item['oppTeamId']][0] as $k => $Component) {
+                if (!empty($rankData["sections"][$eventCode]['athletes'][$item['oppTeamId']][$item['oppSubTeam']])) {
+                    foreach ($rankData["sections"][$eventCode]['athletes'][$item['oppTeamId']][$item['oppSubTeam']] as $k => $Component) {
                         $pdf->setxy($OrgX, 3 * $k + $OrgY + 6);
                         $pdf->Cell(34, 3, $Component['athlete'], '', 0, 'L', 0);
                     }

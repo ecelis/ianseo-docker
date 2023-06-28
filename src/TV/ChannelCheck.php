@@ -4,18 +4,25 @@ require_once(dirname(dirname(__FILE__)) . '/config.php');
 $JSON=array('error' => 1, 'reload'=>false, 'pages' => array());
 
 $Channel=1;
+$Side=0;
 
 if(!empty($_GET)) {
 	foreach($_GET as $k => $v) {
-		if(strtolower($k)=='id')
-			$Channel=intval($v);
+		switch(strtolower($k)) {
+			case 'id';
+				$Channel=intval($v);
+				break;
+			case 'side';
+				$Side=intval($v);
+				break;
+		}
 	}
 }
 
-$q=safe_r_sql("SELECT TVOId , TVOSide, TVOHeight, TVOName, TVOUrl, TVOMessage, TVORuleId, TVOTourCode, TVORuleType, TVOFile
+$q=safe_r_sql("SELECT TVOId, TVOSide, TVOHeight, TVOName, TVOUrl, TVOMessage, TVORuleId, TVOTourCode, TVORuleType, TVOFile
 	FROM TVOut
 	where TVORuleType>0 and not (TVOHeight='' or left(TVOHeight,1)='0')
-	order by TVOId=$Channel desc, TVOId, TVOSide");
+	order by TVOId=$Channel desc, TVOSide=$Side desc, TVOId, TVOSide");
 
 require_once('Common/Lib/Fun_Modules.php');
 
@@ -43,7 +50,7 @@ while($r=safe_fetch($q)) {
 	switch($r->TVORuleType) {
 		case 1:
 			// HTML text...
-			$JSON['pages'][$r->TVOSide]=getMyScheme().'://'.$_SERVER['SERVER_NAME'].$CFG->ROOT_DIR.'TV/ChannelHtmlContent.php?id='.$r->TVOId;
+			$JSON['pages'][$r->TVOSide]=getMyScheme().'://'.$_SERVER['SERVER_NAME'].$CFG->ROOT_DIR.'TV/ChannelHtmlContent.php?id='.$r->TVOId."&side={$r->TVOSide}";
 			break;
 		case 2:
 			// URL...

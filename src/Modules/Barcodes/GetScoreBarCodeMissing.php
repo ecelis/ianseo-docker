@@ -127,9 +127,94 @@ switch($Type) {
 			ORDER BY TargetNo, FirstName, Name ";
 
 		$a=(object) array('distance' => $Date.' '.substr($Time, 0, 5), 'session' => get_text('Matches', 'InfoSystem'));
+		break;
+	case 'R':
+		list($Date,$Time)=explode('|', $Sess);
 
-	//debug_svela($MyQuery);
+		$MyQuery = "SELECT Bib
+				, concat_ws(' - ', coalesce(Ind1Name, Team1Name),coalesce(Ind2Name, Team2Name)) as FirstName
+				, '' AS Name
+				, concat_ws(' ',RrLevName, RrGrName, 'R', M1Round) AS Session
+				, concat_ws('-', M1Target, M2Target) AS TargetNo
+				, concat(coalesce(Ind1Country,Team1Country), ' - ', coalesce(Ind2Country,Team2Country)) AS Nation
+				, '' as ClDescription
+				, EvEventName as DivDescription
+				, '' as SubClass
+				, SesName
+			FROM (select 
+				RrMatchTournament as M1Tournament,
+				RrMatchEvent as M1Event,
+				RrMatchTeam as M1Team,
+				RrMatchLevel as M1Level,
+				RrMatchGroup as M1Group,
+				RrMatchRound as M1Round,
+				RrMatchMatchNo as M1MatchNo,
+				RrMatchScheduledDate as M1Date,
+				RrMatchScheduledTime as M1Time,
+			  	-- date_format(concat(RrMatchScheduledDate,' ',RrMatchScheduledTime), '%d-%m %H:%i') as SesName,
+				RrMatchTarget as M1Target,
+				RrMatchConfirmed as M1Confirmed,
+				RrMatchAthlete as M1Athlete
+				from RoundRobinMatches
+			    where RrMatchTournament={$_SESSION['TourId']} and RrMatchMatchNo%2=0
+			    ) M1
+		    inner join (select 
+				RrMatchTournament as M2Tournament,
+				RrMatchEvent as M2Event,
+				RrMatchTeam as M2Team,
+				RrMatchLevel as M2Level,
+				RrMatchGroup as M2Group,
+				RrMatchRound as M2Round,
+				RrMatchMatchNo as M2MatchNo,
+				RrMatchTarget as M2Target,
+				RrMatchAthlete as M2Athlete
+               	from RoundRobinMatches
+			    where RrMatchTournament={$_SESSION['TourId']} and RrMatchMatchNo%2=1
+			    ) M2 on M2Tournament=M1Tournament and M2Event=M1Event and M2Team=M1Team and M2Level=M1Level and M2Group=M1Group and M2Round=M1Round and M2MatchNo=M1MatchNo+1
+			inner JOIN Events ON EvTournament=M1Tournament AND EvTeamEvent=M1Team and EvCode=M1Event
+			inner JOIN RoundRobinGroup ON RrGrTournament=M1Tournament AND RrGrTeam=M1Team and RrGrEvent=M1Event and RrGrLevel=M1Level and RrGrGroup=M1Group
+			inner JOIN RoundRobinLevel ON RrLevTournament=M1Tournament AND RrLevTeam=M1Team and RrLevEvent=M1Event and RrLevLevel=M1Level
+			left join (select 
+                EnId as En1Id,
+				EnCode as Bib,
+              	CoCode as Ind1Country,
+				concat(upper(EnFirstName), ' ', left(EnName,1)) AS Ind1Name
+				from Entries 
+			    inner join Countries on CoId=EnCountry and CoTournament=EnTournament
+			    where EnTournament={$_SESSION['TourId']}) e1 on En1Id=M1Athlete and M1Team=0
+			left join (select 
+                EnId as En2Id,
+              	CoCode as Ind2Country,
+				concat(upper(EnFirstName), ' ', left(EnName,1)) AS Ind2Name
+				from Entries 
+			    inner join Countries on CoId=EnCountry and CoTournament=EnTournament
+			    where EnTournament={$_SESSION['TourId']}) e2 on En2Id=M2Athlete and M1Team=0
+			left JOIN (select 
+				CoId as Co1Id,
+	            CoName as Team1Name,
+				CoCode Team1Country
+				from Countries
+			    where CoTournament={$_SESSION['TourId']}
+			    ) c1 ON Co1Id=M1Athlete AND M1Team=1
+			    
+			left JOIN (select 
+				CoId as Co2Id,
+                CoName as Team2Name,
+				CoCode Team2Country
+				from Countries
+			    where CoTournament={$_SESSION['TourId']}
+			    ) c2 ON Co2Id=M2Athlete AND M1Team=1
+			left join Session on SesTournament=M1Tournament and SesType='R' and SesDtStart<=".StrSafe_DB($Date.' '.$Time)." and SesDtEnd>".StrSafe_DB($Date.' '.$Time)."
+			WHERE M1Date=".StrSafe_DB($Date)." 
+				and M1Time=".StrSafe_DB($Time)."
+				AND M1Tournament = {$_SESSION['TourId']} 
+				AND M1Confirmed=0 
+				AND coalesce(Ind1Name, Team1Name)!=''
+				AND coalesce(Ind2Name, Team2Name)!=''
+			ORDER BY TargetNo, FirstName, Name ";
 
+		$a=(object) array('distance' => $Date.' '.substr($Time, 0, 5), 'session' => get_text('Matches', 'InfoSystem'));
+		break;
 }
 
 
@@ -149,9 +234,9 @@ $Unit=($pdf->getPageWidth()-20)/150;
 
 $AthCel=$Unit*40;
 $NatCel=$Unit*35;
-$TgtCel=$Unit*10;
-$SesCel=$Unit*15;
-$CatCel=$Unit*50;
+$TgtCel=$Unit*15;
+$SesCel=$Unit*20;
+$CatCel=$Unit*40;
 
 $pdf->SetFont('','B',12);
 $pdf->Cell($AthCel, 0, get_text('Athlete'), 1, 0, 'C', 1);
@@ -179,7 +264,11 @@ while($r=safe_fetch($q)) {
 	}
 	$pdf->Cell($AthCel, 3.6, $r->FirstName.' '.$r->Name, 1, 0);
 	$pdf->Cell($NatCel, 3.6, $r->Nation, 1, 0);
-	$pdf->Cell($TgtCel, 3.6, ltrim($r->TargetNo, '0'), 1, 0, 'R');
+	$tgt=[];
+	foreach(explode('-', $r->TargetNo) as $t) {
+		$tgt[]=ltrim($t, '0');
+	}
+	$pdf->Cell($TgtCel, 3.6, implode('-', $tgt), 1, 0, 'R');
 	$pdf->Cell($SesCel, 3.6, $r->SesName ? $r->SesName : $r->Session, 1, 0);
 	$pdf->Cell($CatCel, 3.6, $r->DivDescription . ' ' . $r->ClDescription, 1, 0);
 	$pdf->ln();

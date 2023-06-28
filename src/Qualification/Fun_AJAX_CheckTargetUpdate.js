@@ -1,7 +1,7 @@
 /*
 													- Fun_AJAX_CheckTargetUpdate.js -
 	Contiene le funzioni ajax usate da CheckTargetUpdate.php
-*/ 	
+*/
 
 var ReloadTime = 5000;	// Intervallo di check in ms
 /*
@@ -11,7 +11,7 @@ var ReloadTime = 5000;	// Intervallo di check in ms
 function CheckTarget()
 {
 	if (XMLHttp)
-	{	
+	{
 		try
 		{
 			if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
@@ -19,9 +19,8 @@ function CheckTarget()
 				var Session = document.getElementById('x_Session').value;
 				var Hour = document.getElementById('x_Hour').value;
 				var QueryString = 'Session=' + Session + '&Hour=' + Hour;
-				
+
 				XMLHttp.open("GET","TargetUpdate_XML.php?" + QueryString,true);
-				//document.getElementById('idOutput').innerHTML="TargetUpdate_XML.php?" + QueryString;
 				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 				XMLHttp.onreadystatechange=CheckTarget_StateChange;
 				XMLHttp.send(null);
@@ -29,7 +28,6 @@ function CheckTarget()
 		}
 		catch (e)
 		{
- 			//document.getElementById('idOutput').innerHTML='Error: ' + e.toString();
 		}
 	}
 }
@@ -48,12 +46,10 @@ function CheckTarget_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -66,17 +62,17 @@ function CheckTarget_Response()
 // intercetto gli errori di IE e Opera
 	if (!XMLResp || !XMLResp.documentElement)
 		throw(XMLResp.responseText);
-	
+
 // Intercetto gli errori di Firefox
 	var XMLRoot;
 	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
 		throw("");
 
 	XMLRoot = XMLResp.documentElement;
-	
+
 	var Error = XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
 	var tbody = document.getElementById('tbody');
-	
+
 // distruggo la tabella
 	var Rows=tbody.getElementsByTagName('tr');
 	document.getElementById('idOutput').innerHTML='';
@@ -87,18 +83,18 @@ function CheckTarget_Response()
 			tbody.removeChild(Rows.item(i));
 		}
 	}
-	
+
 	if (Error==0)
 	{
 		var Arr_No = XMLRoot.getElementsByTagName('no');
 		var Arr_Status = XMLRoot.getElementsByTagName('status');
-		
+
 		if (tbody)
 		{
 			var k=0;
 			var NewRow = document.createElement('TR');
 			NewRow.id = 'Row_' + k;
-			
+
 			for (i=0;i<Arr_No.length;++i)
 			{
 				if (k%10==0 && k!=0)
@@ -125,14 +121,14 @@ function CheckTarget_Response()
 				}
 				NewTd.className=TdStyle;
 				NewRow.appendChild(NewTd);
-				
+
 				++k;
 			}
 			tbody.appendChild(NewRow);
 		}
-		
+
 	}
-	
+
 	setTimeout("CheckTarget()",ReloadTime);
 }
 
@@ -144,13 +140,12 @@ function CheckTarget_Response()
 function ReqServerTime(When)
 {
 	if (XMLHttp)
-	{	
+	{
 		try
 		{
 			if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
 			{
 				XMLHttp.open("GET","ReqServerTime.php?When=" + When,true);
-				//document.getElementById('idOutput').innerHTML="TargetUpdate_XML.php?" + QueryString;
 				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 				XMLHttp.onreadystatechange=ReqServerTime_StateChange;
 				XMLHttp.send(null);
@@ -158,7 +153,6 @@ function ReqServerTime(When)
 		}
 		catch (e)
 		{
- 			//document.getElementById('idOutput').innerHTML='Error: ' + e.toString();
 		}
 	}
 }
@@ -177,12 +171,10 @@ function ReqServerTime_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -195,16 +187,16 @@ function ReqServerTime_Response()
 // intercetto gli errori di IE e Opera
 	if (!XMLResp || !XMLResp.documentElement)
 		throw(XMLResp.responseText);
-	
+
 // Intercetto gli errori di Firefox
 	var XMLRoot;
 	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
 		throw("");
 
 	XMLRoot = XMLResp.documentElement;
-	
+
 	var Error = XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
-	
+
 	if (Error==0)
 	{
 		var Hour=XMLRoot.getElementsByTagName('hour').item(0).firstChild.data;

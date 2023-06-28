@@ -87,6 +87,12 @@ if(!empty($_REQUEST['ods'])) {
 	die();
 }
 
+if(!empty($_REQUEST['ics'])) {
+	$Schedule=new Scheduler();
+	$Schedule->getScheduleICS(true);
+	die();
+}
+
 $edit=(empty($_REQUEST['key']) ? '' : preg_replace('#[^0-9:| -]#sim', '', $_REQUEST['key']));
 
 $JS_SCRIPT=array(
@@ -112,6 +118,7 @@ echo '<table class="Tabella">
 			<input type="checkbox" name="Daily">'.get_text('DailySchedule', 'Tournament').'&nbsp;&nbsp;
 			<input type="checkbox" name="NoLocations">'.get_text('NoLocations', 'Tournament').'&nbsp;&nbsp;
 			<input type="button" name="ODS" value="'.get_text('MenuLM_OdsExport').'" onclick="location.href=\'?ods=1\'">&nbsp;&nbsp;
+			<input type="button" name="ICS" value="'.get_text('ExportICS', 'Tournament').'" onclick="location.href=\'?ics=1\'">&nbsp;&nbsp;
 			<input type="button" name="FOP" value="'.get_text('PrintFOP', 'Tournament').'" onclick="window.open(\'./?fop=1&day=\'+document.getElementById(\'FromDayDay\').value)">&nbsp;&nbsp;<br/>
 			<input type="submit" name="Complete" value="'.get_text('CompleteSchedule', 'Tournament').'">&nbsp;&nbsp;
 			<input type="submit" name="DailySchedule" value="'.get_text('DailySchedule', 'Tournament').'">&nbsp;&nbsp;
@@ -137,52 +144,116 @@ if($aclLevel == AclReadWrite) {
     echo '<table>';
 
 // Get all the qualification items with date & time
-    $q = safe_r_sql("select DiSession,
-		DiDistance,
-		if(DiDay=0, '', DiDay) DiDay,
-		if(DiStart=0, '', date_format(DiStart, '%H:%i')) DiStart,
-		DiDuration,
-		DiTargets,
-		if(DiWarmStart=0, '', date_format(DiWarmStart, '%H:%i')) DiWarmStart,
-		DiWarmDuration,
-		DiOptions,
-		if(SesName!='', SesName, DiSession) Session,
-		DiShift
-	from DistanceInformation
-	inner join Session on SesTournament=DiTournament and SesOrder=DiSession and SesType=DiType and SesType='Q'
-	where DiTournament={$_SESSION['TourId']}
-	order by DiSession, DiDistance");
-    echo '<tr>
-		<th class="Title" colspan="6">' . get_text('Q-Session', 'Tournament') . '</th>
-		<th class="Title w-10" colspan="3">' . get_text('WarmUp', 'Tournament') . '</th>
-		<th class="Title w-10">' . get_text('Targets', 'Tournament') . '</th>
-	</tr>
-	<tr>
-		<th class="Title w-10">' . get_text('Session') . '</th>
-		<th class="Title w-10">' . get_text('Distance', 'Tournament') . '</th>
-		<th class="Title w-10"><img src="' . $CFG->ROOT_DIR . 'Common/Images/Tip.png" title="' . get_Text('TipDate', 'Tournament') . '" align="right">' . get_text('Date', 'Tournament') . '</th>
-		<th class="Title w-10">' . get_text('Time', 'Tournament') . '</th>
-		<th class="Title w-10">' . get_text('Length', 'Tournament') . '</th>
-		<th class="Title w-10">' . get_text('Delayed', 'Tournament') . '</th>
-		<th class="Title w-10">' . get_text('Time', 'Tournament') . '</th>
-		<th class="Title w-10">' . get_text('Length', 'Tournament') . '</th>
-		<th class="Title w-10">' . get_text('ScheduleNotes', 'Tournament') . '</th>
-		<th class="Title w-10">#1-#N@Dist<br>[@Cat[@Face]]</th>
-	</tr>';
-    while ($r = safe_fetch($q)) {
-        echo '<tr>
-		<th nowrap="nowrap">' . $r->Session . '</td>
-		<th nowrap="nowrap">' . $r->DiDistance . '</td>
-		<td><input size="10" type="date" name="Fld[Q][Day][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiDay . '" onchange="DiUpdate(this)"></td>
-		<td><input size="5" type="time" name="Fld[Q][Start][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiStart . '" onchange="DiUpdate(this)"></td>
-		<td><input size="3" max="999" min="0" type="number" name="Fld[Q][Duration][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiDuration . '" onchange="DiUpdate(this)"></td>
-		<td><input size="3" max="999" min="0" type="number" name="Fld[Q][Shift][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiShift . '" onchange="DiUpdate(this)"></td>
-		<td><input size="5" type="text" name="Fld[Q][WarmTime][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiWarmStart . '" onchange="DiUpdate(this)"></td>
-		<td><input size="3" max="999" min="0" type="number" name="Fld[Q][WarmDuration][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiWarmDuration . '" onchange="DiUpdate(this)"></td>
-		<td><input size="45" type="text" name="Fld[Q][Options][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiOptions . '" onchange="DiUpdate(this)"></td>
-		<td><input size="15" type="text" name="Fld[Q][Targets][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiTargets . '" onchange="DiUpdate(this)"></td>
+	if($_SESSION['TourType']==48) {
+		// Run ARchery uses totally different tables!
+		$q = safe_r_sql("select RarPhase,
+			RarPool,
+			min(RarGroup) as RarGroup,
+			if(RarStartlist=0, '', date(RarStartlist)) RarDay,
+			if(RarStartlist=0, '', date_format(min(RarStartlist), '%H:%i')) RarStart,
+			RarDuration,
+			RarWarmup,
+			RarWarmupDuration,
+			RarNotes,
+			RarShift,
+			RarCallTime,
+			min(RarStartList) as RarStartList,
+			EvElimType,
+			group_concat(distinct RarEvent separator ', ') as RarEvents,
+			group_concat(distinct concat_ws('-', RarTeam, RarEvent) separator ',') as RarEventCodes
+		from RunArcheryRank
+		inner join Events on EvTournament=RarTournament and EvTeamEvent=RarTeam and EvCode=RarEvent
+		where RarTournament={$_SESSION['TourId']}
+		group by if(EvElimType=0 or RarPhase>0, RarStartlist, EvCode), RarPhase, RarPool, if(EvElimType=0 or RarPhase>0, '', RarGroup)
+		order by RarStartlist");
+
+		echo '<tr>
+			<th class="Title" colspan="9">' . get_text('RA-Session', 'Tournament') . '</th>
+			<th class="Title w-30" rowspan="2">' . get_text('ScheduleNotes', 'Tournament') . '</th>
+		</tr>
+		<tr>
+			<th class="Title w-5">' . get_text('Session') . '</th>
+			<th class="Title w-5">' . get_text('Distance', 'Tournament') . '</th>
+			<th class="Title w-5">' . get_text('Date', 'Tournament') . '</th>
+			<th class="Title w-5">' . get_text('Time', 'Tournament') . '</th>
+			<th class="Title w-5">' . get_text('Length', 'Tournament') . '</th>
+			<th class="Title w-5">' . get_text('Delayed', 'Tournament') . '</th>
+			<th class="Title w-5">' . get_text('CallTime', 'RunArchery') . '</th>
+			<th class="Title w-5">' . get_text('WarmUp', 'Tournament') . '</th>
+			<th class="Title w-5">' . get_text('WarmUpMins', 'Tournament') . '</th>
 		</tr>';
-    }
+		while ($r = safe_fetch($q)) {
+			$Session='';
+			if($r->RarPhase==1) {
+				$Session=get_text('Final'.$r->RarPool, 'RunArchery');
+			} elseif($r->RarPhase==2) {
+				$Session=get_text('PoolName', 'Tournament', $r->RarPool);
+			} elseif($r->RarGroup) {
+				$Session=get_text('GroupNum','RoundRobin', $r->RarGroup);
+			} else {
+				$Session=get_text('AllEntries','Tournament');
+			}
+			echo '<tr>
+				<th nowrap="nowrap">' . $r->RarEvents . '</td>
+				<th nowrap="nowrap">' . $Session . '</td>
+				<td>'.$r->RarDay.'</td>
+				<td>'.$r->RarStart.'</td>
+				<td><input size="3" max="999" min="0" type="number" name="Fld[RA][Duration][' . $r->RarEventCodes . '][' . $r->RarStartList . ']" value="' . $r->RarDuration . '" onchange="DiUpdate(this)"></td>
+				<td><input size="3" max="999" min="-1" type="number" name="Fld[RA][Shift][' . $r->RarEventCodes . '][' . $r->RarStartList . ']" value="' . $r->RarShift . '" onchange="DiUpdate(this)"></td>
+				<td><input size="3" name="Fld[RA][Calltime][' . $r->RarEventCodes . '][' . $r->RarStartList . ']" value="' . ($r->RarCallTime=='00:00:00' ? '' : substr($r->RarCallTime, 0, 5)) . '" onchange="DiUpdate(this)"></td>
+				<td><input size="3" name="Fld[RA][Warmtime][' . $r->RarEventCodes . '][' . $r->RarStartList . ']" value="' . ($r->RarWarmup=='00:00:00' ? '' : substr($r->RarWarmup, 0, 5)) . '" onchange="DiUpdate(this)"></td>
+				<td><input size="3" name="Fld[RA][WarmtimeDuration][' . $r->RarEventCodes . '][' . $r->RarStartList . ']" value="' . ($r->RarWarmupDuration=='0' ? '' : $r->RarWarmupDuration) . '" onchange="DiUpdate(this)"></td>
+				<td><input style="width:100%" size="35" type="text" name="Fld[RA][Options][' . $r->RarEventCodes . '][' . $r->RarStartList . ']" value="' . $r->RarNotes . '" onchange="DiUpdate(this)"></td>
+				</tr>';
+		}
+	} else  {
+	    $q = safe_r_sql("select DiSession,
+			DiDistance,
+			if(DiDay=0, '', DiDay) DiDay,
+			if(DiStart=0, '', date_format(DiStart, '%H:%i')) DiStart,
+			DiDuration,
+			DiTargets,
+			if(DiWarmStart=0, '', date_format(DiWarmStart, '%H:%i')) DiWarmStart,
+			DiWarmDuration,
+			DiOptions,
+			if(SesName!='', SesName, DiSession) Session,
+			DiShift
+		from DistanceInformation
+		inner join Session on SesTournament=DiTournament and SesOrder=DiSession and SesType=DiType and SesType='Q'
+		where DiTournament={$_SESSION['TourId']}
+		order by DiSession, DiDistance");
+	    echo '<tr>
+			<th class="Title" colspan="6">' . get_text('Q-Session', 'Tournament') . '</th>
+			<th class="Title w-10" colspan="3">' . get_text('WarmUp', 'Tournament') . '</th>
+			<th class="Title w-10">' . get_text('Targets', 'Tournament') . '</th>
+		</tr>
+		<tr>
+			<th class="Title w-10">' . get_text('Session') . '</th>
+			<th class="Title w-10">' . get_text('Distance', 'Tournament') . '</th>
+			<th class="Title w-10"><img src="' . $CFG->ROOT_DIR . 'Common/Images/Tip.png" title="' . get_Text('TipDate', 'Tournament') . '" align="right">' . get_text('Date', 'Tournament') . '</th>
+			<th class="Title w-10">' . get_text('Time', 'Tournament') . '</th>
+			<th class="Title w-10">' . get_text('Length', 'Tournament') . '</th>
+			<th class="Title w-10">' . get_text('Delayed', 'Tournament') . '</th>
+			<th class="Title w-10">' . get_text('Time', 'Tournament') . '</th>
+			<th class="Title w-10">' . get_text('Length', 'Tournament') . '</th>
+			<th class="Title w-10">' . get_text('ScheduleNotes', 'Tournament') . '</th>
+			<th class="Title w-10">#1-#N@Dist<br>[@Cat[@Face]]</th>
+		</tr>';
+	    while ($r = safe_fetch($q)) {
+	        echo '<tr>
+			<th nowrap="nowrap">' . $r->Session . '</td>
+			<th nowrap="nowrap">' . $r->DiDistance . '</td>
+			<td><input size="10" type="date" name="Fld[Q][Day][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiDay . '" onchange="DiUpdate(this)"></td>
+			<td><input size="5" type="time" name="Fld[Q][Start][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiStart . '" onchange="DiUpdate(this)"></td>
+			<td><input size="3" max="999" min="0" type="number" name="Fld[Q][Duration][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiDuration . '" onchange="DiUpdate(this)"></td>
+			<td><input size="3" max="999" min="-1" type="number" name="Fld[Q][Shift][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiShift . '" onchange="DiUpdate(this)"></td>
+			<td><input size="5" type="text" name="Fld[Q][WarmTime][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiWarmStart . '" onchange="DiUpdate(this)"></td>
+			<td><input size="3" max="999" min="0" type="number" name="Fld[Q][WarmDuration][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiWarmDuration . '" onchange="DiUpdate(this)"></td>
+			<td><input size="45" type="text" name="Fld[Q][Options][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiOptions . '" onchange="DiUpdate(this)"></td>
+			<td><input size="15" type="text" name="Fld[Q][Targets][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiTargets . '" onchange="DiUpdate(this)"></td>
+			</tr>';
+	    }
+	}
 
 // Get all the Elimination items with date & time
     $q = safe_r_sql("select SesOrder,
@@ -224,7 +295,7 @@ if($aclLevel == AclReadWrite) {
 			<td><input size="10" type="date" name="Fld[E][Day][' . $r->SesOrder . '][' . $r->ElElimPhase . ']" value="' . $r->DiDay . '" onchange="DiUpdate(this)"></td>
 			<td><input size="5" type="time" name="Fld[E][Start][' . $r->SesOrder . '][' . $r->ElElimPhase . ']" value="' . $r->DiStart . '" onchange="DiUpdate(this)"></td>
 			<td><input size="3" max="999" min="0" type="number" name="Fld[E][Duration][' . $r->SesOrder . '][' . $r->ElElimPhase . ']" value="' . $r->DiDuration . '" onchange="DiUpdate(this)"></td>
-			<td><input size="3" max="999" min="0" type="number" name="Fld[E][Shift][' . $r->SesOrder . '][' . $r->ElElimPhase . ']" value="' . $r->DiShift . '" onchange="DiUpdate(this)"></td>
+			<td><input size="3" max="999" min="-1" type="number" name="Fld[E][Shift][' . $r->SesOrder . '][' . $r->ElElimPhase . ']" value="' . $r->DiShift . '" onchange="DiUpdate(this)"></td>
 			<td><input size="5" type="text" name="Fld[E][WarmTime][' . $r->SesOrder . '][' . $r->ElElimPhase . ']" value="' . $r->DiWarmStart . '" onchange="DiUpdate(this)"></td>
 			<td><input size="3" max="999" min="0" type="number" name="Fld[E][WarmDuration][' . $r->SesOrder . '][' . $r->ElElimPhase . ']" value="' . $r->DiWarmDuration . '" onchange="DiUpdate(this)"></td>
 			<td colspan="2"><input size="45" type="text" name="Fld[E][Options][' . $r->SesOrder . '][' . $r->ElElimPhase . ']" value="' . $r->DiOptions . '" onchange="DiUpdate(this)"></td>
@@ -290,22 +361,22 @@ if($aclLevel == AclReadWrite) {
 			<td><input size="10" type="date" name="Fld[' . $TeamEvent . '][Day][' . $r->GrPhase . '][' . $r->FsScheduledDate . '][' . $r->FsScheduledTime . ']" value="' . $r->ScheduledDate . '" onchange="DiUpdate(this)"></td>
 			<td><input size="5"  type="time" name="Fld[' . $TeamEvent . '][Start][' . $r->GrPhase . '][' . $r->FsScheduledDate . '][' . $r->FsScheduledTime . ']" value="' . $r->ScheduledTime . '" onchange="DiUpdate(this)"></td>
 			<td><input size="3" max="999" min="0" type="number" name="Fld[' . $TeamEvent . '][Duration][' . $r->GrPhase . '][' . $r->FsScheduledDate . '][' . $r->FsScheduledTime . ']" value="' . $r->FsScheduledLen . '" onchange="DiUpdate(this)"></td>
-			<td><input size="3" max="999" min="0" type="number" name="Fld[' . $TeamEvent . '][Shift][' . $r->GrPhase . '][' . $r->FsScheduledDate . '][' . $r->FsScheduledTime . ']" value="' . $r->FsShift . '" onchange="DiUpdate(this)"></td>
+			<td><input size="3" max="999" min="-1" type="number" name="Fld[' . $TeamEvent . '][Shift][' . $r->GrPhase . '][' . $r->FsScheduledDate . '][' . $r->FsScheduledTime . ']" value="' . $r->FsShift . '" onchange="DiUpdate(this)"></td>
 			<td>';
-            $FwTimes = explode('|', $r->FwTime);
+            $FwTimes = explode('|', ($r->FwTime ?? ''));
             foreach ($FwTimes as $k => $FwTime) {
                 if ($k) echo '<br/>';
                 echo '<input size="5"  type="text" name="Fld[' . $TeamEvent . '][WarmTime][' . $r->GrPhase . '][' . $r->FsScheduledDate . '][' . $r->FsScheduledTime . '][' . $FwTime . ']" value="' . $FwTime . '" onchange="DiUpdate(this)">';
             }
             echo '</td>
 			<td>';
-            foreach (explode('|', $r->FwDuration) as $k => $FwDuration) {
+            foreach (explode('|', ($r->FwDuration ?? '')) as $k => $FwDuration) {
                 if ($k) echo '<br/>';
                 echo '<input size="3" max="999" min="0" type="number" name="Fld[' . $TeamEvent . '][WarmDuration][' . $r->GrPhase . '][' . $r->FsScheduledDate . '][' . $r->FsScheduledTime . '][' . $FwTimes[$k] . ']" value="' . $FwDuration . '" onchange="DiUpdate(this)">';
             }
             echo '</td>
 			<td>';
-            foreach (explode('|', $r->FwOptions) as $k => $FwOption) {
+            foreach (explode('|', ($r->FwOptions ?? '')) as $k => $FwOption) {
                 if ($k) echo '<br/>';
                 echo '<input size="45" type="text" name="Fld[' . $TeamEvent . '][Options][' . $r->GrPhase . '][' . $r->FsScheduledDate . '][' . $r->FsScheduledTime . '][' . $FwTimes[$k] . ']" value="' . $FwOption . '" onchange="DiUpdate(this)">';
             }

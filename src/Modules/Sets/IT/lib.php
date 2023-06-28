@@ -40,6 +40,7 @@ function CreateStandardClasses($TourId, $SubRule, $Field='', $Type=0) {
 	$Fita=in_array($Type, array(1,2,4,5,18));
 	$FitaWithAN = in_array($Type, array(3,5,37,39));
 	$Indoor=in_array($Type, array(6,7,8));
+	$divs=(($Indoor or $Field=='FIELD' or $FitaWithAN) ? 'AN,CO,OL' : ($Fita ? 'CO,OL' : ''));
 	switch($SubRule) {
 		case '1':
 			if($Field=='3D') {
@@ -48,8 +49,6 @@ function CreateStandardClasses($TourId, $SubRule, $Field='', $Type=0) {
 				CreateClass($TourId, $i++,  1, 20, 0, 'JM', 'JM,SM', 'Under 20 Maschile');
 				CreateClass($TourId, $i++,  1, 20, 1, 'JF', 'JF,SF', 'Under 20 Femminile');
 			} else {
-				$divs=($Fita ? 'CO,OL' : (($Indoor or $Field=='FIELD' or $FitaWithAN) ? 'AN,CO,OL' : ''));
-                $divsGM=($Fita ? 'OL' : (($Indoor or $Field=='FIELD' or $FitaWithAN) ? 'AN,OL' : ''));
 				CreateClass($TourId, $i++, 21, 49, 0, 'SM', 'SM', 'Senior Maschile', 1, $divs);
 				CreateClass($TourId, $i++, 21, 49, 1, 'SF', 'SF', 'Senior Femminile', 1, $divs);
 				CreateClass($TourId, $i++, 50,100, 0, 'MM', 'MM,SM', 'Master Maschile', 1, $divs);
@@ -60,8 +59,8 @@ function CreateStandardClasses($TourId, $SubRule, $Field='', $Type=0) {
 				CreateClass($TourId, $i++, 15, 17, 1, 'AF', 'AF,JF', 'Allieve Femminile', 1, $divs);
 				CreateClass($TourId, $i++, 13, 14, 0, 'RM', 'RM,AM,JM', 'Ragazzi Maschile', 1, $divs);
 				CreateClass($TourId, $i++, 13, 14, 1, 'RF', 'RF,AF,JF', 'Ragazzi Femminile', 1, $divs);
-				CreateClass($TourId, $i++,  9, 12, 0, 'GM', 'GM,RM', 'Giovanissimi Maschile', 1, $divsGM);
-				CreateClass($TourId, $i++,  9, 12, 1, 'GF', 'GF,RF', 'Giovanissimi Femminile', 1, $divsGM);
+				CreateClass($TourId, $i++,  9, 12, 0, 'GM', 'GM,RM', 'Giovanissimi Maschile', 1, $divs);
+				CreateClass($TourId, $i++,  9, 12, 1, 'GF', 'GF,RF', 'Giovanissimi Femminile', 1, $divs);
 				if($Fita or $FitaWithAN or $Indoor) {
 					CreateClass($TourId, $i++,  1, 100, 0, 'M', 'M', 'Maschile', 1, 'W1','','',1);
 					CreateClass($TourId, $i++,  1, 100, 1, 'F', 'F', 'Femminile', 1, 'W1','','',1);
@@ -80,8 +79,8 @@ function CreateStandardClasses($TourId, $SubRule, $Field='', $Type=0) {
 				CreateClass($TourId, $i++,  1, 20, 0, 'JM', 'JM,SM', 'Under 20 Maschile');
 				CreateClass($TourId, $i++,  1, 20, 1, 'JF', 'JF,SF', 'Under 20 Femminile');
 			} else {
-				CreateClass($TourId, $i++, 1, 100, 0, 'SM', 'SM', 'Senior Maschile',1, ($Fita ? 'CO,OL' : (($Indoor or $Field=='FIELD' or $FitaWithAN) ? 'AN,CO,OL' : '')));
-				CreateClass($TourId, $i++, 1, 100, 1, 'SF', 'SF', 'Senior Femminile',1, ($Fita ? 'CO,OL' : (($Indoor or $Field=='FIELD' or $FitaWithAN) ? 'AN,CO,OL' : '')));
+				CreateClass($TourId, $i++, 1, 100, 0, 'SM', 'SM', 'Senior Maschile',1, $divs);
+				CreateClass($TourId, $i++, 1, 100, 1, 'SF', 'SF', 'Senior Femminile',1, $divs);
                 if($Fita or $FitaWithAN or $Indoor) {
                     CreateClass($TourId, $i++,  1, 100, 0, 'M', 'M', 'Maschile', 1, 'W1','','',1);
                     CreateClass($TourId, $i++,  1, 100, 1, 'F', 'F', 'Femminile', 1, 'W1','','',1);
@@ -90,16 +89,14 @@ function CreateStandardClasses($TourId, $SubRule, $Field='', $Type=0) {
 			}
 			break;
 		case '3':
-            $divs=($Fita ? 'CO,OL' : (($Indoor or $Field=='FIELD' or $FitaWithAN) ? 'AN,CO,OL' : ''));
-            $divsGM=($Fita ? 'OL' : (($Indoor or $Field=='FIELD' or $FitaWithAN) ? 'AN,OL' : ''));
 			CreateClass($TourId, $i++, 18, 20, 0, 'JM', 'JM,SM', 'Junior Maschile', 1, $divs);
 			CreateClass($TourId, $i++, 18, 20, 1, 'JF', 'JF,SF', 'Junior Femminile', 1, $divs);
 			CreateClass($TourId, $i++, 15, 17, 0, 'AM', 'AM,JM', 'Allievi Maschile', 1, $divs);
 			CreateClass($TourId, $i++, 15, 17, 1, 'AF', 'AF,JF', 'Allieve Femminile', 1, $divs);
 			CreateClass($TourId, $i++, 13, 14, 0, 'RM', 'RM,AM,JM', 'Ragazzi Maschile', 1, $divs);
 			CreateClass($TourId, $i++, 13, 14, 1, 'RF', 'RF,AF,JF', 'Ragazzi Femminile', 1, $divs);
-			CreateClass($TourId, $i++,  9, 12, 0, 'GM', 'GM,RM', 'Giovanissimi Maschile', 1, $divsGM);
-			CreateClass($TourId, $i++,  9, 12, 1, 'GF', 'GF,RF', 'Giovanissimi Femminile', 1, $divsGM);
+			CreateClass($TourId, $i++,  9, 12, 0, 'GM', 'GM,RM', 'Giovanissimi Maschile', 1, $divs);
+			CreateClass($TourId, $i++,  9, 12, 1, 'GF', 'GF,RF', 'Giovanissimi Femminile', 1, $divs);
             if($Fita or $FitaWithAN or $Indoor) {
                 CreateClass($TourId, $i++,  1, 100, 0, 'M', 'M', 'Maschile', 1, 'W1','','',1);
                 CreateClass($TourId, $i++,  1, 100, 1, 'F', 'F', 'Femminile', 1, 'W1','','',1);
@@ -107,12 +104,12 @@ function CreateStandardClasses($TourId, $SubRule, $Field='', $Type=0) {
             }
 			break;
 		case '4':
-			CreateClass($TourId, $i++, 18, 20, 0, 'JM', 'SM', 'Junior Maschile', 1, ($Fita ? 'CO,OL' : (($Indoor or $Field=='FIELD' or $FitaWithAN) ? 'AN,CO,OL' : '')));
-			CreateClass($TourId, $i++, 18, 20, 1, 'JF', 'SF', 'Junior Femminile', 1, ($Fita ? 'CO,OL' : (($Indoor or $Field=='FIELD' or $FitaWithAN) ? 'AN,CO,OL' : '')));
-			CreateClass($TourId, $i++, 21, 49, 0, 'SM', 'SM', 'Senior Maschile', 1, ($Fita ? 'CO,OL' : (($Indoor or $Field=='FIELD' or $FitaWithAN) ? 'AN,CO,OL' : '')));
-			CreateClass($TourId, $i++, 21, 49, 1, 'SF', 'SF', 'Senior Femminile', 1, ($Fita ? 'CO,OL' : (($Indoor or $Field=='FIELD' or $FitaWithAN) ? 'AN,CO,OL' : '')));
-			CreateClass($TourId, $i++, 50,100, 0, 'MM', 'MM,SM', 'Master Maschile', 1, ($Fita ? 'CO,OL' : (($Indoor or $Field=='FIELD' or $FitaWithAN) ? 'AN,CO,OL' : '')));
-			CreateClass($TourId, $i++, 50,100, 1, 'MF', 'MF,SF', 'Master Femminile', 1, ($Fita ? 'CO,OL' : (($Indoor or $Field=='FIELD' or $FitaWithAN) ? 'AN,CO,OL' : '')));
+			CreateClass($TourId, $i++, 18, 20, 0, 'JM', 'SM', 'Junior Maschile', 1, $divs);
+			CreateClass($TourId, $i++, 18, 20, 1, 'JF', 'SF', 'Junior Femminile', 1, $divs);
+			CreateClass($TourId, $i++, 21, 49, 0, 'SM', 'SM', 'Senior Maschile', 1, $divs);
+			CreateClass($TourId, $i++, 21, 49, 1, 'SF', 'SF', 'Senior Femminile', 1, $divs);
+			CreateClass($TourId, $i++, 50,100, 0, 'MM', 'MM,SM', 'Master Maschile', 1, $divs);
+			CreateClass($TourId, $i++, 50,100, 1, 'MF', 'MF,SF', 'Master Femminile', 1, $divs);
             if($Fita or $FitaWithAN or $Indoor) {
                 CreateClass($TourId, $i++,  1, 100, 0, 'M', 'M', 'Maschile', 1, 'W1','','',1);
                 CreateClass($TourId, $i++,  1, 100, 1, 'F', 'F', 'Femminile', 1, 'W1','','',1);
@@ -134,6 +131,7 @@ function CreateStandardEvents($TourId, $TourType, $SubRule, $Outdoor=true) {
 	$TargetR=($Outdoor ? TGT_OUT_FULL : TGT_IND_6_big10);
 	$TargetC=($Outdoor ? TGT_OUT_5_big10 : TGT_IND_6_small10);
     $TargetB=($Outdoor ? TGT_OUT_FULL : TGT_IND_1_big10);
+    $TargetC_RG=(TGT_IND_1_small10);
 
 	$TargetSizeR=($Outdoor ? 122 : 40);
     $TargetSizeB=($Outdoor ? 122 : 40);
@@ -172,8 +170,12 @@ function CreateStandardEvents($TourId, $TourType, $SubRule, $Outdoor=true) {
 				CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'OLNF',  'Assoluti Arco Olimpico Allievi e Master Femminile', 1, 240, 240, 0, 0, '', '', $TargetSizeR, $DistanceRam);
 				CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'OLRM',  'Assoluti Arco Olimpico Ragazzi Maschile', 1, 240, 240, 0, 0, '', '', $TargetSizeR, $DistanceRr);
 				CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'OLRF',  'Assoluti Arco Olimpico Ragazze Femminile', 1, 240, 240, 0, 0, '', '', $TargetSizeR, $DistanceRr);
-				CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'OLGM',  'Assoluti Arco Olimpico Giovanissimi Maschile', 1, 240, 240, 0, 0, '', '', $TargetSizeR, $DistanceRg);
-				CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'OLGF',  'Assoluti Arco Olimpico Giovanissime Femminile', 1, 240, 240, 0, 0, '', '', $TargetSizeR, $DistanceRg);
+				CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'OLGM',  'Assoluti Arco Olimpico Giovanissimi Maschile', 1, 240, 240, 0, 0, '', '', $TargetSizeRg, $DistanceRg);
+				CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'OLGF',  'Assoluti Arco Olimpico Giovanissime Femminile', 1, 240, 240, 0, 0, '', '', $TargetSizeRg, $DistanceRg);
+                CreateEvent($TourId, $i++, 0, 0, 16, $TargetC_RG, 5, 3, 1, 5, 3, 1, 'CORM',  'Assoluti Arco Compound Ragazzi Maschile', 1, 240, 240, 0, 0, '', '', $TargetSizeR, $DistanceRr);
+                CreateEvent($TourId, $i++, 0, 0, 16, $TargetC_RG, 5, 3, 1, 5, 3, 1, 'CORF',  'Assoluti Arco Compound Ragazze Femminile', 1, 240, 240, 0, 0, '', '', $TargetSizeR, $DistanceRr);
+                CreateEvent($TourId, $i++, 0, 0, 16, $TargetC_RG, 5, 3, 1, 5, 3, 1, 'COGM',  'Assoluti Arco Compound Giovanissimi Maschile', 1, 240, 240, 0, 0, '', '', $TargetSizeRg, $DistanceRg);
+                CreateEvent($TourId, $i++, 0, 0, 16, $TargetC_RG, 5, 3, 1, 5, 3, 1, 'COGF',  'Assoluti Arco Compound Giovanissime Femminile', 1, 240, 240, 0, 0, '', '', $TargetSizeRg, $DistanceRg);
 			}
 			$i=1;
 			CreateEvent($TourId, $i++, 1, 0, 4, $TargetR, 4, 6, 3, 4, 6, 3, 'OLMT',  'Squadre Arco Olimpico Maschili', 1, 0, 0, 0, 0, '', '', $TargetSizeR, $DistanceR);
@@ -224,6 +226,10 @@ function CreateStandardEvents($TourId, $TourType, $SubRule, $Outdoor=true) {
 				CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'OLRF',  'Assoluti Arco Olimpico Ragazzi Femminile', 1, 240, 240, 0, 0, '', '', $TargetSizeR, $DistanceRr);
 				CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'OLGM',  'Assoluti Arco Olimpico Giovanissimi Maschile', 1, 240, 240, 0, 0, '', '', $TargetSizeR, $DistanceRg);
 				CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'OLGF',  'Assoluti Arco Olimpico Giovanissimi Femminile', 1, 240, 240, 0, 0, '', '', $TargetSizeR, $DistanceRg);
+                CreateEvent($TourId, $i++, 0, 0, 16, $TargetC_RG, 5, 3, 1, 5, 3, 1, 'CORM',  'Assoluti Arco Compound Ragazzi Maschile', 1, 240, 240, 0, 0, '', '', $TargetSizeR, $DistanceRr);
+                CreateEvent($TourId, $i++, 0, 0, 16, $TargetC_RG, 5, 3, 1, 5, 3, 1, 'CORF',  'Assoluti Arco Compound Ragazze Femminile', 1, 240, 240, 0, 0, '', '', $TargetSizeR, $DistanceRr);
+                CreateEvent($TourId, $i++, 0, 0, 16, $TargetC_RG, 5, 3, 1, 5, 3, 1, 'COGM',  'Assoluti Arco Compound Giovanissimi Maschile', 1, 240, 240, 0, 0, '', '', $TargetSizeRg, $DistanceRg);
+                CreateEvent($TourId, $i++, 0, 0, 16, $TargetC_RG, 5, 3, 1, 5, 3, 1, 'COGF',  'Assoluti Arco Compound Giovanissime Femminile', 1, 240, 240, 0, 0, '', '', $TargetSizeRg, $DistanceRg);
 				if($TourType==3 OR $TourType==18 OR $TourType==37 OR $TourType==39) {
 					CreateEvent($TourId, $i++, 0, 0, 16, $TargetC, 5, 3, 1, 5, 3, 1, 'COM',  'Assoluti Arco Compound Maschile', 0, 240, 240, 0, 0, '', '', $TargetSizeC, $DistanceC);
 					CreateEvent($TourId, $i++, 0, 0, 16, $TargetC, 5, 3, 1, 5, 3, 1, 'COF',  'Assoluti Arco Compound Femminile', 0, 240, 240, 0, 0, '', '', $TargetSizeC, $DistanceC);
@@ -372,7 +378,9 @@ function InsertStandardEvents($TourId, $TourType, $SubRule, $Outdoor=true) {
 					'OLN' => array('M', 'A'),
 					'OLR' => array('R'),
 					'OLG' => array('G'),
-					'CO' => array('S', 'J', 'M', 'A', 'R'),
+					'CO' => array('S', 'J', 'M', 'A'),
+                    'COR' => array('R'),
+                    'COG' => array('G'),
                     'AN' => array('S', 'J', 'M'),
                     'ANA' => array('A'),
                     'ANB' => array('R', 'G'),
@@ -387,32 +395,34 @@ function InsertStandardEvents($TourId, $TourType, $SubRule, $Outdoor=true) {
 				}
 				foreach($ds as $d => $cs) {
 					foreach($cs as $c) {
-						InsertClassEvent($TourId, 0, 1, $d.'M', $d, $c.'M');
-						InsertClassEvent($TourId, 0, 1, $d.'F', $d, $c.'F');
+						InsertClassEvent($TourId, 0, 1, $d.'M', substr($d,0,2), $c.'M');
+						InsertClassEvent($TourId, 0, 1, $d.'F', substr($d,0,2), $c.'F');
 
-						InsertClassEvent($TourId, 1, 3, substr($d.'MT',0,4), $d, $c.'M');
-						InsertClassEvent($TourId, 1, 3, substr($d.'FT',0,4), $d, $c.'F');
-						InsertClassEvent($TourId, 1, 1, substr($d.'XT',0,4), $d, $c.'M');
-						InsertClassEvent($TourId, 2, 1, substr($d.'XT',0,4), $d, $c.'F');
+						InsertClassEvent($TourId, 1, 3, substr($d.'MT',0,4), substr($d,0,2), $c.'M');
+						InsertClassEvent($TourId, 1, 3, substr($d.'FT',0,4), substr($d,0,2), $c.'F');
+						InsertClassEvent($TourId, 1, 1, substr($d.'XT',0,4), substr($d,0,2), $c.'M');
+						InsertClassEvent($TourId, 2, 1, substr($d.'XT',0,4), substr($d,0,2), $c.'F');
 					}
 				}
 				break;
 			case '3':
 				$ds=array(
 					'OL' => array('J', 'A', 'R', 'G'),
-					'CO' => array('J', 'A', 'R'),
+					'CO' => array('J', 'A'),
+                    'COR' => array('R'),
+                    'COG' => array('G'),
                     'AN' => array('J', 'A'),
                     'ANB' => array('R', 'G'),
 					);
                 foreach($ds as $d => $cs) {
                     foreach($cs as $c) {
-                        InsertClassEvent($TourId, 0, 1, $d.(($d!='OL' AND $d!='AN') ? '' : $c).'M', $d, $c.'M');
-                        InsertClassEvent($TourId, 0, 1, $d.(($d!='OL' AND $d!='AN') ? '' : $c).'F', $d, $c.'F');
+                        InsertClassEvent($TourId, 0, 1, $d.(($d!='OL' AND $d!='AN') ? '' : $c).'M', substr($d,0,2), $c.'M');
+                        InsertClassEvent($TourId, 0, 1, $d.(($d!='OL' AND $d!='AN') ? '' : $c).'F', substr($d,0,2), $c.'F');
 
-                        InsertClassEvent($TourId, 1, 3, $d.(($d!='OL' AND $d!='AN') ? '' : $c).'M', $d, $c.'M');
-                        InsertClassEvent($TourId, 1, 3, $d.(($d!='OL' AND $d!='AN') ? '' : $c).'F', $d, $c.'F');
-                        InsertClassEvent($TourId, 1, 1, $d.(($d!='OL' AND $d!='AN') ? '' : $c).'X', $d, $c.'M');
-                        InsertClassEvent($TourId, 2, 1, $d.(($d!='OL' AND $d!='AN') ? '' : $c).'X', $d, $c.'F');
+                        InsertClassEvent($TourId, 1, 3, $d.(($d!='OL' AND $d!='AN') ? '' : $c).'M', substr($d,0,2), $c.'M');
+                        InsertClassEvent($TourId, 1, 3, $d.(($d!='OL' AND $d!='AN') ? '' : $c).'F', substr($d,0,2), $c.'F');
+                        InsertClassEvent($TourId, 1, 1, $d.(($d!='OL' AND $d!='AN') ? '' : $c).'X', substr($d,0,2), $c.'M');
+                        InsertClassEvent($TourId, 2, 1, $d.(($d!='OL' AND $d!='AN') ? '' : $c).'X', substr($d,0,2), $c.'F');
                     }
                 }
                 break;
@@ -773,14 +783,18 @@ function CreateStandardStudClasses($TourId, $TourType) {
 
 function CreateStandardGdGClasses($TourId, $SubRule, $Field='') {
 	$i=1;
-    CreateClass($TourId, $i++, 10, 10, 0, 'M1', 'M1', 'Ragazzi 2011');
-    CreateClass($TourId, $i++, 10, 10, 1, 'F1', 'F1', 'Ragazze 2011');
-	CreateClass($TourId, $i++, 11, 11, 0, 'M2', 'M2', 'Ragazzi 2010');
-	CreateClass($TourId, $i++, 11, 11, 1, 'F2', 'F2', 'Ragazze 2010');
-    CreateClass($TourId, $i++, 12, 12, 0, 'M3', 'M3', 'Ragazzi 2009');
-    CreateClass($TourId, $i++, 12, 12, 1, 'F3', 'F3', 'Ragazze 2009');
-    CreateClass($TourId, $i++, 13, 13, 0, 'M4', 'M4', 'Ragazzi 2008');
-    CreateClass($TourId, $i++, 13, 13, 1, 'F4', 'F4', 'Ragazze 2008');
+    CreateClass($TourId, $i++, 8, 8, 0, 'GM', 'GM', 'Ragazzi 2015');
+    CreateClass($TourId, $i++, 8, 8, 1, 'GF', 'GF', 'Ragazze 2015');
+    CreateClass($TourId, $i++, 9, 9, 0, 'M0', 'M0', 'Ragazzi 2014');
+    CreateClass($TourId, $i++, 9, 9, 1, 'F0', 'F0', 'Ragazze 2014');
+    CreateClass($TourId, $i++, 10, 10, 0, 'M1', 'M1', 'Ragazzi 2013');
+    CreateClass($TourId, $i++, 10, 10, 1, 'F1', 'F1', 'Ragazze 2013');
+	CreateClass($TourId, $i++, 11, 11, 0, 'M2', 'M2', 'Ragazzi 2012');
+	CreateClass($TourId, $i++, 11, 11, 1, 'F2', 'F2', 'Ragazze 2012');
+    CreateClass($TourId, $i++, 12, 12, 0, 'M3', 'M3', 'Ragazzi 2011');
+    CreateClass($TourId, $i++, 12, 12, 1, 'F3', 'F3', 'Ragazze 2011');
+    CreateClass($TourId, $i++, 13, 13, 0, 'M4', 'M4', 'Ragazzi 2010');
+    CreateClass($TourId, $i++, 13, 13, 1, 'F4', 'F4', 'Ragazze 2010');
 
 }
 

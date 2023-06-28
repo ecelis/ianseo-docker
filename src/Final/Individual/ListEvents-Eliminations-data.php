@@ -1,6 +1,4 @@
 <?php
-define('debug',false);	// settare a true per l'output di debug
-
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
 CheckTourSession(true);
 checkACL(AclCompetition, AclReadWrite);
@@ -40,7 +38,41 @@ switch($_REQUEST['act']) {
         }
         $Type=intval($_REQUEST['type']);
 
+		if($EVENT->EvElimType==5 and $Type!=5) {
+			// destroys all the round robin thing!
+			safe_w_sql("delete from RoundRobinGrids where RrGridTournament={$_SESSION['TourId']} and RrGridTeam=0 and RrGridEvent=".StrSafe_DB($_REQUEST['ev']));
+			safe_w_sql("delete from RoundRobinGroup where RrGrTournament={$_SESSION['TourId']} and RrGrTeam=0 and RrGrEvent=".StrSafe_DB($_REQUEST['ev']));
+			safe_w_sql("delete from RoundRobinLevel where RrLevTournament={$_SESSION['TourId']} and RrLevTeam=0 and RrLevEvent=".StrSafe_DB($_REQUEST['ev']));
+			safe_w_sql("delete from RoundRobinMatches where RrMatchTournament={$_SESSION['TourId']} and RrMatchTeam=0 and RrMatchEvent=".StrSafe_DB($_REQUEST['ev']));
+			safe_w_sql("delete from RoundRobinParticipants where RrPartTournament={$_SESSION['TourId']} and RrPartTeam=0 and RrPartEvent=".StrSafe_DB($_REQUEST['ev']));
+			// check if there are still Round Robin EVents
+			$q=safe_r_sql("select EvElimType from Events where EvTournament={$_SESSION['TourId']} and EvTeamEvent=0 and EvElimType=5");
+			$_SESSION['HasRobin']=(safe_num_rows($q) ? 1 : 0);
+		}
+
         switch($Type) {
+	        case 5: // Round Robin, We only ask for number of levels in EvELim1
+            	if($EVENT->EvElimType!=$Type) {
+	                safe_w_sql("update Events set 
+						EvElim1=2, EvE1Arrows=0, EvE1Ends=0, EvE1SO=0, 
+						EvElim2=0, EvE2Arrows=0, EvE2Ends=0, EvE2SO=0, 
+						EvFinalAthTarget=0, EvMatchArrowsNo=0,
+						EvElimEnds=0, EvElimArrows=0, EvElimSO=0,
+						EvElimType=$Type where EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent='0' and EvCode=".StrSafe_DB($_REQUEST['ev']));
+		            $q=safe_r_sql($EventSQL);
+		            $EVENT=safe_fetch($q);
+					// check if the final level => Brackets is needed!
+		            if($EVENT->EvFinalFirstPhase) {
+						@include_once('Modules/RoundRobin/Lib.php');
+						if(function_exists('CreateFinalLevel')) {
+							CreateFinalLevel(0, $_REQUEST['ev'], $EVENT->EvNumQualified);
+						}
+		            }
+		            $_SESSION['HasRobin']=1;
+	            }
+                $JSON['html'].='<tr><th colspan="2">'.get_text('R-Session', 'Tournament').'</th></tr>';
+                $JSON['html'].='<tr><th>'.get_text('LevelsHelp', 'RoundRobin').'</th><td><input type="number" id="EvElim1" value="'.$EVENT->EvElim1.'" onchange="SetField(this)"></td></tr>';
+                break;
             case 4:
             	$ArNum=($EVENT->ToElabTeam==2 ? 1 : 3);
             	if($EVENT->EvElimType!=$Type) {

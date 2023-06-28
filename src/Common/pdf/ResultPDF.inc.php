@@ -17,7 +17,7 @@ class ResultPDF extends IanseoPdf {
 	var $PoolWinners=array();
 
 	//Constructor
-	function __construct($DocTitolo, $Portrait=true, $Headers='', $StaffVisibility=true) {
+	function __construct($DocTitolo, $Portrait=true, $Headers='', $StaffVisibility=false) {
 		parent::__construct($DocTitolo, $Portrait, $Headers, $StaffVisibility);
 
 		$this->PoolMatches=getPoolMatchesShort();
@@ -36,8 +36,8 @@ class ResultPDF extends IanseoPdf {
 
 	function SetAccreditedColor()
 	{
-		$this->SetFillColor(0xF4,0xF4,0xF4);
-		$this->SetTextColor(0x90, 0x90, 0x90);
+		$this->SetFillColor(0xF8,0xF8,0xF8);
+		$this->SetTextColor(0x60, 0x60, 0x60);
 	}
 
 	function _endpage()
@@ -347,21 +347,22 @@ class ResultPDF extends IanseoPdf {
 					$this->Cell(4, $this->RealCellHeight,  $row[0], 1, 0, 'R', 0);
 				}
 				$this->SetFont($this->FontStd,'',$this->FontSizeHead);
-				$this->Cell(10, $this->RealCellHeight,  $row[1], 1, 0, 'R', 0);
-				$this->Cell(44, $this->RealCellHeight,  $row[2], 1, 0, 'L', 0);
-				$this->Cell( 8, $this->RealCellHeight,  $row[3], 'LTB', 0, 'C', 0);
-				$this->Cell(48, $this->RealCellHeight,  $row[4] . ($row[11]==null ? "" : " (" . $row[11] . " " . $row[12]. ")") . ($row[14]==null ? "" : " (" . $row[14]." ". $row[15].")"), 'RTB', 0, 'L', 0);
-				if(!$this->HideCols && !$TargetFace)
-				{
+				$this->Cell(10, $this->RealCellHeight,  $row[1]??'', 1, 0, 'R', 0);
+				$this->Cell(44, $this->RealCellHeight,  $row[2]??'', 1, 0, 'L', 0);
+				$this->Cell( 8, $this->RealCellHeight,  $row[3]??'', 'LTB', 0, 'C', 0);
+				$this->Cell(48, $this->RealCellHeight,  $row[4]??'' . ($row[11]==null ? "" : " (" . $row[11] . " " . $row[12]. ")") . ($row[14]==null ? "" : " (" . $row[14]." ". $row[15].")"), 'RTB', 0, 'L', 0);
+				if(!$this->HideCols && !$TargetFace) {
 					$this->Cell(12, $this->RealCellHeight,  $row[5], 1, 0, 'C', 0);
 					$this->Cell( 9, $this->RealCellHeight,  $row[6], 1, 0, 'C', 0);
 				}
 				$this->Cell(12 + ($this->HideCols==true ? ($TargetFace ? 12 : 23) : 0), $this->RealCellHeight, $row[7], 1, 0, 'C', 0);
 				$this->Cell(12 + ($this->HideCols==true ? ($TargetFace ? 12 : 22) : 0), $this->RealCellHeight,  $row[8], 1, 0, 'C', 0);
 
-				if ($TargetFace)
-				{
-					$this->Cell(21, $this->RealCellHeight,  get_text($row[13], 'Tournament', '', true), 1, 0, 'C', 0);
+				if ($TargetFace) {
+					$this->SetFont($this->FontStd,'B',$this->FontSizeHead);
+					$this->Cell(3, $this->RealCellHeight,  ($row[16] ? 'X' : ''), 1, 0, 'C', 0);
+					$this->SetFont($this->FontStd,'',$this->FontSizeHead);
+					$this->Cell(18, $this->RealCellHeight,  get_text($row[13], 'Tournament', '', true), 1, 0, 'C', 0);
 				}
 
 		//Disegna i Pallini per la partecipazione

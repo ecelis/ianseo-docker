@@ -48,6 +48,7 @@ function export_tournament($TourId, $Complete=false, $InfoSystem='') {
 		'CasTeamFinal' => 'CTF',
 		'CasTeamTarget' => 'CTT',
 		'Classes' => 'Cl',
+		'ClassWaEquivalents' => 'ClWaEq',
 		'ClubTeam' => 'CT',
 		'ClubTeamScore' => 'CTS',
 		'Divisions' => 'Div',
@@ -70,7 +71,7 @@ function export_tournament($TourId, $Complete=false, $InfoSystem='') {
 		'IdCardElements' => 'Ice',
 		'IdCards' => 'Ic',
 		'Images' => 'Im',
-		'IskDevices' => 'IskDv',
+        'IskData' => 'IskDt',
 		'Individuals' => 'Ind',
 		'Logs' => 'Log',
 		'ModulesParameters' => 'Mp',
@@ -82,6 +83,14 @@ function export_tournament($TourId, $Complete=false, $InfoSystem='') {
 		'RecBroken' => 'RecBro',
 		'RecTournament' => 'Rt',
 		'Reviews' => 'Rev',
+		"RoundRobinGrids" => "RrGrid",
+		"RoundRobinGroup" => "RrGr",
+		"RoundRobinLevel" => "RrLev",
+		"RoundRobinMatches" => "RrMatch",
+		"RoundRobinParticipants" => "RrPart",
+		'RunArchery' => 'Ra',
+		'RunArcheryRank' => 'Rar',
+		'RunArcheryParticipants' => 'Rap',
 		'Scheduler'=>'Sch',
 		'Session'=>'Ses',
 		'SubClass' => 'Sc',
@@ -91,6 +100,7 @@ function export_tournament($TourId, $Complete=false, $InfoSystem='') {
 		'TeamDavis' => 'TeDa',
 		'TeamFinals' => 'Tf',
 		'TeamFinComponent' => 'Tfc',
+        'TeamFinComponentLog' => 'Tfcl',
 		'Teams' => 'Te',
 		'TournamentDistances' => 'Td',
 		'TournamentInvolved' => 'Ti',
@@ -121,8 +131,10 @@ function export_tournament($TourId, $Complete=false, $InfoSystem='') {
 			'Photos' => 'PhEnId',
 			'Qualifications' => 'QuId',
 			'RecBroken' => 'RecBroAthlete',
+			'RunArchery'=>'RaArcher',
 			'TeamComponent' => 'TcId',
 			'TeamFinComponent' => 'TfcId',
+            'TeamFinComponentLog' => array('TfclIdPrev','TfclIdNext'),
 			'Vegas'=>'VeId',
 	);
 
@@ -134,13 +146,30 @@ function export_tournament($TourId, $Complete=false, $InfoSystem='') {
 			'RecBroken' => 'RecBroTeam',
 			'TeamComponent' => 'TcCoId',
 			'TeamFinComponent' => 'TfcCoId',
+            'TeamFinComponentLog' => 'TfclCoId',
 			'TeamFinals' => 'TfTeam',
 			'Teams' => 'TeCoId',
 			'TournamentInvolved' => 'TiCountry',
 	);
 
+	$RoundRobins=[
+		"RoundRobinMatches" => ['RrMatchTeam', 'RrMatchAthlete'],
+		"RoundRobinParticipants" => ['RrPartTeam', 'RrPartParticipant'],
+		"RunArchery" => ['RaTeam', 'RaEntry'],
+		"RunArcheryRank" => ['RarTeam', 'RarEntry'],
+		"RunArcheryParticipants" => ['RapTeam', 'RapEntry'],
+	];
+
 	$Gara['Photos']=array();
 	$Gara['Flags']=array();
+
+	// check if there are local Records NOT maintained from WA
+	$Gara['RecAreas']=array();
+	$q=safe_r_sql("select RecAreas.* from RecAreas inner join TourRecords on TrRecCode=ReArCode and TrTournament={$TourId} where ReArWaMaintenance=0");
+	while($r=safe_fetch($q)) {
+		$Gara['RecAreas'][]=$r;
+	}
+
 	if($Complete) {
 		// Adds localized Flags
 		$Select
@@ -313,6 +342,31 @@ function export_tournament($TourId, $Complete=false, $InfoSystem='') {
 				} elseif($tab!='TeamFinals') {
 					// unset the record... will be send later on the next cycle
 					unset($Gara[$tab][$k]);
+				}
+			}
+		}
+
+		// Adjust mixed tables
+		foreach($RoundRobins as $tab => $flags) {
+			foreach($Gara[$tab] as $k=>$v) {
+				if($v[$flags[0]]) {
+					// it is a team ID
+					if($v[$flags[1]] and !empty($switches['C'][$v[$flags[1]]])) {
+						// the user has an Online ID
+						$Gara[$tab][$k][$flags[1]]=$switches['C'][$v[$flags[1]]];
+					} elseif($tab!='TeamFinals') {
+						// unset the record... will be send later on the next cycle
+						unset($Gara[$tab][$k]);
+					}
+				} else {
+					// it is an entry ID
+					if($v[$flags[1]] and !empty($switches['E'][$v[$flags[1]]])) {
+						// the user has an Online ID
+						$Gara[$tab][$k][$flags[1]]=$switches['E'][$v[$flags[1]]];
+					} elseif($tab!='Finals' and $tab!='Eliminations') {
+						// unset the record... will be send later on the next cycle
+						unset($Gara[$tab][$k]);
+					}
 				}
 			}
 		}

@@ -122,7 +122,6 @@ function GetStatus(Id)
 			{
 				var MyId=encodeURIComponent(Id);
 				XMLHttp.open("POST","GetStatus.php?Id=" + MyId,true);
-				//document.getElementById('idOutput').innerHTML="GetStatus.php?Id=" + MyId;
 				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 				XMLHttp.onreadystatechange=GetStatus_StateChange;
 				XMLHttp.send(null);
@@ -131,7 +130,6 @@ function GetStatus(Id)
 	}
 	catch (e)
 	{
-		//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 	}
 }
 
@@ -149,12 +147,10 @@ function GetStatus_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -230,7 +226,6 @@ function GetRows(Id,OrderBy,Check)
 					var MyOrderBy = encodeURIComponent(OrderBy);
 					XMLHttp.open("POST","GetRows.php?Id=" + MyId + "&OrderBy=" + MyOrderBy,true);
 					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-					//document.getElementById('idOutput').innerHTML="GetRows.php?Id=" + MyId + "&OrderBy=" + MyOrderBy + '<br>';
 					XMLHttp.onreadystatechange=GetRows_StateChange;
 					XMLHttp.send(null);
 				}
@@ -239,7 +234,6 @@ function GetRows(Id,OrderBy,Check)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML+='Errore: ' + e.toString() + '<br>';
 		}
 	}
 }
@@ -261,12 +255,10 @@ function GetRows_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML+='Errore: ' + e.toString() + '<br>';
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText + '<br>';
 		}
 	}
 	else
@@ -433,7 +425,6 @@ function GetRows_Response()
 				TD_Session.id='Col_Session_' + Arr_Id.item(i).firstChild.data;
 				TD_Session.className='Center';
 				TD_Session.innerHTML=ComboSes;
-				//document.getElementById('idOutput').innerHTML='qui';
 
 				var TD_TargetNo = document.createElement("TD");
 				TD_TargetNo.className='Bold';
@@ -680,7 +671,6 @@ function CercaMatr(Id,Ret)
 					var FromCache = CacheMatr.shift();
 					XMLHttp.open("POST","Matr_FindOnEdit.php",true);
 					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-					//document.getElementById('idOutput').innerHTML="Matr_FindOnEdit.php?"  + FromCache;
 					XMLHttp.onreadystatechange=CercaMatr_StateChange;
 					XMLHttp.send(FromCache);
 				}
@@ -690,7 +680,6 @@ function CercaMatr(Id,Ret)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -709,12 +698,10 @@ function CercaMatr_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -962,7 +949,6 @@ function UpdateField(Field)
 				{
 					var FromCache = CacheField.shift();
 					XMLHttp.open("POST","UpdateField.php",true);
-					//document.getElementById('idOutput').innerHTML="UpdateField.php?" + FieldName + "=" + FieldValue;
 					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 					XMLHttp.onreadystatechange=UpdateField_StateChange;
 					XMLHttp.send(FromCache);
@@ -1054,7 +1040,6 @@ function SelectCountryCode(Id)
 					var IdEntry = encodeURIComponent(Id);
 					var Code = encodeURIComponent(document.getElementById('d_c_CoCode_' + Id).value);
 					XMLHttp.open("GET","SelectCountryCode.php?IdEntry=" + IdEntry + "&Code=" + Code);
-					//document.getElementById('idOutput').innerHTML="SelectCountryCode.php?IdEntry=" + IdEntry + "&Code=" + Code;
 					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 					XMLHttp.onreadystatechange=SelectCountryCode_StateChange;
 					XMLHttp.send(null);
@@ -1063,7 +1048,6 @@ function SelectCountryCode(Id)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -1087,7 +1071,6 @@ function SelectCountryCode_StateChange()
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -1145,7 +1128,6 @@ function SelectCountryCode2(Id)
 					var IdEntry = encodeURIComponent(Id);
 					var Code = encodeURIComponent(document.getElementById('d_c_CoCode2_' + Id).value);
 					XMLHttp.open("GET","SelectCountryCode.php?IdEntry=" + IdEntry + "&Code=" + Code);
-					//document.getElementById('idOutput').innerHTML="SelectCountryCode.php?IdEntry=" + IdEntry + "&Code=" + Code;
 					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 					XMLHttp.onreadystatechange=SelectCountryCode2_StateChange;
 					XMLHttp.send(null);
@@ -1154,7 +1136,6 @@ function SelectCountryCode2(Id)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -1178,7 +1159,6 @@ function SelectCountryCode2_StateChange()
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -1251,7 +1231,6 @@ function UpdateCountryCode(Id)
 						IdEntry = encodeURIComponent(Id);
 						Code = encodeURIComponent(document.getElementById('d_c_CoCode_' + Id).value);
 						XMLHttp.open("POST","UpdateCountryCode.php");
-						//document.getElementById('idOutput').innerHTML="UpdateCountryCode.php?IdEntry=" + IdEntry + "&Code=" + Code + '<br>';
 						XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 						XMLHttp.onreadystatechange=UpdateCountryCode_StateChange;
 						XMLHttp.send(FromCache);
@@ -1263,7 +1242,6 @@ function UpdateCountryCode(Id)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -1282,12 +1260,10 @@ function UpdateCountryCode_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML+='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -1359,7 +1335,6 @@ function UpdateCountryName(Id)
 						var FromCache = CacheCountryName.shift();
 						//XMLHttp.open("POST","UpdateCountryName.php?Name=" + Name + "&Code=" + Code,true);
 						XMLHttp.open("POST","UpdateCountryName.php",true);
- 						//document.getElementById('idOutput').innerHTML="UpdateCountryName.php?Name=" + Name + "&Code=" + Code +'<br>';
 						XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 						XMLHttp.onreadystatechange=UpdateCountryName_StateChange;
 						//XMLHttp.send(null);
@@ -1372,7 +1347,6 @@ function UpdateCountryName(Id)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -1391,12 +1365,10 @@ function UpdateCountryName_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML+='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -1486,7 +1458,6 @@ function UpdateCtrlCode(Id)
 				{
 					XMLHttp.open("POST","UpdateCtrlCode.php?EnId=" + MyId + "&d_e_EnCtrlCode=" + MyCode + '&EnSex=' + MySex);
 					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-					//document.getElementById('idOutput').innerHTML="UpdateCtrlCode.php?EnId=" + MyId + "&d_e_EnCtrlCode=" + MyCode;
 					XMLHttp.onreadystatechange=UpdateCtrlCode_StateChange;
 					XMLHttp.send(null);
 				}
@@ -1494,7 +1465,6 @@ function UpdateCtrlCode(Id)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			//alert(e.toString());
 		}
 	}
@@ -1519,7 +1489,6 @@ function UpdateCtrlCode_StateChange()
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -1625,7 +1594,6 @@ function SelectAgeClass(Id)
 				{
 					XMLHttp.open("POST","SelectAgeClass.php?EnId=" + MyId + "&d_e_EnAgeClass=" + AgeClass);
 					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-					//document.getElementById('idOutput').innerHTML="SelectAgeClass.php?EnId=" + MyId + "&d_e_EnAgeClass=" + AgeClass + '<br>';
 					XMLHttp.onreadystatechange=SelectAgeClass_StateChange;
 					XMLHttp.send(null);
 				}
@@ -1633,7 +1601,6 @@ function SelectAgeClass(Id)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML+='Errore: ' + e.toString() + '<br>';
 		}
 	}
 }
@@ -1743,7 +1710,6 @@ function UpdateClass(Id)
 				{
 					XMLHttp.open("POST","UpdateClass.php?EnId=" + MyId + "&d_e_EnAgeClass=" + AgeClass + "&d_e_EnClass=" + Class);
 					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-					//document.getElementById('idOutput').innerHTML="UpdateClass.php?EnId=" + MyId + "&d_e_EnAgeClass=" + AgeClass + "&d_e_EnClass=" + Class;
 					XMLHttp.onreadystatechange=UpdateClass_StateChange;
 					XMLHttp.send(null);
 				}
@@ -1751,7 +1717,6 @@ function UpdateClass(Id)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -1770,12 +1735,10 @@ function UpdateClass_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -1837,7 +1800,6 @@ function UpdateSession(Field,forceValue)
 				if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
 				{
 					XMLHttp.open("POST","UpdateSession.php?" + FieldName + "=" + FieldValue,true);
-					//document.getElementById('idOutput').innerHTML="UpdateSession.php?" + FieldName + "=" + FieldValue;
 					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 					XMLHttp.onreadystatechange=UpdateSession_StateChange;
 					XMLHttp.send(null);
@@ -1846,7 +1808,6 @@ function UpdateSession(Field,forceValue)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -1941,7 +1902,6 @@ function AddRow()
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -1960,12 +1920,10 @@ function AddRow_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -2207,7 +2165,6 @@ function DeleteRow(Id,Msg1,Msg2,Msg3,Msg4)
 					{
 						XMLHttp.open("GET","DeleteRow.php?Id=" + IdDel);
 						XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-						//document.getElementById('idOutput').innerHTML="DeleteRow.php?Id=" + IdDel;
 						XMLHttp.onreadystatechange=DeleteRow_StateChange;
 						XMLHttp.send(null);
 					}
@@ -2216,7 +2173,6 @@ function DeleteRow(Id,Msg1,Msg2,Msg3,Msg4)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -2235,12 +2191,10 @@ function DeleteRow_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -2299,7 +2253,6 @@ function AddManyRows(Num,Warning,Msg)
 					if (Fai)
 					{
 						XMLHttp.open("GET","AddManyRows.php?Num=" + Num,true);
-						//document.getElementById('idOutput').innerHTML="AddManyRows.php?Num=" + Num;
 						XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 						XMLHttp.onreadystatechange=AddManyRows_StateChange;
 						XMLHttp.send(null);
@@ -2309,7 +2262,6 @@ function AddManyRows(Num,Warning,Msg)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -2328,12 +2280,10 @@ function AddManyRows_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }

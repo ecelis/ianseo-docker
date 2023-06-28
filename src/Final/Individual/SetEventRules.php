@@ -23,7 +23,7 @@ echo '<table class="Tabella" id="MyTable">';
 echo '<tr><th class="Title" colspan="4">'. get_text('EventClass') . '</th></tr>';
 echo '<tr class="Divider"><td colspan="4"></td></tr>';
 
-$Select = "SELECT * FROM Events WHERE EvCode=" . StrSafe_DB($_REQUEST['EvCode']) . " AND EvTeamEvent='0' AND EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " ";
+$Select = "SELECT *, ToGoldsChars, ToGolds, ToXNineChars, ToXNine FROM Events inner join Tournament on ToId=EvTournament WHERE EvCode=" . StrSafe_DB($_REQUEST['EvCode']) . " AND EvTeamEvent='0' AND EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " ";
 $RsEv = safe_r_sql($Select);
 
 if (safe_num_rows($RsEv)==1 and $RowEv=safe_fetch($RsEv)) {
@@ -115,6 +115,8 @@ if (safe_num_rows($RsEv)==1 and $RowEv=safe_fetch($RsEv)) {
     echo '</table>';
 
     echo '<br/>';
+
+	// ADVANCED TABLE
     echo '<table class="Tabella">';
     echo '<tr id="AdvancedButton"><th colspan="4"><input type="button" onclick="showAdvanced()" value="'.get_text('Advanced').'"></th></tr>';
     echo '<tbody id="Advanced" style="display: none;">';
@@ -127,6 +129,10 @@ if (safe_num_rows($RsEv)==1 and $RowEv=safe_fetch($RsEv)) {
 	echo '<th>'.get_text('WaCategory', 'Tournament').'</th>';
 	echo '<th>'.get_text('RecordCategory', 'Tournament').'</th>';
 	echo '<th>'.get_text('OdfEventCode', 'ODF').'</th>';
+	echo '<th>'.get_text('GoldLabel','Tournament').'</th>';
+	echo '<th>'.get_text('XNineLabel','Tournament').'</th>';
+	echo '<th>'.get_text('PointsAsGold','Tournament').'<br/><span style="font-weight: normal">'.get_text('CommaSeparatedValues').'</span></th>';
+	echo '<th>'.get_text('PointsAsXNine','Tournament').'<br/><span style="font-weight: normal">'.get_text('CommaSeparatedValues').'</span></th>';
     echo '</tr>';
 
     echo '<tr>';
@@ -147,6 +153,10 @@ if (safe_num_rows($RsEv)==1 and $RowEv=safe_fetch($RsEv)) {
 	echo '<td class="Center"><input size="12" maxlength="10" type="text" value="'.$RowEv->EvWaCategory.'" id="fld=wacat&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
 	echo '<td class="Center"><input size="12" maxlength="10" type="text" value="'.$RowEv->EvRecCategory.'" id="fld=reccat&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
 	echo '<td class="Center"><input type="text" value="'.$RowEv->EvOdfCode.'" id="fld=odfcode&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
+	echo '<td class="Center"><input size="5" type="text" value="'.($RowEv->EvGolds ?: $RowEv->ToGolds).'" id="fld=golds&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
+	echo '<td class="Center"><input size="5" type="text" value="'.($RowEv->EvXNine ?: $RowEv->ToXNine).'" id="fld=xnines&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
+	echo '<td class="Center"><input size="5" type="text" value="'.implode(',', DecodeFromString($RowEv->EvGoldsChars ?: $RowEv->ToGoldsChars, false, true)).'" id="fld=goldschars&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
+	echo '<td class="Center"><input size="5" type="text" value="'.implode(',', DecodeFromString($RowEv->EvXNineChars ?: $RowEv->ToXNineChars, false, true)).'" id="fld=xninechars&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
     echo '</tr>';
     echo '</tbody>';
     echo '</table>';

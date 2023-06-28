@@ -277,7 +277,7 @@
 			$q .= "
 					QuScore AS Score, QuGold AS Gold, QuXnine AS XNine, QuHits as Hits,
 					QuTimestamp,
-					ToGolds AS GoldLabel, ToXNine AS XNineLabel,
+					IF(EvGolds!='',EvGolds,ToGolds) AS GoldLabel, IF(EvXNine!='',EvXNine,ToXNine) AS XNineLabel,
 					ToDouble, DiEnds, DiArrows, DiEnds*DiArrows*ToNumDist as MaxArrows,
 					ToNumDist,ToDouble
 					, " . ($isAbs ? "IF(EvElim1=0 && EvElim2=0, EvNumQualified,IF(EvElim1=0,EvElim2,EvElim1))" : "''") . " as QualifiedNo

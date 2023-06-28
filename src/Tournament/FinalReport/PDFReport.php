@@ -47,9 +47,10 @@ foreach($TourRulesArray as $k=>$v) {
 	$q=safe_r_SQL("SELECT COUNT(*) as Quanti, 
 		SUM(IF(".$v[0]."TourRules='". $RowTournament->ToLocRule . "|" . $RowTournament->ToTypeName . "|" . $RowTournament->ToTypeSubRule . "',1,0)) as Compliant
 		FROM {$k} WHERE " . $v[0] . "Tournament=" . StrSafe_DB($_SESSION['TourId']) . " GROUP BY " . $v[0] . "Tournament");
-	$r = safe_fetch($q);
-	$TourRulesArray[$k][1] = intval($r->Quanti);
-	$TourRulesArray[$k][2] = intval($r->Compliant);
+	if($r = safe_fetch($q)) {
+        $TourRulesArray[$k][1] = intval($r->Quanti);
+        $TourRulesArray[$k][2] = intval($r->Compliant);
+    }
 }
 $SyncLastUpdate=array();
 $q=safe_r_sql("select LupIocCode, LupLastUpdate from LookUpPaths where LupIocCode in (select ToIocCode from Tournament where ToId={$_SESSION['TourId']} union select distinct EnIocCode from Entries where EnTournament={$_SESSION['TourId']})");

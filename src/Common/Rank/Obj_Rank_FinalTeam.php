@@ -193,25 +193,20 @@
 			$myEv='';
 			$myTeam='';
 
-			if(safe_num_rows($r)>0)
-			{
+			if(safe_num_rows($r)>0)	{
 				$section=null;
 
-				while ($myRow=safe_fetch($r))
-				{
-					if ($myEv!=$myRow->TeEvent)
-					{
-						if ($myEv!='')
-						{
+				while ($myRow=safe_fetch($r)) {
+					if ($myEv!=$myRow->TeEvent) {
+						if ($myEv!='') {
 							$this->data['sections'][$myEv]=$section;
 							$section=null;
-
 						}
 
 						$myEv=$myRow->TeEvent;
 						$phases=getPhasesId($myRow->EvFinalFirstPhase);
 
-						$fields=array(
+						$fields = array(
 							'id' 			=> 'Id',
 							'countryCode' 	=> '',
 							'countryName' 	=> get_text('Country'),
@@ -227,9 +222,9 @@
 									'gender' => get_text('Sex', 'Tournament')
 								)
 							),
-							'qualRank' => get_text('RankScoreShort'),
+							'qualRank'  => get_text('RankScoreShort'),
 							'qualScore' => get_text('PositionShort'),
-							'rank'			=> get_text('PositionShort'),
+							'rank'		=> get_text('PositionShort'),
 							'finals'=>array()
 						);
 
@@ -239,7 +234,7 @@
 							}
 						}
 
-						$fields['finals']['fields']=array(
+						$fields['finals']['fields'] = array(
 							'score'=>get_text('TotalShort','Tournament'),
 							'setScore'=>get_text('SetTotal','Tournament'),
 						 	'setPoints'=>get_text('SetPoints','Tournament'),

@@ -96,6 +96,11 @@ by the `MARIADB_ROOT_PASSWORD` / `MYSQL_ROOT_PASSWORD` variable.
 Refer to the MariaDB official repository for deeper information about
 variable environments https://hub.docker.com/_/mariadb
 
+## Fetch newer Ianseo releases
+
+```
+./bin/fetch <YYYYMMDD>
+```
 
 ## Build the docker image
 
@@ -112,7 +117,7 @@ docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 --tag arq
 
 ## Relase and Publish images to Docker registries
 
-There are github actions wired to this repository, after mergin a barnach into `master` you must tag the commit to publish with semantic versioning. Ex: v2022.01.01.1 vYEAR.MONTH.DAY.REVISION. Official I@anseo versioning has integers as REVISION, however docker releases may add an alphabetic charater to the REVISIOn integer to support my own releases linked to official ones.
+There are github actions wired to this repository, after mergin a bracnch into `master` you must tag the commit to publish with semantic versioning. Ex: v2022.01.01.1 vYEAR.MONTH.DAY.REVISION. Official I@anseo versioning has integers as REVISION, however docker releases may add an alphabetic charater to the REVISIOn integer to support my own releases linked to official ones.
 
 ```
 git checkout master

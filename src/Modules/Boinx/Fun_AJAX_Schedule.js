@@ -83,7 +83,6 @@ function toggle_do(queryString) {
 
 		}
 	} catch(e) {
-		//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 	}
 }
 
@@ -93,10 +92,8 @@ function toggle_do_StateChange() {
 			try {
 				toggle_do_Response();
 			} catch(e) {
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		} else {
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -159,7 +156,6 @@ function SetBackColor() {
 						}
 
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
 
 				};
@@ -206,7 +202,6 @@ function DoRaiseFlag() {
 							}
 						}
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
 
 				};

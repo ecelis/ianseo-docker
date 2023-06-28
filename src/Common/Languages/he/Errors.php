@@ -1,6 +1,12 @@
 <?php
+$lang['AllFieldsMandatory']='חובה למלא את כל השדות';
+$lang['AllMailsRedirect']='כל ההודעות ישלחו אל';
 $lang['Anomalies']='חריגות';
+$lang['ClassFromToError']='נתוני "החל" ו"עד" חייבים להיות ערכים מספריים';
+$lang['ClubNotFound']='קוד מועדון לא ננמצא במועדוינם הקיימים. נא עדכנו תחילה את מסד הנתוים!';
+$lang['DiameterMandatory']='חובה להזין קוטר פייס מטרה';
 $lang['DirectoryNotWriteable']='התיקיה $a אינה בעלת הרשאת כתיבה על-ידי השרת. נא שנו את ההרשאות שלה על-מנת לאפשר כתיבה על-ידי כל אחד.';
+$lang['DistanceOutRange']='טווח מחוץ לתחום';
 $lang['ErrCodeExists']='קוד כבר קיים!';
 $lang['ErrCommitteeError']='קוד או תיאור ועדה לא חוקיים';
 $lang['ErrConnection']='אין חיבור לשרת $a';
@@ -18,9 +24,23 @@ $lang['ErrNoStartDate']='תאריך התחלה חסר';
 $lang['ErrRedCard']='הועדה קיבלה כרטיס אדום ואינה יכולה לבקש אירוח תחרויות בינסאו. צרו קשר על codes@ianseo.net לקבלת הסברים נוספים.';
 $lang['ErrUnknownNation']='מדינה לא ידועה';
 $lang['ErrYellowCard']='הועדה קיבלה כרטיס צהוב מכיוון שלא הועלו תוצאות תחרויות. צרו קשר על codes@ianseo.net לקבלת הסברים נוספים.';
+$lang['FilterAlreadyExists']='אפשרות סיננון זו כבר קיימת';
+$lang['FilterNotEmpty']='עליכם להגדיר אפשרות סינון';
+$lang['IllegalTarget']='פייס המטרה שנבחר אינו במסד הנתונים';
 $lang['LockedProcedure']='התהליך נעול';
+$lang['MailingDeleteTitle']='הסר דיוור';
+$lang['MailingError']='לא בוצעו שינויים!';
+$lang['ManDistance-EmptySelection']='אפשרות הסינון אינה תואמת לאף אחת מהקטגוריות';
+$lang['MissingData']='מידע חסר';
 $lang['MissingPhpIntlModule']='המרה יכולה להתבצע על-ידי התקנה או הפעלה של מודול php-inti';
+$lang['NameNotEmpty']='שדה השם אינו יכול להיות ריק';
+$lang['NoDNSRecord']='שם השרת אינו נכון או שאין אליו גישה מקוונת: שימו לב שעליכם להיות מחוברים לאינטרנט לקביעת אפשרות זו.';
+$lang['NoMailingTemplate']='לא נבחרה/קיימת תבנית דיוור אלקטרוני';
 $lang['SpecialFilterDiscrepancy']='הוגדר מסנן מיוחד, אך הוא אינו פעיל!';
+$lang['TargetNumberMismatch']='מספר המטרה חייב להיות בתצורת [מספר מטרה][אות מטרה], כמו למשל 129C';
+$lang['TargetRangeMismatch']='טווח המטרות חייב להיות 2 מספםרי מטרות (ללא אותיות) המופרד על-ידי מקף (סימן מינוס), כאשר הראשון נמוך מהשני, כמו למשל 23-44';
+$lang['TextSmtpDelete']='נא אשרו שברצונכם לבטל את הגדרות ה-SMTP בהתקנה זו של Ianseo.';
 $lang['TooManyArrows']='יותר מידי חיצים: המספר המרבי הוא $a';
 $lang['TooManyElimQualified']='סבבים מסוג $a[0] יכולים לקבל רק עד $a[1] קשתים';
+$lang['WrongPort']='יציאה זו אינה נתמכת!';
 ?>

@@ -5,6 +5,7 @@ $version='2013-03-09 14:32:00';
 $AllowedTypes=array(1,3,6,7,23,24,25,26,27,28,29,30);
 
 $SetType['ARLEF']['descr']=get_text('Setup-ARLEF', 'Install');
+$SetType['ARLEF']['noc'] = 'BEL';
 $SetType['ARLEF']['types']=array();
 $SetType['ARLEF']['rules']=array();
 

@@ -285,7 +285,114 @@ if(!empty($_REQUEST['Id']) and isset($_REQUEST['RuleId'])) {
 				$ResCols[$i]['header']=get_text('TVFilterEventInd','Tournament');
 				$ResCols[$i+1]['header']=get_text('TVFilterPhaseIndFinal','Tournament');
 				if (safe_num_rows($Rs)) {
-					if($IskGroup=getModuleParameter('ISK', 'Sequence')) {
+					if($IskGroup=getModuleParameter('ISK', 'Sequence') OR $IskGroup=getModuleParameter('ISK-NG', 'Sequence')) {
+						foreach($IskGroup as $Group => $sequence) {
+							if(!is_numeric($Group)) {
+								// this is the old sequences system still used by the ISK ... so not supported
+								break;
+							}
+							$ResCols[$i]['data'][] = '<input type="checkbox" name="d_TVEventInd[]"'
+								. (in_array("##".$Group."##", $Arr_EventIndRule) ? ' checked' : '')
+								. ' value="##'.$Group.'##">Follow Group '.chr(65+$Group);
+							$ResCols[$i+1]['data'][]='<span style="font-size:150%">&nbsp;</span>';
+						}
+					}
+
+					while ($r=safe_fetch($Rs)) {
+						$ResCols[$i]['data'][] = '<input type="checkbox" name="d_TVEventInd[]"'
+							. (in_array($r->EvCode, $Arr_EventIndRule) ? ' checked' : '')
+							. ' value="' . $r->EvCode . '">' . get_text($r->EvEventName,'','',true)
+							. ' (' . $r->EvCode . ')';
+
+						$tmp = $OrgPhases;
+
+						while ($r->EvFinalFirstPhase>1) {
+							$tmp=str_replace('name="d_TVPhaseInd[]" disabled="disabled" value="'.$r->EvFinalFirstPhase.'"><span style="color:#e0e0e0;">', 'name="d_TVPhaseInd['.$r->EvCode.'][]" value="'.$r->EvFinalFirstPhase.'" id="id_'.$r->EvCode.'_'.$r->EvFinalFirstPhase.'"><span>', $tmp);
+							if(!empty($Arr_PhaseIndRule[$r->EvCode]) && in_array($r->EvFinalFirstPhase, $Arr_PhaseIndRule[$r->EvCode])) $tmp=str_replace('name="d_TVPhaseInd['.$r->EvCode.'][]" value="'.$r->EvFinalFirstPhase.'"', 'name="d_TVPhaseInd['.$r->EvCode.'][]" value="'.$r->EvFinalFirstPhase.'" checked="checked"', $tmp);
+
+							$r->EvFinalFirstPhase=namePhase($r->EvFinalFirstPhase, ceil($r->EvFinalFirstPhase/2));
+						}
+						$tmp=str_replace('name="d_TVPhaseInd[]" value="1">', 'name="d_TVPhaseInd['.$r->EvCode.'][]" value="1" id="id_'.$r->EvCode.'_1">', $tmp);
+						if(!empty($Arr_PhaseIndRule[$r->EvCode]) && in_array(1, $Arr_PhaseIndRule[$r->EvCode])) {
+							$tmp=str_replace('name="d_TVPhaseInd['.$r->EvCode.'][]" value="1"', 'name="d_TVPhaseInd['.$r->EvCode.'][]" value="1" checked="checked"', $tmp);
+						}
+						$tmp=str_replace('name="d_TVPhaseInd[]" value="0">', 'name="d_TVPhaseInd['.$r->EvCode.'][]" value="0" id="id_'.$r->EvCode.'_0">', $tmp);
+						if(!empty($Arr_PhaseIndRule[$r->EvCode]) && in_array(0, $Arr_PhaseIndRule[$r->EvCode])) {
+							$tmp=str_replace('name="d_TVPhaseInd['.$r->EvCode.'][]" value="0"', 'name="d_TVPhaseInd['.$r->EvCode.'][]" value="0" checked="checked"', $tmp);
+						}
+						$ResCols[$i+1]['data'][]=$tmp;
+					}
+				}
+			}
+
+			$i++;
+			// select schedules
+			$TmpHht=array();
+			$Select
+				= "(SELECT DISTINCT CONCAT(FSScheduledDate,' ',FSScheduledTime) AS MyDate,FSTeamEvent "
+				. "FROM Tournament INNER JOIN FinSchedule ON ToId=FSTournament "
+				. ($_SESSION["MenuHHT"] ? "INNER JOIN HhtEvents on HeTournament=ToId and HeFinSchedule=concat(FSScheduledDate, ' ', FSScheduledTime) and HeTeamEvent=FsTeamEvent " : "")
+				. "WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " and FSScheduledDate>0 and FSTeamEvent=0 "
+				.") UNION ALL "
+				. "(SELECT DISTINCT CONCAT(FSScheduledDate,' ',FSScheduledTime) AS MyDate,FSTeamEvent "
+				. "FROM Tournament INNER JOIN FinSchedule ON ToId=FSTournament "
+				. ($_SESSION["MenuHHT"] ? "inner join HhtEvents on HeTournament=ToId and HeFinSchedule=concat(FSScheduledDate, ' ', FSScheduledTime) and HeTeamEvent=FsTeamEvent  " : "")
+				. "WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " and FSScheduledDate>0 and FSTeamEvent!=0 "
+				. ") ORDER BY MyDate ASC ";
+
+			$Rs=safe_r_sql($Select);
+			while($myRow=safe_fetch($Rs)) {
+				if($myRow->FSTeamEvent)
+					continue;
+				$TmpHht[]='<option value="'.$myRow->FSTeamEvent . $myRow->MyDate.'">' . get_text('Individual') . ' ' . $myRow->MyDate . '</option>';
+			}
+			$Cols[] = '<br><select name="d_Scheduler" id="d_Scheduler" onchange="selectSchedule(this.value)"><option value="">--</option>' . implode('', $TmpHht) . '</select>';
+			$Cols[] = '<input type="checkbox" id="useHHT" ' . ($_SESSION["MenuHHT"] ? "checked" : "disabled") . ' onClick="GetComboSchedule(0);">' . get_text('FollowHHT','Tournament');
+			$Cols[] = '<input type="checkbox" id="onlyToday" onClick="GetComboSchedule(0);">' . get_text('OnlyToday','Tournament');
+			break;
+		case 'RRI':
+//			$Cols[]='10';
+			require_once('Common/Lib/Fun_Phases.inc.php');
+			$Cols[]='BYE';
+			$Cols[]='ENDS';
+
+			$Select = "SELECT MAX(RrLevGroups) as MaxGroups, max(RrLevLevel) as MaxLevels, max(RrLevGroupArchers) as MaxComponents 
+				FROM RoundRobinLevel 
+				where RrLevTeam=0 and RrLevTournament={$_SESSION['TourId']}";
+			$Rs=safe_r_sql($Select);
+
+			if($MaxPhase=safe_fetch($Rs) and $MaxPhase->MaxLevels) {
+				// there are some finals!
+
+				$tmp=array();
+
+				// while ($MaxPhase->Phase>1) {
+				// 	$txt=get_text($MaxPhase->Phase . '_Phase');
+				// 	if($MaxPhase->Phase==64) $txt = get_text('48_Phase') . '-' . get_text('64_Phase');
+				// 	elseif($MaxPhase->Phase==32) $txt = get_text('24_Phase') . '-' . get_text('32_Phase');
+				// 	elseif($MaxPhase->Phase==16) $txt = get_text('12_Phase') . '-' . get_text('16_Phase');
+				// 	$tmp[] = '<input type="checkbox" name="d_TVPhaseInd[]" disabled="disabled" value="'.$MaxPhase->Phase.'"><span style="color:#e0e0e0;">' . $txt . '</span>';
+				//
+				// 	$MaxPhase->Phase=namePhase($MaxPhase->Phase, ceil($MaxPhase->Phase/2));
+				//
+				// }
+				// $tmp[] = '<input type="checkbox" name="d_TVPhaseInd[]" value="1"><span>' . get_text('1_Phase') . '</span>';
+				// $tmp[] = '<input type="checkbox" name="d_TVPhaseInd[]" value="0"><span>' . get_text('0_Phase') . '</span>';
+
+				$OrgPhases=implode('&nbsp;', $tmp);
+
+				$Select = "SELECT EvCode, EvEventName, greatest(PhId, PhLevel) as EvFinalFirstPhase
+					FROM Events
+					INNER JOIN Phases on PhId=EvFinalFirstPhase and (PhIndTeam & pow(2,EvTeamEvent))>0
+					WHERE EvTournament={$_SESSION['TourId']} and EvTeamEvent=0 and EvFinalFirstPhase>0 and EvElimType=5
+					ORDER BY EvTeamEvent ASC, EvProgr ";
+
+				$Rs=safe_r_sql($Select);
+
+				$ResCols[$i]['header']=get_text('TVFilterEventInd','Tournament');
+				$ResCols[$i+1]['header']=get_text('TVFilterPhaseIndFinal','Tournament');
+				if (safe_num_rows($Rs)) {
+					if($IskGroup=getModuleParameter('ISK', 'Sequence') OR $IskGroup=getModuleParameter('ISK-NG', 'Sequence')) {
 						foreach($IskGroup as $Group => $sequence) {
 							if(!is_numeric($Group)) {
 								// this is the old sequences system still used by the ISK ... so not supported
@@ -397,7 +504,7 @@ if(!empty($_REQUEST['Id']) and isset($_REQUEST['RuleId'])) {
 				$ResCols[$i]['header']=get_text('TVFilterEventTeam','Tournament');
 				$ResCols[$i+1]['header']=get_text('TVFilterPhaseTeamFinal','Tournament');
 				if (safe_num_rows($Rs)) {
-					if($IskGroup=getModuleParameter('ISK', 'Sequence')) {
+					if($IskGroup=getModuleParameter('ISK', 'Sequence') OR $IskGroup=getModuleParameter('ISK-NG', 'Sequence')) {
 						foreach($IskGroup as $Group => $sequence) {
 							if(!is_numeric($Group)) {
 								// this is the old sequences system still used by the ISK ... so not supported

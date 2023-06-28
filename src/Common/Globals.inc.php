@@ -15,7 +15,7 @@
 
 
 define ("ProgramName","Ianseo");	// Nome del programma
-define ("ProgramVersion","2022-01-01"); // "Improve a mechanical device and you may double productivity. But improve man, you gain a thousandfold. – Khan Noonien Singh"
+define ("ProgramVersion","2023-01-10"); // "Remembering Er Salustro. Ciao Giggi 💔"
 
 define ("TargetNoPadding",3);		// Padding del targetno
 
@@ -57,7 +57,6 @@ define('UploadVersion', 3);
 /*****************************
 
 Inserimento nuove funzioni di Chris per la gestione degli errori di DB
-
 Definizione delle variabili e delle costanti utilizzate
 
 ******************************/
@@ -123,7 +122,7 @@ function get_text($text, $module='Common', $a=null, $translate=false, $force=fal
 	static $_LANG;
 	global $Arr_StrStatus, $CFG;
 
-	if(strlen($text)==0) {
+	if(strlen($text ?? '')==0) {
 		return '';
 	}
 
@@ -249,6 +248,9 @@ function set_qual_session_flags() {
     $ConstToStore['MenuElimPool']=array();
 	$ConstToStore['MenuFinI']=array();
 	$ConstToStore['MenuFinT']=array();
+	$ConstToStore['MenuRobinDo']=false;
+	$ConstToStore['MenuRobinOn']=false;
+	$ConstToStore['MenuRobin']=array();
 
     $q = safe_r_sql("select EvCode, EvTeamEvent, EvFinalFirstPhase,  EvShootOff, EvE1ShootOff, EvE2ShootOff, EvElimType, EvElim1, EvElim2
 		from Events 
@@ -267,6 +269,11 @@ function set_qual_session_flags() {
 	            if((!$r->EvE2ShootOff and $r->EvElim2>0)) $ConstToStore['MenuElimPool'][]=$r->EvCode;
 				$ConstToStore['MenuElimPoolDo']=true;
                 break;
+	        case 5:
+		        if(!$r->EvE1ShootOff) $ConstToStore['MenuRobin'][$r->EvTeamEvent][]=$r->EvCode;
+		        $ConstToStore['MenuRobinDo']=true;
+		        $ConstToStore['MenuRobinOn']=($ConstToStore['MenuRobinOn'] or $r->EvE1ShootOff);
+				break;
         }
         if ($r->EvTeamEvent == 1 and $r->EvFinalFirstPhase!=0) {
 			$ConstToStore['MenuFinTDo']=true;
@@ -279,8 +286,12 @@ function set_qual_session_flags() {
 		}
 	}
 
-	if(count($ConstToStore['MenuElim1'])==0 && count($ConstToStore['MenuElim2'])==0 && count($ConstToStore['MenuElimPool'])==0 && $ConstToStore['MenuElimOn']==false)
+	if(count($ConstToStore['MenuElim1'])==0 && count($ConstToStore['MenuElim2'])==0 && count($ConstToStore['MenuElimPool'])==0 && $ConstToStore['MenuElimOn']==false) {
 		$ConstToStore['MenuElimDo']=false;
+	}
+	if(count($ConstToStore['MenuRobin'])==0 && $ConstToStore['MenuRobinOn']==false) {
+		$ConstToStore['MenuRobinDo']=false;
+	}
 
 	safe_w_sql("update Tournament set ToOptions=".StrSafe_DB(serialize($ConstToStore))." where ToId={$_SESSION['TourId']}");
 
@@ -400,7 +411,7 @@ function InfoTournament()
 		print '</td>';
 	}
 	if(!empty($INFO->ACLReqfeatures)) {
-        print '<td width="10%" id="securityBox">';
+        print '<td width="10%" id="securityBox" class="NoWrap">';
         print get_text('MenuLM_Lock manage').": <b>".($INFO->ACLEnabled ? get_text('CmdOn') : get_text('CmdOff')).'</b><br>';
         if($INFO->ACLReqlevel!=0) {
             foreach ($INFO->ACLReqfeatures as $feature) {
@@ -426,17 +437,13 @@ function InfoTournament()
  */
 function CreateTourSession($TourId) {
 	require_once('Common/CheckPictures.php');
-	$Select
-		= "SELECT"
-		. " Tournament.*"
-		. ", UNIX_TIMESTAMP(ToWhenFrom) AS ToWhenFromUTS"
-		. ", DATE_FORMAT(ToWhenFrom,'" . get_text('DateFmtDB') . "') AS DtFrom"
-		. ", UNIX_TIMESTAMP(ToWhenTo) AS ToWhenToUTS"
-		. ", DATE_FORMAT(ToWhenTo,'" . get_text('DateFmtDB') . "') AS DtTo"
-		. ", ToTypeName AS TtName"
-		. ", ToElimination AS TtElimination "
-		. "FROM Tournament "
-		. "WHERE ToId=" . StrSafe_DB($TourId);
+	$TourId=intval($TourId);
+	$Select = "SELECT Tournament.*, ElimTypes, TeamEvents,
+		UNIX_TIMESTAMP(ToWhenFrom) AS ToWhenFromUTS, DATE_FORMAT(ToWhenFrom,'" . get_text('DateFmtDB') . "') AS DtFrom, UNIX_TIMESTAMP(ToWhenTo) AS ToWhenToUTS, 
+		DATE_FORMAT(ToWhenTo,'" . get_text('DateFmtDB') . "') AS DtTo, ToTypeName AS TtName, ToElimination AS TtElimination
+		FROM Tournament
+		left join (select EvTournament, group_concat(distinct EvElimType order by EvElimType) as ElimTypes, group_concat(distinct EvTeamEvent order by EvTeamEvent) as TeamEvents from Events where EvTournament=$TourId group by EvTournament) Events on EvTournament=ToId
+		WHERE ToId=$TourId";
 	//print $Select;
 	$Rs=safe_r_sql($Select);
 	if (safe_num_rows($Rs)==1)
@@ -468,6 +475,8 @@ function CreateTourSession($TourId) {
 		$_SESSION['ToWhenFromUTS']=$MyRow->ToWhenFromUTS;
 		$_SESSION['ToWhenToUTS']=$MyRow->ToWhenToUTS;
 		$_SESSION['ToPaper']=$MyRow->ToPrintPaper;
+		// RoundRobinEvents...
+		$_SESSION['HasRobin']=(strstr($MyRow->ElimTypes??'', '5') ? 1 : 0);
 	// parametri per le credenziali di upload verso ianseo.net
 		$_SESSION['OnlineId']=0;
 		$_SESSION['OnlineEventCode']=0;
@@ -681,20 +690,12 @@ function getIdFromCode($code, $ForceLang=false)
  *
  * @return int: id torneo se esiste; 0 altrimenti
  */
-function getCodeFromId($id)
-{
-	if($id==-1) return 'BaseIanseo';
-	$ret=0;
-
-	$query
-		= "SELECT ToCode FROM Tournament WHERE ToId=" . StrSafe_DB($id) . " ";
-	$rs=safe_r_sql($query);
-	if (safe_num_rows($rs)==1)
-	{
-		$row=safe_fetch($rs);
+function getCodeFromId($id) {
+	$ret = '';
+	$rs=safe_r_sql("SELECT ToCode FROM Tournament WHERE ToId=" . intval($id));
+	if ($row=safe_fetch($rs)) {
 		$ret=$row->ToCode;
 	}
-
 	return $ret;
 }
 
@@ -959,7 +960,9 @@ function JsonOut($JSON, $JsonP=false, $ExtraHeaders=array(), $Straight=false) {
     }
 
     header('Access-Control-Allow-Origin: *');
-	header('Cache-Control: no-store, no-cache, must-revalidate');
+    header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type');
+    header('Cache-Control: no-store, no-cache, must-revalidate');
     foreach($ExtraHeaders as $h) {
     	header($h);
     }

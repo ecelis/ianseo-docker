@@ -91,7 +91,6 @@ function CallURL()
 		}
 		catch (e)
 		{
- 			//document.getElementById('idOutput').innerHTML='Error: ' + e.toString();
 		}
 	}
 
@@ -111,12 +110,10 @@ function CallURL_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Error: ' + e.toString();
 			}
 		}
 		else
 		{
- 			//document.getElementById('idOutput').innerHTML='Error: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -157,7 +154,6 @@ function SendPOST()
 					+  '&Message=' + document.getElementById('d_Notes').value;
 
 				XMLHttp.open("GET",WebDir+'Tournament/Send2Fitarco.php' + QueryString,true);
-			//	document.getElementById('idOutput').innerHTML=WebDir+'Tournament/Send2Fitarco.php' + QueryString;
 				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 				XMLHttp.onreadystatechange=SendPOST_StateChange;
 				XMLHttp.send(null);
@@ -166,7 +162,6 @@ function SendPOST()
 		}
 		catch (e)
 		{
- 			//document.getElementById('idOutput').innerHTML='Error: ' + e.toString();
 		}
 	}
 
@@ -186,12 +181,10 @@ function SendPOST_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Error: ' + e.toString();
 			}
 		}
 		else
 		{
- 			//document.getElementById('idOutput').innerHTML='Error: ' +XMLHttp.statusText;
 		}
 	}
 }

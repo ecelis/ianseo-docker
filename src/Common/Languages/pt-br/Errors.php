@@ -1,6 +1,11 @@
 <?php
+$lang['AllFieldsMandatory']='Todos os campos são obrigatórios';
+$lang['AllMailsRedirect']='Todas as mensagens serão enviadas para';
 $lang['Anomalies']='Anomalias';
+$lang['ClassFromToError']='De e Para devem ser valores numéricos';
+$lang['DiameterMandatory']='Diâmetro da face é obrigatório';
 $lang['DirectoryNotWriteable']='A pasta $a não pode ser editada pelo servidor web. Por favor, altere as permissões para que possa ser editado por todos os usuários.';
+$lang['DistanceOutRange']='Distância está fora do intervalo';
 $lang['ErrCodeExists']='Código já existe!';
 $lang['ErrCommitteeError']='Código ou descrição inválido.';
 $lang['ErrConnection']='Não há conexão com o servidor $a';
@@ -21,4 +26,5 @@ $lang['ErrYellowCard']='O Comitê lhe deu um Cartão Amarelo porque nenhum resul
 $lang['LockedProcedure']='Este procedimento está BLOQUEADO';
 $lang['TooManyArrows']='Excesso de flechas: o máximo é $a';
 $lang['TooManyElimQualified']='Rounds do tipo $a[0] somente podem aceitar até $a[1] arqueiros.';
+$lang['WrongPort']='Esta porta não é suportada';
 ?>

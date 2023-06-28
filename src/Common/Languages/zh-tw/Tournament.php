@@ -27,7 +27,6 @@ $lang['Action']='動作';
 $lang['ActualFlag']='使用旗幟';
 $lang['AddMaxRows']='增加所有有效列';
 $lang['AddTournament']='增加賽事';
-$lang['AdvancedParams']='進階參數';
 $lang['AllDistances']='所有距離';
 $lang['AllEvents']='所有項目';
 $lang['AlternateJury']='審判委員(替補)';

@@ -2,9 +2,9 @@
 														- Fun_AJAX_ManTraining.js -
 	Contiene le funzioni ajax che riguardano la pagina ManTraining.php
 	NOTA BENE: deve essere invlusa la stringa
-	<?php 
+	<?php
 	print 'var StrConfirm="' . get_text('MsgAreYouSure') . '";';
-	?> 				
+	?>
 */
 function DefaultTarget(obj) {
 	var cell=obj.parentNode;
@@ -17,7 +17,7 @@ function DefaultTarget(obj) {
 function UpdateTargets(obj) {
 	//	if(obj.value=='') return;
 	var field=encodeURIComponent(obj.name)+'='+encodeURIComponent(obj.value);
-	
+
 	var XMLHttp=CreateXMLHttpRequestObject();
 	if (XMLHttp) {
 		try {
@@ -30,15 +30,15 @@ function UpdateTargets(obj) {
 						var XMLResp=XMLHttp.responseXML;
 						// intercetto gli errori di IE e Opera
 						if (!XMLResp || !XMLResp.documentElement) throw(XMLResp.responseText);
-	
+
 						// Intercetto gli errori di Firefox
 						var XMLRoot;
 						if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror") throw("ParseError");
-	
+
 						XMLRoot = XMLResp.documentElement;
-	
+
 						var Error = XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
-	
+
 						if (Error==0) {
 							var val=XMLRoot.getElementsByTagName('val').item(0).firstChild.data;
 							obj.value=val;
@@ -47,16 +47,14 @@ function UpdateTargets(obj) {
 							obj.style.backgroundColor='red';
 							obj.value=obj.defaultValue;
 						}
-	
+
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
-	
+
 				};
 				XMLHttp.send();
 			}
 		} catch (e) {
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }

@@ -15,6 +15,10 @@ $(function() {
 		$("#doCalcFinTeam").hide();
 	}
 
+	if(CalcFinR==0) {
+		$("#doCalcFinRobin").hide();
+	}
+
 });
 
 function LiteAction(obj) {

@@ -79,6 +79,7 @@ mettere in $ESS_EXT i moduli essenziali
 $INI_SET=ini_get_all(); // solo il dato attuale
 $EXT_SET=get_loaded_extensions();
 $ESS_EXT=array('mysqli', 'curl', 'gd', 'mbstring', 'iconv');
+$SUG_EXT=array('imagick');
 
 $INI_FAIL=false;
 $MOD_FAIL=false;
@@ -94,10 +95,10 @@ echo '<th>'.get_text('System value','Install').'</th>';
 echo '</tr>';
 
 // Check PHP version
-print_row(PHP_VERSION, '5.0', '<b>'.get_text('PHP version','Install') . '</b>', intval(PHP_VERSION) < 5, true);
+print_row(PHP_VERSION, '>= 7.4', '<b>'.get_text('PHP version','Install') . '</b>', PHP_VERSION < 7.4, true);
 
-// se la versione è inferiore a 5 è inutile proseguire!!!
-if(intval(PHP_VERSION) < 5) {
+// se la versione è inferiore a 7.4 è inutile proseguire!!!
+if(PHP_VERSION < 7.4) {
 		echo '<tr><td colspan="3">'.get_text('PHP too old','Install').'<br/>'.get_text('Failing install','Install').'</td></tr>';
 } else {
 
@@ -158,6 +159,9 @@ if(intval(PHP_VERSION) < 5) {
 	foreach($ESS_EXT as $key) {
 		print_row(in_array($key, $EXT_SET)?get_text('installed','Install'):get_text('missing','Install'), get_text('installed','Install'), $key, !in_array($key, $EXT_SET), true);
 		$MOD_FAIL=($MOD_FAIL or !in_array($key, $EXT_SET));
+	}
+	foreach($SUG_EXT as $key) {
+		print_row(in_array($key, $EXT_SET)?get_text('installed','Install'):get_text('missing','Install'), get_text('installed','Install'), $key, !in_array($key, $EXT_SET), false);
 	}
 
 	if($MOD_FAIL) {

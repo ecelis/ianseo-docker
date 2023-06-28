@@ -71,7 +71,7 @@
 			$pdf->Cell($TgtCell + ($PdfData->HideCols==true ? $TgtCell:0), 4,  ($PdfData->HideCols==true ? $MyRow->ClDescription : $MyRow->ClassCode), 1, 0, 'C', 0);
 
 			if ($TargetFace) {
-				$pdf->Cell($TgtCell*2, 4, get_text($MyRow->TfName,'Tournament','',true), 1, 0, 'C', 0);
+				$pdf->Cell($TgtCell*2, 4, $MyRow->TfName, 1, 0, 'C', 0);
 			}
 
 		//Disegna i Pallini per la partecipazione

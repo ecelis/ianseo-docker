@@ -1,8 +1,9 @@
 <?php
+// global $TourTypes;
 require_once('Common/Fun_Modules.php');
 $version='2011-05-13 08:13:00';
 
-$AllowedTypes=array(1,2,3,4,5,6,7,8,9,10,11,12,13,18,37);
+$AllowedTypes=array(1,2,3,4,5,6,7,8,9,10,11,12,13,18,37,48);
 
 $SetType['default']['descr']=get_text('Setup-Default', 'Install');
 $SetType['default']['types']=array();
@@ -43,33 +44,3 @@ foreach(array(11, 13) as $val) {
 		'SetWAPools-One',
 		);
 }
-
-
-/*
-regole FITA
-* Tipo FITA, 2xFITA, 1/2FITA e 70m (1, 2, 3, 4)
-- 4 subrules (tutte le classi, una sola classe, S-J e J-C)
-- incluse le finali (nuove regole per OL e CO)
-
-* tipo indoor: (6, 7, 8)
-- 4 subrules (come sopra) solo per 18
-- incluse finali solo per 18m
-
-* tipo 900 round (5)
-- 1 subrule (tutte le classi)
-- no finali
-
-* tipo HF (12+12 1 dist, 12+12 2 dist, 24+24 2 dist) (9, 10, 12)
-- 2 subrules (S-J e Tutte le classi)
-- finali (separate per classi)
-
-* tipo 3D (1 e 2 dist) (11, 13)
-- 2 subrules (S e Tutte classi)
-- finali (16-8)
-
-
-
-*** per l'italia farei "Giovanili", "Adulti","Tutte le classi"
-
-*/
-?>

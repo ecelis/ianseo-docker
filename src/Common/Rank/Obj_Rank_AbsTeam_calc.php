@@ -106,11 +106,12 @@
 				SELECT
 					TeTournament,TeCoId,TeSubTeam,TeEvent,
 					IFNULL(IF(EvRunning=1, TeScore/TeHits,TeScore),0) as TeScore, TeGold, TeXnine,
-					IF(EvFinalFirstPhase=0,99999,(EvFinalFirstPhase*2)) AS QualifiedNo, EvFinalFirstPhase, 
+					IF(EvFinalFirstPhase=0,99999,coalesce(RrQualified, EvNumQualified)) AS QualifiedNo, EvFinalFirstPhase, 
 					TeRank AS ActualRank
 				 FROM Teams
 			    INNER JOIN Events ON TeEvent=EvCode AND TeTournament=EvTournament AND EvTeamEvent=1
 			    inner join IrmTypes on IrmId=TeIrmType and IrmShowRank=1
+				left join (select max(RrPartSourceRank) as RrQualified, RrPartEvent from RoundRobinParticipants where RrPartTournament={$this->tournament} and RrPartTeam=1 and RrPartSourceLevel=0 group by RrPartEvent) RoundRobin on RrPartEvent=EvCode
 				 WHERE
 				 	TeTournament={$this->tournament} AND TeFinEvent=1 AND TeScore<>'0'
 				 	{$filter}

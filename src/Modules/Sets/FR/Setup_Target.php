@@ -33,11 +33,11 @@ switch($TourType) {
 				CreateDistanceNew($TourId, $TourType, 'CLS_', array(array('50m-1',50), array('50m-2',50)));
 				CreateDistanceNew($TourId, $TourType, 'CLV_', array(array('50m-1',50), array('50m-2',50)));
 				CreateDistanceNew($TourId, $TourType, 'CLW_', array(array('50m-1',50), array('50m-2',50)));
-				CreateDistanceNew($TourId, $TourType, 'CLJ_', array(array('50m-1',50), array('50m-2',50)));
-				CreateDistanceNew($TourId, $TourType, 'CLC_', array(array('50m-1',50), array('50m-2',50)));
-				CreateDistanceNew($TourId, $TourType, 'CLM_', array(array('30m-1',30), array('30m-2',30)));
-				CreateDistanceNew($TourId, $TourType, 'CLB_', array(array('20m-1',20), array('20m-2',20)));
-				CreateDistanceNew($TourId, $TourType, 'CLP_', array(array('20m-1',20), array('20m-2',20)));
+				CreateDistanceNew($TourId, $TourType, 'CLU21_', array(array('50m-1',50), array('50m-2',50)));
+				CreateDistanceNew($TourId, $TourType, 'CLU18_', array(array('50m-1',50), array('50m-2',50)));
+				CreateDistanceNew($TourId, $TourType, 'CLU15_', array(array('30m-1',30), array('30m-2',30)));
+				CreateDistanceNew($TourId, $TourType, 'CLU13_', array(array('20m-1',20), array('20m-2',20)));
+				CreateDistanceNew($TourId, $TourType, 'CLU11_', array(array('20m-1',20), array('20m-2',20)));
 				CreateDistanceNew($TourId, $TourType, 'CO%', array(array('50m-1',50), array('50m-2',50)));
 				break;
 			case 11:
@@ -45,13 +45,13 @@ switch($TourType) {
 				CreateDistanceNew($TourId, $TourType, 'CL1H', array(array('70m-1',70), array('70m-2',70)));
 				CreateDistanceNew($TourId, $TourType, 'CL2H', array(array('70m-1',70), array('70m-2',70)));
 				CreateDistanceNew($TourId, $TourType, 'CL3H', array(array('60m-1',60), array('60m-2',60)));
-				CreateDistanceNew($TourId, $TourType, 'CLJH', array(array('70m-1',70), array('70m-2',70)));
-				CreateDistanceNew($TourId, $TourType, 'CLCH', array(array('70m-1',70), array('70m-2',70)));
+				CreateDistanceNew($TourId, $TourType, 'CLU21H', array(array('70m-1',70), array('70m-2',70)));
+				CreateDistanceNew($TourId, $TourType, 'CLU18H', array(array('70m-1',70), array('70m-2',70)));
 				CreateDistanceNew($TourId, $TourType, 'CL1F', array(array('70m-1',70), array('70m-2',70)));
 				CreateDistanceNew($TourId, $TourType, 'CL2F', array(array('70m-1',70), array('70m-2',70)));
 				CreateDistanceNew($TourId, $TourType, 'CL3F', array(array('60m-1',60), array('60m-2',60)));
-				CreateDistanceNew($TourId, $TourType, 'CLJF', array(array('70m-1',70), array('70m-2',70)));
-				CreateDistanceNew($TourId, $TourType, 'CLCF', array(array('60m-1',60), array('60m-2',60)));
+				CreateDistanceNew($TourId, $TourType, 'CLU21F', array(array('70m-1',70), array('70m-2',70)));
+				CreateDistanceNew($TourId, $TourType, 'CLU18F', array(array('60m-1',60), array('60m-2',60)));
 				CreateDistanceNew($TourId, $TourType, 'CL_W', array(array('50m-1',50), array('50m-2',50)));
 				CreateDistanceNew($TourId, $TourType, 'CL_M', array(array('50m-1',50), array('50m-2',50)));
 				CreateDistanceNew($TourId, $TourType, 'CO%', array(array('50m-1',50), array('50m-2',50)));
@@ -60,11 +60,11 @@ switch($TourType) {
 				CreateDistanceNew($TourId, $TourType, 'CL1_', array(array('70m-1',70), array('70m-2',70)));
 				CreateDistanceNew($TourId, $TourType, 'CL2_', array(array('70m-1',70), array('70m-2',70)));
 				CreateDistanceNew($TourId, $TourType, 'CL3_', array(array('70m-1',70), array('70m-2',70)));
-				CreateDistanceNew($TourId, $TourType, 'CLJ_', array(array('70m-1',70), array('70m-2',70)));
-				CreateDistanceNew($TourId, $TourType, 'CLC_', array(array('60m-1',60), array('60m-2',60)));
-				CreateDistanceNew($TourId, $TourType, 'CLM_', array(array('40m-1',40), array('40m-2',40)));
-				CreateDistanceNew($TourId, $TourType, 'CLB_', array(array('30m-1',30), array('30m-2',30)));
-				CreateDistanceNew($TourId, $TourType, 'CLP_', array(array('20m-1',20), array('20m-2',20)));
+				CreateDistanceNew($TourId, $TourType, 'CLU21_', array(array('70m-1',70), array('70m-2',70)));
+				CreateDistanceNew($TourId, $TourType, 'CLU18_', array(array('60m-1',60), array('60m-2',60)));
+				CreateDistanceNew($TourId, $TourType, 'CLU15_', array(array('40m-1',40), array('40m-2',40)));
+				CreateDistanceNew($TourId, $TourType, 'CLU13_', array(array('30m-1',30), array('30m-2',30)));
+				CreateDistanceNew($TourId, $TourType, 'CLU11_', array(array('20m-1',20), array('20m-2',20)));
 				CreateDistanceNew($TourId, $TourType, 'CO%', array(array('50m-1',50), array('50m-2',50)));
 		}
 		break;
@@ -102,18 +102,18 @@ switch($TourType) {
 		switch($SubRule) {
 			case 8:
 				// FEDERAL
-				CreateTargetFace($TourId, 1, 'Blason 80', 'REG-^CL[BMP]', '1', 5, 80, 5, 80);
-				CreateTargetFace($TourId, 2, 'Blason 122', 'REG-^(CO|CL[^CJSVW])', '1', 5, 122, 5, 122);
+				CreateTargetFace($TourId, 1, 'Blason 80', 'REG-^CLU1[0-7]', '1', 5, 80, 5, 80);
+				CreateTargetFace($TourId, 2, 'Blason 122', 'REG-^(CO|CL([^U]|(U18)|(U21)))', '1', 5, 122, 5, 122);
 				break;
 			case 11:
 				// Coupe France, mix of international and federal
 				CreateTargetFace($TourId, 1, 'Blason Classique 122', 'CL%', '1', 5, 122, 5, 122);
-				CreateTargetFace($TourId, 2, 'Blason Compound', 'REG-^CO.[FH]', '1',  9, 80, 9, 80);
-				CreateTargetFace($TourId, 3, 'Blason Fédéral 122', 'REG-^CO.[WM]', '1', 5, 122, 5, 122);
+				CreateTargetFace($TourId, 2, 'Blason Compound', 'REG-^CO.+[FH]', '1',  9, 80, 9, 80);
+				CreateTargetFace($TourId, 3, 'Blason Fédéral 122', 'REG-^CO.+[WM]', '1', 5, 122, 5, 122);
 				break;
 			default:
-				CreateTargetFace($TourId, 1, 'Blason Classique 80', 'REG-^CL[BM]', '1', 5, 80, 5, 80);
-				CreateTargetFace($TourId, 2, 'Blason Classique 122', 'REG-^CL[^BM]', '1', 5, 122, 5, 122);
+				CreateTargetFace($TourId, 1, 'Blason Classique 80', 'REG-^CLU1[0-7]', '1', 5, 80, 5, 80);
+				CreateTargetFace($TourId, 2, 'Blason Classique 122', 'REG-^CL(([^U])|(U2)|(U18))', '1', 5, 122, 5, 122);
 				CreateTargetFace($TourId, 3, 'Blason Compound', 'CO%', '1',  9, 80, 9, 80);
 		}
 		break;
@@ -121,12 +121,12 @@ switch($TourType) {
 		switch($SubRule) {
 			case '1':
 				// All classes
-				CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'REG-^(CL|BB)[^BMPY]', '1', 1, 40, 1, 40);
-				CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'REG-^(CL|BB)[BMY]', '1', 1, 60, 1, 60);
-				CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'CLP%', '1', 1, 80, 1, 80);
+				CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'REG-^(CL|BB)([^YU]|(U18)|(U21))', '1', 1, 40, 1, 40);
+				CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'REG-^(CL|BB)(Y|(U1[3-7]))', '1', 1, 60, 1, 60);
+				CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'CLU11%', '1', 1, 80, 1, 80);
 				CreateTargetFace($TourId, $TgtId++, 'Trispot Poulie 6-10', 'CO%', '1', 4, 40, 4, 40);
 				// optional target faces
-				CreateTargetFace($TourId, $TgtId++, 'Trispot Classique 6-10', 'REG-^(CL|BB)[^BMPY]', '',  2, 40, 2, 40);
+				CreateTargetFace($TourId, $TgtId++, 'Trispot Classique 6-10', 'REG-^(CL|BB)([^YU]|(U18)|(U21))', '',  2, 40, 2, 40);
 				break;
 			case '2':
 				// Championships Adults
@@ -136,28 +136,28 @@ switch($TourType) {
 				break;
 			case '3':
 				// Championships Youth
-				CreateTargetFace($TourId, $TgtId++, 'Trispot Classique 6-10', 'REG-^CL[^BM]', '1', 2, 40, 2, 40);
-				CreateTargetFace($TourId, $TgtId++, 'Trispot 60cm 6-10', 'REG-^CL[BM]', '1', 2, 60, 2, 60);
+				CreateTargetFace($TourId, $TgtId++, 'Trispot Classique 6-10', 'REG-^CL(([^U])|(U2)|(U18))', '1', 2, 40, 2, 40);
+				CreateTargetFace($TourId, $TgtId++, 'Trispot 60cm 6-10', 'REG-^CLU1[0-7]', '1', 2, 60, 2, 60);
 				CreateTargetFace($TourId, $TgtId++, 'Trispot Poulie 6-10', 'CO%', '1', 2, 40, 2, 40);
 				CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'REG-^(BB)', '1', 1, 60, 1, 60);
 				break;
 		}
 		break;
 	case 7:
-		CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'REG-^(CL|BB)[^BMPY]', '1', 1, 60, 1, 60);
-		CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'REG-^(CL|BB)[BMY]', '1', 1, 80, 1, 80);
-		CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'CLP%', '1', 1, 122, 1, 122);
+		CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'REG-^(CL|BB)([^YU]|(U18)|(U21))', '1', 1, 60, 1, 60);
+		CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'REG-^(CL|BB)([Y]|(U1[3-7]))', '1', 1, 80, 1, 80);
+		CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'CLU11%', '1', 1, 122, 1, 122);
 		CreateTargetFace($TourId, $TgtId++, 'Trispot Poulie 6-10', 'CO%', '1', 4, 60, 4, 60);
 		// optional target faces
-		CreateTargetFace($TourId, $TgtId++, 'Trispot Classique 10', 'REG-^(CL|BB)[^BMPY]', '',  2, 60, 2, 60);
+		CreateTargetFace($TourId, $TgtId++, 'Trispot Classique 10', 'REG-^(CL|BB)([^YU]|(U18)|(U21))', '',  2, 60, 2, 60);
 		break;
 	case 8:
-		CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'REG-^(CL|BB)[^BMPY]', '1', 1, 60, 1, 60,  1, 40, 1, 40);
-		CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'REG-^(CL|BB)[BMY]', '1', 1, 80, 1, 80, 1, 60, 1, 60);
-		CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'CLP%', '1', 1, 122, 1, 122, 1, 80, 1, 80);
+		CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'REG-^(CL|BB)([^YU]|(U18)|(U21))', '1', 1, 60, 1, 60,  1, 40, 1, 40);
+		CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'REG-^(CL|BB)([Y]|(U1[3-7]))', '1', 1, 80, 1, 80, 1, 60, 1, 60);
+		CreateTargetFace($TourId, $TgtId++, 'Blason Unique', 'CLU11%', '1', 1, 122, 1, 122, 1, 80, 1, 80);
 		CreateTargetFace($TourId, $TgtId++, 'Trispot Poulie 6-10', 'CO%', '1', 4, 60, 4, 60, 4, 40, 4, 40);
 		// optional target faces
-		CreateTargetFace($TourId, $TgtId++, 'Trispot Classique 10', 'REG-^(CL|BB)[^BMPY]', '',  2, 60, 2, 60, 2, 40, 2, 40);
+		CreateTargetFace($TourId, $TgtId++, 'Trispot Classique 10', 'REG-^(CL|BB)([^YU]|(U18)|(U21))', '',  2, 60, 2, 60, 2, 40, 2, 40);
 		break;
 }
 

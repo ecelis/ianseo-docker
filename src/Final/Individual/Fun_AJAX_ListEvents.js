@@ -122,3 +122,73 @@ function AddEvent(ErrMsg) {
         alert(ErrMsg.replace(/\+/g," "));
 	}
 }
+
+function autoEventAddDel() {
+
+    $.confirm({
+        content: MsgForExpert,
+        boxWidth: '50%',
+        useBootstrap: false,
+        title: Advanced,
+        buttons: {
+            cancel: {
+                text: CmdCancel,
+                btnClass: 'btn-blue', // class for the button
+            },
+            unset: {
+                text: CmdConfirm,
+                btnClass: 'btn-red', // class for the button
+                action: () => {
+                    $.getJSON("ListEvents-autoEventAddDel.php?checkEvents=1", function(data) {
+                        if(data.error == 0 ) {
+                            $.confirm({
+                                content: 'You are going to add ' + data.Add + ' events<br>'+
+                                    (data.Del > 0 ? 'You are delete ' + data.Del + ' events ('+data.DelList+')' : ''),
+                                boxWidth: '50%',
+                                useBootstrap: false,
+                                title: EvAddDelTitle,
+                                buttons: {
+                                    add: {
+                                        text: CmdAdd,
+                                        btnClass: 'btn-orange', // class for the button
+                                        action: () => {
+                                            if(confirm(ConfirmMsg)) {
+                                                $.getJSON("ListEvents-autoEventAddDel.php?addEvents="+data.Add, function (data) {
+                                                    if (data.error == 0) {
+                                                        window.location.reload();
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    },
+                                    del: {
+                                        text: CmdDelete,
+                                        btnClass: 'btn-red', // class for the button
+                                        action: () => {
+                                            if(confirm(ConfirmMsg)) {
+                                                $.getJSON("ListEvents-autoEventAddDel.php?delEvents="+data.Del, function (data) {
+                                                    if (data.error == 0) {
+                                                        window.location.reload();
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    },
+                                    cancel: {
+                                        text: CmdCancel,
+                                        btnClass: 'btn-green', // class for the button
+                                    }
+                                },
+                                escapeKey: true,
+                                backgroundDismiss: true,
+                            });
+                        }
+                    });
+                }
+            }
+        },
+        escapeKey: true,
+        backgroundDismiss: true,
+    });
+}
+

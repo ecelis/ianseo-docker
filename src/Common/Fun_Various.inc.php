@@ -17,7 +17,7 @@ function Class_In_Division($Class, $AgeClass, $Division) {
 
 function checkAgainstLUE($id) {
 	$LueArray = getLUEArray();
-	$Sql = "SELECT EnId, EnFirstName, EnName, EnSex, EnDob, EnCode, EnIocCode, CoCode, EnStatus, EnIocCode, ToCode,
+	$Sql = "SELECT EnId, EnFirstName, EnName, EnSex, EnDob, EnCode, EnIocCode, IF(LEFT(CoCode,3)='US-' AND LENGTH(CoCode)=5,'USA',CoCode) AS CoCode, EnStatus, EnIocCode, ToCode,
 		LueCode, LueFamilyName, LueName, LueSex, LueCtrlCode, LueCountry, LueStatus, EnLueFieldChanged, EnLueTimeStamp
 		FROM Entries
 		inner join Tournament on EnTournament=ToId
@@ -35,7 +35,11 @@ function checkAgainstLUE($id) {
 		} elseif($r->EnIocCode) {
 			$curStatus=0;
 			foreach($LueArray as $kLue=>$vLue) {
-				$curStatus += (strcasecmp($r->{$vLue[0]},$r->{$vLue[1]})==0 ? 0 : $kLue);
+                if(intval($_SESSION['ISORIS']) and $kLue===8 and $r->{$vLue[0]} === $r->{$vLue[1]} AND $r->{$vLue[0]}=='0000-00-00') {
+                    $curStatus += $kLue;
+                } else {
+                    $curStatus += (strcasecmp($r->{$vLue[0]}, $r->{$vLue[1]}) == 0 ? 0 : $kLue);
+                }
 			}
 			if($r->EnLueFieldChanged!=$curStatus || $r->EnLueTimeStamp==0) {
 				$Sql = "UPDATE Entries
@@ -75,9 +79,12 @@ function getLUEChanges($TourId) {
 	while($r=safe_fetch($q)) {
 		$tmp=array();
 		foreach($LueArray as $k=>$v) {
-			$tmp[$k] = $r->{$v[0]} . ($r->EnLueFieldChanged & $k ? ' ('. $r->{$v[1]}.')' : "");
+            if($k !== 4) {
+                $tmp[$k] = $r->{$v[0]} . ($r->EnLueFieldChanged & $k ? ' (' . $r->{$v[1]} . ')' : "");
+            } else {
+                $tmp[$k] = ($r->{$v[0]} ? get_text('ShortFemale', 'Tournament'):get_text('ShortMale', 'Tournament')) . ($r->EnLueFieldChanged & $k ? ' (' . ($r->{$v[1]} ? get_text('ShortFemale', 'Tournament'):get_text('ShortMale', 'Tournament')). ')' : "");
+            }
 		}
-		$tmp[4] = $tmp[4] ? get_text('ShortFemale', 'Tournament'):get_text('ShortMale', 'Tournament');
 		$Results[$r->EnCode." ".$r->EnIocCode]=$tmp;
 	}
 	return $Results;

@@ -30,22 +30,20 @@ function move2NextPhase($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, $NoR
 			f.FinAthlete AS Athlete, f2.FinAthlete AS OppAthlete, f.FinConfirmed as IsConfirmed,
 			f.FinIrmType AS IrmType, f2.FinIrmType AS OppIrmType,
 			f.FinTbClosest AS Closest, f2.FinTbClosest AS OppClosest,
-			if(f.FinMatchNo>15, EvElimEnds, EvFinEnds) FinEnds, if(f.FinMatchNo>15, EvElimArrows, EvFinArrows) FinArrows, if(f.FinMatchNo>15, EvElimSO, EvFinSO) FinSO,
+			@PhaseMatch:=(GrPhase & EvMatchArrowsNo), 
+			if(@PhaseMatch, EvElimEnds, EvFinEnds) FinEnds, if(@PhaseMatch, EvElimArrows, EvFinArrows) FinArrows, if(@PhaseMatch, EvElimSO, EvFinSO) FinSO,
 			IF(f.FinDateTime>=f2.FinDateTime, f.FinDateTime, f2.FinDateTime) AS DateTime,
 			IF(EvMatchMode=0,f.FinScore,f.FinSetScore) AS Score, f.FinTie as Tie, f.FinTieBreak as TbString, IF(EvMatchMode=0,f2.FinScore,f2.FinSetScore) as OppScore, f2.FinTie as OppTie, f2.FinTieBreak as OppTbString,
 			f.FinArrowString as ArrString, f2.FinArrowString as OppArrString,  f.FinSetPoints as SetPoint, f2.FinSetPoints as OppSetPoint,
 			f.FinIrmType as IrmType, f2.FinIrmType as OppIrmType
 		FROM Finals AS f
-		INNER JOIN Finals AS f2 ON f.FinEvent=f2.FinEvent AND f.FinMatchNo=IF((f.FinMatchNo % 2)=0,f2.FinMatchNo-1,f2.FinMatchNo+1) AND f.FinTournament=f2.FinTournament
-		INNER JOIN Events ON f.FinEvent=EvCode AND f.FinTournament=EvTournament AND EvTeamEvent=0 ";
-		if(!is_null($Phase))
-			$Select .= "INNER JOIN Grids ON f.FinMatchNo=GrMatchNo AND GrPhase=" . StrSafe_DB($Phase) . " ";
-		else
-			$Select .= "INNER JOIN Grids ON f.FinMatchNo=GrMatchNo AND GrMatchNo=" . StrSafe_DB(($MatchNo % 2 == 0 ? $MatchNo:$MatchNo-1)) . " ";
-		$Select .= "WHERE f.FinTournament=" . StrSafe_DB($TourId) . " AND (f.FinMatchNo % 2)=0 ";
+		INNER JOIN Finals AS f2 ON f.FinEvent=f2.FinEvent AND f2.FinMatchNo=f.FinMatchNo+1 AND f.FinTournament=f2.FinTournament
+		INNER JOIN Events ON f.FinEvent=EvCode AND f.FinTournament=EvTournament AND EvTeamEvent=0 
+		INNER JOIN Grids ON f.FinMatchNo=GrMatchNo AND ". (is_null($Phase) ? "GrMatchNo=" . intval(($MatchNo % 2 == 0 ? $MatchNo:$MatchNo-1)) : "GrPhase=" . intval($Phase)) ."
+		WHERE f.FinTournament=" . StrSafe_DB($TourId) . " AND (f.FinMatchNo % 2)=0";
 
 		if(!is_null($Event) and $Event!='')
-			$Select .= "AND f.FinEvent=" . StrSafe_DB($Event) . " ";
+			$Select .= " AND f.FinEvent=" . StrSafe_DB($Event) . " ";
 		$Select .= "ORDER BY f.FinEvent, f.FinMatchNo ";
 	//echo $Select;exit;
 	$Rs=safe_r_sql($Select);
@@ -217,7 +215,7 @@ function move2NextPhase($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, $NoR
 	if (safe_num_rows($Rs)>0) {
 		$AthPropTs = date('Y-m-d H:i:s');
 
-		// Elimination Pools Show Match Winner chooese where to go!!!
+		// Elimination Pools Show Match Winner choose where to go!!!
 		$ShowMatchWinner='';
 		$ShowMatchLoser='';
 		if($Pool) {
@@ -444,20 +442,18 @@ function move2NextPhaseTeam($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, 
 	$Confirmed=array();
 	$Select = "SELECT EvMatchMode as MatchMode, tf.TfEvent, tf.TfMatchNo as MatchNo, tf2.TfMatchNo as OppMatchNo, tf.TfTbClosest Closest, tf2.TfTbClosest OppClosest,
 			tf.TfTeam AS Team, tf.TfSubteam AS SubTeam, tf2.TfTeam AS OppTeam, tf2.TfSubTeam AS OppSubTeam, tf.TfConfirmed as IsConfirmed, 
-			if(tf.TfMatchNo>15, EvElimEnds, EvFinEnds) FinEnds, if(tf.TfMatchNo>15, EvElimArrows, EvFinArrows) FinArrows, if(tf.TfMatchNo>15, EvElimSO, EvFinSO) FinSO,
+			@PhaseMatch:=(GrPhase & EvMatchArrowsNo), 
+			if(@PhaseMatch, EvElimEnds, EvFinEnds) FinEnds, if(@PhaseMatch, EvElimArrows, EvFinArrows) FinArrows, if(@PhaseMatch, EvElimSO, EvFinSO) FinSO,
 			IF(tf.TfDateTime>=tf2.TfDateTime, tf.TfDateTime, tf2.TfDateTime) AS DateTime,
 			IF(EvMatchMode=0,tf.TfScore,tf.TfSetScore) AS Score, tf.TfTie as Tie, tf.TfTieBreak as TbString, IF(EvMatchMode=0,tf2.TfScore,tf2.TfSetScore) as OppScore, tf2.TfTie as OppTie, tf2.TfTieBreak as OppTbString,
 			tf.TfArrowString as ArrString, tf2.TfArrowString as OppArrString,  tf.TfSetPoints as SetPoint, tf2.TfSetPoints as OppSetPoint,
 			tf.TfNotes as Notes, tf2.TfNotes as OppNotes,
 			tf.TfIrmType as IrmType, tf2.TfIrmType as OppIrmType
 		FROM TeamFinals AS tf
-		INNER JOIN TeamFinals AS tf2 ON tf.TfEvent=tf2.TfEvent AND tf.TfMatchNo=IF((tf.TfMatchNo % 2)=0,tf2.TfMatchNo-1,tf2.TfMatchNo+1) AND tf.TfTournament=tf2.TfTournament and tf2.TfIrmType<15
-		INNER JOIN Events ON tf.TfEvent=EvCode AND tf.TfTournament=EvTournament AND EvTeamEvent=1 ";
-	if(!is_null($Phase))
-		$Select .= "INNER JOIN Grids ON tf.TfMatchNo=GrMatchNo AND GrPhase=" . StrSafe_DB($Phase) . " ";
-	else
-		$Select .= "INNER JOIN Grids ON tf.TfMatchNo=GrMatchNo AND GrMatchNo=" . StrSafe_DB(($MatchNo % 2 == 0 ? $MatchNo:$MatchNo-1)) . " ";
-	$Select .= "WHERE tf.TfTournament=" . StrSafe_DB($TourId) . " AND (tf.TfMatchNo % 2)=0 and tf.TfIrmType<15 ";
+		INNER JOIN TeamFinals AS tf2 ON tf.TfEvent=tf2.TfEvent AND tf2.TfMatchNo=tf.TfMatchNo+1 AND tf.TfTournament=tf2.TfTournament and tf2.TfIrmType<15
+		INNER JOIN Events ON tf.TfEvent=EvCode AND tf.TfTournament=EvTournament AND EvTeamEvent=1
+		INNER JOIN Grids ON tf.TfMatchNo=GrMatchNo AND ".(is_null($Phase) ? "GrMatchNo=" . intval($MatchNo % 2 == 0 ? $MatchNo:$MatchNo-1) . "" : "GrPhase=" . intval($Phase))."
+		WHERE tf.TfTournament=" . StrSafe_DB($TourId) . " AND (tf.TfMatchNo % 2)=0 and tf.TfIrmType<15 ";
 
 	if(!is_null($Event) and $Event!='')
 		$Select .= "AND tf.TfEvent=" . StrSafe_DB($Event) . " ";

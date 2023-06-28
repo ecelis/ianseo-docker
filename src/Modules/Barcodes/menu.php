@@ -34,6 +34,13 @@ if($on) {
 		$ret['FINT']['SCOR'][] = get_text('MenuLM_GetScoreBarcodeReport') .'|'.GetWebDirectory(__FILE__).'/GetScoreBarCodeReport.php|||_blank';
 	}
 
+	if(!empty($ret['ROBIN'])  AND $acl[AclRobin] == AclReadWrite) {
+		$ret['ROBIN'][] = MENU_DIVIDER;
+		$ret['ROBIN']['SCOR'][] = get_text('MenuLM_Input Score') .'|'.GetWebDirectory(__FILE__).'/GetFinScoreBarCode.php';
+		$ret['ROBIN']['SCOR'][] = get_text('MenuLM_GetScoreBarcode') .'|'.GetWebDirectory(__FILE__).'/GetRobinScoreBarCode.php';
+		$ret['ROBIN']['SCOR'][] = get_text('MenuLM_GetScoreBarcodeReport') .'|'.GetWebDirectory(__FILE__).'/GetScoreBarCodeReport.php|||_blank';
+	}
+
 	if(!empty($ret['FINT'])  AND $acl[AclTeams] == AclReadWrite and !empty($_SESSION['TourLocSubRule']) and $_SESSION['TourLocSubRule']=='SetFRChampsD1DNAP') {
 		$ret['SetFRChampsD1DNAP'][] = MENU_DIVIDER;
 		$ret['SetFRChampsD1DNAP']['SCOR'][] = get_text('MenuLM_Input Score') .'|'.GetWebDirectory(__FILE__).'/GetFinScoreBarCode.php';

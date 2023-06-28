@@ -7,7 +7,6 @@ $lang['CreateStandardCatFull']='Utwórz kategorię i akredytację';
 $lang['Credits-Coordination']='Koordynacja projektu IT';
 $lang['Credits-CoreGroup']='Grupa IANSEO';
 $lang['Credits-Credits']='Kretyty';
-$lang['Credits-Documentation']='Dokumentacja i wsparcie';
 $lang['Credits-FitarcoCredits']='Czym jest Ianseo? Ianseo to oprogromawanie do obsługi zawodów łuczniczych; projekt Open Source rozwijany dzięki wsparciu finansowemu FITARCO; oprogramowanie jest dystrybuowane za darmo w całej Europie. Przetłumaczony na wiele języków, Ianseo jest najbardziej aktualnym i zaawansowanych systemem, zawierającym reguły FITA. W toku ewolucji, system umożliwia zarządzaniem zawodami łuczniczymi w całości: od akredytacji Zawodników i organizatorów, różnego rodzaju wydruków, integracji sieciowej i on-line, po projekt pola zawodów.';
 $lang['Credits-HHT']='Intergrajca HHT';
 $lang['Credits-IanseoTeam']='Ianseo i Zespół Ianseo';

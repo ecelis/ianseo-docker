@@ -41,7 +41,7 @@ $JS_SCRIPT = array(
     ),
 );
 
-include('Common/Templates/head' . (isset($_REQUEST["hideMenu"]) ? '-min': '') . '.php');
+include('Common/Templates/head.php');
 
 echo '<table class="Tabella" id="MatchSelector">';
     echo '<tr><th class="Title" colspan="6">'.get_text('MenuLM_Spotting').'</th></tr>';
@@ -118,4 +118,4 @@ echo '<tr id="keypadLegenda" class="Hidden"><td colspan="3">'.
 echo '</table>';
 
 
-include('Common/Templates/tail' . (isset($_REQUEST["hideMenu"]) ? '-min' : '') . '.php');
+include('Common/Templates/tail.php');

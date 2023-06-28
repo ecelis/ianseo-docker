@@ -1,7 +1,7 @@
 /*
 													- Fun_AJAX_SetTarget_default.js -
 	Contiene le funzioni ajax che riguardano la pagina SetTarget_default.php
-*/ 		
+*/
 
 /*
 	- UpdateSession(Field)
@@ -20,7 +20,6 @@ function UpdateSession(Field)
 				if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
 				{
 					XMLHttp.open("POST","UpdateSession.php?" + FieldName + "=" + FieldValue,true);
-					//document.getElementById('idOutput').innerHTML="UpdateSession.php?" + FieldName + "=" + FieldValue;
 					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 					XMLHttp.onreadystatechange=UpdateSession_StateChange;
 					XMLHttp.send(null);
@@ -29,7 +28,6 @@ function UpdateSession(Field)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -48,12 +46,10 @@ function UpdateSession_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -66,28 +62,28 @@ function UpdateSession_Response()
 // intercetto gli errori di IE e Opera
 	if (!XMLResp || !XMLResp.documentElement)
 		throw(XMLResp.responseText);
-	
+
 // Intercetto gli errori di Firefox
 	var XMLRoot;
 	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
 		throw("");
 
 	XMLRoot = XMLResp.documentElement;
-	
+
 	var Error = XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
 	//alert(Error);
 	if (Error==0)
 	{
 		var Troppi = XMLRoot.getElementsByTagName('troppi').item(0).firstChild.data;
 		var Id = XMLRoot.getElementsByTagName('id').item(0).firstChild.data;
-		
+
 		if (Troppi==1)
 		{
 			document.getElementById('d_q_QuSession_' + Id).value=0;
 			var Msg = XMLRoot.getElementsByTagName('msg').item(0).firstChild.data;
 			alert(Msg);
 		}
-		
+
 		if (document.getElementById('d_q_QuSession_' + Id).value==0)
 		{
 			document.getElementById('d_q_QuTargetNo_' + Id).value='';
@@ -97,7 +93,7 @@ function UpdateSession_Response()
 		{
 			document.getElementById('d_q_QuTargetNo_' + Id).readOnly=false;
 		}
-		
+
 		var NewTargetNo = XMLRoot.getElementsByTagName('new_targetno').item(0).firstChild.data;
 		if (NewTargetNo=='#')
 			document.getElementById('d_q_QuTargetNo_' + Id).value='';
@@ -122,7 +118,6 @@ function UpdateTargetNo(Field,Ses)
 				if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
 				{
 					XMLHttp.open("POST","UpdateTargetNo.php?Ses=" + Ses + "&" + FieldName + "=" + FieldValue,true);
-					//document.getElementById('idOutput').innerHTML="UpdateTargetNo.php?Ses=" + Ses + "&" + FieldName + "=" + FieldValue;
 					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 					XMLHttp.onreadystatechange=UpdateTargetNo_StateChange;
 					XMLHttp.send(null);
@@ -131,7 +126,6 @@ function UpdateTargetNo(Field,Ses)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -150,12 +144,10 @@ function UpdateTargetNo_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -168,29 +160,29 @@ function UpdateTargetNo_Response()
 // intercetto gli errori di IE e Opera
 	if (!XMLResp || !XMLResp.documentElement)
 		throw(XMLResp.responseText);
-	
+
 // Intercetto gli errori }di Firefox
 	var XMLRoot;
 	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
 		throw("");
 
 	XMLRoot = XMLResp.documentElement;
-	
+
 	var Error = XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
 	//alert(Error);
 	var Id = XMLRoot.getElementsByTagName('id').item(0).firstChild.data;
 	//alert(Id);
-	
+
 	if (Error==1)
 	{
-		SetStyle('d_q_QuTargetNo_' + Id,'error');		
+		SetStyle('d_q_QuTargetNo_' + Id,'error');
 	}
 	else
 	{
-		SetStyle('d_q_QuTargetNo_' + Id,'');		
+		SetStyle('d_q_QuTargetNo_' + Id,'');
 		var PadValue = XMLRoot.getElementsByTagName('pad_value').item(0).firstChild.data;
 		document.getElementById('d_q_QuTargetNo_' + Id).value=(PadValue!='#' ? PadValue : '');
-		
+
 		var Ses = XMLRoot.getElementsByTagName('ses').item(0).firstChild.data;
 		XMLHttp = CreateXMLHttpRequestObject();
 		FindRedTarget(Ses);
@@ -212,7 +204,6 @@ function FindRedTarget(Ses)
 			if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
 			{
 				XMLHttp.open("POST","FindRedTarget.php?Ses=" + Ses,true);
-				//document.getElementById('idOutput').innerHTML="FindRedTarget.php?Ses=" + Ses;
 				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 				XMLHttp.onreadystatechange=FindRedTarget_StateChange;
 				XMLHttp.send(null);
@@ -220,7 +211,6 @@ function FindRedTarget(Ses)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -239,12 +229,10 @@ function FindRedTarget_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -257,17 +245,17 @@ function FindRedTarget_Response()
 // intercetto gli errori di IE e Opera
 	if (!XMLResp || !XMLResp.documentElement)
 		throw(XMLResp.responseText);
-	
+
 // Intercetto gli errori }di Firefox
 	var XMLRoot;
 	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
 		throw("");
 
 	XMLRoot = XMLResp.documentElement;
-	
+
 	var Error = XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
 	//alert(Error);
-		
+
 	if (Error==0)
 	{
 		var Arr_Id = XMLRoot.getElementsByTagName('id');

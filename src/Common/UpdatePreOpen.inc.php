@@ -157,6 +157,11 @@ function UpdatePreOpen($TournamentID) {
         to_save_version($TournamentID, '2021-05-15 18:13:01');
     }
 
+    if($version<'2023-03-20 05:26:04') {
+        updateTeamFinComponentsLog_20220320($TournamentID);
+        to_save_version($TournamentID, '2023-03-20 05:26:04');
+    }
+
     to_save_version($TournamentID, $DbVersion);
 }
 

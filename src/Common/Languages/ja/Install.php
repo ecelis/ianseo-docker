@@ -1,4 +1,5 @@
 <?php
+$lang['Credits-BeiterCredits']='バーコードモジュールはBeiter Archery Products社及びMr.Andreas Lorenzのサポートによりianseoに無償提供されています。';
 $lang['EventWillBeReset']='【注意】「$a[0]」「 $a[1]」「$a[2]」を変更すると、設定された大会のパラメータがすべてデフォルトに戻ります。ご注意ください。';
 $lang['FreeOnlineResults']='<b>試合結果公開:</b> インターネット接続があれば、試合結果をIanseoにフリーで公開することが出来ます。あなたの試合結果を世界に公開しましょう！大会情報が出来たら、接続コードを申請しましょう（メニュー «{$a}»）。';
 $lang['NoSubRules']='サブルールなし';

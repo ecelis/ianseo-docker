@@ -207,7 +207,8 @@
 					ToId,TeRank,CoId,CoCode,CoName,	CoCaCode, CoMaCode, TeSubTeam ,TeEvent, DivId, ClId, ClDescription, DivDescription,ToNumEnds,ToNumDist,FlContAssoc,
 					EnId,EnCode,EnSex,EnNameOrder,EnFirstName,upper(EnFirstName) EnFirstNameUpper,EnName,Q,EnClass,EnDivision,EnAgeClass,EnSubClass,
 					IFNULL(Td1,'.1.') as Td1, IFNULL(Td2,'.2.') as Td2, IFNULL(Td3,'.3.') as Td3, IFNULL(Td4,'.4.') as Td4, IFNULL(Td5,'.5.') as Td5, IFNULL(Td6,'.6.') as Td6, IFNULL(Td7,'.7.') as Td7, IFNULL(Td8,'.8.') as Td8,
-					TeHits AS Arrows_Shot, QuSession AS Session, QuScore,QuGold, QuXnine, TeScore, TeGold, TeXnine, TeHits,ToGolds, ToXNine ,TeTimeStamp,
+					TeHits AS Arrows_Shot, QuSession AS Session, QuScore,QuGold, QuXnine, TeScore, TeGold, TeXnine, TeHits,
+					IF(TfGolds!='',TfGolds,ToGolds) AS GoldLabel, IF(TfXNine!='',TfXNine,ToXNine) AS XNineLabel,TeTimeStamp,
 					DiEnds, DiArrows, TeIrmType, IrmType, IrmShowRank
 				FROM Tournament
 				INNER JOIN Teams ON ToId=TeTournament AND TeFinEvent=0
@@ -238,15 +239,11 @@
 							WHERE DivAthlete AND ClAthlete
 						) AS DivClass
 					ON TeEvent=DivClass AND TeTournament=DivTournament
-					LEFT JOIN
-						TournamentDistances
-					ON ToType=TdType AND TdTournament=ToId AND TeEvent like TdClasses
-					LEFT JOIN
-						Flags
-						ON FlIocCode='FITA' and FlCode=CoCode and FlTournament=ToId
-					left join DistanceInformation on EnTournament=DiTournament and DiSession=1 and DiDistance=1 and DiType='Q'
-				WHERE
-					ToId={$this->tournament}
+                LEFT JOIN TargetFaces ON TfTournament=EnTournament and EnTargetFace=TfId
+                LEFT JOIN TournamentDistances ON ToType=TdType AND TdTournament=ToId AND TeEvent like TdClasses
+                LEFT JOIN Flags ON FlIocCode='FITA' and FlCode=CoCode and FlTournament=ToId
+                left join DistanceInformation on EnTournament=DiTournament and DiSession=1 and DiDistance=1 and DiType='Q'
+				WHERE ToId={$this->tournament}
 					{$filter}
 				ORDER BY
 					{$orderBy}
@@ -314,14 +311,14 @@
 									'ageclass' => get_text('AgeCl'),
 									'subclass' => get_text('SubCl','Tournament'),
 									'quscore' => get_text('TotaleScore'),
-									'qugold' => $row->ToGolds,
-									'quxnine' => $row->ToXNine
+									'qugold' => $row->GoldLabel,
+									'quxnine' => $row->XNineLabel
 								)
 							),
 							'rank'			=> get_text('PositionShort'),
 							'score' 		=> get_text('TotaleScore'),
-							'gold' 			=> $row->ToGolds,
-							'xnine' 		=> $row->ToXNine,
+							'gold' 			=> $row->GoldLabel,
+							'xnine' 		=> $row->XNineLabel,
 							'hits'			=> get_text('Arrows','Tournament')
 						);
 
@@ -356,13 +353,6 @@
 					}
 
 					if ($myTeam!=$row->CoId . $row->TeEvent) {
-                        if($row->TeRank==127) {
-                            $tmpRank = 'DSQ';
-                        } else if ($row->TeRank==126) {
-                            $tmpRank = 'DNS';
-                        } else {
-                            $tmpRank= $row->TeRank;
-                        }
 						$item=array(
 							'id' 			=> $row->CoId,
 							'countryCode' 	=> $row->CoCode,
@@ -371,7 +361,7 @@
 							'countryName' 	=> $row->CoName,
 							'subteam' 		=> $row->TeSubTeam,
 							'athletes'		=> array(),
-							'rank'			=> $row->IrmShowRank ? $tmpRank : $row->IrmType,
+							'rank'			=> $row->IrmShowRank ? $row->TeRank : $row->IrmType,
 							'score' 		=> $row->TeScore,
 							'gold' 			=> $row->TeGold,
 							'xnine' 		=> $row->TeXnine,

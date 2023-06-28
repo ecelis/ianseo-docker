@@ -1,6 +1,7 @@
 function ChangeTourType(who) {
 	var combo=document.getElementById('d_ToType');
 	var subrule=document.getElementById('d_SubRule');
+	var country=document.getElementById('d_ToCountry');
 
 	while(combo.options.length>0) combo.remove(0);
 	while(subrule.options.length>0) subrule.remove(0);
@@ -32,6 +33,10 @@ function ChangeTourType(who) {
 			combo.selectedIndex=0;
 		}
 		ChangeLocalSubRule(combo.value);
+		//default country
+		if(ToTypes[who]['noc'] && (isNew || country.value == '')) {
+			country.value = ToTypes[who]['noc'];
+		}
 	}
 }
 

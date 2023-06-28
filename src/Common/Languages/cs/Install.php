@@ -6,7 +6,6 @@ $lang['CreateStandardCatFull']='Vytvořit kategorii a akreditaci';
 $lang['Credits-Coordination']='Koordinaci IT projektu';
 $lang['Credits-CoreGroup']='IANSEO hlavní skupina';
 $lang['Credits-Credits']='Titulky';
-$lang['Credits-Documentation']='Dokumentace a podpora';
 $lang['Credits-HHT']='HHT integrace';
 $lang['Credits-IanseoTeam']='Ianseo a Ianseo tým';
 $lang['Credits-License']='IANSEO je distribuován přes GNU GENERAL PUBLIC LICENSE verze 3 (GPLV3)';

@@ -210,7 +210,7 @@ function rotAbst($TVsettings, $RULE) {
 					or $Record['claim']==$archer['memberAssoc'])) {
 				$tmp.='<div class="RecBar Rec_'. $RecCode.'"></div>';
 			} else {
-				$tmp.='<div class="RecBar">&nbsp;</div>';
+				$tmp.='<div class="RecBar"></div>';
 			}
 		}
 

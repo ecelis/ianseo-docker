@@ -54,19 +54,24 @@ foreach(($DefinedTargets=getTargets(false)) as $Target=>$divs) {
     }
 }
 
+$IncludeFA=true;
+$IncludeJquery=true;
+$PAGE_TITLE=get_text('MenuLM_Targets');
+
 $JS_SCRIPT = array(
-	'<link href="'.$CFG->ROOT_DIR.'Common/css/font-awesome.css" rel="stylesheet" type="text/css">',
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
-	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
-    '<script type="text/javascript" src="Fun_AJAX_ManTargets.js"></script>',
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
+    '<script type="text/javascript" src="./Fun_AJAX_ManTargets.js"></script>',
     phpVars2js(array(
     	'StrConfirm' =>get_text('MsgAreYouSure'),
     	'CannotDelete' =>get_text('CannotDelete','Tournament'),
     	'numDist' => $numDist,
+	    'AvailableTargets'=>$AvTargets,
+	    'GoldLabel' =>get_text('GoldLabel','Tournament'),
+	    'XNineLabel' =>get_text('XNineLabel','Tournament'),
+	    'PointsAsGold' =>get_text('PointsAsGold','Tournament'),
+	    'PointsAsXNine' =>get_text('PointsAsXNine','Tournament'),
+	    'CommaSeparatedValues' =>get_text('CommaSeparatedValues'),
         )),
     );
-$PAGE_TITLE=get_text('MenuLM_Targets');
 
 include('Common/Templates/head.php');
 
@@ -80,7 +85,7 @@ echo '<th>'.get_text('FilterOnDivClAdv','Tournament').'</th>';
 for ($i=1;$i<=$numDist;++$i) {
     echo '<th>.'.$i.'.</th>';
 }
-echo '<th><?php '.get_text('TVSetAsDefault','Tournament').'</th>';
+echo '<th>'.get_text('TVSetAsDefault','Tournament').'</th>';
 echo '<th></th>';
 echo '</tr>';
 
@@ -91,9 +96,9 @@ foreach($AvDiv as $Div=>$Cl) {
     if($Cl) echo implode(', ',$Cl).'<br/>';
 }
 echo '</td>';
-echo '<td class="Center"><input type="text" id="TdName" size="15" maxlength="15" value=""></td>';
+echo '<td class="Center"><input type="text" id="TdName" size="15" maxlength="50" value=""></td>';
 echo '<td class="Center"><input type="text" id="TdClasses" size="12" maxlength="10" value=""></td>';
-echo '<td class="Center">'.($Advanced ? '<input type="text" id="TdRegExp" size="16" value="">' : '&nbsp;').'</td>';
+echo '<td class="Center">'.($Advanced ? '<input type="text" id="TdRegExp" size="16" value="">' : '').'</td>';
 for ($i=1;$i<=$numDist;++$i) {
     echo '<td class="Center"><select id="TdFace'.$i.'">'.$SelTargets.'</select><br/>ø (cm) <input type="text" id="TdDiam'.$i.'" size="3" maxlength="3" value=""></td>';
 }

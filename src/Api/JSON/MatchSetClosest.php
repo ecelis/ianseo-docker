@@ -54,6 +54,6 @@ if($Side!=-1) {
 }
 
 $JSON['Error']=false;
-MatchTotal($MatchL, $EvCode, $EvType, $TourId);
+EvaluateMatch($EvCode, $EvType, $MatchL, $TourId, false);
 
 SendResult($JSON);

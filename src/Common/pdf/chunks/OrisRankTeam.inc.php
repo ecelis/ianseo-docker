@@ -19,8 +19,8 @@ foreach($PdfData->rankData['sections'] as $Event => $section) {
 	} else {
 		$pdf->setComment(trim($section['meta']['printHeader']));
 	}
-	$pdf->AddPage();
 	$pdf->setOrisCode($section['meta']['OrisCode'], $PdfData->Description);
+	$pdf->AddPage();
 	if($First and (empty($pdf->CompleteBookTitle) or $pdf->CompleteBookTitle!=$PdfData->IndexName)) {
 		$pdf->Bookmark($PdfData->IndexName, 0);
 		$pdf->CompleteBookTitle=$PdfData->IndexName;
@@ -66,8 +66,7 @@ foreach($PdfData->rankData['sections'] as $Event => $section) {
             $item['countryNameLong'] . ($item['subteam']<=1 ? '' : ' (' . $item['subteam'] .')'));
 
 		if(count($item['athletes'])) {
-			$dataRow[] = $item['athletes'][0]['athlete'];
-			$dataRow[] = $item['athletes'][0]['irm'];
+			$dataRow[] = $item['athletes'][0]['athlete'];;
 		} else {
 			$dataRow[]='';
 		}
@@ -78,8 +77,7 @@ foreach($PdfData->rankData['sections'] as $Event => $section) {
 		if($NumComponenti>1) {
 			for($k=1; $k<$NumComponenti; $k++) {
 				$pdf->printDataRow(array('','','','',
-					$item['athletes'][$k]['athlete'],
-					$item['athletes'][$k]['irm']));
+					$item['athletes'][$k]['athlete']));
 			}
 		}
 
@@ -89,38 +87,3 @@ foreach($PdfData->rankData['sections'] as $Event => $section) {
 	}
 }
 
-/*
-
-		//Risultati  delle varie fasi
-		foreach($item['finals'] as $k=>$v) {
-			if($v['irm']) {
-				if($v['irmText']=='DQB') {
-					break;
-				}
-				$dataRow[] = $v['irmText'];
-				$dataRow[] = '';
-				break;
-			} elseif($v['tie']==2) {
-				$dataRow[] = $PdfData->Bye;
-				$dataRow[] = '';
-			} else {
-				if($k==4 && $section['meta']['matchMode']!=0 && $item['rank']>=5) {
-					$dataRow[] = $v['setScore'] . "#";
-					$dataRow[] = "(" . $v['score'] .")#";
-				} elseif($v['notes'] and ($section['meta']['matchMode']==0 ? $v['score'] : $v['setScore'])==0 ) {
-					$dataRow[] = $v['notes'];
-					$dataRow[] = '';
-				} else {
-					$dataRow[] = ($section['meta']['matchMode']==0 ? $v['score'] : $v['setScore']) . "#";
-					if(strlen($v['tiebreak'])>0 && $k<=1) {
-						$dataRow[] =  "T." . $v['tiebreakDecoded'] . "#";
-					} elseif($k<=1 && $v['tie']==1) {
-						$dataRow[] = "*#";
-					} else {
-						$dataRow[] = $v['notes'];
-					}
-				}
-			}
-
-
- */

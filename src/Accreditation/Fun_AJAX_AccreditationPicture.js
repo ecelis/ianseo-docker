@@ -32,6 +32,10 @@ function selectedAthlete(clickObj) {
 						var Error = XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
 
 						if(Error==0) {
+							let searchCat = XMLRoot.getElementsByTagName('cat').item(0).firstChild.data.replace('-','');
+							let searchTour =XMLRoot.getElementsByTagName('tourid').item(0).firstChild.data;
+							console.log(searchCat + '.....' + searchTour);
+
 							document.getElementById("selId").value = XMLRoot.getElementsByTagName('id').item(0).firstChild.data;
 							document.getElementById("selAth").innerHTML = XMLRoot.getElementsByTagName('ath').item(0).firstChild.data;
 							document.getElementById("selTeam").innerHTML = XMLRoot.getElementsByTagName('team').item(0).firstChild.data;
@@ -39,24 +43,26 @@ function selectedAthlete(clickObj) {
 							document.getElementById("athPic").src = XMLRoot.getElementsByTagName('pic').item(0).firstChild.data;
 							if(XMLRoot.getElementsByTagName('pic').item(0).firstChild.data!='data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==') {
 								document.getElementById("ManBlock").style.display='';
+								if(cardsByCat[searchTour]!==undefined && cardsByCat[searchTour][searchCat]!== undefined) {
+									$('#accreditation-number').val(cardsByCat[searchTour][searchCat]);
+								}
 							} else {
 								document.getElementById("ManBlock").style.display='none';
 								document.getElementById("confirm-button").style.display='none';
 							}
 
-							if(document.getElementById("stop-button").style.display != '')
-								document.getElementById("start-button").style.display='';
+							if(document.getElementById("stop-button").style.display != '') {
+								document.getElementById("start-button").style.display = '';
+							}
 						}
 
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
 
 				};
 				XMLHttp.send();
 			}
 		} catch (e) {
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -67,11 +73,11 @@ function searchAthletes() {
 		try {
 			if ((XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)) {
 				var queryString='?search='+encodeURIComponent(document.getElementById("x_Search").value)
-					+"&country="+(document.getElementById("x_Country").checked ? 1 : 0)
-					+"&athlete="+(document.getElementById("x_Athlete").checked ? 1 : 0)
-					+"&noprint="+(document.getElementById("x_NoPrint").checked ? 1 : 0)
-					+"&noacc="+(document.getElementById("x_noAcc").checked ? 1 : 0)
-					+"&nophoto="+(document.getElementById("x_noPhoto").checked ? 1 : 0);
+					+"&country="+($("#x_Country").is(":checked") ? 1 : 0)
+					+"&athlete="+($("#x_Athlete").is(":checked") ? 1 : 0)
+					+"&noprint="+($("#x_NoPrint").is(":checked") ? 1 : 0)
+					+"&noacc="+($("#x_noAcc").is(":checked") ? 1 : 0)
+					+"&nophoto="+($("#x_noPhoto").is(":checked") ? 1 : 0);
 				var srcTours=document.querySelectorAll('.x_Tours');
 				if(srcTours.length>0) {
 					for(var i=0; i< srcTours.length; i++) {
@@ -146,14 +152,12 @@ function searchAthletes() {
 						}
 
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
 
 				};
 				XMLHttp.send();
 			}
 		} catch (e) {
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -194,14 +198,12 @@ function sendPicture(encodedPict) {
 						}
 
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
 
 				};
 				XMLHttp.send("Id=" + srcAthlete + "&picEncoded=" + encodeURIComponent(encodedPict));
 			}
 		} catch (e) {
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -238,21 +240,18 @@ function deletePicture() {
 							searchAthletes();
 						}
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
 
 				};
 				XMLHttp.send();
 			}
 		} catch (e) {
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
 
 function printAccreditation() {
-	var CardNumber=document.getElementById("accreditation-number").value;
-
+	let CardNumber=$("#accreditation-number").val();
 	window.open('CardCustom.php?CardType=A&CardNumber='+CardNumber+'&Entries[]='+document.getElementById("selId").value);
 	document.getElementById("confirm-button").style.display='';
 }
@@ -285,14 +284,12 @@ function ConfirmPrinted() {
 							document.getElementById("confirm-button").style.display='none';
 						}
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
 
 				};
 				XMLHttp.send();
 			}
 		} catch (e) {
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 

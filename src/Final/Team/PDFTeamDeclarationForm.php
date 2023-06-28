@@ -22,7 +22,7 @@ $pdf = new TMDeclarationPDF('C48', get_text('TeamComponentForm', 'Tournament'));
 
 $pdf->setEvent(get_text('TeamComponentForm', 'Tournament'));
 
-$EvCode = (!empty($_REQUEST["EvCode"]) ? filter_var($_REQUEST["EvCode"], FILTER_SANITIZE_STRING) : '' );
+$EvCode = (!empty($_REQUEST["EvCode"]) ? filter_var($_REQUEST["EvCode"], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '' );
 $CoId = (!empty($_REQUEST["CoId"]) ? intval($_REQUEST["CoId"]) : 0 );
 
 $Sql = "SELECT DISTINCT EvCode, TeCoId, TeSubTeam " .

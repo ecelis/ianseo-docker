@@ -1,14 +1,12 @@
 <?php
 
 require_once(dirname(dirname(__FILE__)) . '/config.php');
-CheckTourSession(true);
-checkACL(AclParticipants, AclReadWrite);
-
 $JSON=array('error' => 1, 'msg' => '');
 
-if(empty($_REQUEST['item']) or (!isset($_REQUEST['bye']) and !isset($_REQUEST['note']) and (!isset($_REQUEST['irm']) or !isset($_REQUEST['qual']) or !isset($_REQUEST['fin'])))) {
+if(!CheckTourSession() or !hasACL(AclParticipants, AclReadWrite) or empty($_REQUEST['item']) or (!isset($_REQUEST['bye']) and !isset($_REQUEST['note']) and (!isset($_REQUEST['irm']) or !isset($_REQUEST['qual']) or !isset($_REQUEST['fin'])))) {
 	JsonOut($JSON);
 }
+global $CFG;
 
 // FOR THE MOMENT WE KEEP LOW PROFILE!!!!!
 // NO AUTOMATIC RECALCULATION OF RANKS AND TEAMS
@@ -132,6 +130,7 @@ switch($Items[0].$Items[1]) {
 		// this should never been triggered
 		$JSON['error']=1;
 		$JSON['msg']='Generic Error';
+		JsonOut($JSON);
 		break;
 	case '0M':
 		// Individual Events
@@ -148,6 +147,12 @@ switch($Items[0].$Items[1]) {
 				$q=safe_r_sql("select IndId from Individuals where IndTournament={$_SESSION['TourId']} and IndId=$EnId");
 				if($QualAffected = (safe_num_rows($q)==1)) {
 					safe_w_sql("update Qualifications inner join Entries on EnId=QuId and EnTournament={$_SESSION['TourId']} set QuIrmType=$IRM, QuClRank=$QUAL, QuSubClassRank=$SUB where QuId=$EnId");
+				}
+
+				if($IRM==10) {
+					// being this a DNS, also the round robins are affected, so set the DNS status also there
+					safe_w_sql("update RoundRobinParticipants set RrPartIrmType=$IRM where RrPartParticipant=$EnId and RrPartTeam=0 and RrPartEvent=".StrSafe_DB($Event)." and RrPartTournament={$_SESSION['TourId']}");
+					safe_w_sql("update RoundRobinMatches set RrMatchIrmType=$IRM where RrMatchAthlete=$EnId and RrMatchTeam=0 and RrMatchEvent=".StrSafe_DB($Event)." and RrMatchTournament={$_SESSION['TourId']}");
 				}
 			} else {
 				$ElimPhase=substr($Phase,1);
@@ -203,32 +208,36 @@ switch($Items[0].$Items[1]) {
 				safe_w_sql("update Individuals set IndIrmTypeFinal=0 where IndTournament={$_SESSION['TourId']} and IndEvent=".StrSafe_DB($Event)." and IndId=$EnId");
 			}
 
-			// If DNF/DNS, the opponent if any wins the match and gets a bye so get the matchno
-			if($IRM==5 or $IRM==10) {
+			// If DNF/DNS/DSQ, the opponent if any wins the match and gets a bye so get the matchno
+			if($IRM>0 and $IRM<20) {
 				$q=safe_r_sql("select FinMatchNo, FinWinLose 
 					from Finals 
 				    inner join Grids on GrMatchNo=FinMatchNo and GrPhase=$Phase 
 					where FinTournament={$_SESSION['TourId']} and FinEvent=".StrSafe_DB($Event)." and FinAthlete=$EnId");
 				if($r=safe_fetch($q)) {
-					// assigns the winlose status to the opponent only if there are no winners already
-					$OppMatchno=$r->FinMatchNo%2 ? $r->FinMatchNo-1 : $r->FinMatchNo+1;
-					$Match=$r->FinMatchNo.','.$OppMatchno;
-					$t=safe_r_sql("select max(FinWinLose) as HasWinner, group_concat(FinAthlete separator '|') as Opponents from Finals where FinTournament={$_SESSION['TourId']} and FinEvent=".StrSafe_DB($Event)." and FinMatchNo in ($Match)");
-					if($u=safe_fetch($t) and !$u->HasWinner) {
-						safe_w_sql("update Finals set FinWinLose=1, FinTie=2 where FinAthlete>0 and FinTournament={$_SESSION['TourId']} and FinEvent=".StrSafe_DB($Event)." and FinMatchNo=$OppMatchno");
+					// check the double IRM!
+					require_once('Final/Fun_ChangePhase.inc.php');
+					if(!CheckDoubleIrm($Event, 0, $r->FinMatchNo)) {
+						$OppMatchno=$r->FinMatchNo%2 ? $r->FinMatchNo-1 : $r->FinMatchNo+1;
+						// assigns the winlose status to the opponent only if there are no winners already
+						$Match=$r->FinMatchNo.','.$OppMatchno;
+						$t=safe_r_sql("select max(FinWinLose) as HasWinner, group_concat(FinAthlete separator '|') as Opponents from Finals where FinTournament={$_SESSION['TourId']} and FinEvent=".StrSafe_DB($Event)." and FinMatchNo in ($Match)");
+						if($u=safe_fetch($t) and !$u->HasWinner) {
+							safe_w_sql("update Finals set FinWinLose=1, FinTie=2 where FinAthlete>0 and FinTournament={$_SESSION['TourId']} and FinEvent=".StrSafe_DB($Event)." and FinMatchNo=$OppMatchno");
 
-						// recalculates the rank
-						require_once('Final/Fun_ChangePhase.inc.php');
-						move2NextPhase($Phase, $Event);
+							// recalculates the rank
+							require_once('Final/Fun_ChangePhase.inc.php');
+							move2NextPhase($Phase, $Event);
 
-						$Opponents=explode('|', $u->Opponents);
-						$Items[4] = $EnId==$Opponents[0] ? $Opponents[1] : $Opponents[0];
-						$JSON['OpStatusChange']=implode('-',$Items);
+							$Opponents=explode('|', $u->Opponents);
+							$Items[4] = $EnId==$Opponents[0] ? $Opponents[1] : $Opponents[0];
+							$JSON['OpStatusChange']=implode('-',$Items);
 
-						// gets the new rank of the IRM
-						$t=safe_r_sql("select IndRankFinal from Individuals where IndId=$EnId and IndTournament={$_SESSION['TourId']}");
-						$u=safe_fetch($t);
-						$JSON['FinRank']=$u->IndRankFinal;
+							// gets the new rank of the IRM
+							$t=safe_r_sql("select IndRankFinal from Individuals where IndId=$EnId and IndTournament={$_SESSION['TourId']}");
+							$u=safe_fetch($t);
+							$JSON['FinRank']=$u->IndRankFinal;
+						}
 					}
 				}
 			}
@@ -238,6 +247,7 @@ switch($Items[0].$Items[1]) {
 			/// somebody faking the system?
 			$JSON['error']=1;
 			$JSON['msg']='Generic Error';
+			JsonOut($JSON);
 		}
 		break;
 	case '1M':
@@ -273,40 +283,44 @@ switch($Items[0].$Items[1]) {
 			}
 
 			// If DNF/DNS, the opponent if any wins the match and gets a bye so get the matchno
-			if($IRM==5 or $IRM==10) {
+			if($IRM>0 and $IRM<20) {
 				$q=safe_r_sql("select TfMatchNo, TfWinLose 
 					from TeamFinals 
 				    inner join Grids on GrMatchNo=TfMatchNo and GrPhase=$Phase 
 					where TfTournament={$_SESSION['TourId']} and TfEvent=".StrSafe_DB($Event)." and TfTeam=$CoId and TfSubTeam=$SubTeam");
 				if($r=safe_fetch($q)) {
-					// assigns the winlose status to the opponent only if there are no winners already
-					$OppMatchno=$r->TfMatchNo%2 ? $r->TfMatchNo-1 : $r->TfMatchNo+1;
-					$Match=$r->TfMatchNo.','.$OppMatchno;
-					$t=safe_r_sql("select max(TfWinLose) as HasWinner, group_concat(concat(TfTeam, '-', TfSubTeam) separator '|') as Opponents from TeamFinals where TfTournament={$_SESSION['TourId']} and TfEvent=".StrSafe_DB($Event)." and TfMatchNo in ($Match)");
-					if($u=safe_fetch($t) and !$u->HasWinner) {
-						safe_w_sql("update TeamFinals set TfWinLose=1, TfTie=2 where TfTeam>0 and TfTournament={$_SESSION['TourId']} and TfEvent=".StrSafe_DB($Event)." and TfMatchNo=$OppMatchno");
+					// check the double IRM!
+					require_once('Final/Fun_ChangePhase.inc.php');
+					if(!CheckDoubleIrm($Event, 1, $r->TfMatchNo)) {
+						// assigns the winlose status to the opponent only if there are no winners already
+						$OppMatchno=$r->TfMatchNo%2 ? $r->TfMatchNo-1 : $r->TfMatchNo+1;
+						$Match=$r->TfMatchNo.','.$OppMatchno;
+						$t=safe_r_sql("select max(TfWinLose) as HasWinner, group_concat(concat(TfTeam, '-', TfSubTeam) separator '|') as Opponents from TeamFinals where TfTournament={$_SESSION['TourId']} and TfEvent=".StrSafe_DB($Event)." and TfMatchNo in ($Match)");
+						if($u=safe_fetch($t) and !$u->HasWinner) {
+							safe_w_sql("update TeamFinals set TfWinLose=1, TfTie=2 where TfTeam>0 and TfTournament={$_SESSION['TourId']} and TfEvent=".StrSafe_DB($Event)." and TfMatchNo=$OppMatchno");
 
-						// recalculates the rank
-						require_once('Final/Fun_ChangePhase.inc.php');
-						move2NextPhaseTeam($Phase, $Event);
+							// recalculates the rank
+							require_once('Final/Fun_ChangePhase.inc.php');
+							move2NextPhaseTeam($Phase, $Event);
 
-						$Opponents=explode('|', $u->Opponents);
-						$Items[4] = $CoId.'-'.$SubTeam==$Opponents[0] ? $Opponents[1] : $Opponents[0];
-						unset($Items[5]);
-						$JSON['OpStatusChange']=implode('-',$Items);
+							$Opponents=explode('|', $u->Opponents);
+							$Items[4] = $CoId.'-'.$SubTeam==$Opponents[0] ? $Opponents[1] : $Opponents[0];
+							unset($Items[5]);
+							$JSON['OpStatusChange']=implode('-',$Items);
 
-						// gets the new rank of the IRM
-						$t=safe_r_sql("select TeRankFinal from Teams where TeCoId=$CoId and TeSubTeam=$SubTeam and TeTournament={$_SESSION['TourId']}");
-						$u=safe_fetch($t);
-						$JSON['FinRank']=$u->TeRankFinal;
+							// gets the new rank of the IRM
+							$t=safe_r_sql("select TeRankFinal from Teams where TeCoId=$CoId and TeSubTeam=$SubTeam and TeTournament={$_SESSION['TourId']}");
+							$u=safe_fetch($t);
+							$JSON['FinRank']=$u->TeRankFinal;
+						}
 					}
 				}
 			}
-
 		} else {
 			/// somebody faking the system?
 			$JSON['error']=1;
 			$JSON['msg']='Generic Error';
+			JsonOut($JSON);
 		}
 		break;
 	default:

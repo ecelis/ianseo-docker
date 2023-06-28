@@ -7,15 +7,28 @@ checkACL(AclIndividuals, AclReadOnly);
 
 $isCompleteResultBook = true;
 
-$pdf = new OrisBracketPDF('C75A', 'Result Brackets');
+if(($_REQUEST['OrisABD']??'')=='D') {
+	// scorecard!
+	require_once('Common/OrisFunctions.php');
+	require_once('Common/pdf/PdfChunkLoader.php');
+	$PdfData = getBracketsIndividual($_REQUEST['Event']??'', true, false, false, true, false);
 
-if(isset($_REQUEST["IncBrackets"]) && $_REQUEST["IncBrackets"]==1)
-	include 'OrisBracket.php';
+	//$pdf->setOrisCode('', '', true);
+	$pdf = new OrisPDF('C73D', $PdfData->Description);
+	$pdf->SetAutoPageBreak(true,(OrisPDF::bottomMargin+$pdf->extraBottomMargin));
 
-$pdf->SetAutoPageBreak(true,OrisPDF::bottomMargin);
+	include(PdfChunkLoader('OrisScoreIndividual.inc.php'));
+} else {
+	$pdf = new OrisBracketPDF('C75A', 'Result Brackets');
 
-if(isset($_REQUEST["IncRankings"]) && $_REQUEST["IncRankings"]==1) {
-	include 'OrisRanking.php';
+	if(isset($_REQUEST["IncBrackets"]) && $_REQUEST["IncBrackets"]==1)
+		include 'OrisBracket.php';
+
+	$pdf->SetAutoPageBreak(true,OrisPDF::bottomMargin);
+
+	if(isset($_REQUEST["IncRankings"]) && $_REQUEST["IncRankings"]==1) {
+		include 'OrisRanking.php';
+	}
 }
 
 

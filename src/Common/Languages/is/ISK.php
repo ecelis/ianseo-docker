@@ -120,7 +120,6 @@ $lang['ScanQRCode']='Skanna QR kóða';
 $lang['Score']='Skor';
 $lang['Scorecard']='Skorblað';
 $lang['ScoreHelp']='Hjálp';
-$lang['ScoreHelpDesc']='Þessi skjár gerir þér kleift að skora örva gildi sem skotið var. Upplýsingar um núverandi fjarlægð, skotskífu og keppendur er einnig sýnilegt. Settu inn örva gildi með því að nota númeruðu takkana.';
 $lang['SelDist']='Veldu fjarlægðina og reyndu aftur';
 $lang['SelTgtNum']='Veldu númer skotmarks og reyndu aftur';
 $lang['Setup']='Uppsetning';

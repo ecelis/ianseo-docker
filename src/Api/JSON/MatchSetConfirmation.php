@@ -87,9 +87,9 @@ if($ConfirmMatch) {
 			$JSON['Error']=false;
 
             if ($EvType) {
-                move2NextPhaseTeam(null,$EvCode,$MatchL,$TourId);
+                move2NextPhaseTeam(null,$EvCode,$MatchL, $TourId, true, '', true);
             } else {
-                move2NextPhase(null, $EvCode, $MatchL, $TourId);
+                move2NextPhase(null, $EvCode, $MatchL, $TourId, true, '', true);
             }
 
 			runJack("FinConfirmEnd", $TourId, array("Event" => $EvCode, "Team" => $EvType, "MatchNo" => $MatchL, "TourId" => $TourId));

@@ -36,48 +36,47 @@
 		$image=$r->PhPhoto;
 
 	// immagine così com'è nel db
-		$im=imagecreatefromstring(base64_decode($image));
-		//$im=imagecreatefromstring(($image));
-
-		if (!is_null($mode) && !is_null($val) && is_numeric($val) && $val>0)
-		{
-
-			$oldW=imagesx($im);
-			$oldH=imagesy($im);
-
-			$newW=0;
-			$newH=0;
-
-			switch ($mode)
+		if($im=imagecreatefromstring(base64_decode($image))) {
+			if (!is_null($mode) && !is_null($val) && is_numeric($val) && $val>0)
 			{
-				case 'max':
-					if ($oldW>=$oldH)
-					{
+
+				$oldW=imagesx($im);
+				$oldH=imagesy($im);
+
+				$newW=0;
+				$newH=0;
+
+				switch ($mode)
+				{
+					case 'max':
+						if ($oldW>=$oldH)
+						{
+							$newW=$val;
+							$newH=$newW*($oldH/$oldW);
+						}
+						else
+						{
+							$newH=$val;
+							$newW=$newH*($oldW/$oldH);
+						}
+						break;
+
+					case 'x':
 						$newW=$val;
 						$newH=$newW*($oldH/$oldW);
-					}
-					else
-					{
+						break;
+
+					case 'y':
+					//	print 'qui';exit;
 						$newH=$val;
 						$newW=$newH*($oldW/$oldH);
-					}
-					break;
+						break;
+				}
 
-				case 'x':
-					$newW=$val;
-					$newH=$newW*($oldH/$oldW);
-					break;
-
-				case 'y':
-				//	print 'qui';exit;
-					$newH=$val;
-					$newW=$newH*($oldW/$oldH);
-					break;
+				$newImage=imagecreatetruecolor($newW,$newH);
+				imagecopyresampled($newImage,$im,0,0,0,0,$newW,$newH,$oldW,$oldH);
+				$im=$newImage;
 			}
-
-			$newImage=imagecreatetruecolor($newW,$newH);
-			imagecopyresampled($newImage,$im,0,0,0,0,$newW,$newH,$oldW,$oldH);
-			$im=$newImage;
 		}
 	}
 	elseif($altnophoto)

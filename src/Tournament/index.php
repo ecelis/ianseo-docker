@@ -1,5 +1,4 @@
 <?php
-define('debug',false);	// settare a true per l'output di debug
 
 require_once(dirname(dirname(__FILE__)) . '/config.php');
 require_once('Common/Fun_FormatText.inc.php');
@@ -10,12 +9,13 @@ require_once('Common/Fun_Various.inc.php');
 
 checkACL(AclCompetition, AclReadWrite);
 
-$SetTypes=GetExistingTournamentTypes();
-
 if (!isset($_REQUEST['New']) && !CheckTourSession(true)) {
     print get_text('CrackError');
     exit;
 }
+
+$SetTypes=GetExistingTournamentTypes();
+
 $NumErr=0;
 if (isset($_REQUEST['Command'])) {
     if($_REQUEST['Command']=='AssignLookupEntry') {
@@ -212,8 +212,6 @@ if (isset($_REQUEST['Command'])) {
                                         }
                                         break;
                                     case ($Module=='ISK' and $Parameter=='Mode' and $Value):
-                                        setModuleParameter('ISK', 'StopAutoImport', '0');
-                                        setModuleParameter('ISK', 'StopPartialImport', '0');
                                         if($Value=='pro') {
                                             // MUST have a licence to work
                                             if(!isset($_REQUEST['Module']['ISK']['LicenseNumber']) or trim($_REQUEST['Module']['ISK']['LicenseNumber'])=='') {
@@ -222,12 +220,23 @@ if (isset($_REQUEST['Command'])) {
                                                 delModuleParameter('ISK', 'LicenseNumber');
                                             }
                                         }
-                                        $UseAPI = ($Value=='pro' ? 2 : ($Value=='live' ? 3 : 1));
-                                        if($Value=='pro' or $Value=='live') {
-                                            $tmp=array();
-                                            foreach(range(0,25) as $n) $tmp[$n]=1;
+                                        if($Value=='ng-pro') {
+                                            // MUST have a licence to work
+                                            if(!isset($_REQUEST['Module']['ISK-NG']['LicenseNumber']) or trim($_REQUEST['Module']['ISK-NG']['LicenseNumber'])=='') {
+                                                unset($_REQUEST['Module']['ISK-NG']['LicenseNumber']);
+                                                $Value='ng-lite';
+                                                delModuleParameter('ISK-NG', 'LicenseNumber');
+                                            }
+                                        }
+                                        $apiType=array('lite'=>1, 'pro'=>2, 'live'=>3, 'ng-lite'=>11, 'ng-pro'=>12, 'ng-live'=>13);
+                                        $UseAPI = $apiType[$Value];
+                                        if(($UseAPI % 10) != 1) {
+                                            $tmp=array_fill(0,25,1);
                                             setModuleParameter('ISK', 'StopAutoImport', $tmp);
                                             setModuleParameter('ISK', 'StopPartialImport', $tmp);
+                                        } else {
+                                            setModuleParameter('ISK', 'StopAutoImport', '0');
+                                            setModuleParameter('ISK', 'StopPartialImport', '0');
                                         }
                                         break;
                                     case ($Module=='ISK' and $Parameter=='LicenseNumber'):
@@ -236,6 +245,15 @@ if (isset($_REQUEST['Command'])) {
                                             $_REQUEST['Module']['ISK']['Mode']='lite';
                                             setModuleParameter('ISK', 'mode', 'lite');
                                             delModuleParameter('ISK', 'LicenseNumber');
+                                            continue 2;
+                                        }
+                                        break;
+                                    case ($Module=='ISK-NG' and $Parameter=='LicenseNumber'):
+                                        // MUST have a licence to work
+                                        if(isset($_REQUEST['Module']['ISK']['Mode']) and $_REQUEST['Module']['ISK']['Mode']=='ng-pro' and !trim($Value)) {
+                                            $_REQUEST['Module']['ISK']['Mode']='ng-lite';
+                                            setModuleParameter('ISK', 'mode', 'ng-lite');
+                                            delModuleParameter('ISK-NG', 'LicenseNumber');
                                             continue 2;
                                         }
                                         break;
@@ -250,11 +268,8 @@ if (isset($_REQUEST['Command'])) {
                     exit;
                 }
             }
-        }
-        else
-        {
-            $Arr_Values2Check_Index = array
-            (
+        } else {
+            $Arr_Values2Check_Index = array (
                 'd_ToCode' 			=> array('Func' => 'StrNotEmpty', 'Error' => true),
                 'd_ToName' 			=> array('Func' => 'StrNotEmpty', 'Error' => true),
                 'd_ToCommitee' 		=> array('Func' => 'StrNotEmpty', 'Error' => true),
@@ -271,84 +286,23 @@ if (isset($_REQUEST['Command'])) {
     }
 }
 
-//	$JS_SCRIPT = array(
-//		'<script type="text/javascript" src="../Common/ext-2.2/adapter/ext/ext-base.js"></script>',
-//		'<script type="text/javascript" src="../Common/ext-2.2/ext-all-debug.js"></script>',
-//		'<script type="text/javascript" src="../Common/ext-2.2/ext.util/ext.util.js"></script>',
-//		'<script type="text/javascript" src="Fun_AJAX_index.js"></script>',
-//		);
-//	if (isset($_REQUEST['New'])) {
-//		$JS_SCRIPT[]='<script type="text/javascript">';
-//		$JS_SCRIPT[]='	var LocalRuleAlert=\''.str_replace(array("\n","'"),array('\n',"\\'"),get_text('LocalRuleAlert','Tournament')).'\';';
-//		$JS_SCRIPT[]='	Ext.onReady';
-//		$JS_SCRIPT[]='	(';
-//		$JS_SCRIPT[]='		function()';
-//		$JS_SCRIPT[]='		{';
-//		$JS_SCRIPT[]='			Ext.get(\'d_ToType\').on(\'change\',selectLocRule);';
-//		if (isset($_REQUEST['Command']) && $_REQUEST['Command']=='SAVE')
-//		{
-//			$JS_SCRIPT[]='		selectLocRule("' . $_REQUEST['d_Rule']. '");';
-//		}
-//		$JS_SCRIPT[]='		},';
-//		$JS_SCRIPT[]='		window';
-//		$JS_SCRIPT[]='	);';
-//		$JS_SCRIPT[]='</script>';
-//	}
 
 	// nuova procedura
 
-	$JS_TMP = "\n\n\n".'<script>';
-	$JS_TMP.= 'var TxtSelectLocalRule = "'.get_text('Setup-Select','Install').'"; ';
-	$JS_TMP.= "\n\n\n".'var ToTypes = '.json_encode(SubruleEncode($SetTypes));
-//	foreach($SetTypes as $ToLocal=>$val) {
-//		$JS_TMP.= $ToLocal . ": ";
-//		$JS_TMP.= "{ descr: '{$val['descr']}', types: '{$val['types']}'";
-//
-//		if($val['rules']) {
-//			$JS_TMP.= ", rules: {";
-//			foreach($val['rules'] as $type=>$rules) {
-//				$JS_TMP.= " type$type: ['".implode("','", $rules)."'], ";
-//			}
-//			$JS_TMP=substr($JS_TMP, 0, -2);
-//			$JS_TMP.= "}";
-//		}
-//		$JS_TMP.= "}, ";
-//	}
-//	$JS_TMP=substr($JS_TMP, 0, -2);
-	$JS_TMP.= ';';
-
-	$JS_TMP.= '</script>';
-
-	$JS_SCRIPT=array($JS_TMP);
-	$JS_SCRIPT[] = '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>';
+    $JS_SCRIPT[] = '<script>var TxtSelectLocalRule = "'.get_text('Setup-Select','Install').'"; var ToTypes = '.json_encode(SubruleEncode($SetTypes)) . ';</script>';
+    $JS_SCRIPT[] = '<script>var isNew='. (isset($_REQUEST['New']) ? 'true':'false').';</script>';
+    $JS_SCRIPT[] = '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.6.0.min.js"></script>';
 	$JS_SCRIPT[] = '<script type="text/javascript" src="Fun_Index.js"></script>';
-	$JS_SCRIPT[] = '<style>
-        .TextInput {width:40rem;box-sizing: border-box;}
-        </style>';
+	$JS_SCRIPT[] = '<style>.TextInput {width:40rem;box-sizing: border-box;}</style>';
 
 	$PAGE_TITLE=get_text('TourMainInfo', 'Tournament');
 
 	include('Common/Templates/head.php');
 
-	/* DEBUG */
-	if (debug==true)
-	{
-		if (isset($_REQUEST['Command']))
-		{
-			if ($_REQUEST['Command']=='SAVE')
-			{
-				print '<pre>';
-				print_r($Arr_Values2Check_Index);
-				print '</pre>';
-			}
-		}
-	}
-	/* FINE DEBUG */
-
-	$Rs=NULL;
-	$MyRow=NULL;
+	$Rs = null;
+	$MyRow = null;
 	if (!isset($_REQUEST['New'])) {
-		$Select = "SELECT *, 
+        $Select = "SELECT *, 
 		        DATE_FORMAT(ToWhenFrom,'" . get_text('DateFmtDB') . "') AS DtFrom,
 		        DATE_FORMAT(ToWhenTo,'" . get_text('DateFmtDB') . "') AS DtTo, 
 			    DATE_FORMAT(ToWhenFrom,'%d') AS DtFromDay,
@@ -361,14 +315,12 @@ if (isset($_REQUEST['Command'])) {
 			    ToNumDist AS TtNumDist
 			FROM Tournament
 			WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " ";
-		$Rs=safe_r_sql($Select);
-		//print $Select;exit;
-	}
-
-	if ($Rs && safe_num_rows($Rs)==1) {
-		$MyRow=safe_fetch($Rs);
-		if($MyRow->ToOptions) $MyRow->ToOptions=unserialize($MyRow->ToOptions);
-	}
+        $Rs = safe_r_sql($Select);
+        if(safe_num_rows($Rs) == 1) {
+            $MyRow = safe_fetch($Rs);
+            if ($MyRow->ToOptions) $MyRow->ToOptions = unserialize($MyRow->ToOptions);
+        }
+    }
 ?>
 <form name="Frm" id="Frm" method="post" action="">
 <input type="hidden" name="Command" id="Command" value="SAVE">
@@ -377,14 +329,14 @@ if (isset($_REQUEST['Command'])) {
 <tr class="Divider"><td colspan="2"></td></tr>
 <tr><td class="Title" colspan="2"><?php echo get_text('TourMainInfo', 'Tournament') ?></td></tr>
 <tr>
-<th class="TitleLeft" width="15%"><?php print get_text('TourCode','Tournament');?></th>
+<th class="TitleLeft w-15"><?php print get_text('TourCode','Tournament');?></th>
 <td>
 <input <?php print ($Arr_Values2Check_Index['d_ToCode']['Error'] ? ' class="error"' : '');?> type="text" name="d_ToCode" class="TextInput" maxlength="8" value="<?php print ($Arr_Values2Check_Index['d_ToCode']['Error'] ? (isset($ToCode) ? $ToCode : '') : ($MyRow!=NULL ? $MyRow->ToCode : (isset($ToCode) ? $ToCode : '')));?>">
 </td>
 </tr>
 
 <tr>
-<th class="TitleLeft" width="15%"><?php print get_text('TourName','Tournament');?></th>
+<th class="TitleLeft w-15"><?php print get_text('TourName','Tournament');?></th>
 <td>
 <textarea <?php print ($Arr_Values2Check_Index['d_ToName']['Error'] ? ' class="error"' : '');?> name="d_ToName" rows="2" class="TextInput" >
 <?php
@@ -402,30 +354,24 @@ if (isset($_REQUEST['Command'])) {
 </td>
 </tr>
 <tr>
-<th class="TitleLeft" width="15%"><?php print get_text('TourShortName','Tournament');?></th>
+<th class="TitleLeft w-15"><?php print get_text('TourShortName','Tournament');?></th>
 <td>
 <input type="text" name="d_ToNameShort" class="TextInput" maxlength="60" value="<?php print ($MyRow!=NULL ? $MyRow->ToNameShort : (array_key_exists('d_ToNameShort',$_REQUEST) ? $_REQUEST['d_ToNameShort'] : ''));?>">
 </td>
 </tr>
 
 <tr>
-<th class="TitleLeft" width="15%"><?php print get_text('TourCommitee','Tournament');?></th>
+<th class="TitleLeft w-15"><?php print get_text('TourCommitee','Tournament');?></th>
 <td>
 <input <?php print ($Arr_Values2Check_Index['d_ToCommitee']['Error'] ? ' class="error"' : '');?> type="text" name="d_ToCommitee" class="TextInput" maxlength="10" value="<?php print ($Arr_Values2Check_Index['d_ToCommitee']['Error'] ? (array_key_exists('d_ToCommitee',$_REQUEST) ? $_REQUEST['d_ToCommitee'] : '') : ($MyRow!=NULL ? $MyRow->ToCommitee : (array_key_exists('d_ToCommitee',$_REQUEST) ? $_REQUEST['d_ToCommitee'] : '')));?>"><br><br>
 <textarea <?php print ($Arr_Values2Check_Index['d_ToComDescr']['Error'] ? ' class="error"' : '');?> name="d_ToComDescr" rows="2" class="TextInput">
 <?php
-	if ($Arr_Values2Check_Index['d_ToComDescr']['Error'])
-	{
+	if ($Arr_Values2Check_Index['d_ToComDescr']['Error']) {
 		print (array_key_exists('d_ToComDescr',$_REQUEST) ? $_REQUEST['d_ToComDescr'] : '');
-	}
-	else
-	{
-		if ($MyRow!=NULL)
-		{
+	} else {
+		if (!is_null($MyRow)){
 			print $MyRow->ToComDescr;
-		}
-		else
-		{
+		} else {
 			print (array_key_exists('d_ToComDescr',$_REQUEST) ? $_REQUEST['d_ToComDescr'] : '');
 		}
 	}
@@ -435,46 +381,40 @@ if (isset($_REQUEST['Command'])) {
 </tr>
 
 <tr>
-	<th class="TitleLeft" width="15%"><?php print get_text('TourIsOris','Tournament');?></th>
+	<th class="TitleLeft w-15"><?php print get_text('TourIsOris','Tournament');?></th>
 	<td>
 		<input type="checkbox" name="d_ORIS" <?php echo (!empty($_SESSION['ISORIS']) ? ' checked="checked"' : '');?>> <?php echo get_text('TourIsOrisDescr','Tournament'); ?>
 	</td>
 </tr>
 
-<?php
-
-// suppressed after Lausanne Masters Champs 2018
-//if (!isset($_REQUEST['New'])) {
-//	echo '<tr class="warning"><td colspan="2" class="Center">';
-//	echo '&nbsp;<strong>' . get_text('EventWillBeReset','Install',
-//			array(get_text('LocalRule','Tournament'), get_text('TourType','Tournament'), get_text('LocalSubRule','Tournament'))) . '</strong><br/>';
-//	echo '</td></tr>';
-//}
-
-?>
-
 <tr>
-	<th class="TitleLeft" width="15%"><?php print get_text('LocalRule','Tournament');?></th>
+	<th class="TitleLeft w-15"><?php print get_text('LocalRule','Tournament');?></th>
 	<td>
 		<select name="d_Rule" onchange="ChangeTourType(this.value)" id="d_Rule" <?php print ($Arr_Values2Check_Index['d_Rule']['Error'] ? ' class="error"' : '');?>>
 			<?php
 				if(count($SetTypes)>1)
 					echo '<option value="">--> '.get_text('Setup-Select','Install').' <--</option>';
-				foreach($SetTypes as $key => $val)
-					echo '<option value="'.$key.'"'.(!empty($MyRow) && $key==$MyRow->ToLocRule?' selected':'').'>'.$val['descr'].'</option>';
+				foreach($SetTypes as $key => $val) {
+                    echo '<option value="' . $key . '"' . (((!is_null($MyRow) and $key == $MyRow->ToLocRule) or (is_null($MyRow) and !empty($_REQUEST['d_Rule']) and $key == $_REQUEST['d_Rule'])) ? ' selected' : '') . '>' . $val['descr'] . '</option>';
+                }
 			?>
 		</select>
 	</td>
 </tr>
 
 <tr>
-<th class="TitleLeft" width="15%"><?php print get_text('TourType','Tournament');?></th>
+<th class="TitleLeft w-15"><?php print get_text('TourType','Tournament');?></th>
 <td>
 	<select name="d_ToType" onchange="ChangeLocalSubRule(this.value)" id="d_ToType" <?php print ($Arr_Values2Check_Index['d_ToType']['Error'] ? ' class="error"' : '');?>>
 <?php
 
 if(isset($_REQUEST['New'])) {
 	echo '<option value="">------</option>';
+    if(!empty($_REQUEST['d_Rule']) AND array_key_exists($_REQUEST['d_Rule'], $SetTypes)) {
+        foreach($SetTypes[$_REQUEST['d_Rule']]['types'] as $key => $val) {
+            echo '<option value="' . $key . '"' . ((!empty($_REQUEST['d_ToType']) and $key == $_REQUEST['d_ToType']) ? ' selected' : '') . '>' . $val . '</option>';
+        }
+    }
 } else {
 	foreach($SetTypes[$MyRow->ToLocRule]['types'] as $k=>$v) {
 		echo '<option value="'.$k.'"'.($k==$MyRow->ToType?' selected':'').'>'.$v.'</option>';
@@ -487,11 +427,17 @@ if(isset($_REQUEST['New'])) {
 </tr>
 
 <tr id="rowSubRule"<?php echo (isset($_REQUEST['New']) || !empty($SetTypes[$MyRow->ToLocRule]['rules'][$MyRow->ToType]) ? '' : ' style="display:none"'); ?>>
-	<th class="TitleLeft" width="15%"><?php echo get_text('LocalSubRule','Tournament'); ?></th>
+	<th class="TitleLeft w-15"><?php echo get_text('LocalSubRule','Tournament'); ?></th>
 	<td><select name="d_SubRule" id="d_SubRule">
 <?php
 
-if(!isset($_REQUEST['New']) and !empty($SetTypes[$MyRow->ToLocRule]['rules'][$MyRow->ToType])) {
+if(isset($_REQUEST['New']) and !empty($_REQUEST['d_Rule']) and !empty($_REQUEST['d_ToType']) and !empty($SetTypes[$_REQUEST['d_Rule']]['rules'][$_REQUEST['d_ToType']])) {
+    echo '<option value="">--</option>';
+    foreach($SetTypes[$_REQUEST['d_Rule']]['rules'][$_REQUEST['d_ToType']] as $k => $v) {
+        echo '<option value="'.($k+1).'"'.(($k+1)==$_REQUEST['d_SubRule'] ? ' selected' : '').'>'.get_text($v,'Install').'</option>';
+    }
+
+} else if(!isset($_REQUEST['New']) and !empty($SetTypes[$MyRow->ToLocRule]['rules'][$MyRow->ToType])) {
 	echo '<option value="">--</option>';
 	foreach($SetTypes[$MyRow->ToLocRule]['rules'][$MyRow->ToType] as $k => $v) {
 		echo '<option value="'.($k+1).'"'.($v==$MyRow->ToTypeSubRule?' selected':'').'>'.get_text($v,'Install').'</option>';
@@ -511,7 +457,7 @@ if(!isset($_REQUEST['New']) and !empty($SetTypes[$MyRow->ToLocRule]['rules'][$My
 
 if (!isset($_REQUEST['New'])) {
 	// the lookup table should NOT appear in new tournaments
-    echo '<tr><th class="TitleLeft" width="15%">'. get_text('LookupTable','Tournament'). '</th><td>';
+    echo '<tr><th class="TitleLeft w-15">'. get_text('LookupTable','Tournament'). '</th><td>';
     echo '<input type="hidden" id="oldToIocCode" value="'.$MyRow->ToIocCode.'">';
 	echo '<select name="d_ToIocCode" id="d_ToIocCode" onchange="ChangeLookUpCombo();"><option></option>';
 	$q = safe_r_sql("SELECT * FROM LookUpPaths order by LupIocCode='FITA' desc, LupIocCode");
@@ -531,7 +477,7 @@ if (!isset($_REQUEST['New'])) {
 
 ?>
 <tr>
-<th class="TitleLeft" width="15%"><?php print get_text('TourWhere','Tournament');?></th>
+<th class="TitleLeft w-15"><?php print get_text('TourWhere','Tournament');?></th>
 <td>
 <textarea <?php print ($Arr_Values2Check_Index['d_ToWhere']['Error'] ? ' class="error"' : '');?> name="d_ToWhere" rows="2" class="TextInput">
 <?php
@@ -546,7 +492,7 @@ if (!isset($_REQUEST['New'])) {
 </tr>
 
 <tr>
-<th class="TitleLeft" width="15%"><?php print get_text('CompVenue','Tournament');?></th>
+<th class="TitleLeft w-15"><?php print get_text('CompVenue','Tournament');?></th>
 <td>
 <input type="text" name="d_ToVenue" class="TextInput" value="<?php
 if (!$MyRow) {
@@ -560,8 +506,8 @@ if (!$MyRow) {
 </tr>
 
 <tr>
-    <th class="TitleLeft" width="15%"><?php echo get_text('Natl-Nation','Tournament'); ?></th>
-    <td><select name="d_ToCountry" <?php print ($Arr_Values2Check_Index['d_ToCountry']['Error'] ? ' class="error"' : '');?>><option value="">--</option>
+    <th class="TitleLeft w-15"><?php echo get_text('Natl-Nation','Tournament'); ?></th>
+    <td><select id="d_ToCountry" name="d_ToCountry" <?php print ($Arr_Values2Check_Index['d_ToCountry']['Error'] ? ' class="error"' : '');?>><option value="">--</option>
             <?php
                 foreach(get_Countries() as $k => $v) {
                     echo '<option value="'.$k.'"'.(($MyRow and $k==$MyRow->ToCountry) ? ' selected':'').'>'.$k . ' - ' .$v.'</option>';
@@ -571,7 +517,7 @@ if (!$MyRow) {
 </tr>
 
 <tr>
-<th class="TitleLeft" width="15%"><?php print get_text('TourTimeZone','Tournament');?></th>
+<th class="TitleLeft w-15"><?php print get_text('TourTimeZone','Tournament');?></th>
 <td>
 <input type="text" <?php print ($Arr_Values2Check_Index['d_ToTimeZone']['Error'] ? ' class="error"' : '');?> name="d_ToTimeZone" rows="2" cols="40" value="
 <?php
@@ -586,7 +532,7 @@ if (!$MyRow) {
 </tr>
 
 <tr>
-<th class="TitleLeft" width="15%"><?php print get_text('TourWhen','Tournament');?></th>
+<th class="TitleLeft w-15"><?php print get_text('TourWhen','Tournament');?></th>
 <td>
 <?php
 
@@ -619,17 +565,17 @@ if($MyRow) {
 
 // Date seting is ALWAYS ISO: yyyy-mm-dd
 $tmpFromDay = '<select ' . ($Arr_Values2Check_Index['x_ToWhenFrom']['Error'] ? ' class="error"' : '').' name="xx_ToWhenFromDay">';
-for ($i=1;$i<=31;++$i) $tmpFromDay.= '<option value="' . str_pad($i,2,'0',STR_PAD_LEFT) . '"' . ($i==$FromDay ? ' selected' : '') . '>' . sprintf('%0d', $i) . '</option>' . "\n";
+for ($i=1;$i<=31;++$i) $tmpFromDay.= '<option value="' . str_pad($i,2,'0',STR_PAD_LEFT) . '"' . ($i==$FromDay ? ' selected' : '') . '>' . sprintf('%0d', $i) . '</option>';
 $tmpFromDay.= '</select>';
 $tmpToDay = '<select ' . ($Arr_Values2Check_Index['x_ToWhenTo']['Error'] ? ' class="error"' : '') . ' name="xx_ToWhenToDay">';
-for ($i=1;$i<=31;++$i) $tmpToDay.= '<option value="' . str_pad($i,2,'0',STR_PAD_LEFT) . '"' . ($i==$ToDay ? ' selected' : '') . '>' . sprintf('%0d', $i) . '</option>' . "\n";
+for ($i=1;$i<=31;++$i) $tmpToDay.= '<option value="' . str_pad($i,2,'0',STR_PAD_LEFT) . '"' . ($i==$ToDay ? ' selected' : '') . '>' . sprintf('%0d', $i) . '</option>';
 $tmpToDay.= '</select>';
 
 $tmpFromMonth = '<select ' . ($Arr_Values2Check_Index['x_ToWhenFrom']['Error'] ? ' class="error"' : '') . ' name="xx_ToWhenFromMonth">';
-for ($i=1;$i<=12;++$i) $tmpFromMonth.= '<option value="' . str_pad($i,2,'0',STR_PAD_LEFT) . '"' . ($i==$FromMonth ? ' selected' : '') . '>' . sprintf('%0d', $i) . '</option>' . "\n";
+for ($i=1;$i<=12;++$i) $tmpFromMonth.= '<option value="' . str_pad($i,2,'0',STR_PAD_LEFT) . '"' . ($i==$FromMonth ? ' selected' : '') . '>' . sprintf('%0d', $i) . '</option>';
 $tmpFromMonth.= '</select>';
 $tmpToMonth = '<select ' . ($Arr_Values2Check_Index['x_ToWhenTo']['Error'] ? ' class="error"' : '') . ' name="xx_ToWhenToMonth">';
-for ($i=1;$i<=12;++$i) $tmpToMonth.= '<option value="' . str_pad($i,2,'0',STR_PAD_LEFT) . '"' . ($i==$ToMonth ? ' selected' : '') . '>' . sprintf('%0d', $i) . '</option>' . "\n";
+for ($i=1;$i<=12;++$i) $tmpToMonth.= '<option value="' . str_pad($i,2,'0',STR_PAD_LEFT) . '"' . ($i==$ToMonth ? ' selected' : '') . '>' . sprintf('%0d', $i) . '</option>';
 $tmpToMonth.= '</select>';
 
 $ToFromLen=max(strlen(get_text('From','Tournament')), strlen(get_text('To','Tournament')));
@@ -653,7 +599,7 @@ echo get_text('To','Tournament')
 
 <?php // Settaggio carta A4/LETTER ?>
 <tr>
-<th class="TitleLeft" width="15%"><?php print get_text('PaperSize','Tournament');?></th>
+<th class="TitleLeft w-15"><?php print get_text('PaperSize','Tournament');?></th>
 <td>
 <?php
 	$ref='';
@@ -671,7 +617,7 @@ echo get_text('To','Tournament')
 
 <?php // Settaggio Currency ?>
 <tr>
-<th class="TitleLeft" width="15%"><?php print get_text('StrCurrency','Tournament');?></th>
+<th class="TitleLeft w-15"><?php print get_text('StrCurrency','Tournament');?></th>
 <td>
 <input type="text" name="xx_ToCurrency" value="<?php echo ($MyRow!=NULL && $NumErr==0 && $MyRow->ToCurrency?$MyRow->ToCurrency: (isset($_REQUEST['xx_ToCurrency']) ? $_REQUEST['xx_ToCurrency'] : '€')); ?>" size="5">
 </td>
@@ -681,7 +627,7 @@ echo get_text('To','Tournament')
 include_once('Common/GlobalsLanguage.inc.php');
 ?>
 <tr>
-<th class="TitleLeft" width="15%"><?php print get_text('PrintLanguage','Tournament');?></th>
+<th class="TitleLeft w-15"><?php print get_text('PrintLanguage','Tournament');?></th>
 <td>
 <select name="xx_ToPrintLang">
 <option value=""><?php print get_text('SetByUser','Tournament');?></option>
@@ -701,7 +647,7 @@ foreach($Lingue as $key=>$val) {
 
 <?php // Settaggio PrintoutCharset ?>
 <tr>
-<th class="TitleLeft" width="15%"><?php print get_text('PrintCharset','Tournament');?></th>
+<th class="TitleLeft w-15"><?php print get_text('PrintCharset','Tournament');?></th>
 <td>
 <?php
 	$options=array(
@@ -732,7 +678,7 @@ foreach($Lingue as $key=>$val) {
 
 <?php // Settaggio Uso HHT ?>
 <tr>
-<th class="TitleLeft" width="15%"><?php print get_text('EnableHHT','HTT');?></th>
+<th class="TitleLeft w-15"><?php print get_text('EnableHHT','HTT');?></th>
 <td>
 <?php
 if ($MyRow!=NULL && $NumErr==0) {
@@ -764,7 +710,7 @@ if(file_exists($CFG->DOCUMENT_PATH.'Api/index.php')) {
     if($IskType) {
 
 	    echo '<tr>
-            <th class="TitleLeft" width="15%">'.get_text('ISK-EnableScore','Api').'</th>
+            <th class="TitleLeft w-15">'.get_text('ISK-EnableScore','Api').'</th>
                 <td>
                     <select name="Module[ISK][Mode]" onchange="ChangeIskConfig()" id="IskSelect">
                     <option value="">'.get_text('No').'</option>';
@@ -791,7 +737,7 @@ if (!isset($_REQUEST['New'])) {
     print '<a class="Link" href="ManSubClass.php">' . get_text('ManSubClasses','Tournament') . '</a> - ';
     print '<a class="Link" href="ManageAdvancedParams.php">' . get_text('AdvancedParams','Tournament') . '</a>';
     print '</td>';
-    print '</tr>' . "\n";
+    print '</tr>';
 }
 ?>
 <tr><td colspan="2" class="Center">
@@ -799,12 +745,9 @@ if (!isset($_REQUEST['New'])) {
 <input type="reset" value="<?php print get_text('CmdCancel');?>">
 <br><br>
 <?php
-	if (CheckTourSession())
-	{
+	if (CheckTourSession()) {
 		print '<a class="Link" href="../Main.php">' . get_text('Close') . '</a>';
-	}
-	else
-	{
+	} else {
 		print '<a class="Link" href="../index.php">' . get_text('CmdCancel') . '</a>';
 	}
 ?>
@@ -812,6 +755,7 @@ if (!isset($_REQUEST['New'])) {
 </table>
 </form>
 <script>ChangeIskConfig()</script>
+
 <?php
 	include('Common/Templates/tail.php');
 

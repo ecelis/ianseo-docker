@@ -35,28 +35,22 @@ function GetSessionsTypes()
  *
  * @return mixed: array con l'elenco delle sessioni con la descrizione impostata in base a $extend e l'id SesOrder_SesType
  */
-function GetSessions($type=null,$extend=false,$ids=null,$tour=null)
-{
+function GetSessions($type=null,$extend=false,$ids=null,$tour=null) {
 	$tour=(!is_null($tour) ? $tour : $_SESSION['TourId']);
 
 	$sessionsTypes=GetSessionsTypes();
 
 	$filter="SesTournament=" . StrSafe_DB($tour) . " ";
 
-	if (is_null($ids))
-	{
-		if (!is_null($type) && array_key_exists($type,$sessionsTypes))
-		{
+	if (is_null($ids)) {
+		if (!is_null($type) && array_key_exists($type,$sessionsTypes)) {
 			$filter.="AND SesType='" . $type . "' ";
 		}
-	}
-	else
-	{
+	} else {
 		if (!is_array($ids)) $ids=array($ids);
 
 		$in=array();
-		for ($i=0;$i<count($ids);++$i)
-		{
+		for ($i=0;$i<count($ids);++$i) {
 			$in[]=StrSafe_DB($ids[$i]);
 		}
 
@@ -67,41 +61,33 @@ function GetSessions($type=null,$extend=false,$ids=null,$tour=null)
 
 	$q="SELECT * FROM Session WHERE {$filter} ORDER BY locate(SesType, 'QEF'), SesOrder ";
 	$r=safe_r_sql($q);
-	if ($r && safe_num_rows($r)>0)
-	{
-		while ($row=safe_fetch($r))
-		{
+	if ($r && safe_num_rows($r)>0) {
+		while ($row=safe_fetch($r)) {
 			$tmp=$row;
 
 			$tmp->Id=$row->SesOrder.'_'.$row->SesType;
 
-			if ($row->SesName!='')
-			{
+			if ($row->SesName!='') {
 				$tmp->Descr=$row->SesOrder.': ' . $row->SesName;
-				if ($extend)
-				{
+				if ($extend) {
 					$tmp->Descr=$row->SesName . ' (' . $sessionsTypes[$row->SesType] . ' ' . $row->SesOrder .')';
 				}
-			}
-			else
-			{
+			} else {
 				$tmp->Descr=$tmp->SesOrder;
 			}
 			$ret[]=$tmp;
-
 		}
 	}
 
 	return $ret;
 }
 
-	function GetNumQualSessions()
-	{
-		$q="SELECT ToNumSession FROM Tournament WHERE ToId={$_SESSION['TourId']}";
-		$r=safe_r_sql($q);
+function GetNumQualSessions() {
+    $q="SELECT ToNumSession FROM Tournament WHERE ToId={$_SESSION['TourId']}";
+    $r=safe_r_sql($q);
 
-		return safe_fetch($r)->ToNumSession;
-	}
+    return safe_fetch($r)->ToNumSession;
+}
 
 /**
  * CreateElimRows().
@@ -231,11 +217,21 @@ function GetSessions($type=null,$extend=false,$ids=null,$tour=null)
             $q="";
             if ($type==0 || $type==3) {
                 if ($team==0) {
-                    $q = "UPDATE Individuals  SET IndRankFinal=0, IndTimestampFinal='{$date}' " .
-                        "WHERE IndTournament={$ToId} AND IndEvent='{$event}'";
+                    $q = "UPDATE Individuals
+						inner join Events on EvTournament=IndTournament and EvTeamEvent=0 and EvCode=IndEvent
+                    	SET IndRankFinal=0, IndTimestampFinal='{$date}'
+                    	WHERE IndTournament={$ToId} AND IndEvent='{$event}'";
+					if($type==3) {
+						$q.=" and IndRankFinal between EvFirstQualified and EvNumQualified+EvFirstQualified-1";
+					}
                 } else {
-                    $q = "UPDATE Teams SET TeFinal=0, TeRankFinal=0, TeTimeStampFinal='{$date}' " .
-                        "WHERE TeTournament={$ToId} AND TeEvent='{$event}' AND TeFinEvent=1 ";
+                    $q = "UPDATE Teams
+						inner join Events on EvTournament=TeTournament and EvTeamEvent=1 and EvCode=TeEvent
+						SET TeFinal=0, TeRankFinal=0, TeTimeStampFinal='{$date}' 
+                    	WHERE TeTournament={$ToId} AND TeEvent='{$event}' AND TeFinEvent=1";
+					if($type==3) {
+						$q.=" and TeRankFinal between EvFirstQualified and EvNumQualified+EvFirstQualified-1";
+					}
                 }
             } elseif ($type==1 AND $team==0) {
                 $q = "UPDATE Individuals INNER JOIN Eliminations ON IndTournament=ElTournament AND IndId=ElId AND IndEvent=ElEventCode AND ElElimPhase=0 SET IndRankFinal=0, IndTimestampFinal='{$date}' ".
@@ -257,7 +253,7 @@ function getArrowEnds($Session=1, $Dist=0, $TourId=0) {
         . ($Dist ? " and DiDistance=$Dist " : '')
     );
     while ($r = safe_fetch($q)) {
-        $ret[$r->DiDistance] = array('ends' => ($r->DiEnds ? $r->DiEnds : 12), 'arrows' => ($r->DiArrows ? $r->DiArrows : 3));
+        $ret[$r->DiDistance] = array('ends' => ($r->DiEnds ?: 12), 'arrows' => ($r->DiArrows ?: 3));
     }
 
 	return $ret;

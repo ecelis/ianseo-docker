@@ -372,21 +372,21 @@ function GetRows($Id=null,$OrderBy=null,$AllTargets=false)
 				'firstname' => stripslashes($MyRow->EnFirstName),
 				'name' => stripslashes($MyRow->EnName),
 				'tvname' => stripslashes($MyRow->EnOdfShortname),
-				'email' => stripslashes($MyRow->EdEmail),
+				'email' => stripslashes($MyRow->EdEmail ?? ''),
 				'sex_id' => $MyRow->EnSex,
 				'sex' =>  $MyRow->EnId!==null ? $MyRow->EnSex==0 ? get_text('ShortMale','Tournament') : get_text('ShortFemale','Tournament') : '',
 				'ctrl_code' => $MyRow->EnCtrlCode,
 				'dob' => $MyRow->Dob,
 				'country_id' => $MyRow->EnCountry,
 				'country_code' => $MyRow->CoCode,
-				'country_name' => stripslashes($MyRow->CoName),
+				'country_name' => stripslashes($MyRow->CoName ?? ''),
 				'sub_team' => $MyRow->EnSubTeam,
 				'country_id2' => $MyRow->EnCountry2,
 				'country_code2' => $MyRow->CoCode2,
-				'country_name2' => stripslashes($MyRow->CoName2),
+				'country_name2' => stripslashes($MyRow->CoName2 ?? ''),
 				'country_id3' => $MyRow->EnCountry3,
 				'country_code3' => $MyRow->CoCode3,
-				'country_name3' => stripslashes($MyRow->CoName3),
+				'country_name3' => stripslashes($MyRow->CoName3 ?? ''),
 				'division' => $MyRow->EnDivision,
 				'class' => $MyRow->EnClass,
 				'ageclass' => $MyRow->EnAgeClass,
@@ -566,4 +566,4 @@ function getAllDivCl()
 
 	return array($divs,$agecls,$cls);
 }
-?>
+

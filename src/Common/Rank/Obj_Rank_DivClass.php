@@ -87,8 +87,7 @@
  *
  * Estende Obj_Rank
  */
-	class Obj_Rank_DivClass extends Obj_Rank
-	{
+	class Obj_Rank_DivClass extends Obj_Rank{
 	/**
 	 * safeFilter()
 	 * Protegge con gli apici gli elementi di $this->opts['events'] e genera il pezzo di query per filtrare
@@ -97,65 +96,66 @@
 	 */
 		protected function safeFilter()
 		{
-			$filter="";
+			$filter=[];
 
 			if (!empty($this->opts['divs'])) {
 				if(is_array($this->opts['divs'])) {
-					$tmp=array();
-					foreach ($this->opts['divs'] as $e) $tmp[]=StrSafe_DB($e);
-					sort($tmp);
-					$filter.=" AND EnDivision IN (" . implode(',',$tmp). ") ";
+					$filter[]="EnDivision IN (" . implode(',', StrSafe_DB($this->opts['divs'])). ") ";
 				} else {
-					$filter.=" AND EnDivision LIKE " . StrSafe_DB($this->opts['divs']) ;
+					$filter[]="EnDivision LIKE " . StrSafe_DB($this->opts['divs']) ;
 				}
 			}
 			if (!empty($this->opts['cls'])) {
 				if(is_array($this->opts['cls'])) {
-					$tmp=array();
-					foreach ($this->opts['cls'] as $e) $tmp[]=StrSafe_DB($e);
-					sort($tmp);
-					$filter.=" AND EnClass IN (" . implode(',',$tmp). ") ";
+					$filter[]="EnClass IN (" . implode(',', StrSafe_DB($this->opts['cls'])). ") ";
 				} else {
-					$filter.=" AND EnClass LIKE " . StrSafe_DB($this->opts['cls']) ;
+					$filter[]="EnClass LIKE " . StrSafe_DB($this->opts['cls']) ;
 				}
 			}
 
 			if (!empty($this->opts['events'])) {
 				// events overrides Div/Class selection
 				if (is_array($this->opts['events'])) {
-					$tmp=array();
-					foreach ($this->opts['events'] as $e) $tmp[]=StrSafe_DB($e);
-					sort($tmp);
-					$filter="AND CONCAT(EnDivision,EnClass) IN (" . implode(',',$tmp) . ")";
+					$filter[]="CONCAT(EnDivision,EnClass) IN (" . implode(',', StrSafe_DB($this->opts['events'])) . ")";
 				} else {
-					$filter="AND CONCAT(EnDivision,EnClass) LIKE '" . $this->opts['events'] . "' ";
+					$filter[]="CONCAT(EnDivision,EnClass) LIKE '" . $this->opts['events'] . "' ";
 				}
 			}
 
 			if (!empty($this->opts['enid'])) {
-				$filter.=" AND EnId=" . intval($this->opts['enid']) . " ";
+				$filter[]="EnId=" . intval($this->opts['enid']) . " ";
 			}
 
 			if (!empty($this->opts['encode'])) {
 				if (is_array($this->opts['encode'])) {
-					$tmp=array();
-					foreach ($this->opts['encode'] as $e) $tmp[]=StrSafe_DB($e);
-					sort($tmp);
-					$filter="AND EnCode IN (" . implode(',',$tmp) . ")";
+					$filter[]="EnCode IN (" . implode(',', StrSafe_DB($this->opts['encode'])) . ")";
 				} else {
-					$filter="AND EnCode = " . StrSafe_DB($this->opts['encode']) . " ";
+					$filter[]="EnCode = " . StrSafe_DB($this->opts['encode']) . " ";
 				}
 			}
 
 			if (!empty($this->opts['coid'])) {
-				$filter.=" AND EnCountry=" . intval($this->opts['coid'])  . " " ;
+				$filter[]="EnCountry=" . intval($this->opts['coid'])  . " " ;
+			}
+
+			if (!empty($this->opts['country'])) {
+				$filter[]="CoCode=" . StrSafe_DB($this->opts['country'])  . " " ;
 			}
 
 			if (!empty($this->opts['sessions'])) {
-				$filter.=" AND QuSession in (" . implode($this->opts['sessions'])  . ") " ;
+				$filter[]="QuSession in (" . implode(',', $this->opts['sessions'])  . ") " ;
 			}
 
-			return $filter;
+			if (!empty($this->opts['encodeEvents'])) {
+				$filter[]="concat_ws('|', EnCode, EnDivision, EnClass) IN (" . implode(',', StrSafe_DB($this->opts['encodeEvents'])) . ")";
+			}
+
+			if (empty($this->opts['includeAll']) and empty($this->opts['forceArchers'])) {
+				$filter[]= '(QuHits>0 or QuScore>0)';
+			}
+
+			$ret=implode(' AND ', $filter);
+			return ($ret ? ' AND '.$ret : '');
 		}
 
 		public function __construct($opts=null)
@@ -218,8 +218,8 @@
 
 			$q="
 				SELECT
-					EnId, EnCode, EnSex, EnNameOrder, upper(EnIocCode) EnIocCode, EnName AS Name, upper(EnFirstName) AS FirstNameUpper, EnFirstName AS FirstName, SUBSTRING(QuTargetNo,1,1) AS Session,
-					SUBSTRING(QuTargetNo,2) AS TargetNo, FlContAssoc,
+					EnId, EnCode, EnSex, EnNameOrder, upper(EnIocCode) EnIocCode, EnName AS Name, upper(EnFirstName) AS FirstNameUpper, EnFirstName AS FirstName, QuSession AS Session, if(SesName='', concat('Session ', SesOrder), SesName) as SesName,
+					SUBSTRING(QuTargetNo,2) AS TargetNo, FlContAssoc, ScDescription,
 					CoId, CoCode, CoName, CoMaCode, CoCaCode, EnClass, EnDivision,EnAgeClass, EnSubClass, ClDescription, DivDescription,
 					IFNULL(Td1,'.1.') as Td1, IFNULL(Td2,'.2.') as Td2, IFNULL(Td3,'.3.') as Td3, IFNULL(Td4,'.4.') as Td4, IFNULL(Td5,'.5.') as Td5, IFNULL(Td6,'.6.') as Td6, IFNULL(Td7,'.7.') as Td7, IFNULL(Td8,'.8.') as Td8,
 					QuD1Score, QuD1Rank, QuD2Score, QuD2Rank, QuD3Score, QuD3Rank, QuD4Score, QuD4Rank,
@@ -227,8 +227,8 @@
 					QuD1Gold, QuD2Gold, QuD3Gold, QuD4Gold, QuD5Gold, QuD6Gold, QuD7Gold, QuD8Gold,
 					QuD1Xnine, QuD2Xnine, QuD3Xnine, QuD4Xnine, QuD5Xnine, QuD6Xnine, QuD7Xnine, QuD8Xnine,
 					QuD1ArrowString, QuD2ArrowString, QuD3ArrowString, QuD4ArrowString, QuD5ArrowString, QuD6ArrowString, QuD7ArrowString, QuD8ArrowString,
-					{$tmp} AS Arrows_Shot, ToNumEnds, DiEnds, DiArrows,
-					QuIrmType, IrmType, IrmShowRank,
+					{$tmp} AS Arrows_Shot, ToNumEnds, DiEnds, DiArrows, FdiDetails,
+					QuIrmType, IrmType, IrmShowRank, QuNotes,
 					{$MyRank} AS `Rank`, " . (!empty($comparedTo) ? 'IFNULL(QopClRank,0)' : '0') . " as OldRank, Qu{$dd}Score AS Score, Qu{$dd}Gold AS Gold,Qu{$dd}Xnine AS XNine, Qu{$dd}Hits AS Hits, ";
 
 			if(!empty($this->opts['runningDist']) && $this->opts['runningDist']>0)
@@ -246,7 +246,7 @@
 			else {
 				$q .= "0 AS OrderScore, 0 AS OrderGold, 0 AS OrderXnine, ";
 			}
-			$q .= "	QuTimestamp, ToGolds AS GoldLabel, ToXNine AS XNineLabel, ToNumDist,ToDouble
+			$q .= "	QuTimestamp, IF(TfGolds!='',TfGolds,ToGolds) AS GoldLabel, IF(TfXNine!='',TfXNine,ToXNine) AS XNineLabel, ToNumDist,ToDouble, hasShootOff
 				FROM Tournament
 				INNER JOIN Entries ON ToId=EnTournament
 				INNER JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament AND EnTournament={$this->tournament}
@@ -254,12 +254,27 @@
 				inner join IrmTypes on IrmId=QuIrmType
 				INNER JOIN Classes ON EnClass=ClId AND ClTournament=EnTournament AND ClAthlete=1
 				INNER JOIN Divisions ON EnDivision=DivId AND DivTournament=EnTournament AND DivAthlete=1
+				inner join (
+					select {$this->SoColumn} as hasShootOff, EnDivision as SoDivision, EnClass as SoClass 
+					from Qualifications 
+					inner join Entries on EnId=QuId and EnTournament={$this->tournament}
+					group by EnDivision, EnClass
+					) hasSO on SoDivision=enDivision and SoClass=EnClass 
+				LEFT JOIN TargetFaces ON TfTournament=EnTournament and EnTargetFace=TfId
+				left join Session on QuSession=SesOrder and SesTournament={$this->tournament} and SesType='Q'
+				left join SubClass on ScId=EnSubclass and ScTournament={$this->tournament}
 				LEFT JOIN TournamentDistances ON ToType=TdType AND TdTournament=ToId AND CONCAT(TRIM(EnDivision),TRIM(EnClass)) LIKE TdClasses ";
 			if(!empty($comparedTo))
 				$q .= "LEFT JOIN QualOldPositions ON EnId=QopId AND QopHits=" . ($comparedTo>0 ? $comparedTo :  "(SELECT MAX(QopHits) FROM QualOldPositions WHERE QopId=EnId AND QopHits!=QuHits) ") . " ";
 			$q .= "	LEFT JOIN Flags ON FlIocCode='FITA' and FlCode=CoCode and FlTournament=ToId
 				left join DistanceInformation on EnTournament=DiTournament and DiSession=1 and DiDistance=1 and DiType='Q'
-				WHERE EnAthlete=1 AND EnIndClEvent=1 AND EnStatus <= 1 AND QuScore != 0 AND ToId={$this->tournament}
+				left join (
+					select DiSession as FdiSession, group_concat(concat_ws('|', DiDistance, DiEnds, DiArrows) order by DiDistance separator ',') as FdiDetails
+					from DistanceInformation
+					where DiTournament={$this->tournament} and DiType='Q'
+					group by DiSession
+					) FullDistanceInfo on FdiSession=QuSession
+				WHERE EnAthlete=1 AND EnIndClEvent=1 AND EnStatus <= 1 AND ToId={$this->tournament}
 					{$filter}
 				ORDER BY DivViewOrder, EnDivision, ClViewOrder, EnClass, if(IrmShowRank=1, 0, QuIrmType), ";
 			if(!empty($this->opts['runningDist']) && $this->opts['runningDist']>0)
@@ -321,11 +336,23 @@
 					// qui ci sono le descrizioni dei campi
 						$distFields=array();
 						$distValid=$myRow->ToNumDist;
+
+						// adding the full distance info here
+						$FullDistInfo=[];
+						foreach(explode(',',$myRow->FdiDetails) as $d) {
+							$t=explode('|', $d);
+							$FullDistInfo['dist_' . $t[0]]=[
+								'ends'=>$t[1],
+								'arr'=>$t[2],
+							];
+						}
+
 						foreach(range(1,8) as $n)
 						{
 							$distFields['dist_' . $n]=$myRow->{'Td' . $n};
-							if($distFields['dist_' . $n]=='-')
+							if($distFields['dist_' . $n]=='-') {
 								$distValid--;
+							}
 						}
 
 						$fields=array(
@@ -362,8 +389,10 @@
 								'arrowsShot'=> array(),
 								'maxArrows' => ($myRow->DiEnds ? $myRow->DiEnds*$myRow->DiArrows : $myRow->ToNumEnds*3),
 								'sesArrows'=> array(),
+								'distanceInfo'=>$FullDistInfo,
 								'printHeader' => "",
-								'fields' => $fields
+								'fields' => $fields,
+								'shootOffStarted'=>$myRow->hasShootOff,
 							),
 							'records' => array()
 						);
@@ -398,6 +427,7 @@
 						'id'  => $myRow->EnId,
 						'bib' => $myRow->EnCode,
 						'session' => $myRow->Session,
+						'sessionName' => $myRow->SesName,
 						'target' => $myRow->TargetNo,
 						'athlete' => $myRow->FirstNameUpper . ' ' . $myRow->Name,
 						'familyname' => $myRow->FirstName,
@@ -409,6 +439,7 @@
 						'class' => $myRow->EnClass,
 						'ageclass' => $myRow->EnAgeClass,
 						'subclass' => $myRow->EnSubClass,
+						'subclassName' => $myRow->ScDescription,
 						'countryId' => $myRow->CoId,
 						'countryCode' => $myRow->CoCode,
 						'contAssoc' => $myRow->CoCaCode,
@@ -424,6 +455,7 @@
 						'arrowsShot' => $myRow->Arrows_Shot,
 						'irm' => $myRow->QuIrmType,
 						'irmText' => $myRow->IrmType,
+                        'notes' => $myRow->QuNotes,
 						'recordGap' => ($myRow->Arrows_Shot*10)-$myRow->Score,
 					);
 

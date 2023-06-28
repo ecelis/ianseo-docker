@@ -45,7 +45,7 @@
 		//$msg=get_text('Error');
 	}
 
-	runJack("FinLiveUpdate", $_SESSION['TourId'], array("Event"=>$event ,"Team"=>$TeamEvent ,"MatchNo"=>$match ,"TourId"=>$_SESSION['TourId']));
+	runJack("FinLiveUpdate", $_SESSION['TourId'], array("Event"=>$event, "Team"=>$TeamEvent, "MatchNo"=>$match, "IsLive"=>$JSON['isLive'], "TourId"=>$_SESSION['TourId']));
 
 	if($isJSON) {
 		$JSON['msg']=$msg;

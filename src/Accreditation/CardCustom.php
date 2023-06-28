@@ -189,9 +189,9 @@ while ($MyRow=safe_fetch($Rs)) {
 
 	foreach($Elements as $Element) {
 		unset($Text);
-		$ElX=$StartX+$Element->Options['X'];
-		$ElY=$StartY+$Element->Options['Y'];
-		$ElH=$Element->Options['H'];
+		$ElX=$StartX+($Element->Options['X']??0);
+		$ElY=$StartY+($Element->Options['Y']??0);
+		$ElH=($Element->Options['H']??0);
 
 		switch($Element->IceType) {
 			case 'ToLeft':
@@ -376,7 +376,7 @@ while ($MyRow=safe_fetch($Rs)) {
 					$Text[]=trim($l);
 				}
 
-				$ElH=$Element->Options['H']/count($Text);
+				$ElH=($Element->Options['H']??0)/count($Text);
 			case 'CompName':
 				if(!isset($Text)) $Text=array($MyRow->ToName);
 			case 'CompDetails':
@@ -529,14 +529,16 @@ while ($MyRow=safe_fetch($Rs)) {
 					$Text=array(trim($txt));
 				}
 
-                if(strpos($Element->Options['Size'],'-')!==false) {
-                    list($fSize,$fSpace) = explode('-',$Element->Options['Size']);
-                    $Element->Options['Size'] = $fSize;
-                    $pdf->setFontSpacing($fSpace);
-                } else {
-                    $pdf->setFontSpacing(0);
-                }
-				$pdf->SetFont($Element->Options['FontFamily'], $Element->Options['FontStyle'], $Element->Options['Size']);
+				if($Element->Options) {
+	                if(strpos($Element->Options['Size']??'','-')!==false) {
+	                    list($fSize,$fSpace) = explode('-',$Element->Options['Size']);
+	                    $Element->Options['Size'] = $fSize;
+	                    $pdf->setFontSpacing($fSpace);
+	                } else {
+	                    $pdf->setFontSpacing(0);
+	                }
+					$pdf->SetFont($Element->Options['FontFamily'], $Element->Options['FontStyle'], $Element->Options['Size']);
+				}
 				$Fill=false;
 				$WhiteText=false;
 				$BlackText=false;
@@ -553,7 +555,7 @@ while ($MyRow=safe_fetch($Rs)) {
 					} else {
 						$BlackText=true;
 					}
-				} elseif($Element->Options['BackCol']) {
+				} elseif($Element->Options and $Element->Options['BackCol']) {
 					$R=hexdec(substr($Element->Options['BackCol'], 1, 2));
 					$G=hexdec(substr($Element->Options['BackCol'], 3, 2));
 					$B=hexdec(substr($Element->Options['BackCol'], 5, 2));
@@ -568,7 +570,7 @@ while ($MyRow=safe_fetch($Rs)) {
 
 				if(!empty($Element->Options['BackCat']) and $WhiteText) {
 					$pdf->setColor('text', 255, 255, 255);
-				} elseif($Element->Options['Col']) {
+				} elseif($Element->Options and $Element->Options['Col']) {
 					$R=hexdec(substr($Element->Options['Col'], 1, 2));
 					$G=hexdec(substr($Element->Options['Col'], 3, 2));
 					$B=hexdec(substr($Element->Options['Col'], 5, 2));
@@ -584,10 +586,12 @@ while ($MyRow=safe_fetch($Rs)) {
 				}
 				if($Fill and implode('', $Text)) $pdf->SetCellPadding(max(0.5, min($Element->Options['W'], $Element->Options['H'])/10));
 
-				foreach($Text as $k => $txt) {
-					$pdf->SetXY($ElX, $ElY + ($k*$ElH));
-                    $pdf->Cell($Element->Options['W'], $ElH, $txt, 0, true,
-							$Just[$Element->Options['Just']], $Fill);
+				if($Element->Options) {
+					foreach($Text as $k => $txt) {
+						$pdf->SetXY($ElX, $ElY + ($k*$ElH));
+	                    $pdf->Cell($Element->Options['W'], $ElH, $txt, 0, true,
+								$Just[$Element->Options['Just']], $Fill);
+					}
 				}
 				if($Fill) $pdf->SetCellPadding(0);
 				break;

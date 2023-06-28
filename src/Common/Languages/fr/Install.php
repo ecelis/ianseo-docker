@@ -8,7 +8,6 @@ $lang['Credits-BeiterCredits']='Le module Barcode est réaliasé gratuitement po
 $lang['Credits-Coordination']='Coordinateur du projet IT';
 $lang['Credits-CoreGroup']='Équipe IANSEO';
 $lang['Credits-Credits']='Remerciements';
-$lang['Credits-Documentation']='Documentation & Support';
 $lang['Credits-FitarcoCredits']='Qu\'est-ce que Ianseo ? 
 Ianseo est un logiciel pour la gestion des résultats d\'un tournoi de Tir à l\'arc.
 C\'est un projet "Open Source" développé avec le soutien financier de la fédération italienne de Tir à l\'arc, qui a décidé de le distribuer gratuitement en Europe.
@@ -116,7 +115,7 @@ $lang['SetFRChampsScratchC']='Championnat Scratch Poulies';
 $lang['SetFRChampsScratchR']='Championnat Scratch Classique';
 $lang['SetFRChampsTNJ']='Tournoi National Jeunes';
 $lang['SetFRChampsVet']='Championnat Vétérans';
-$lang['SetFRCoupeFrance']='Coupe de France';
+$lang['SetFRCoupeFrance']='Championnat de France Adulte';
 $lang['SetFRFinDRD2']='Finales DR/D2';
 $lang['SetFRTAE']='Championnat de France TAE';
 $lang['SetJ-CClass']='Juniors et cadets';
@@ -146,7 +145,7 @@ $lang['Setup-UK']='Règles du Tournoi ArcheryGB';
 $lang['Setup-US']='Règles US Archery';
 $lang['SetVegas-KOA']='Rois de l\'archerie - Hollande';
 $lang['SetVegas-WAF']='Festival Mondial de l\'archerie - Las Vegas';
-$lang['SpecialUpdate']='Vous utilisez une installation "testing".<br/>Seuls les utilisateurs autorisés peuvent utiliser cette fonctionnalité: Veuillez fournir le courriel avec lequel vous vous êtes enregistré.<br/> Une notivication vous sera envoyée ainsi qu\'à l\'équipe Ianseo.';
+$lang['SpecialUpdate']='Vous utilisez une installation "testing".<br/>Seuls les utilisateurs autorisés peuvent utiliser cette fonctionnalité: Veuillez fournir le courriel avec lequel vous vous êtes enregistré.<br/> Une notification vous sera envoyée ainsi qu\'à l\'équipe Ianseo.';
 $lang['Start Ianseo']='Lancer IANSEO !';
 $lang['Status']='Etat';
 $lang['stdValue']='Valeur';

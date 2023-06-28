@@ -156,7 +156,6 @@ $lang['Score']='Puntaje';
 $lang['Scorecard']='Hoja de Puntuación';
 $lang['ScoredPoints']='Puntos Anotados';
 $lang['ScoreHelp']='Ayuda';
-$lang['ScoreHelpDesc']='Esta pantalla permite el ingreso de los puntos de cada flecha disparada. También se muestra información sobre la ronda actual, tipo de contención e información del arquero. Ingrese los valores de las flechas usando el teclado numérico.';
 $lang['ScoringEntry']='Introducción de Puntajes';
 $lang['SelDist']='Por favor seleccione la ronda e intente de nuevo';
 $lang['SelTgtNum']='Por favor seleccione el número de contención e intente de nuevo';

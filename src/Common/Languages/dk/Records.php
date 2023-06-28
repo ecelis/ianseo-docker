@@ -1,4 +1,6 @@
 <?php
+$lang['Africa']='WA Afrika medlemsorganisation';
+$lang['Americas']='WA Amerika medlemsorganisation';
 $lang['ArrowMatchName']='$a pile match';
 $lang['Asia']='WA Asien medlemsorganisation';
 $lang['Assign']='Tildel';
@@ -36,7 +38,8 @@ $lang['MonitorRecords']='Tilføj rekord til overvågning';
 $lang['NoMoreRecords']='Ikke flere rekorder. Fjern en Game rekord eller opret et nyt sæt';
 $lang['NoRecordTypes']='Ingen rekorder registreret for denne stævne type';
 $lang['NoSuchRecord']='Ingen rekord fundet';
-$lang['Para']='Par/IPC';
+$lang['Oceania']='WA Oceania medlemsorganisation';
+$lang['Para']='Para/IPC';
 $lang['RecordAreaClaimer']='Rekord ansøger';
 $lang['RecordAreaClaimerHelp']='Vælg hvor som er berettiget til at få denne rekord. Hvis et enkelt land, så angiv WA nationskode (NOC)';
 $lang['RecordAreaCode']='Rekord kode';
@@ -61,7 +64,10 @@ $lang['SelectRecordCategory']='Vælg Rekord kategori';
 $lang['StandingRecord']='Gældende rekord';
 $lang['TourRecords']='Mulige rekorder for dette stævne';
 $lang['TourRecordSetupHelp']='En internet forbindelse er krævet for at opdatere/indsætte WA håndterede rekorder';
+$lang['UpdateAllFromWA']='Opdatere World Archery vedligeholdte rekorder område og klasse Ækvivalenter';
+$lang['UpdateEverything']='Område og klasse Ækvivalenter';
 $lang['UpdateFromWA']='Opdater WA håndterbare rekorder';
+$lang['UpdateOnlyAreas']='Kun områder';
 $lang['UpdateSingleRecord']='Bekræft at denne rekord skal opdateres';
 $lang['WA-Distance']='WA afstand';
 $lang['WA-Rec-Class']='WA klasse';

@@ -14,7 +14,7 @@ echo '<link rel="stylesheet" href="'.$CFG->ROOT_DIR.'Common/css/bs4-switch.css">
 echo '<link rel="stylesheet" href="'.$CFG->ROOT_DIR.'Common/css/bootstrap-toggle.min.css">';
 echo '<link rel="stylesheet" href="'.$CFG->ROOT_DIR.'Common/css/ianseo.css">';
 //<!-- jQuery first, then Popper.js, then Bootstrap JS -->
-echo '<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>';
+echo '<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.6.0.min.js"></script>';
 echo '<script src="'.$CFG->ROOT_DIR.'Common/js/popper.min.js"></script>';
 echo '<script src="'.$CFG->ROOT_DIR.'Common/js/bootstrap.min.js"></script>';
 echo '<script src="'.$CFG->ROOT_DIR.'Common/js/bootstrap-toggle.min.js"></script>';

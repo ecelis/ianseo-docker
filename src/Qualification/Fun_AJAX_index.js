@@ -66,7 +66,6 @@ function UpdateQuals(Field) {
 					{
 						var FromCache = Cache.shift();
 						XMLHttp.open("POST",RootDir+"UpdateQuals.php",true);
-						//document.getElementById('idOutput').innerHTML="UpdateQuals.php?" + FieldName + "=" + FieldValue;
 						XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 						XMLHttp.onreadystatechange=UpdateQuals_StateChange;
 						if (PostUpdate)
@@ -99,7 +98,6 @@ function UpdateQuals(Field) {
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 
 	}
@@ -119,12 +117,10 @@ function UpdateQuals_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -185,7 +181,6 @@ function MakeTeams()
 				if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
 				{
 					XMLHttp.open("GET",RootDir+"MakeTeams.php",true);
-					//document.getElementById('idOutput').innerHTML="MakeTeams.php";
 					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 					XMLHttp.onreadystatechange=MakeTeams_StateChange;
 					XMLHttp.send(null);
@@ -194,7 +189,6 @@ function MakeTeams()
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -213,12 +207,10 @@ function MakeTeams_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -263,7 +255,6 @@ function MakeTeamsAbs()
 				if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
 				{
 					XMLHttp.open("GET","MakeTeamsAbs.php",true);
-					//document.getElementById('idOutput').innerHTML="MakeTeamsAbs.php";
 					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 					XMLHttp.onreadystatechange=MakeTeamsAbs_StateChange;
 					XMLHttp.send(null);
@@ -346,7 +337,6 @@ function CalcRank(Dist)
 					if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
 					{
 						XMLHttp.open("GET","CalcRank.php" + (Dist ? "?Dist=" + document.getElementById('x_Dist').value : ""),true);
-					//	document.getElementById('idOutput').innerHTML="CalcRank.php" + (Dist ? "Dist=" + document.getElementById('x_Dist').value : "");
 						XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 						XMLHttp.onreadystatechange=CalcRank_StateChange;
 						XMLHttp.send(null);
@@ -356,7 +346,6 @@ function CalcRank(Dist)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -375,12 +364,10 @@ function CalcRank_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -488,7 +475,6 @@ function saveSnapshotImage()
 					+ '&fromTarget=' + from
 					+ '&toTarget=' + to;
 				XMLHttp.open("GET",RootDir+"MakeSnapshot.php" + qs,true);
-				//document.getElementById('idOutput').innerHTML="MakeSnapshot.php";
 				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 				XMLHttp.onreadystatechange=saveSnapshotImage_StateChange;
 				XMLHttp.send(null);
@@ -496,7 +482,6 @@ function saveSnapshotImage()
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -515,12 +500,10 @@ function saveSnapshotImage_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }

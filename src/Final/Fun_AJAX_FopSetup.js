@@ -78,14 +78,12 @@ function AddLocation() {
 						}
 
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
 
 				};
 				XMLHttp.send();
 			}
 		} catch (e) {
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -124,14 +122,12 @@ function UpdateField(obj) {
 						}
 
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
 
 				};
 				XMLHttp.send();
 			}
 		} catch (e) {
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -170,14 +166,12 @@ function DeleteLocation(obj) {
 						}
 
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
 
 				};
 				XMLHttp.send();
 			}
 		} catch (e) {
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }

@@ -172,7 +172,6 @@ function nextPhase($startPhase) {
 	return intval($startPhase/2);
 }
 
-
 function namePhase($startPhase, $curPhase) {
 	switch(true) {
 		case ($startPhase==48 && $curPhase==64): return 48; break;
@@ -263,6 +262,7 @@ function getEventArrowsParams($event, $phase, $team, $TourId=0) {
 
 	if (safe_num_rows($rs)==1) {
 		$results[$resKey]=safe_fetch($rs);
+		$results[$resKey]->MaxArrows=$results[$resKey]->ends*$results[$resKey]->arrows;
 		return $results[$resKey];
 	}
 
@@ -273,6 +273,7 @@ function getEventArrowsParams($event, $phase, $team, $TourId=0) {
 	$results[$resKey]->winAt=0;
 	$results[$resKey]->MaxTeam=0;
 	$results[$resKey]->EvMatchMode=0;
+	$results[$resKey]->MaxArrows=0;
 
 	return $results[$resKey];
 }
@@ -650,4 +651,352 @@ function getChildrenEvents($Events, $Team=0, $TourId=0) {
 	}
 
 	return array_unique($ret);
+}
+
+function SendToNextPhase($Event, $Team, $Phase=NULL, $MatchNo=NULL, $TourId=0, $Pool='') {
+	require_once('Common/Fun_Modules.php');
+	global $action;
+
+	// Check Parameters
+	if(is_null($Phase) and is_null($MatchNo)) {
+		// One of the 2 MUST exist
+		return false;
+	}
+
+	// most specific!
+	$HasMatchno=(!isnull($MatchNo));
+
+	if(!$TourId) {
+		$TourId=$_SESSION['TourId'];
+	}
+
+	if($Team) {
+		$Table='TeamFinals';
+		$Prefix='Tf';
+	} else {
+		$Table='Finals';
+		$Prefix='Fin';
+	}
+
+	$Confirmed=[];
+	// Remember to check the saved from 64th to 16th!
+	$CheckSaved=false;
+
+	// triggers the confirmed matches and check if we have double saved
+	$Select = "SELECT EvCode, EvFinalFirstPhase, GrPhase, 
+       		f1.{$Prefix}MatchNo as MatchNo1, f2.{$Prefix}MatchNo as MatchNo2, 
+       		f1.{$Prefix}Confirmed as IsConfirmed
+		FROM {$Table} AS f1
+		INNER JOIN {$Table} AS f2 ON f2.{$Prefix}Event=f1.{$Prefix}Event AND f2.{$Prefix}MatchNo=f1.{$Prefix}MatchNo+1 AND f2.{$Prefix}Tournament=f1.{$Prefix}Tournament
+		INNER JOIN Events ON EvCode=f1.{$Prefix}Event AND EvTournament=f1.{$Prefix}Tournament AND EvTeamEvent=$Team 
+		INNER JOIN Grids ON GrMatchNo=f1.{$Prefix}MatchNo ".($HasMatchno ? "" : "and GrPhase=$Phase")."
+		WHERE f1.{$Prefix}Tournament=$TourId AND ".($HasMatchno ? "f1.{$Prefix}MatchNo=".(intval($MatchNo/2)*2) : "(f1.{$Prefix}MatchNo % 2)=0")." AND f1.{$Prefix}Event=" . StrSafe_DB($Event) . "
+		ORDER BY f1.{$Prefix}MatchNo";
+
+	$Rs=safe_r_sql($Select);
+	while ($MyRow=safe_fetch($Rs)) {
+		if($MyRow->IsConfirmed) {
+			$Confirmed[]=["Event"=>$MyRow->EvCode, "Team"=>$Team, "MatchNo"=>$MyRow->MatchNo1, "TourId"=>$TourId];
+		}
+		$CheckSaved=($CheckSaved or ($MyRow->EvFinalFirstPhase==48 and $MyRow->GrPhase==64));
+	}
+
+	// Faccio i passaggi di fase
+	$MyNextMatchNo='xx';
+	$QueryFilter = '';
+
+	$Select = "SELECT 
+			f.FinEvent AS Event, f.FinMatchNo, f2.FinMatchNo OppMatchNo,
+			f.FinIrmType AS IrmType, f2.FinIrmType AS OppIrmType, 
+			GrPhase, f.FinAthlete AS Athlete, f2.FinAthlete AS OppAthlete, f.FinCoach AS Coach, f2.FinCoach AS OppCoach,
+			IF(EvMatchMode=0,f.FinScore,f.FinSetScore) AS Score, f.FinTie as Tie, IF(EvMatchMode=0,f2.FinScore,f2.FinSetScore) as OppScore, f2.FinTie as OppTie,
+			IF(GrPhase>2, FLOOR(f.FinMatchNo/2),FLOOR(f.FinMatchNo/2)-2) AS NextMatchNo, EvElimType
+		FROM Finals AS f
+		INNER JOIN Finals AS f2 ON f.FinEvent=f2.FinEvent AND f2.FinMatchNo=f.FinMatchNo+1 AND f.FinTournament=f2.FinTournament
+		INNER JOIN Events ON f.FinEvent=EvCode AND f.FinTournament=EvTournament AND EvTeamEvent=0
+		inner join Grids on f.FinMatchNo=GrMatchNo and ".(is_null($Phase) ? "GrMatchNo=" . StrSafe_DB(($MatchNo % 2 == 0 ? $MatchNo:$MatchNo-1)) : "GrPhase=" . StrSafe_DB($Phase))."
+		WHERE f.FinTournament=" . StrSafe_DB($TourId) . " AND (f.FinMatchNo % 2)=0 
+		";
+	if(!is_null($Event) and $Event!='') {
+		$Select .= "AND f.FinEvent=" . StrSafe_DB($Event) . " ";
+	}
+
+	$Select .= "ORDER BY f.FinEvent, NextMatchNo ASC, Score DESC, Tie DESC ";
+
+	$Rs=safe_r_sql($Select);
+
+	// conterrà i parametri per il calcolo delle RankFinal
+	$coppie=array();
+
+	$AthPropTs = NULL;
+	if (safe_num_rows($Rs)>0) {
+		$AthPropTs = date('Y-m-d H:i:s');
+
+		// Elimination Pools Show Match Winner choose where to go!!!
+		$ShowMatchWinner='';
+		$ShowMatchLoser='';
+		if($Pool) {
+			if($Pool=='A') {
+				$ShowMatchWinner='4';
+				$ShowMatchLoser='7';
+			} elseif($Pool=='B') {
+				$ShowMatchWinner='7';
+				$ShowMatchLoser='4';
+			}
+		}
+
+
+		while ($MyRow=safe_fetch($Rs)) {
+			/*
+			 * Dato che potrei avere più fasi gestite da questa funzione, io ricavo le coppie
+			 * per la RankFinal dalle righe del recordset.
+			 * Visto che mi imbatterò più volte nella stessa coppia evento/fase, solo se la coppia
+			 * non l'ho già contata la aggiungo nel vettore.
+			 */
+			if (!in_array($MyRow->Event.'@'.$MyRow->GrPhase,$coppie)) {
+				$coppie[]=$MyRow->Event.'@'.$MyRow->GrPhase;
+			}
+
+			// sets the WinLose Flag
+			$WinLose=-1;
+
+			$AthProp = '0';
+			$CoachProp = '0';
+			$WhereProp = '0';
+			if ($MyRow->IrmType<10 and intval($MyRow->Score)>intval($MyRow->OppScore) or $MyRow->Tie==2 or (intval($MyRow->Score)==intval($MyRow->OppScore) and intval($MyRow->Tie)>intval($MyRow->OppTie))) {
+				$WinLose=$MyRow->FinMatchNo;
+				if ($MyRow->GrPhase>=2) {
+					$action='reload';
+					// Pool Matches...
+					if($ShowMatchWinner) {
+						$MyUpQuery = "UPDATE Finals SET
+							FinAthlete =" . StrSafe_DB($MyRow->Athlete) . ",
+							FinCoach =" . StrSafe_DB($MyRow->Coach) . ",
+							FinDateTime=" . StrSafe_DB($AthPropTs) . "
+							WHERE FinEvent=" . StrSafe_DB($MyRow->Event) . " AND FinMatchNo=" . StrSafe_DB($ShowMatchWinner) . " AND FinTournament=" . StrSafe_DB($TourId) . " ";
+						safe_w_sql($MyUpQuery);
+						$MyUpQuery = "UPDATE Finals SET
+							FinAthlete =" . StrSafe_DB($MyRow->OppAthlete) . ",
+							FinCoach =" . StrSafe_DB($MyRow->OppCoach) . ",
+							FinDateTime=" . StrSafe_DB($AthPropTs) . "
+							WHERE FinEvent=" . StrSafe_DB($MyRow->Event) . " AND FinMatchNo=" . StrSafe_DB($ShowMatchLoser) . " AND FinTournament=" . StrSafe_DB($TourId) . " ";
+						safe_w_sql($MyUpQuery);
+					} else {
+						$MyUpQuery = "UPDATE Finals SET
+							FinAthlete =" . StrSafe_DB($MyRow->Athlete) . ",
+							FinCoach =" . StrSafe_DB($MyRow->Coach) . ",
+							FinDateTime=" . StrSafe_DB($AthPropTs) . "
+							WHERE FinEvent=" . StrSafe_DB($MyRow->Event) . " AND FinMatchNo=" . StrSafe_DB($MyRow->NextMatchNo) . " AND FinTournament=" . StrSafe_DB($TourId) . " ";
+						$RsUp=safe_w_sql($MyUpQuery);
+
+						$AthProp=$MyRow->Athlete;
+						$CoachProp=$MyRow->Coach;
+						$WhereProp=$MyRow->OppAthlete;
+						if($MyRow->GrPhase==2) {
+							$MyUpQuery = "UPDATE Finals SET
+								FinAthlete =" . StrSafe_DB($MyRow->OppAthlete) . ",
+								FinCoach =" . StrSafe_DB($MyRow->OppCoach) . ",
+								FinDateTime=" . StrSafe_DB($AthPropTs) . "
+								WHERE FinEvent=" . StrSafe_DB($MyRow->Event) . " AND FinMatchNo=" . StrSafe_DB(($MyRow->NextMatchNo+2)) . " AND FinTournament=" . StrSafe_DB($TourId) . " ";
+							$RsUp=safe_w_sql($MyUpQuery);
+						}
+					}
+				}
+			} elseif ($MyRow->OppIrmType<10 and intval($MyRow->Score)<intval($MyRow->OppScore) or $MyRow->OppTie==2 or (intval($MyRow->Score)==intval($MyRow->OppScore) and intval($MyRow->Tie)<intval($MyRow->OppTie))) {
+				$WinLose=$MyRow->OppMatchNo;
+				if ($MyRow->GrPhase>=2) {
+					$action='reload';
+					// Pool Matches...
+					if($ShowMatchWinner) {
+						$MyUpQuery = "UPDATE Finals SET
+							FinAthlete =" . StrSafe_DB($MyRow->OppAthlete) . ",
+							FinCoach =" . StrSafe_DB($MyRow->OppCoach) . ",
+							FinDateTime=" . StrSafe_DB($AthPropTs) . "
+							WHERE FinEvent=" . StrSafe_DB($MyRow->Event) . " AND FinMatchNo=" . StrSafe_DB($ShowMatchWinner) . " AND FinTournament=" . StrSafe_DB($TourId) . " ";
+						safe_w_sql($MyUpQuery);
+						$MyUpQuery = "UPDATE Finals SET
+							FinAthlete =" . StrSafe_DB($MyRow->Athlete) . ",
+							FinCoach =" . StrSafe_DB($MyRow->Coach) . ",
+							FinDateTime=" . StrSafe_DB($AthPropTs) . "
+							WHERE FinEvent=" . StrSafe_DB($MyRow->Event) . " AND FinMatchNo=" . StrSafe_DB($ShowMatchLoser) . " AND FinTournament=" . StrSafe_DB($TourId) . " ";
+						safe_w_sql($MyUpQuery);
+					} else {
+						$MyUpQuery = "UPDATE Finals SET ";
+						$MyUpQuery.= "FinAthlete =" . StrSafe_DB($MyRow->OppAthlete) . ", ";
+						$MyUpQuery.= "FinCoach =" . StrSafe_DB($MyRow->OppCoach) . ", ";
+						$MyUpQuery.= "FinDateTime=" . StrSafe_DB($AthPropTs) . " ";
+						$MyUpQuery.= "WHERE FinEvent=" . StrSafe_DB($MyRow->Event) . " AND FinMatchNo=" . StrSafe_DB($MyRow->NextMatchNo) . " AND FinTournament=" . StrSafe_DB($TourId) . " ";
+						$RsUp=safe_w_sql($MyUpQuery);
+
+						$AthProp=$MyRow->OppAthlete;
+						$CoachProp=$MyRow->OppCoach;
+						$WhereProp=$MyRow->Athlete;
+						if($MyRow->GrPhase==2) {
+							$MyUpQuery = "UPDATE Finals SET ";
+							$MyUpQuery.= "FinAthlete =" . StrSafe_DB($MyRow->Athlete) . ", ";
+							$MyUpQuery.= "FinCoach =" . StrSafe_DB($MyRow->Coach) . ", ";
+							$MyUpQuery.= "FinDateTime=" . StrSafe_DB($AthPropTs) . " ";
+							$MyUpQuery.= "WHERE FinEvent=" . StrSafe_DB($MyRow->Event) . " AND FinMatchNo=" . StrSafe_DB(($MyRow->NextMatchNo+2)) . " AND FinTournament=" . StrSafe_DB($TourId) . " ";
+							$RsUp=safe_w_sql($MyUpQuery);
+						}
+					}
+				}
+
+			} else {
+				if($MyRow->EvElimType!=3 and $MyRow->EvElimType!=4) {
+					if ($MyRow->GrPhase>=2) {
+						$action='reload';
+						$MyUpQuery = "UPDATE Finals SET ";
+						$MyUpQuery.= "FinAthlete ='0', FinCoach ='0', ";
+						$MyUpQuery.= "FinDateTime=" . StrSafe_DB($AthPropTs) . " ";
+						$MyUpQuery.= "WHERE FinEvent=" . StrSafe_DB($MyRow->Event) . " AND FinMatchNo=" . StrSafe_DB($MyRow->NextMatchNo) . " AND FinTournament=" . StrSafe_DB($TourId) . " ";
+						$RsUp=safe_w_sql($MyUpQuery);
+
+						if($MyRow->GrPhase==2) {
+							$MyUpQuery = "UPDATE Finals SET ";
+							$MyUpQuery.= "FinAthlete ='0', FinCoach ='0', ";
+							$MyUpQuery.= "FinDateTime=" . StrSafe_DB($AthPropTs) . " ";
+							$MyUpQuery.= "WHERE FinEvent=" . StrSafe_DB($MyRow->Event) . " AND FinMatchNo=" . StrSafe_DB(($MyRow->NextMatchNo+2)) . " AND FinTournament=" . StrSafe_DB($TourId) . " ";
+							$RsUp=safe_w_sql($MyUpQuery);
+						}
+					}
+				}
+			}
+
+			// update the winner of previous match
+			safe_w_sql("update Finals set FinWinLose=if(FinMatchNo=".$WinLose.", 1, 0) where FinMatchNo in (" . StrSafe_DB($MyRow->FinMatchNo) . "," . StrSafe_DB($MyRow->OppMatchNo) . ") AND FinEvent=" . StrSafe_DB($MyRow->Event) . " AND FinTournament=" . StrSafe_DB($TourId) . "");
+
+			$OldId=($AthProp!=0 ? StrSafe_DB($WhereProp) : StrSafe_DB($MyRow->Athlete) . ',' . StrSafe_DB($MyRow->OppAthlete));
+			if($OldId!="'0'" and !$ShowMatchWinner) {
+				$action='reload';
+				// if Athlete and Opponent are both there or if athlete is not present
+				// propagates the winner in next matches
+
+				$Update
+					= "UPDATE Finals SET "
+					. "FinAthlete=" . StrSafe_DB($AthProp) . ", "
+					. "FinCoach=" . StrSafe_DB($CoachProp) . ", "
+					. "FinDateTime=" . StrSafe_DB($AthPropTs) . " "
+					. ($AthProp==0 ? ', FinWinLose=0 ' : '')
+					. "WHERE FinAthlete IN (" . $OldId . ") "
+					. "AND FinTournament=" . StrSafe_DB($TourId) . " "
+					. "AND FinEvent=" . StrSafe_DB($MyRow->Event) . " "
+					. "AND FinMatchNo<"	. StrSafe_DB($MyRow->NextMatchNo) . " ";
+
+				$RsProp = safe_w_sql($Update);
+			}
+		}
+	}
+
+	if($CheckSaved) {
+		// we get here only if we check phase 64 and we have a starting phase of 48, so the first 8 are automatically put in the 16th matches
+		// start putting a bye to the first saved athletes in 24th
+		$Saved=SavedInPhase(48);
+		safe_w_SQL("UPDATE Finals inner join Grids on FinMatchNo=GrMatchNo and GrPhase=32 and GrPosition2<=$Saved and GrPosition2>0
+			SET FinTie=2, FinWinLose=1, FinDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . "
+			WHERE FinEvent=" . StrSafe_DB($Event) . " AND FinTournament=$TourId");
+
+		// Push the first saved to 16th... postponed as it breaks the brackets in the infosystem
+		// in write SQL as it must be certain that it takes the right people without waiting for replica!!!
+		$q=safe_w_sql("select FinAthlete, GrPosition2 from Finals inner join Grids on FinMatchNo=GrMatchNo and GrPhase=64 and GrPosition2<=$Saved and GrPosition2>0
+			WHERE FinEvent=" . StrSafe_DB($Event) . " AND FinTournament=$TourId");
+		while($r=safe_fetch($q)) {
+			safe_w_sql("UPDATE Finals inner join Grids on FinMatchNo=GrMatchNo and GrPhase=16 and GrPosition2=$r->GrPosition2
+				SET FinAthlete=$r->FinAthlete, FinDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . "
+				WHERE FinEvent=" . StrSafe_DB($Event) . " AND FinTournament=$TourId");
+		}
+	}
+
+
+	// se ho delle coppie calcolo per queste la RankFinal
+	if (count($coppie)>0) {
+		// manages the loosers if there is a looser event
+		$coppie=array_merge($coppie, moveToNextPhaseLoosers($coppie, $TourId));
+
+		Obj_RankFactory::create('FinalInd',array('tournament' => $TourId, 'eventsC'=>$coppie))->calculate();
+		foreach($coppie as $cp) {
+			runJack("FinRankUpdate", $TourId, array("Event"=>substr($cp, 0, strpos($cp, '@')), "Team"=>0, "TourId"=>$TourId));
+		}
+	}
+
+	//Verifico se esiste qualcosa di specifico da fare (tipo gestione Bracket looser)
+	global $CFG;
+	$q=safe_r_sql("select ToType, ToLocRule, ToTypeSubRule from Tournament where ToId={$TourId}");
+	$r=safe_fetch($q);
+	$ToType=$r->ToType;
+	$ToLocRule=$r->ToLocRule;
+	$ToSubRule=$r->ToTypeSubRule;
+	$Common=$CFG->DOCUMENT_PATH . "Modules/Sets/$ToLocRule/Functions/move2NextPhase%s.php";
+	if(file_exists($file=sprintf($Common, "-$ToType-$ToSubRule"))
+		or file_exists($file=sprintf($Common, "-$ToType"))
+		or file_exists($file=sprintf($Common, "-$ToSubRule"))
+		or file_exists($file=sprintf($Common, ""))
+	) {
+		require_once($file);
+	}
+
+	// Jack call is put here in case it hangs!
+	foreach($Confirmed as $data) {
+		runJack("MatchConfirmed", $TourId, $data);
+	}
+
+
+	return $AthPropTs;
+}
+
+
+/**
+ * Check if a double IRM has been assigned and acts accordingly
+ * @param $Event
+ * @param $Team
+ * @param $MatchNo
+ * @param $CompId
+ * @return bool true if a double IRM has been assigned, false otherwise.
+ */
+function CheckDoubleIrm($Event, $Team, $MatchNo, $CompId=0) {
+	if(!$CompId) {
+		$CompId=$_SESSION['TourId'];
+	}
+
+	if($Team){
+		$Table='TeamFinals';
+		$Prefix='Tf';
+		$Athlete='TfTeam';
+		$SubTeam=', TfSubteam=0,';
+	} else {
+		$Table='Finals';
+		$Prefix='Fin';
+		$Athlete='FinAthlete';
+		$SubTeam=',';
+	}
+
+	// get both matchnos
+	$m1=intval($MatchNo/2)*2;
+	$m2=$m1+1;
+
+	// select both opponent status
+	$t=safe_r_sql("select f1.{$Prefix}IrmType as Irm1, f2.{$Prefix}IrmType as Irm2, GrPhase
+		from {$Table} f1
+		inner join {$Table} f2 on f2.{$Prefix}Event=f1.{$Prefix}Event and f2.{$Prefix}Matchno=f1.{$Prefix}Matchno+1 and f2.{$Prefix}Tournament=f1.{$Prefix}Tournament and f2.{$Prefix}IrmType>=10
+		inner join Grids on GrMatchNo=f1.{$Prefix}MatchNo
+		where f1.{$Prefix}Tournament={$_SESSION['TourId']} and f1.{$Prefix}IrmType>=10 and f1.{$Prefix}MatchNo=$m1 and f1.{$Prefix}Event=".StrSafe_DB($Event));
+	if($u=safe_fetch($t)) {
+		// both lose the match! the opponent in the next phase gets a bye
+		safe_w_sql("update {$Table} set {$Prefix}WinLose=0, {$Prefix}Tie=0 where {$Prefix}Tournament={$_SESSION['TourId']} and {$Prefix}Event=".StrSafe_DB($Event)." and {$Prefix}MatchNo in ($m1, $m2)");
+
+		// resets the name of the following match
+		$NextMatch=$m1/2;
+		$NextOpp=($NextMatch%2 ? $NextMatch-1 : $NextMatch+1);
+		safe_w_sql("update {$Table} set {$Athlete}=0 $SubTeam {$Prefix}WinLose=0, {$Prefix}Tie=0, {$Prefix}IrmType=0 where {$Prefix}Tournament={$_SESSION['TourId']} and {$Prefix}Event=".StrSafe_DB($Event)." and {$Prefix}MatchNo=$NextMatch");
+		safe_w_sql("update {$Table} set {$Prefix}WinLose=1, {$Prefix}Tie=2, {$Prefix}IrmType=0 where {$Athlete}>0 and {$Prefix}Tournament={$_SESSION['TourId']} and {$Prefix}Event=".StrSafe_DB($Event)." and {$Prefix}MatchNo=$NextOpp");
+
+		// recalculates the rank and the byes
+		if($Team) {
+			move2NextPhaseTeam($u->GrPhase, $Event, $m1, $CompId);
+		} else {
+			move2NextPhase($u->GrPhase, $Event, $m1, $CompId);
+		}
+		return true;
+	}
+	return false;
 }

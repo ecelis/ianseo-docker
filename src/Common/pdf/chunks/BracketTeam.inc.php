@@ -105,7 +105,7 @@ foreach($PdfData->rankData['sections'] as $Event => $section) {
 				$pdf->SetXY($LineXstart, $OrgY);
 			}
 
-			if($ShowSchedule && $Match['scheduledDate']!='00-00-0000'  && $Match['scheduledTime']!='00:00') {
+			if($ShowSchedule && $Match['scheduledDate']!='00-00-0000'  && $Match['scheduledTime']!='00:00' and !($Match['score'] or $Match['setScore']) and !($Match['oppScore'] or $Match['oppSetScore']) and !$Match['tie'] and !$Match['oppTie']) {
 				if($FirstPhase) {
 					$pdf->SetFont($pdf->FontStd,'I',6);
 					$pdf->SetXY($LineXstart, $OrgY-3);
@@ -159,7 +159,7 @@ foreach($PdfData->rankData['sections'] as $Event => $section) {
 			$MyX = $pdf->GetX();
 			if($FirstPhase) {
 			   	$pdf->SetFont($pdf->FontStd, 'B', 8);
-			   	$pdf->Cell($MisName+$AddSize, $Cella, $Match['countryName'], 'TLR', 0, 'L', 0);
+			   	$pdf->Cell($MisName+$AddSize, $Cella, ($Match['countryName'] ?? ''), 'TLR', 0, 'L', 0);
 				$pdf->SetFont($pdf->FontStd,'',6);
 				//Components
 				for($n=0; $n<$Componenti; $n++) {
@@ -170,7 +170,7 @@ foreach($PdfData->rankData['sections'] as $Event => $section) {
 				}
 				$pdf->SetXY($MyX, $OrgY+$CellHeight);
 			   	$pdf->SetFont($pdf->FontStd, 'B', 8);
-			   	$pdf->Cell($MisName+$AddSize, $Cella, $Match['oppCountryName'], 'TLR'.($Componenti==0 ? 'B' : ''), 0, 'L', 0);
+			   	$pdf->Cell($MisName+$AddSize, $Cella, ($Match['oppCountryName'] ?? ''), 'TLR'.($Componenti==0 ? 'B' : ''), 0, 'L', 0);
 				$pdf->SetFont($pdf->FontStd,'',6);
 				//Components
 				for($n=0; $n<$Componenti; $n++) {
@@ -182,9 +182,9 @@ foreach($PdfData->rankData['sections'] as $Event => $section) {
 				$pdf->SetY($OrgY, false);
 			} else {
 			   	$pdf->SetFont($pdf->FontStd, '', 8);
-			   	$pdf->Cell($MisName+$AddSize, $Cella, $Match['countryName'], 1, 0, 'L', 0);		//Squadra
+			   	$pdf->Cell($MisName+$AddSize, $Cella, ($Match['countryName'] ?? ''), 1, 0, 'L', 0);		//Squadra
 				$pdf->SetXY($MyX, $OrgY+$CellHeight);
-			   	$pdf->Cell($MisName+$AddSize, $Cella, $Match['oppCountryName'], 1, 0, 'L', 0);		//Squadra
+			   	$pdf->Cell($MisName+$AddSize, $Cella, ($Match['oppCountryName'] ?? ''), 1, 0, 'L', 0);		//Squadra
 				$pdf->SetY($OrgY, false);
 			}
 

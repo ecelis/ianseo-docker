@@ -262,7 +262,6 @@ $lang['Rank']='Rang';
 $lang['RankingInd']='Rondes éliminatoires et finales - Classements individuels';
 $lang['Rankings']='Classements';
 $lang['RankingSq']='Rondes éliminatoires et finales - classements des équpes';
-$lang['RankScoreShort']='Qual.';
 $lang['RB']='Arc recourbé';
 $lang['RevMainLang']='Langage principal';
 $lang['RevSecLang']='Langage secondaire';

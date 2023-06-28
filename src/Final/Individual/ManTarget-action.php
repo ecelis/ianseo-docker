@@ -9,6 +9,7 @@ $JSON=array('error'=>1, 'targets'=>array());
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
 require_once('Common/Fun_FormatText.inc.php');
 require_once('Common/Fun_Phases.inc.php');
+require_once('Common/OrisFunctions.php');
 require_once('../LibFinals.php');
 
 if (!CheckTourSession() or !hasACL(AclCompetition, AclReadWrite) or IsBlocked(BIT_BLOCK_TOURDATA) or empty($_REQUEST['act'])) {

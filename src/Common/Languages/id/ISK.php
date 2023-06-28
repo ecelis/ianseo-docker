@@ -110,6 +110,7 @@ $lang['Event']='Event';
 $lang['Exit']='Keluar';
 $lang['ExitConfirm']='Apakah anda yakin ingin keluar dari aplikasi?';
 $lang['Face']='Wajah';
+$lang['FieldControl']='Kontrol Lapangan';
 $lang['FirstTarget']='Target Pertama';
 $lang['GestureHelp']='Anda dapat menggeser antara pemanah dan/atau rambahan menggunakan gestur sebagaimana dijelaskan di bawah.';
 $lang['Gestures']='Gestur';

@@ -2,8 +2,8 @@
 $pdf->SetDataHeader($PdfData->Header, $PdfData->HeaderWidth);
 $pdf->setPhase('');
 
-$pdf->AddPage();
 $pdf->setOrisCode($PdfData->Code, $PdfData->Description);
+$pdf->AddPage();
 $pdf->Bookmark($PdfData->IndexName, 0);
 
 $ONLINE=isset($PdfData->HTML);

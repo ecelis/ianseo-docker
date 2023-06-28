@@ -6,8 +6,8 @@ if($PdfData->DocVersion) {
 	$Version=trim('Vers. '.$PdfData->DocVersion . " ($PdfData->DocVersionDate) $PdfData->DocVersionNotes");
 }
 $pdf->setComment($Version);
-$pdf->AddPage();
 $pdf->setOrisCode($PdfData->Code, $PdfData->Description);
+$pdf->AddPage();
 $pdf->Bookmark($PdfData->IndexName, 0);
 
 $ONLINE=isset($PdfData->HTML);

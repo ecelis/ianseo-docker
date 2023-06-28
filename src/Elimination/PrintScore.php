@@ -55,6 +55,7 @@
 
 	echo '<form id="PrnParameters" action="../Qualification/PDFScore.php" method="post" target="PrintOut">';
     echo '<input name="SessionType" type="hidden" value="E" >';
+    echo '<input type="hidden" name="TourField3D" value="'.($RowTour->TtElabTeam==0 ? '': ($RowTour->TtElabTeam==1 ? 'FIELD'  : '3D')).'">';
 	echo '<table class="Tabella">';
 	echo '<tr><th class="Title" colspan="2">' . get_text('PrintScore','Tournament')  . '</th></tr>';
 	echo '<tr><th class="SubTitle" colspan="2">' . get_text('ScorePrintMode','Tournament')  . '</th></tr>';
@@ -74,10 +75,13 @@
 		echo '<input name="ScoreBarcode" type="checkbox" checked value="1" >&nbsp;' . get_text('ScoreBarcode','Tournament') . '<br>';
 	}
     foreach(AvailableApis() as $Api) {
-        if(!($tmp=getModuleParameter($Api, 'Mode')) || $tmp=='live' ) {
+        if(!($tmp=getModuleParameter($Api, 'Mode')) || strpos($tmp,'live') !== false) {
             continue;
         }
-        echo '<input name="QRCode[]" type="checkbox" '.($tmp=='pro' ? '' : 'checked="checked"').' value="'.$Api.'" >&nbsp;' . get_text($Api.'-QRCode','Api') . '<br>';
+        if(strpos($tmp,'ng-') === 0) {
+            $Api.= '-NG';
+        }
+        echo '<input name="QRCode[]" type="checkbox" '.(strpos($tmp,'pro')!== false ? '' : 'checked="checked"').' value="'.$Api.'" >&nbsp;' . get_text($Api.'-QRCode','Api') . '<br>';
     }
 	echo '</td>';
 	echo '</tr>';
@@ -96,19 +100,19 @@
 		echo '<tr>';
 		echo '<td colspan="2" align="Center"><br>';
 		echo '<input type="hidden" name="chk_BlockAutoSave" id="chk_BlockAutoSave" value="1">';
-		echo get_text('Session') . '&nbsp;<select name="x_ElimSession" id="x_ElimSession">' . "\n";
-		echo '<option value="0">---</option>' . "\n";
+		echo get_text('Session') . '&nbsp;<select name="x_ElimSession" id="x_ElimSession">';
+		echo '<option value="0">---</option>';
 		$Select = "Select SesOrder, SesName FROM Session WHERE SesTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND SesType='E' ORDER BY SesOrder";
 		$Rs=safe_r_sql($Select);
 		while($row=safe_fetch($Rs))
-			echo '<option value="' . $row->SesOrder . '"' . (isset($_REQUEST['x_ElimSession']) && $_REQUEST['x_ElimSession']==$row->SesOrder ? ' selected' : '') . '>' . $row->SesOrder . (!empty($row->SesName) ? " - " . $row->SesName : "") . '</option>' . "\n";
-		echo '</select>' . "\n";
+			echo '<option value="' . $row->SesOrder . '"' . (isset($_REQUEST['x_ElimSession']) && $_REQUEST['x_ElimSession']==$row->SesOrder ? ' selected' : '') . '>' . $row->SesOrder . (!empty($row->SesName) ? " - " . $row->SesName : "") . '</option>';
+		echo '</select>';
 
-		echo get_text('Phase') . '&nbsp;<select name="x_Session" id="x_Session" onChange="javascript:SelectSession();">' . "\n";
-		echo '<option value="-1">---</option>' . "\n";
+		echo get_text('Phase') . '&nbsp;<select name="x_Session" id="x_Session" onChange="javascript:SelectSession();">';
+		echo '<option value="-1">---</option>';
 		for ($i=0;$i<=1;++$i)
-			echo '<option value="' . $i . '"' . (isset($_REQUEST['x_Session']) && $_REQUEST['x_Session']==$i ? ' selected' : '') . '>' . ($i+1) . '</option>' . "\n";
-		echo '</select>' . "\n";
+			echo '<option value="' . $i . '"' . (isset($_REQUEST['x_Session']) && $_REQUEST['x_Session']==$i ? ' selected' : '') . '>' . ($i+1) . '</option>';
+		echo '</select>';
 
 		echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
 		echo  get_text('From','Tournament') . '&nbsp;<input type="text" name="x_From" id="x_From" size="5" maxlength="' . (TargetNoPadding +1) . '" value="' . (isset($_REQUEST['x_From']) ? $_REQUEST['x_From'] : '') . '">';
@@ -137,12 +141,12 @@
 	echo '<br/>';
 
 	//Bigliettini
-	echo '<form name="frmTick" method="post" action="PrnGetScore.php" target="PrintOut">' . "\n";
+	echo '<form name="frmTick" method="post" action="PrnGetScore.php" target="PrintOut">';
 	echo '<input type="hidden" name ="x_ElimSession" id="xx_ElimSession" value="">';
 	echo '<input type="hidden" name ="x_Session" id="xx_Session" value="">';
 	echo '<input type="hidden" name="x_From" id="xx_From" value="">';
 	echo '<input type="hidden" name="x_To" id="xx_To" value="">';
-	echo '<table class="Tabella">' . "\n";
+	echo '<table class="Tabella">';
 	echo '<tr><th class="SubTitle" colspan="2">' . get_text('TicketGetScore', 'Tournament')  . '</th></tr>';
 		echo '<tr>';
 				echo '<td colspan="2" align="Center"><br>';
@@ -150,8 +154,8 @@
 				echo '<input type="button" onclick="submitTicket();" value="' . get_text('Print', 'Tournament') .'">';
 			echo '</td>';
 		echo '</tr>';
-	echo '</table>' . "\n";
-	echo '</form>' . "\n";
+	echo '</table>';
+	echo '</form>';
 ?>
 <div id="idOutput"></div>
 <?php

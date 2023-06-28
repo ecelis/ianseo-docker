@@ -6,8 +6,8 @@ if($PdfData->Version) {
 	$pdf->setComment(trim("Vers. {$PdfData->Version} ({$PdfData->VersionDate}) {$PdfData->VersionNote}"));
 }
 
-$pdf->AddPage();
 $pdf->setOrisCode($PdfData->Code,$PdfData->Description);
+$pdf->AddPage();
 $pdf->Bookmark($PdfData->IndexName, 0);
 $pdf->setDocUpdate($PdfData->LastUpdate);
 $pdf->SetXY(OrisPDF::leftMargin,$pdf->lastY);

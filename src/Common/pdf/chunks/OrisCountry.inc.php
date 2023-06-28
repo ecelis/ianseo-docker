@@ -8,8 +8,8 @@ if($PdfData->DocVersion) {
 	$Version=trim('Vers. '.$PdfData->DocVersion . " ($PdfData->DocVersionDate) $PdfData->DocVersionNotes");
 }
 $pdf->setComment($Version);
-$pdf->AddPage();
 $pdf->setOrisCode($PdfData->Code, $PdfData->Description);
+$pdf->AddPage();
 $pdf->Bookmark($PdfData->IndexName, 0);
 
 $ONLINE=isset($PdfData->HTML);
@@ -32,9 +32,13 @@ $lstDoB = array();
 $AddPage=false;
 
 foreach($PdfData->Data['Items'] as $Rows) {
-	if($AddPage and $SinglePage) $pdf->addpage();
+	if($AddPage and $SinglePage) {
+		$pdf->addpage();
+	}
 	$AddPage=true;
-	$pdf->SamePage(count($Rows), 3.5, $pdf->lastY);
+	if(!$SinglePage) {
+		$pdf->SamePage(count($Rows), 3.5, $pdf->lastY);
+	}
 	$pdf->lastY += 3.5;
 	$first=true;
 	$lstPictures = array();

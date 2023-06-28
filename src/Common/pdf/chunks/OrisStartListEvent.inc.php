@@ -12,8 +12,8 @@ foreach($PdfData->Data['Items'] as $Group) {
 	foreach($Group as $MyRow) {
 		if($OldEvent != $MyRow->EventCode) {
 			$pdf->setEvent($MyRow->EventName);
-			$pdf->AddPage();
 			$pdf->setOrisCode($PdfData->Code, $PdfData->Description);
+			$pdf->AddPage();
 			$OldTeam='#@#@#';
 			$OldEvent = $MyRow->EventCode;
 		}

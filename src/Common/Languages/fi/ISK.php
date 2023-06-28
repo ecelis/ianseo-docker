@@ -130,7 +130,6 @@ $lang['Score']='Tulos';
 $lang['Scorecard']='Tuloskortti';
 $lang['ScoredPoints']='Ammutut Pisteet';
 $lang['ScoreHelp']='Apua';
-$lang['ScoreHelpDesc']='Tässä näkymässä voit syöttää ammuttujen nuolten tulokset. Tiedot matkasta, taulusta ja ampujasta näkyvillä. Syötä tulokset käyttäen numeronäppäimiä.';
 $lang['ServerUrl']='Ianseo URL';
 $lang['Session']='Jakso';
 $lang['Setup']='Asetukset';

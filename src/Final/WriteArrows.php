@@ -13,7 +13,6 @@ require_once('Common/Fun_Sessions.inc.php');
 // require_once('Common/Fun_Various.inc.php');
 
 $JS_SCRIPT=array(
-	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Final/WriteArrows.js"></script>',
 	phpVars2js(array(
 		'CmdPostUpdate'=>get_text('CmdPostUpdate'),
@@ -33,10 +32,10 @@ $Events=array();
 $Phases=array();
 $q=safe_r_sql("select EvCode, EvFinalFirstPhase, EvTeamEvent from Events where EvTournament={$_SESSION['TourId']} order by EvTeamEvent, EvProgr");
 while($r=safe_fetch($q)) {
-	$Events[$r->EvTeamEvent][$r->EvCode]='<input type="checkbox" id="Event['.$r->EvTeamEvent.'][]='.$r->EvCode.'">'.$r->EvCode;
+	$Events[$r->EvTeamEvent][$r->EvCode]='<input type="checkbox" class="EventCheck" name="'.$r->EvTeamEvent.'" value="'.$r->EvCode.'">'.$r->EvCode;
 	if($r->EvFinalFirstPhase and empty($Phases[$r->EvTeamEvent][$r->EvFinalFirstPhase])) {
 		for($n=valueFirstPhase($r->EvFinalFirstPhase); $n>=0; $n/=2) {
-			$Phases[$r->EvTeamEvent][$n]='<input type="checkbox" id="Phase['.$r->EvTeamEvent.'][]='.valueFirstPhase($n).'">'.get_text(namePhase($r->EvFinalFirstPhase,$n).'_Phase');
+			$Phases[$r->EvTeamEvent][$n]='<input type="checkbox" class="PhaseCheck" name="'.$r->EvTeamEvent.'" value="'.valueFirstPhase($n).'">'.get_text(namePhase($r->EvFinalFirstPhase,$n).'_Phase');
 			if($n==0) break; // escape from this zoo :D
 			if($n==1) $n=0; // makes the gold medal match ;)
 		}
@@ -50,6 +49,7 @@ if(!empty($Phases[1])) {
     krsort($Phases[1], SORT_NUMERIC );
 }
 
+$IncludeJquery=1;
 include('Common/Templates/head.php');
 
 ?>

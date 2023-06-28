@@ -4,7 +4,6 @@ $lang['Create']='Creare utilizator si baza de date';
 $lang['Credits-Coordination']='Coordonare proiect IT';
 $lang['Credits-CoreGroup']='Grup principal IANSEO';
 $lang['Credits-Credits']='Credite';
-$lang['Credits-Documentation']='Documentatie & Suport';
 $lang['Credits-HHT']='Integrare HHT';
 $lang['Credits-IanseoTeam']='Ianseo & Echipa Ianseo';
 $lang['Credits-License']='IANSEO functioneaza sub licenta GNU GENERAL PUBLIC LICENCE versiunea 3 (GPLV3)';

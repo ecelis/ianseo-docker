@@ -94,36 +94,41 @@ function CreateStandardEvents($TourId, $SubRule, $Outdoor=true) {
 	$Settings['EvDistance']=$DistanceV;
 	CreateEventNew($TourId, 'VI1', 'Visually Impaired 1', $i++, $Settings);
 	CreateEventNew($TourId, 'VI23', 'Visually Impaired 2/3', $i++, $Settings);
-	$i=1;
+	//Team
+    $i=1;
 	$Settings['EvTeamEvent']=1;
 	$Settings['EvFinalAthTarget']=0;
 	$Settings['EvMatchArrowsNo']=0;
 	$Settings['EvElimEnds']=4;
-	$Settings['EvElimArrows']=6;
-	$Settings['EvElimSO']=3;
+	$Settings['EvElimArrows']=4;
+	$Settings['EvElimSO']=2;
 	$Settings['EvFinEnds']=4;
-	$Settings['EvFinArrows']=6;
-	$Settings['EvFinSO']=3;
+	$Settings['EvFinArrows']=4;
+	$Settings['EvFinSO']=2;
 	$Settings['EvMatchArrowsNo']=0;
 	$Settings['EvMatchMode']=1;
 	$Settings['EvFinalFirstPhase']=8;
 	$Settings['EvFinalTargetType']=$TargetR;
 	$Settings['EvTargetSize']=$TargetSizeR;
 	$Settings['EvDistance']=$DistanceR;
-	CreateEventNew($TourId, 'RMO', 'Recurve Men Open Team', $i++, $Settings);
-	CreateEventNew($TourId, 'RWO', 'Recurve Women Open Team', $i++, $Settings);
+	CreateEventNew($TourId, 'RMO', 'Recurve Men Open Doubles', $i++, $Settings);
+	CreateEventNew($TourId, 'RWO', 'Recurve Women Open Doubles', $i++, $Settings);
     if($SubRule=='2') {
         $Settings['EvIsPara']=0;
+        $Settings['EvElimArrows']=6;
+        $Settings['EvElimSO']=3;
+        $Settings['EvFinArrows']=6;
+        $Settings['EvFinSO']=3;
         CreateEventNew($TourId, 'RM', 'Recurve Men Team', $i++, $Settings);
         CreateEventNew($TourId, 'RW', 'Recurve Women Team', $i++, $Settings);
         $Settings['EvIsPara']=1;
+        $Settings['EvElimArrows']=4;
+        $Settings['EvElimSO']=2;
+        $Settings['EvFinArrows']=4;
+        $Settings['EvFinSO']=2;
     }
 	if($Outdoor) {
 		$Settings['EvMixedTeam']=1;
-		$Settings['EvElimArrows']=4;
-		$Settings['EvElimSO']=2;
-		$Settings['EvFinArrows']=4;
-		$Settings['EvFinSO']=2;
 		CreateEventNew($TourId, 'RXO', 'Recurve Open Mixed Team', $i++, $Settings);
         if($SubRule=='2') {
             $Settings['EvIsPara']=0;
@@ -131,55 +136,42 @@ function CreateStandardEvents($TourId, $SubRule, $Outdoor=true) {
             $Settings['EvIsPara']=1;
         }
         $Settings['EvMixedTeam']=0;
-		$Settings['EvElimArrows']=6;
-		$Settings['EvElimSO']=3;
-		$Settings['EvFinArrows']=6;
-		$Settings['EvFinSO']=3;
 	}
+    $Settings['EvMatchMode']=0;
 	$Settings['EvFinalTargetType']=$TargetW1;
 	$Settings['EvTargetSize']=$TargetSizeC;
 	$Settings['EvDistance']=$DistanceC;
-	CreateEventNew($TourId, 'MW1', 'Men W1 Open (Rec/Comp) Team', $i++, $Settings);
-	CreateEventNew($TourId, 'WW1', 'Women W1 Open (Rec/Comp) Team', $i++, $Settings);
+	CreateEventNew($TourId, 'MW1', 'Men W1 Doubles', $i++, $Settings);
+	CreateEventNew($TourId, 'WW1', 'Women W1 Doubles', $i++, $Settings);
 	if($Outdoor) {
 		$Settings['EvMixedTeam']=1;
-		$Settings['EvElimArrows']=4;
-		$Settings['EvElimSO']=2;
-		$Settings['EvFinArrows']=4;
-		$Settings['EvFinSO']=2;
-		CreateEventNew($TourId, 'W1X', 'W1 Open (Rec/Comp) Mixed Team', $i++, $Settings);
+		CreateEventNew($TourId, 'W1X', 'W1 Mixed Team', $i++, $Settings);
 		$Settings['EvMixedTeam']=0;
-		$Settings['EvElimArrows']=6;
-		$Settings['EvElimSO']=3;
-		$Settings['EvFinArrows']=6;
-		$Settings['EvFinSO']=3;
 	}
 	$Settings['EvFinalTargetType']=$TargetC;
-	CreateEventNew($TourId, 'CMO', 'Compound Men Open Team', $i++, $Settings);
-	CreateEventNew($TourId, 'CWO', 'Compound Women Open Team', $i++, $Settings);
+	CreateEventNew($TourId, 'CMO', 'Compound Men Open Doubles', $i++, $Settings);
+	CreateEventNew($TourId, 'CWO', 'Compound Women Open Doubles', $i++, $Settings);
     if($SubRule=='2') {
         $Settings['EvIsPara']=0;
+        $Settings['EvElimArrows']=6;
+        $Settings['EvElimSO']=3;
+        $Settings['EvFinArrows']=6;
+        $Settings['EvFinSO']=3;
         CreateEventNew($TourId, 'CM', 'Compound Men Team', $i++, $Settings);
         CreateEventNew($TourId, 'CW', 'Compound Women Team', $i++, $Settings);
         $Settings['EvIsPara']=1;
+        $Settings['EvElimArrows']=4;
+        $Settings['EvElimSO']=2;
+        $Settings['EvFinArrows']=4;
+        $Settings['EvFinSO']=2;
     }
 	if($Outdoor) {
 		$Settings['EvMixedTeam']=1;
-		$Settings['EvElimArrows']=4;
-		$Settings['EvElimSO']=2;
-		$Settings['EvFinArrows']=4;
-		$Settings['EvFinSO']=2;
 		CreateEventNew($TourId, 'CXO', 'Compound Open Mixed Team', $i++, $Settings);
         if($SubRule=='2') {
             $Settings['EvIsPara']=0;
             CreateEventNew($TourId, 'CX', 'Compound Mixed Team', $i++, $Settings);
-            $Settings['EvIsPara']=1;
         }
-		$Settings['EvMixedTeam']=0;
-		$Settings['EvElimArrows']=6;
-		$Settings['EvElimSO']=3;
-		$Settings['EvFinArrows']=6;
-		$Settings['EvFinSO']=3;
 	}
 }
 
@@ -204,22 +196,22 @@ function InsertStandardEvents($TourId, $SubRule, $Outdoor=true) {
 	InsertClassEvent($TourId, 0, 1, 'VI1', 'VI', '1');
 	InsertClassEvent($TourId, 0, 1, 'VI23', 'VI', '23');
     if($SubRule=='1') {
-        InsertClassEvent($TourId, 1, 3, 'RMO', 'R', 'M');
-        InsertClassEvent($TourId, 1, 3, 'RWO', 'R', 'W');
-        InsertClassEvent($TourId, 1, 3, 'CMO', 'C', 'M');
-        InsertClassEvent($TourId, 1, 3, 'CWO', 'C', 'W');
+        InsertClassEvent($TourId, 1, 2, 'RMO', 'R', 'M');
+        InsertClassEvent($TourId, 1, 2, 'RWO', 'R', 'W');
+        InsertClassEvent($TourId, 1, 2, 'CMO', 'C', 'M');
+        InsertClassEvent($TourId, 1, 2, 'CWO', 'C', 'W');
     } elseif($SubRule=='2') {
-        InsertClassEvent($TourId, 1, 3, 'RMO', 'RO', 'M');
-        InsertClassEvent($TourId, 1, 3, 'RWO', 'RO', 'W');
-        InsertClassEvent($TourId, 1, 3, 'CMO', 'CO', 'M');
-        InsertClassEvent($TourId, 1, 3, 'CWO', 'CO', 'W');
+        InsertClassEvent($TourId, 1, 2, 'RMO', 'RO', 'M');
+        InsertClassEvent($TourId, 1, 2, 'RWO', 'RO', 'W');
+        InsertClassEvent($TourId, 1, 2, 'CMO', 'CO', 'M');
+        InsertClassEvent($TourId, 1, 2, 'CWO', 'CO', 'W');
         InsertClassEvent($TourId, 1, 3, 'RM', 'R', 'M');
         InsertClassEvent($TourId, 1, 3, 'RW', 'R', 'W');
         InsertClassEvent($TourId, 1, 3, 'CM', 'C', 'M');
         InsertClassEvent($TourId, 1, 3, 'CW', 'C', 'W');
     }
-	InsertClassEvent($TourId, 1, 3, 'MW1', 'W1', 'M');
-	InsertClassEvent($TourId, 1, 3, 'WW1', 'W1', 'W');
+	InsertClassEvent($TourId, 1, 2, 'MW1', 'W1', 'M');
+	InsertClassEvent($TourId, 1, 2, 'WW1', 'W1', 'W');
 	if($Outdoor) {
         if($SubRule=='1') {
             InsertClassEvent($TourId, 1, 1, 'RXO', 'R', 'W');

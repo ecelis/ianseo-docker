@@ -17,7 +17,7 @@ $tmp=explode(' ',substr($schedule,1));
 $date=$tmp[0];
 $time=$tmp[1];
 
-if($IskSequence=getModuleParameter('ISK', 'Sequence')) {
+if($IskSequence=getModuleParameter('ISK', 'Sequence') OR $IskSequence=getModuleParameter('ISK-NG', 'Sequence')) {
 	if(!isset($IskSequence['session'])) {
 		$IskSequence=current($IskSequence);
 	}

@@ -25,6 +25,7 @@ foreach ($_REQUEST as $Key => $Value) {
 	$ee=$Items[2];
 	$mm=$Items[3];
 	$opp = ($mm % 2) ? $mm - 1 : $mm + 1;
+	$obj=getEventArrowsParams($ee, getPhase($mm),1);
 
 	switch($Items[1]) {
 		case 'N':
@@ -52,7 +53,7 @@ foreach ($_REQUEST as $Key => $Value) {
 			break;
 		case 'T':
 			if (substr($Value, 0, 4) == 'irm-') {
-				// needs to reset the tie status also
+				// low-level DNF, needs to reset the tie status also
 				$Value=intval(substr($Value, 4));
 				safe_w_SQL("update TeamFinals set TfTie=0, TfWinLose=0, TfIrmType=" . $Value . " where TfTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND TfEvent=" . StrSafe_DB($ee) . " AND TfMatchNo=" . StrSafe_DB($mm) . " ");
 				if($Value) {
@@ -66,7 +67,7 @@ foreach ($_REQUEST as $Key => $Value) {
 				$WinLose=min(1, $Value);
 
 				// setting or removing the bye also "kills" the winlose status of both opponents
-				setTieWinner($ee, $mm, $opp, $WinLose, $Value);
+				setTieWinner($ee, $mm, $opp, $obj->so, $WinLose, $Value);
 
 				// if tie==1 then check the "bonus point" if a set event
 				if($Value==1) {
@@ -124,14 +125,14 @@ foreach ($_REQUEST as $Key => $Value) {
 						$Tie2=ValutaArrowString($r2->TfTiebreak);
 						if($Tie1>$Tie2) {
 							// opponent won the tie
-							setTieWinner($ee, $opp, $mm);
+							setTieWinner($ee, $opp, $mm, $obj->so);
 							// adjust the winner match in case of sets
 							if($r2->EvMatchMode) {
 								safe_w_sql("update TeamFinals set TfSetScore=if(TfMatchNo=$opp, $obj->winAt, $obj->ends) where TfTournament={$_SESSION['TourId']} AND TfEvent='$ee' AND TfMatchNo in ($mm, $opp)");
 							}
 						} elseif($Tie1<$Tie2) {
 							// current matchno won the tie
-							setTieWinner($ee, $mm, $opp);
+							setTieWinner($ee, $mm, $opp, $obj->so);
 							// adjust the winner match in case of sets
 							if($r2->EvMatchMode) {
 								safe_w_sql("update TeamFinals set TfSetScore=if(TfMatchNo=$mm, $obj->winAt, $obj->ends) where TfTournament={$_SESSION['TourId']} AND TfEvent='$ee' AND TfMatchNo in ($mm, $opp)");
@@ -140,12 +141,12 @@ foreach ($_REQUEST as $Key => $Value) {
 							if($Items[1]=='cl') {
 								// sets the closest
 								if($Value) {
-									setTieWinner($ee, $mm, $opp, 1, 1, 1);
+									setTieWinner($ee, $mm, $opp, $obj->so, 1, 1, 1);
 									if($r2->EvMatchMode) {
 										safe_w_sql("update TeamFinals set TfSetScore=if(TfMatchNo=$mm, $obj->winAt, $obj->ends) where TfTournament={$_SESSION['TourId']} AND TfEvent='$ee' AND TfMatchNo in ($mm, $opp)");
 									}
 								} else {
-									setTieWinner($ee, $mm, $opp, 0, 0, 0);
+									setTieWinner($ee, $mm, $opp, $obj->so, 0, 0, 0);
 									if($r2->EvMatchMode) {
 										safe_w_sql("update TeamFinals set TfSetScore=$obj->ends where TfTournament={$_SESSION['TourId']} AND TfEvent='$ee' AND TfMatchNo in ($mm, $opp)");
 									}
@@ -153,21 +154,21 @@ foreach ($_REQUEST as $Key => $Value) {
 							} else {
 								if($r1->TfTbClosest) {
 									// opponent won the tie
-									setTieWinner($ee, $opp, $mm, 1, 1, 1);
+									setTieWinner($ee, $opp, $mm, $obj->so, 1, 1, 1);
 									// adjust the winner match in case of sets
 									if($r2->EvMatchMode) {
 										safe_w_sql("update TeamFinals set TfSetScore=if(TfMatchNo=$opp, $obj->winAt, $obj->ends) where TfTournament={$_SESSION['TourId']} AND TfEvent='$ee' AND TfMatchNo in ($mm, $opp)");
 									}
 								} elseif($r2->TfTbClosest) {
 									// current matchno won the tie
-									setTieWinner($ee, $mm, $opp, 1, 1, 1);
+									setTieWinner($ee, $mm, $opp, $obj->so, 1, 1, 1);
 									// adjust the winner match in case of sets
 									if($r2->EvMatchMode) {
 										safe_w_sql("update TeamFinals set TfSetScore=if(TfMatchNo=$mm, $obj->winAt, $obj->ends) where TfTournament={$_SESSION['TourId']} AND TfEvent='$ee' AND TfMatchNo in ($mm, $opp)");
 									}
 								} else {
 									// still tie, removes ties and winner from current match
-									setTieWinner($ee, $mm, $opp, 0, 0);
+									setTieWinner($ee, $mm, $opp, $obj->so, 0, 0);
 									if($r2->EvMatchMode) {
 										safe_w_sql("update TeamFinals set TfSetScore=$obj->ends where TfTournament={$_SESSION['TourId']} AND TfEvent='$ee' AND TfMatchNo in ($mm, $opp)");
 									}
@@ -226,7 +227,53 @@ JsonOut($JSON);
 
 // ======================================
 
-function setTieWinner($ee, $winner, $loser, $WinLose=1, $TieValue=1, $Closest=0) {
+function setTieWinner($ee, $winner, $loser, $SoArrows, $WinLose=1, $TieValue=1, $Closest=0) {
 	safe_w_sql("UPDATE TeamFinals SET TfTie=0, TfWinLose=0, TfTbClosest=0, TfDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " WHERE TfTournament={$_SESSION['TourId']} AND TfEvent='$ee' AND TfMatchNo in ($winner, $loser)");
 	safe_w_sql("UPDATE TeamFinals SET TfTie=$TieValue, TfWinLose=$WinLose, TfTbClosest=$Closest, TfIrmType=0, TfDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " WHERE TfTournament={$_SESSION['TourId']} AND TfEvent='$ee' AND TfMatchNo=$winner");
+
+	// calculate the TbDecoded
+	$q=safe_r_sql("select f1.TfMatchNo as MatchNo1, f1.TfTiebreak as TieBreak1, f1.TfTbClosest as Closest1,
+			f2.TfMatchNo as MatchNo2, f2.TfTiebreak as TieBreak2, f2.TfTbClosest as Closest2
+		from TeamFinals f1 
+		inner join TeamFinals f2 on f2.TfTournament=f1.TfTournament and f2.TfEvent=f1.TfEvent and f2.TfMatchNo=f1.TfMatchNo+1
+		WHERE f1.TfTournament={$_SESSION['TourId']} AND f1.TfEvent='$ee' AND f1.TfMatchNo = ".min($winner, $loser));
+	if($r=safe_fetch($q)) {
+		$TbDecoded1=array();
+		$TbDecoded2=array();
+		$tiebreak=rtrim($r->TieBreak1);
+		$idx=0;
+		while($SoEnd=substr($tiebreak, $idx, $SoArrows)) {
+			if($SoArrows>1) {
+				$TbDecoded1[]=ValutaArrowString($SoEnd);
+			} else {
+				$TbDecoded1[]=DecodeFromLetter($SoEnd);
+			}
+			$idx+=$SoArrows;
+		}
+		$tiebreak=rtrim($r->TieBreak2);
+		$idx=0;
+		while($SoEnd=substr($tiebreak, $idx, $SoArrows)) {
+			if($SoArrows>1) {
+				$TbDecoded2[]=ValutaArrowString($SoEnd);
+			} else {
+				$TbDecoded2[]=DecodeFromLetter($SoEnd);
+			}
+			$idx+=$SoArrows;
+		}
+
+		// check if the tiebreaks are the same
+		if($TbDecoded1==$TbDecoded2 and $WinLose) {
+			// the closest is the winner!
+			if($r->Closest1==$r->Closest2) {
+				if($winner==$r->MatchNo1) {
+					$r->Closest1=1;
+				} else {
+					$r->Closest2=1;
+				}
+			}
+		}
+
+		safe_w_sql("update TeamFinals set TfTbDecoded='" . ($TbDecoded1 ? implode(",",$TbDecoded1).($r->Closest1 ? '+' : '') : '') . "' where TfTournament={$_SESSION['TourId']} AND TfEvent='$ee' AND TfMatchNo = $r->MatchNo1");
+		safe_w_sql("update TeamFinals set TfTbDecoded='" . ($TbDecoded2 ? implode(",",$TbDecoded2).($r->Closest2 ? '+' : '') : '') . "' where TfTournament={$_SESSION['TourId']} AND TfEvent='$ee' AND TfMatchNo = $r->MatchNo2");
+	}
 }

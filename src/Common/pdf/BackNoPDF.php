@@ -70,8 +70,11 @@ class BackNoPDF extends IanseoPdf {
 		// background temp creation
 		if($this->RowBn->ImgSize) {
 			$this->BackGroundFile = tempnam('/tmp', 'bgf');
-			$img=imagecreatefromstring($this->RowBn->BnBackground);
-			if(!imagepng($img, $this->BackGroundFile)) die('could not create image');
+			if($img=imagecreatefromstring($this->RowBn->BnBackground)) {
+				if(!imagepng($img, $this->BackGroundFile)) {
+					die('could not create image');
+				}
+			}
 		}
 		$Orientation=($this->RowBn->BnWidth>$this->RowBn->BnHeight ? 'L' : 'P');
 		$this->setPageOrientation($Orientation);

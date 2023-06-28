@@ -16,7 +16,6 @@ $lang['Credits-BeiterCredits']='Modulen for strekkoder er frigitt for alle  I@NS
 $lang['Credits-Coordination']='IT Prosjektkoordinering';
 $lang['Credits-CoreGroup']='IANSEO kjerngruppe';
 $lang['Credits-Credits']='Medvirkende';
-$lang['Credits-Documentation']='Dokumentasjon og støtte';
 $lang['Credits-FitarcoCredits']='Hva er Ianseo? Ianseo er en programvare for håndtering av resultatene i et bueskytterstevne, det er et prosjekt bygget på åpen kildekode og takket være det Italienske Bueskytterforbundet som har stilt opp med økonomisk støtte og som har bestemte seg for fritt å distribuere programmet i hele Europa. Det er oversatt til flere språk, og Ianseo er det mest oppdaterte og avanserte programmet i verden og integrerer alle WA reglene, og har utviklet seg til å inkludere en helhetlig oppfølging av et stevne som helhet: fra akkreditering av utøverne og ledere til alle slags utskrifter, verktøy, nettverket og online integrasjon til FOP design.';
 $lang['Credits-HHT']='HHT Integrasjon';
 $lang['Credits-IanseoTeam']='Ianseo & Ianseo gruppe';

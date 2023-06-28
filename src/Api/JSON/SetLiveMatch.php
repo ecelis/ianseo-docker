@@ -41,6 +41,6 @@ if (safe_num_rows($Rs)==1) {
     $JSON['Error']=false;
 }
 
-runJack("FinLiveUpdate", $TourId, array("Event"=>$EvCode ,"Team"=>$EvType ,"MatchNo"=>$MatchId ,"TourId"=>$TourId));
+runJack("FinLiveUpdate", $TourId, array("Event"=>$EvCode, "Team"=>$EvType, "MatchNo"=>$MatchId, "IsLive"=>true, "TourId"=>$TourId));
 
 SendResult($JSON);

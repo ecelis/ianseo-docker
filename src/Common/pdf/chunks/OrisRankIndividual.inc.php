@@ -26,8 +26,8 @@ foreach($PdfData->rankData['sections'] as $Event => $section) {
 	} else {
 		$pdf->setComment(trim($section['meta']['printHeader']));
 	}
-	$pdf->AddPage();
 	$pdf->setOrisCode($PdfData->Code, $PdfData->Description);
+	$pdf->AddPage();
 	if($First and (empty($pdf->CompleteBookTitle) or $pdf->CompleteBookTitle!=$PdfData->IndexName)) {
 		$pdf->Bookmark($PdfData->IndexName, 0);
 		$pdf->CompleteBookTitle=$PdfData->IndexName;

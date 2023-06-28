@@ -13,7 +13,7 @@ if (isset($PdfData->Data['Items']) && count($PdfData->Data['Items'])>0)
 		if(!$FirstTime && ($SinglePage || !$pdf->SamePage(20))) {
 			$pdf->AddPage();
 		}
-		$FirstTime=false;		
+		$FirstTime=false;
 
 	   	$pdf->SetFont($pdf->FontStd,'B',10);
 		$pdf->Cell(190, 6,  $Rows[0]->EventCode." - ".$Rows[0]->EventName, 1, 1, 'C', 1);
@@ -132,7 +132,7 @@ if (isset($PdfData->Data['Items']) && count($PdfData->Data['Items'])>0)
 
 			if ($TargetFace)
 			{
-				$pdf->Cell(19,4* $secondaryTeam,get_text($MyRow->TfName,'Tournament','',true),1,0,'C',0);
+				$pdf->Cell(19,4* $secondaryTeam,$MyRow->TfName,1,0,'C',0);
 			}
 			//Disegna i Pallini per la partecipazione
 			if(!$PdfData->HideCols)

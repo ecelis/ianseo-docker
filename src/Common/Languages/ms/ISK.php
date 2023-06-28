@@ -109,6 +109,7 @@ $lang['Event']='Acara';
 $lang['Exit']='Keluar';
 $lang['ExitConfirm']='Adakah anda pasti mahu keluar dari aplikasinya?';
 $lang['Face']='Muka';
+$lang['FieldControl']='Kawalan Padang';
 $lang['FirstTarget']='Sasaran Pertama';
 $lang['GestureHelp']='Anda boleh menatal antara pemanah dan / atau hujung dengan menggunakan gerak isyarat yang diterangkan di bawah.';
 $lang['Gestures']='Gerak isyarat';
@@ -194,8 +195,6 @@ $lang['Scorecard']='Kad skor';
 $lang['ScorecardsManagement']='Pengurusan Kertas Markah';
 $lang['ScoredPoints']='Skor Markah';
 $lang['ScoreHelp']='Bantuan';
-$lang['ScoreHelpDesc']='208/5000
-Skrin ini membolehkan anda menjaringkan anak panah yang ditembak. Maklumat mengenai jarak semasa, jenis sasaran, dan maklumat pemanah juga dipaparkan. Masukkan nilai anak panah menggunakan butang bernombor.';
 $lang['ScoringEntry']='Masuk Skor';
 $lang['SelDist']='Sila pilih jarak dan cuba lagi';
 $lang['SelTgtNum']='Sila pilih nombor sasaran dan cuba lagi';

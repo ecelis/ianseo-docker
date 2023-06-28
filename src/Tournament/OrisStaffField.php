@@ -9,12 +9,12 @@ require_once('Common/pdf/PdfChunkLoader.php');
 
 // ATTENTION!
 // MUST BE called $PdfData
-$PdfData=getCompetitionOfficials(true, isset($_GET['Athletes']));
+$PdfData=getCompetitionOfficials(true);
 
 if(!isset($isCompleteResultBook))
     $pdf = new OrisPDF($PdfData->Code, $PdfData->Description);
 else
-    $pdf->setOrisCode('', $PdfData->Description);
+    $pdf->setOrisCode('C35A', $PdfData->Description);
 
 require_once(PdfChunkLoader('OrisCompetitionOfficials.inc.php'));
 if(!isset($isCompleteResultBook)) {

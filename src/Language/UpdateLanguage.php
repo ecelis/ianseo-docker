@@ -7,7 +7,7 @@ require_once('Language/lib.php');
 $JSON=array('error' => 1, 'date' => '', 'lang' => '');
 
 
-if(!empty($_REQUEST['lang']) and preg_match('/^[A-Z-]+$/i', $_REQUEST['lang'])) {
+if(!empty($_REQUEST['lang']) and preg_match('/^[A-Z_-]+$/i', $_REQUEST['lang'])) {
     $LANG=strtoupper($_REQUEST['lang']);
     // gets the content of the language pack from ianseo!
     if( $package=@file_get_contents("https://translations.ianseo.net/getpackage.php?lang=$LANG")) {
@@ -21,7 +21,11 @@ if(!empty($_REQUEST['lang']) and preg_match('/^[A-Z-]+$/i', $_REQUEST['lang'])) 
             }
 
             // salva il credit aggiornato
-            save_lang_files($LangCommon . "credits.php", $files['credits']);
+	        if(!empty($files['translators'])) {
+		        save_lang_files($LangDir . 'translators.json', json_encode($files['translators']));
+	        } else {
+		        save_lang_files($LangCommon . "credits.php", $files['credits']);
+	        }
 
             // salva le immaginine
             save_lang_files($LangDir . $Lang . '.png', $files['flag-png']);

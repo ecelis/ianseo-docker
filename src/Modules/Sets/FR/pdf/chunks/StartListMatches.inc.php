@@ -89,9 +89,9 @@ if (isset($PdfData->Data['Items']))
 			$pdf->Cell(12 + ($pdf->HideCols ? 23 : 0), 4, 'Match Score', 1, 0, 'C', 1);
 			$pdf->Cell(12 + ($pdf->HideCols ? 22 : 0), 4, '', 1, 0, 'C', 1);
 
-			if ($TargetFace)
-			{
-				$pdf->Cell(21, 4, $PdfData->Data['Fields']['TargetFace'], 1, 0, 'C', 1);
+			if ($TargetFace) {
+                $pdf->Cell(3, 4, $PdfData->Data['Fields']['Wheelchair'], 1, 0, 'C', 1);
+                $pdf->Cell(18, 4, $PdfData->Data['Fields']['TargetFace'], 1, 0, 'C', 1);
 			}
 
 
@@ -151,6 +151,7 @@ if (isset($PdfData->Data['Items']))
 		$temprow[]= $MyRow->TfName;
 		$temprow[]= $MyRow->NationCode3;
 		$temprow[]= $MyRow->Nation3;
+        $temprow[]= $MyRow->Wheelchair;
 
 		$ShowStatusLegend = ($ShowStatusLegend || ($MyRow->Status!=0));
 		$Components['players'][]=$temprow;

@@ -23,7 +23,7 @@ if(isset($_REQUEST["onlyToday"]) && $_REQUEST["onlyToday"]) {
 	$OnlyToday="AND FSScheduledDate='$Today'";
 }
 
-if($IskSequence=getModuleParameter('ISK', 'Sequence')) {
+if($IskSequence=getModuleParameter('ISK', 'Sequence') OR $IskSequence=getModuleParameter('ISK-NG', 'Sequence')) {
 	if(!isset($IskSequence['session'])) {
 		$IskSequence=current($IskSequence);
 	}

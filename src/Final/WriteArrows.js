@@ -29,71 +29,73 @@ function GetSchedule(reset) {
 }
 
 function getArrows() {
-	var go=($('#x_Schedule').val()!='');
+	let go=($('#x_Schedule').val()!='');
+	let form={
+		act:'getArrows',
+		schedule:$('#x_Schedule').val(),
+		events:[[],[]],
+		phases:[[],[]],
+		end:$('#x_Volee').val(),
+		arrows:$('#x_Arrows').val(),
+	};
 
-	var get='schedule='+$('#x_Schedule').val();
-	$('[id^="Event"]:checked').each(function() {
-		get+='&'+this.id;
+	$('.EventCheck:checked').each(function() {
+		form.events[this.name=='0' ? 0 : 1].push(this.value);
 		go=true;
 	});
-	$('[id^="Phase"]:checked').each(function() {
-		get+='&'+this.id;
+	$('.PhaseCheck:checked').each(function() {
+		form.phases[this.name=='0' ? 0 : 1].push(this.value);
 		go=true;
 	});
-	get+='&end='+$('#x_Volee').val();
-	get+='&arrows='+$('#x_Arrows').val();
 
 	if(!go || !($.isNumeric($('#x_Volee').val()) && $('#x_Volee').val()>0) || !($.isNumeric($('#x_Arrows').val()) && $('#x_Arrows').val()>0)) {
 		return;
 	}
-	$.getJSON('WriteArrows-GetArrows.php?'+get, function(data) {
-		$('#idOutput').html(data.html);
+	$.getJSON('WriteArrows-Action.php', form, function(data) {
+		if(data.error==0) {
+			$('#idOutput').html(data.html);
+		} else {
+			$.alert(data.msg);
+		}
 	});
 }
 
 function updateScore(obj) {
-	var split=obj.id.split('_');
-	var qs = "what=" + split[0]
-		+ "&team=" + split[1]
-		+ "&event=" + split[2]
-		+ "&match=" + split[3]
-		+ "&index=" + split[4]
-		+ "&arrow=" + obj.value
-		+ "&matchfirst=0";
+	let split=obj.id.split('_');
+	let form={
+		act:'updateArrow',
+		what: split[0],
+		team: split[1],
+		event: split[2],
+		match: split[3],
+		index: split[4],
+		arrow: obj.value,
+	};
 
 	$(obj).css('backgroundColor', '#ffff00');
 
-	$.get('UpdateScoreCard.php?'+qs, function(data) {
-		var XMLRoot = data.documentElement;
-
-		// we are only interested in the single arrow and the total score
-		var Error=XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
-		var msg=XMLRoot.getElementsByTagName('msg').item(0).firstChild.data;
-
-		if (Error==0) {
-			var opp=split[3]+1;
-			if(split[3]%2) {
-				opp=split[3]-1;
-			}
-
-			this.value=$(XMLRoot).find(split[0]+'_'+split[3]+'_'+split[4]).text();
-			$('#tot_'+split[1]+'_'+split[2]+'_'+split[3]).html( $(XMLRoot).find('tot_'+split[3]).text());
-			$('#set_'+split[1]+'_'+split[2]+'_'+split[3]).html( $(XMLRoot).find('totsets_'+split[3]).text());
-			$('#set_'+split[1]+'_'+split[2]+'_'+opp).html( $(XMLRoot).find('totsets_'+opp).text());
-
-			// check if there is a winner
-			if($(XMLRoot).find('winner[arc1="1"]').length>0 || $(XMLRoot).find('winner[arc2="1"]').length>0) {
-				$('#next_'+split[1]+'_'+split[2]+'_'+$(XMLRoot).attr('match1')).show();
-			}
-
-			// puts the arrow value returned by the script
-			if(obj.value.toUpperCase()==$(XMLRoot).attr('arrow')) {
-				$(obj).css('backgroundColor', '');
-			}
-			obj.value=$(XMLRoot).attr('arrow');
+	// $.get('UpdateScoreCard.php?'+qs, function(data) {
+	$.getJSON('WriteArrows-Action.php', form, function(data) {
+		if(data.error==0) {
+			obj.value=data.arrow;
+			$.each(data.updates, function() {
+				switch(this.k) {
+					case 'class':
+						$(this.id).removeClass().addClass(this.val);
+						break;
+					case 'value':
+						$(this.id).val(this.val);
+						break;
+					case 'html':
+						$(this.id).html(this.val);
+						break;
+				}
+			});
+			$(obj).css('backgroundColor', '');
+		} else {
+			showAlert(data.msg);
 		}
 	});
-
 }
 
 function SendToServer(obj) {

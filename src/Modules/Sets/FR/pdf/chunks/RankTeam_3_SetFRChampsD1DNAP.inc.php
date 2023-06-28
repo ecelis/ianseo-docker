@@ -6,12 +6,11 @@ if((isset($pdf->OrgEvent) and strlen($pdf->OrgEvent)==6) or (isset($Events) and 
 	$pdf->setDocUpdate($PdfData->rankData['meta']['lastUpdate']);
 
 	// se ho degli eventi
-	//$Bonus = getModuleParameter('FFTA', 'D1Bonus');
 	$FirstPage=true;
 	$Height=6;
 	$Width=$pdf->getPageWidth() - 87 - 24*count($PdfData->rankData['competitions']);
 
-	$AllInOne=getModuleParameter('FFTA', 'D1AllInOne', 0);
+	$AllInOne=$PdfData->rankData['meta']['allInOne'];
 
 	foreach($PdfData->rankData['sections'] as $section) {
 		$NeedTitle=true;
@@ -220,7 +219,7 @@ if((isset($pdf->OrgEvent) and strlen($pdf->OrgEvent)==6) or (isset($Events) and 
 	$pdf->setCellPaddings(0,0,0,0);
 
 	// DETAILS of all the matches
-	$Height=2.5;
+	$margins=$pdf->getMargins();
 	if($AllInOne) {
 		$ColWidth=($pdf->getPageWidth()-20-12)/5;
 		$ClubCol=($ColWidth-12);
@@ -237,6 +236,7 @@ if((isset($pdf->OrgEvent) and strlen($pdf->OrgEvent)==6) or (isset($Events) and 
 
 	foreach($PdfData->rankData['details'] as $Event => $section) {
 		$RunNumber=1;
+		$Height=($pdf->getPageHeight()-$margins['top']-$margins['bottom'])/(68+($PdfData->rankData['sections'][$Event]['meta']['printHeader'] ? 3 : 0));
 		foreach($section as $CompId => $Lines) {
 			if(empty($PdfData->rankData['sections'][$Event])) {
 				continue;
@@ -248,14 +248,14 @@ if((isset($pdf->OrgEvent) and strlen($pdf->OrgEvent)==6) or (isset($Events) and 
 			// testastampa
 			if ($PdfData->rankData['sections'][$Event]['meta']['printHeader']) {
 		        $pdf->SetFont($pdf->FontStd,'B',7);
-				$pdf->Cell(0, 5,  $PdfData->rankData['sections'][$Event]['meta']['printHeader'], 0, 1, 'R', 0);
+				$pdf->Cell(0, $Height*2,  $PdfData->rankData['sections'][$Event]['meta']['printHeader'], 0, 1, 'R', 0);
+				$pdf->ln($Height);
 			}
 
 			// Titolo della tabella
-			$pdf->ln(4);
 		    $pdf->SetFont($pdf->FontStd,'B',7);
-			$pdf->Cell(0, 5, $PdfData->rankData['sections'][$Event]['meta']['descr'] . ' / ' . $PdfData->rankData['meta']['Run'.$RunNumber++].' - '.$PdfData->rankData['competitions'][$CompId], 1, 1, 'C', 1);
-			$pdf->ln(2);
+			$pdf->Cell(0, $Height*2, $PdfData->rankData['sections'][$Event]['meta']['descr'] . ' / ' . $PdfData->rankData['meta']['Run'.$RunNumber++].' - '.$PdfData->rankData['competitions'][$CompId], 1, 1, 'C', 1);
+			$pdf->ln($Height);
 
 			// remembers where the Y is!
 			$OrgY=$pdf->GetY();
@@ -296,7 +296,7 @@ if((isset($pdf->OrgEvent) and strlen($pdf->OrgEvent)==6) or (isset($Events) and 
 					$pdf->SetLeftMargin($Blocks[$Line]);
 					$pdf->SetXY($Blocks[$Line], $OrgY);
 					$pdf->Cell($ColWidth, $Height, $PdfData->rankData['meta']['Game'.(($RunNumber-2)*5+$Line)], 1, 1, 'C', 1);
-					$pdf->ln(2);
+					$pdf->ln($Height);
 
 
 					foreach($Matches as $Match) {
@@ -349,7 +349,7 @@ if((isset($pdf->OrgEvent) and strlen($pdf->OrgEvent)==6) or (isset($Events) and 
 
 						$pdf->Cell(3, $Height, $PrintScore ? $Match['score1'] : '',0,0,'C');
 						$pdf->Cell(3, $Height, $PrintScore ? $Match['score2'] : '',0,1,'C');
-						$pdf->ln(2);
+						$pdf->ln($Height);
 					}
 
 				}

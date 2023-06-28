@@ -79,8 +79,8 @@ if(!empty($_REQUEST['lev'])) {
 		where EnTournament={$_SESSION['TourId']}");
 	$EnCodes=array();
 	while($r=safe_fetch($q)) {
-		if(empty($EnCodes[$r->EnCode])) $EnCodes[$r->EnCode]=0;
-		$EnCodes[$r->EnCode]++;
+		if(empty($EnCodes["{$r->EnCode}-{$r->EnDivision}"])) $EnCodes["{$r->EnCode}-{$r->EnDivision}"]=0;
+		$EnCodes["{$r->EnCode}-{$r->EnDivision}"]++;
 
 		// check the age class
 		switch($r->EnAgeClass[0]) {
@@ -99,8 +99,11 @@ if(!empty($_REQUEST['lev'])) {
 			case 'Y':
 				$AgeClass='C';
 				break;
+			case 'S':
+				$AgeClass=substr($r->EnAgeClass, 0 ,2);
+				break;
 			default:
-				$AgeClass=$r->EnAgeClass[0];
+				$AgeClass=substr($r->EnAgeClass,0,-1);
 		}
 
 		// check the shooting class
@@ -120,8 +123,11 @@ if(!empty($_REQUEST['lev'])) {
 			case 'Y':
 				$Class='C';
 				break;
+			case 'S':
+				$Class=substr($r->EnClass, 0 ,2);
+				break;
 			default:
-				$Class=$r->EnClass[0];
+				$Class=substr($r->EnAgeClass,0,-1);
 		}
 
 		$Archers[$r->IndEvent][$r->EnId]=array_fill(0, 51, '');
@@ -153,7 +159,7 @@ if(!empty($_REQUEST['lev'])) {
 		$Archers[$r->IndEvent][$r->EnId][47] = $r->IndRankFinal;
 		$Archers[$r->IndEvent][$r->EnId][48] = '1'; // will always be a valid competition... set to 1 if official FFTA Ranking Category
 		$Archers[$r->IndEvent][$r->EnId][49] = $r->EnDivision;
-		$Archers[$r->IndEvent][$r->EnId][50] = $EnCodes[$r->EnCode];
+		$Archers[$r->IndEvent][$r->EnId][50] = $EnCodes["{$r->EnCode}-{$r->EnDivision}"];
 	}
 
 	// get the matches

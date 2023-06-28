@@ -5,6 +5,7 @@ $version = '2020-01-01 00:00:00';
 $AllowedTypes=array(1,2,3,37,5,6,7,8,9,12,10,11,13);
 
 $SetType['AT']['descr']=get_text('Setup-AT', 'Install');
+$SetType['AT']['noc'] = 'AUT';
 $SetType['AT']['types']=array();
 $SetType['AT']['rules']=array();
 

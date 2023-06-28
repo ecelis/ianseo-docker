@@ -20,6 +20,8 @@
 		protected $tournament=null;
 		protected $tourcode=null;
 		protected $touryear=null;
+		var $RankType='';
+		var $RankSubRule='';
 
 	/**
 	 * Struttura contenente la rank con tutte le metainformazioni
@@ -51,6 +53,13 @@
 		protected $TourOptions=array();
 		protected $TimeZone='UTC';
 
+
+		/**
+		 * @var bool signals if the events have been flighted in some competitions (eg NFAA)
+		 */
+		protected $Flighted=false;
+		protected $SoColumn='0';
+
 	/**
 	 * __construct()
 	 * Costruttore.
@@ -68,7 +77,7 @@
 				$this->tournament=$_SESSION['TourId'];
 			}
 
-			$q=safe_r_sql("select ToTimeZone, ToOptions, ToCode, year(ToWhenTo) as ToYear, RecAreas.* 
+			$q=safe_r_sql("select ToTimeZone, ToOptions, ToCode, year(ToWhenTo) as ToYear, ToBlock & 1024 as Flighted, RecAreas.* 
 				from Tournament 
 			    left join (select distinct RecAreas.*, TrTournament from RecAreas inner join TourRecords on TrRecCode=ReArCode and TrTournament=$this->tournament) RecAreas on TrTournament=ToId 
 				where ToId=$this->tournament");
@@ -78,13 +87,13 @@
 					$this->TimeZone = $r->ToTimeZone;
 					$this->tourcode = $r->ToCode;
 					$this->touryear = $r->ToYear;
+					$this->Flighted = ($r->Flighted>0);
 				}
 				unset($r->ToOptions, $r->ToTimeZone, $r->ToCode, $r->ToYear, $r->TrTournament);
 				if(!empty($r->ReArCode)) {
 					$this->HasRecords["$r->ReArBitLevel|$r->ReArMaCode"]=$r;
 				}
 			}
-
 
 			// defines a constant that overrides printing if not empty
 			if(!empty($_SESSION['TourPrintLang']) AND !defined('PRINTLANG')) {
@@ -115,8 +124,7 @@
 	 */
 		abstract public function read();
 
-		public function getData()
-		{
+		public function getData() {
 			return $this->data;
 		}
 

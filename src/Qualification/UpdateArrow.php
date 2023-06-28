@@ -57,7 +57,7 @@
 			. "FROM Tournament INNER JOIN Tournament*Type ON ToType=TtId "
 			. "WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " ";*/
 
-		$Select	= "SELECT ToType, ToGoldsChars,ToXNineChars,(ToMaxDistScore/ToGolds) AS MaxArrows FROM Tournament WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " ";
+		$Select	= "SELECT ToType, ToGoldsChars,ToXNineChars,(ToMaxDistScore/ToGolds) AS MaxArrows FROM Tournament WHERE ToId=" . intval($_SESSION['TourId']) . " ";
 
 		$Rs=safe_r_sql($Select);
 
@@ -70,10 +70,12 @@
 			$G=$MyRow->ToGoldsChars;
 			$X=$MyRow->ToXNineChars;
 		// Estraggo l'arrowstring
-			$Select = "SELECT QuD" . $_REQUEST['Dist'] . "ArrowString AS ArrowString, DiEnds*DiArrows as MaxArrows, DiArrows 
+			$Select = "SELECT QuD" . $_REQUEST['Dist'] . "ArrowString AS ArrowString, DiEnds*DiArrows as MaxArrows, DiArrows, TfGoldsChars, TfXNineChars, TfGoldsChars" . $_REQUEST['Dist'] . ", TfXNineChars" . $_REQUEST['Dist'] . "
 				FROM Qualifications
-				LEFT JOIN DistanceInformation on DiTournament={$_SESSION['TourId']} and QuSession=DiSession and DiDistance={$_REQUEST['Dist']} and DiType='Q'
-				WHERE QuId=" . StrSafe_DB($_REQUEST['Id']) . " ";
+				INNER JOIN Entries ON QuId=EnId 
+				LEFT JOIN DistanceInformation on DiTournament=EnTournament and QuSession=DiSession and DiDistance={$_REQUEST['Dist']} and DiType='Q'
+				LEFT JOIN TargetFaces ON TfTournament=EnTournament and EnTargetFace=TfId
+				WHERE EnId=" . StrSafe_DB($_REQUEST['Id']) . " AND EnTournament={$_SESSION['TourId']}";
 			$Rs=safe_r_sql($Select);
 
 			if (safe_num_rows($Rs)!=1) {
@@ -83,6 +85,16 @@
 				if($MyRow->MaxArrows) {
 					$MaxArrows=$MyRow->MaxArrows;
 				}
+                if(!empty($MyRow->{"TfGoldsChars".$_REQUEST['Dist']})) {
+                    $G=$MyRow->{"TfGoldsChars".$_REQUEST['Dist']};
+                } else if(!empty($MyRow->TfGoldsChars)) {
+                    $G=$MyRow->TfGoldsChars;
+                }
+                if(!empty($MyRow->{"TfXNineChars".$_REQUEST['Dist']})) {
+                    $X=$MyRow->{"TfXNineChars".$_REQUEST['Dist']};
+                } else if(!empty($MyRow->TfXNineChars)) {
+                    $X=$MyRow->TfXNineChars;
+                }
 				$ArrowString=str_pad($MyRow->ArrowString,$MaxArrows,' ',STR_PAD_RIGHT);
 				$xx=GetLetterFromPrint($_REQUEST['Point'],$_REQUEST['Id'],$_REQUEST['Dist']);
 
@@ -95,7 +107,7 @@
 				if ($Value2Write=='') {
                     $Errore = 1;
                 } else {
-					$MustUpdateZeroValue=($Value2Write=='A' and $ArrowString[$_REQUEST['Index']]!=$Value2Write);
+					$MustUpdateZeroValue=(($Value2Write=='A' OR $Value2Write==' ') and $ArrowString[$_REQUEST['Index']]!=$Value2Write);
 					$ArrowString[$_REQUEST['Index']]=$Value2Write;
 					$CurEndScore=ValutaArrowString(substr($ArrowString, intval($_REQUEST['Index']/$MyRow->DiArrows)*$MyRow->DiArrows, $MyRow->DiArrows));
 
@@ -203,7 +215,6 @@
 	                                        $Errore = 1;
 	                                    }
 
-	                                    // nuovo by simo
 	                                    // rank abs di distanza
 	                                    if ($Errore == 0 and $events4abs) {
 	                                        if (!Obj_RankFactory::create('Abs', array('events' => $events4abs, 'dist' => $_REQUEST['Dist']))->calculate()) {
@@ -211,7 +222,6 @@
 	                                        }
 	                                    }
 
-	                                    // nuovo by simo
 	                                    // rank abs totale
 	                                    if ($Errore == 0 and $events4abs) {
 	                                        if (!Obj_RankFactory::create('Abs', array('events' => $events4abs, 'dist' => 0))->calculate()) {

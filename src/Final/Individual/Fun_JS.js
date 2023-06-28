@@ -118,6 +118,14 @@ function BlockPhase(Phase) {
 	var Disable=(Button.val()==CmdDisable);
 	Button.val(Disable ? CmdEnable : CmdDisable);
 
+	let url=new URL(window.location.href)
+
+	if(Disable) {
+		window.history.pushState("", "", url.origin+url.pathname);
+	} else {
+		window.history.pushState("", "", url.origin+url.pathname+'?active='+Phase);
+	}
+
 	$('.ph-'+Phase).find('select,input').each(function() {
 		this.disabled=Disable;
 		$(this).toggleClass('disabled', Disable);

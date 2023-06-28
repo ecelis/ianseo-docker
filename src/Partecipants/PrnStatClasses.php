@@ -3,260 +3,265 @@ require_once(dirname(dirname(__FILE__)) . '/config.php');
 checkACL(AclParticipants, AclReadOnly);
 require_once('Common/pdf/ResultPDF.inc.php');
 
-if(!isset($isCompleteResultBook))
-	$pdf = new ResultPDF((get_text('StatClasses','Tournament')),false);
+if(!isset($isCompleteResultBook)) {
+    $pdf = new ResultPDF((get_text('StatClasses', 'Tournament')), false);
+}
 
 $SesArray=array();
-$DivArray=array();
-$ClsArray=array();
-$TotArray=array();
-$SesFields=array();
-$Categories=array();
-$MyQuery = "SELECT DISTINCT QuSession " .
-	"FROM Qualifications INNER JOIN Entries ON QuId = EnId AND EnTournament = " . StrSafe_DB($_SESSION['TourId']) . " " .
-	"ORDER BY QuSession";
-$Rs = safe_r_sql($MyQuery);
-while($MyRow=safe_fetch($Rs)) $SesArray[] = $MyRow->QuSession;
-safe_free_result($Rs);
-
-$Sql = "SELECT ";
-$MyQuery
-	= "SELECT DISTINCT EnDivision, DivDescription FROM Entries LEFT JOIN Divisions ON EnDivision=DivId AND DivTournament=" . StrSafe_DB($_SESSION['TourId']) . " "
-	. "WHERE EnTournament = " . StrSafe_DB($_SESSION['TourId']) . " ORDER BY DivViewOrder ";
-$Rs = safe_r_sql($MyQuery);
-while($MyRow=safe_fetch($Rs)) {
-	$DivArray[(trim($MyRow->EnDivision)!='' ? $MyRow->EnDivision : '--')] = $MyRow->DivDescription;
-	foreach($SesArray as $Value) {
-		$Sql .= "SUM(IF(TRIM(EnDivision)='" . trim($MyRow->EnDivision) . "' AND QuSession='" . $Value . "',1,0)) as `" . (trim($MyRow->EnDivision)!='' ? $MyRow->EnDivision : '--') . $Value . "`, ";
-		$SesFields[]= (trim($MyRow->EnDivision)!='' ? $MyRow->EnDivision : '--') . $Value;
-	}
+$tmpCntSession = array();
+$Sql = "SELECT DISTINCT QuSession, IFNULL(SesName,'') as SessionName
+	FROM Qualifications 
+	INNER JOIN Entries ON QuId = EnId AND EnTournament = " . StrSafe_DB($_SESSION['TourId']) . " 
+	LEFT JOIN Session on SesTournament=EnTournament and SesOrder=QuSession and SesType='Q'
+	ORDER BY QuSession";
+$q = safe_r_sql($Sql);
+while($r = safe_fetch($q)) {
+    $SesArray[$r->QuSession] = $r->SessionName;
+    $tmpCntSession[$r->QuSession] = 0;
 }
-safe_free_result($Rs);
+safe_free_result($q);
 
-$DivKeys=array_keys($DivArray);
+$data=array();
+$divTotals=array();
+$sesTotals=array();
 
-$SqlEmpty=$Sql;
-$Sql .= "ClId, ClDescription "
-	. "FROM Classes "
-	. "LEFT JOIN Entries ON TRIM(ClId) = TRIM(EnClass) AND ClTournament=EnTournament "
-	. "LEFT JOIN Qualifications ON EnId = QuId "
-	. "WHERE EnTournament = " . StrSafe_DB($_SESSION['TourId']) . " "
-	. "GROUP BY ClId "
-	. "ORDER BY ClViewOrder";
-$SqlEmpty .= "'--' AS ClId, '' as ClDescription  "
-	. "FROM Entries "
-	. "LEFT JOIN Qualifications ON EnId = QuId "
-	. "WHERE EnTournament = " . StrSafe_DB($_SESSION['TourId']) . " AND EnClass='' "
-	. "GROUP BY EnClass ";
-$Rs=safe_r_sql($Sql);
-$RsEmpty=safe_r_sql($SqlEmpty);
+$Sql = "SELECT EnDivision, QuSession, EnClass, count(*) as numArchers 
+    FROM Entries 
+    INNER JOIN Qualifications on EnId=QuId
+    LEFT JOIN Divisions ON EnDivision=DivId AND DivTournament=EnTournament
+    LEFT JOIN Classes ON EnClass=ClId AND ClTournament=EnTournament
+    WHERE EnTournament=" . StrSafe_DB($_SESSION['TourId']) ." 
+    GROUP BY DivViewOrder, ClViewOrder, QuSession, EnDivision, EnClass 
+    ORDER BY DivViewOrder, ClViewOrder, QuSession, EnDivision, EnClass";
+$q=safe_r_SQL($Sql);
+while ($r = safe_fetch($q)) {
+    if(!array_key_exists($r->EnClass, $data)) {
+        $data[$r->EnClass] = array();
+    }
+    if(!array_key_exists($r->EnDivision, $divTotals)) {
+        $divTotals[$r->EnDivision] = $tmpCntSession;
+    }
+    if(!array_key_exists($r->EnDivision, $data[$r->EnClass])) {
+        $data[$r->EnClass][$r->EnDivision] = array();
+    }
+    $data[$r->EnClass][$r->EnDivision][$r->QuSession] = $r->numArchers;
+    $divTotals[$r->EnDivision][$r->QuSession] += $r->numArchers;
+}
+safe_free_result($q);
 
-if($Rs && count($DivArray)>0)
-{
-	$ShowStatusLegend = false;
-	$FirstTime=true;
-	$DivSize=(($pdf->getPageWidth()-35)/count($DivArray));
-	$SesSize=min(20,($DivSize/(count($SesArray)+1)));
-	$SumSize=$SesSize * ($SesSize<5 ? 2:1);
-	$DivSize=$SesSize*(count($SesArray)+1);
-	$PageWidth=$DivSize*count($DivArray);
-	while($MyRow=safe_fetch($Rs))
-	{
-		if ($FirstTime || !$pdf->SamePage(16))
-		{
-			$TmpSegue = !$pdf->SamePage(16);
-		   	$pdf->SetFont($pdf->FontStd,'B',10);
-			$pdf->SetXY(25,$pdf->GetY()+5);
-			$pdf->Cell(($PageWidth), 6,  (get_text('StatClasses','Tournament')), 1, 1, 'C', 1);
-			if($TmpSegue)
-			{
-				$pdf->SetXY(($pdf->getPageWidth()-40),$pdf->GetY()-6);
-			   	$pdf->SetFont($pdf->FontStd,'I',6);
-				$pdf->Cell(30, 6,  (get_text('Continue')), 0, 1, 'R', 0);
-			}
-			$pdf->SetX(25);
-		   	$pdf->SetFont($pdf->FontStd,'B',10);
-			foreach($DivArray as $Value => $DivDescr)
-				$pdf->Cell($DivSize, 6,  $Value, 1, 0, 'C', 1);
-			$pdf->Cell(0.1, 6,  '', 0, 1, 'C', 0);
+//Dettaglio per Classe/Divisione/Turno
+$WCode=15;
+$tmpCnt=0;
+foreach($divTotals as $k) {
+    foreach($k as $v) {
+        if($v) {
+            $tmpCnt++;
+        }
+    }
+}
+$WCell=min(20,(($pdf->getPageWidth()-20-$WCode)/($tmpCnt+2)));
+$pdf->SetFont($pdf->FontStd,'B',10);
+$pdf->SetXY($pdf->GetX()+$WCode,$pdf->GetY()+5);
+$pdf->Cell($WCell*($tmpCnt+2), 6,  (get_text('StatClasses','Tournament')), 1, 1, 'C', 1);
+$pdf->SetX($pdf->GetX()+$WCode);
+foreach($divTotals as $kDiv=>$tDiv) {
+    $YORG = $pdf->GetY();
+    $XORG = $pdf->GetX();
+    $tmpCnt=0;
+    foreach($tDiv as $v) {
+        if($v) {
+            $tmpCnt++;
+        }
+    }
+    $pdf->SetFont($pdf->FontStd,'B',10);
+    $pdf->Cell($tmpCnt*$WCell, 6, $kDiv, 1, 1, 'C', 1);
+    $pdf->SetFont($pdf->FontStd,'B',8);
+    $pdf->setX($XORG);
+    $sesValid[$kDiv]=array();
+    foreach($tDiv as $k=>$v) {
+        if($v) {
+            $pdf->Cell($WCell, 4, $k, 1, 0, 'C', 1);
+        }
+    }
+    $pdf->setXY($pdf->GetX(),$YORG);
+}
+$pdf->SetFont($pdf->FontStd,'B',10);
+$pdf->Cell(2*$WCell, 10, get_text('TotalShort','Tournament'), 1, 1, 'C', 1);
 
-			$pdf->SetX(25);
-		   	$pdf->SetFont($pdf->FontStd,'B',8);
-			for($i=0; $i < count($DivArray); $i++)
-			{
-				foreach($SesArray as $Value)
-				{
-					$TotArray[]=0;
-					$pdf->Cell($SesSize, 4,  ($Value==0 ? '--' : $Value), 1, 0, 'C', 1);
-				}
-				$pdf->Cell($SesSize, 4,   (get_text('TotalShort','Tournament')), 1, 0, 'C', 1);
-			}
-			$pdf->Cell(0.1, 4,  '', 0, 1, 'C', 0);
-			$FirstTime=false;
-		}
-	   	$pdf->SetFont($pdf->FontStd,'',8);
-		$pdf->Cell(15, 5,  trim($MyRow->ClId), 1, 0, 'C', 1);
-
-		for($i=0; $i < count($DivArray); $i++)
-		{
-			$pdf->SetFont($pdf->FontStd,'',7);
-			$TmpCounter=0;
-			for($j=0; $j < count($SesArray); $j++)
-			{
-				$TmpValue = $MyRow->{trim($SesFields[$i*count($SesArray)+$j])};
-				$TotArray[$i*count($SesArray)+$j] += $TmpValue;
-				$TmpCounter += $TmpValue;
-				$pdf->Cell($SesSize, 5, ($TmpValue>0 ? $TmpValue : ''), 1, 0, 'R', 0);
-			}
-			$pdf->SetFont($pdf->FontStd,'B',7);
-			$pdf->Cell($SesSize, 5,  $TmpCounter, 1, 0, 'R', 0);
-			$ClsArray[(trim($MyRow->ClId)!='' ? $MyRow->ClId : '--')] = $MyRow->ClDescription;
-// 			if($TmpCounter) $Categories[$DivArray[$DivKeys[$i]].' '.$MyRow->ClDescription]=array($DivKeys[$i].$MyRow->ClId, $TmpCounter);
-			if($TmpCounter) $Categories[$DivKeys[$i]][(trim($MyRow->ClId)!='' ? $MyRow->ClId : '--')]=$TmpCounter;
-		}
-		$pdf->Cell(0.1, 5,  '', 0, 1, 'C', 0);
-	}
-//Righe con classe vuota
-	if(safe_num_rows($RsEmpty)>0)
-	{
-		while($MyRow=safe_fetch($RsEmpty))
-		{
-		   	$pdf->SetFont($pdf->FontStd,'',8);
-			$pdf->Cell(15, 5,  ($MyRow->ClId), 1, 0, 'C', 1);
-
-			for($i=0; $i < count($DivArray); $i++)
-			{
-				$pdf->SetFont($pdf->FontStd,'',7);
-				$TmpCounter=0;
-				for($j=0; $j < count($SesArray); $j++)
-				{
-					$TmpValue = $MyRow->{$SesFields[$i*count($SesArray)+$j]};
-					$TotArray[$i*count($SesArray)+$j] += $TmpValue;
-					$TmpCounter += $TmpValue;
-					$pdf->Cell($SesSize, 5,  ($TmpValue>0 ? $TmpValue : ''), 1, 0, 'R', 0);
-				}
-				$pdf->SetFont($pdf->FontStd,'B',7);
-				$pdf->Cell($SesSize, 5,  $TmpCounter, 1, 0, 'R', 0);
-// 				if($TmpCounter) $Categories[$DivArray[$DivKeys[$i]].' '.$MyRow->ClDescription]=array($DivKeys[$i].$MyRow->ClId, $TmpCounter);
-				$ClsArray[(trim($MyRow->ClId)!='' ? $MyRow->ClId : '--')] = $MyRow->ClDescription;
-				if($TmpCounter) $Categories[$DivKeys[$i]][(trim($MyRow->ClId)!='' ? $MyRow->ClId : '--')]=$TmpCounter;
-			}
-			$pdf->Cell(0.1, 5,  '', 0, 1, 'C', 0);
-		}
-	}
-
-//Divider
-	$pdf->SetFont($pdf->FontStd,'B',1);
-	$pdf->Cell($PageWidth+15, 0.5, '', 1, 1, 'C', 0);
-//Totali
-	$pdf->SetFont($pdf->FontStd,'B',8);
-	$pdf->Cell(15, 5,  (get_text('Total')), 1, 0, 'C', 1);
-	for($i=0; $i < count($DivArray); $i++)
-	{
-		$pdf->SetFont($pdf->FontStd,'B',7);
-		$TmpCounter=0;
-		for($j=0; $j < count($SesArray); $j++)
-		{
-			$TmpCounter += $TotArray[$i*count($SesArray)+$j];
-			$pdf->Cell($SesSize, 5, $TotArray[$i*count($SesArray)+$j], 1, 0, 'R', 0);
-		}
-		$pdf->SetFont($pdf->FontStd,'B',8);
-		$pdf->Cell($SesSize, 5,  $TmpCounter, 1, 0, 'R', 1);
-	}
-	$pdf->Cell(0.1, 5,  '', 0, 1, 'C', 0);
-
+foreach($data as $kCl=>$vCl) {
+    $rowTot = 0;
+    $pdf->SetFont($pdf->FontStd,'B',10);
+    $pdf->Cell($WCode, 5, $kCl, 1, 0, 'C', 1);
+    $pdf->SetFont($pdf->FontStd,'',8);
+    foreach($divTotals as $kDiv=>$tDiv) {
+        foreach($tDiv as $k=>$v) {
+            if(array_key_exists($kDiv,$vCl) AND array_key_exists($k,$vCl[$kDiv]) AND $v!=0) {
+                $pdf->Cell($WCell, 5, $vCl[$kDiv][$k], 1, 0, 'R', 0);
+                $rowTot += $vCl[$kDiv][$k];
+            } elseif($divTotals[$kDiv][$k]) {
+                $pdf->Cell($WCell, 5, '', 1, 0, 'R', 0);
+            }
+        }
+    }
+    $pdf->SetFont($pdf->FontStd,'B',8);
+    $pdf->Cell(2*$WCell, 5, $rowTot, 1, 1, 'R', 1);
+}
+$pdf->SetFont($pdf->FontStd,'B',1);
+$pdf->Cell($WCode+$WCell*($tmpCnt+2), 0.5, '', 1, 1, 'C', 0);
+$pdf->SetFont($pdf->FontStd,'B',10);
+$pdf->Cell($WCode, 5, get_text('Total'), 1, 0, 'L', 1);
+$pdf->SetFont($pdf->FontStd,'B',8);
+$rowTot = 0;
+foreach($divTotals as $kDiv=>$tDiv) {
+    foreach($tDiv as $k=>$v) {
+        if($v) {
+            $pdf->Cell($WCell, 5, array_sum(array_column(array_column($data,$kDiv),$k)), 1, 0, 'R', 1);
+            $rowTot += array_sum(array_column(array_column($data,$kDiv),$k));
+        }
+    }
+}
+$pdf->SetFont($pdf->FontStd,'B',10);
+$pdf->Cell(2*$WCell, 5, $rowTot, 1, 1, 'R', 1);
 
 //Totali per turni
-	$YORG=$pdf->GetY()+5;
-	$LEFT=$pdf->GetX();
-	if(!$pdf->SamePage(11 + count($SesArray)*5)) {
-		$pdf->AddPage();
-		$YORG=$pdf->GetY()+5;
-	}
-   	$pdf->SetFont($pdf->FontStd,'B',10);
-	$pdf->SetXY(25, $YORG);
-	foreach($DivArray as $Value => $DivDescr) {
-		$pdf->Cell($SumSize, 6,  $Value, 1, 0, 'C', 1);
-	}
-	$pdf->Cell($SumSize, 6,   (get_text('TotalShort','Tournament')), 1, 0, 'C', 1);
-	$pdf->Cell(0.1, 6,  '', 0, 1, 'C', 0);
-//Totali
-	for($i=0; $i < count($SesArray); $i++)
-	{
-		$pdf->SetFont($pdf->FontStd,'B',8);
-		$pdf->Cell(15, 5,  $SesArray[$i]==0 ? '--' : $SesArray[$i], 1, 0, 'C', 1);
-		$pdf->SetFont($pdf->FontStd,'',7);
-		$TmpCounter=0;
-		for($j=0; $j < count($DivArray); $j++)
-		{
-			$TmpCounter += $TotArray[$j*count($SesArray)+$i];
-			$pdf->Cell($SumSize, 5, $TotArray[$j*count($SesArray)+$i], 1, 0, 'R', 0);
-		}
-		$pdf->SetFont($pdf->FontStd,'B',8);
-		$pdf->Cell($SumSize, 5,  $TmpCounter, 1, 0, 'R', 0);
-		$pdf->Cell(0.1, 5,  '', 0, 1, 'C', 0);
-	}
-	$pdf->SetFont($pdf->FontStd,'B',1);
-	$pdf->Cell($SumSize*(count($DivArray)+1)+15, 0.5, '', 1, 1, 'C', 0);
-	$pdf->SetFont($pdf->FontStd,'B',8);
-	$pdf->Cell(15, 5, (get_text('Total')), 1, 0, 'C', 1);
-	$GrandTotal=0;
-	for($i=0; $i < count($DivArray); $i++)
-	{
-		$pdf->SetFont($pdf->FontStd,'B',7);
-		$TmpCounter=0;
-		for($j=0; $j < count($SesArray); $j++)
-			$TmpCounter += $TotArray[$i*count($SesArray)+$j];
-		$pdf->Cell($SumSize, 5,  $TmpCounter, 1, 0, 'R', 0);
-		$GrandTotal+=$TmpCounter;
-	}
-	$pdf->SetFont($pdf->FontStd,'B',8);
-	$pdf->Cell($SumSize, 5,  $GrandTotal, 1, 0, 'R', 1);
-	$pdf->Cell(0.1, 5,  '', 0, 1, 'C', 0);
-	safe_free_result($Rs);
+$DivArray=array_keys($divTotals);
+$TotArray=array();
 
-	if($Categories) {
-// 		ksort($Categories);
-		$TotCats=0;
-		foreach($Categories as $k=>$v) $TotCats+=count($v);
-
-		if(!$pdf->SamePage(2*$TotCats)) {
-			// cannot print all categories in the bottom right square... go to a new page
-			// 3 columns to put the data
-			$pdf->AddPage();
-			$YORG=$pdf->GetY()+5;
-			$cols=3;
-			$Left=10;
-			$cellHead=  (($pdf->getPageWidth()-20-$Left)/2)-$SesSize-15;
-			$i=0;
-			$ChangeColumn=ceil($TotCats/2);
-		} else {
-			$cols=2;
-			$Left=($SumSize*(count($DivArray)+1))+35;
-			$cellHead=  (($pdf->getPageWidth()-20-$Left)/2)-$SesSize-15;
-			$i=0;
-			$ChangeColumn=ceil($TotCats/2);
-		}
-
-	   	$pdf->SetFont($pdf->FontStd,'B',8);
-		$SesSize+=6;
-		$cellHead-=6;
-	   	foreach($DivArray as $DivCode => $DivDescription) {
-	   		foreach($ClsArray as $ClsCode => $ClsDescription) {
-	   			if(empty($Categories[$DivCode][$ClsCode])) continue;
-
-				if($i==$ChangeColumn) {
-					$Left+=$cellHead+$SesSize+25;
-					$YORG-=4*$i;
-				}
-				$pdf->SetXY($Left, $YORG+4*$i++);
-				$pdf->Cell(15, 4,  $DivCode.$ClsCode, 1, 0, 'L', 1);
-				$pdf->Cell($SesSize, 4,  $Categories[$DivCode][$ClsCode], 1, 0, 'R', 0);
-				$pdf->Cell($cellHead, 4,  $DivDescription.' '.$ClsDescription, 1, 0, 'L', 0);
-	   		}
-	   	}
-	}
+$WCategory=70;
+$totSize=min(20,($pdf->getPageWidth()-20-$WCode-$WCategory)/(count($DivArray)+1));
+$YORG=$pdf->GetY()+5;
+if(!$pdf->SamePage(11 + count($SesArray)*5)) {
+    $pdf->AddPage();
+    $YORG=$pdf->GetY()+5;
 }
-if(!isset($isCompleteResultBook))
-	$pdf->Output();
-?>
+$pdf->SetFont($pdf->FontStd,'B',10);
+$pdf->SetXY($pdf->GetX()+$WCode+$WCategory, $YORG);
+foreach($DivArray as $vDiv) {
+    $pdf->Cell($totSize, 6,  $vDiv, 1, 0, 'C', 1);
+}
+$pdf->Cell($totSize, 6, get_text('TotalShort','Tournament'), 1, 1, 'C', 1);
+//Totali
+$i=0;
+foreach ($SesArray as $Ses=>$sName) {
+    $pdf->SetFont($pdf->FontStd,'B',10);
+    $pdf->Cell($WCode, 5, $Ses==0 ? '--' : $Ses, 1, 0, 'C', 1);
+    $pdf->SetFont($pdf->FontStd,'',8);
+    $pdf->Cell($WCategory, 5, $sName, 1, 0, 'L', 0);
+    $pdf->SetFont($pdf->FontStd,'',8);
+    $TmpCounter=0;
+    foreach($DivArray as $vDiv) {
+        $pdf->Cell($totSize, 5, $divTotals[$vDiv][$Ses] ?:'-', 1, 0, 'R', 0);
+        $TmpCounter += $divTotals[$vDiv][$Ses];
+    }
+    $pdf->SetFont($pdf->FontStd,'B',8);
+    $pdf->Cell($totSize, 5,  $TmpCounter, 1, 1, 'R', 0);
+    $i++;
+}
+$pdf->SetFont($pdf->FontStd,'B',1);
+$pdf->Cell($WCode+$WCategory+$totSize*(count($DivArray)+1), 0.5, '', 1, 1, 'C', 0);
+$pdf->SetFont($pdf->FontStd,'B',10);
+$pdf->Cell($WCode+$WCategory, 5, (get_text('Total')), 1, 0, 'L', 1);
+$GrandTotal=0;
+foreach($DivArray as $vDiv) {
+    $pdf->SetFont($pdf->FontStd,'B',8);
+    $TmpCounter = array_sum($divTotals[$vDiv]);
+    $pdf->Cell($totSize, 5,  $TmpCounter, 1, 0, 'R', 1);
+    $GrandTotal+=$TmpCounter;
+}
+$pdf->SetFont($pdf->FontStd,'B',10);
+$pdf->Cell($totSize, 5,  $GrandTotal, 1, 1, 'R', 1);
+
+//Totali per categorie e per turni
+$Categories = [];
+$q=safe_r_sql("select QuSession, concat(EnDivision, EnClass) as CatCode, concat_ws(' ', DivDescription, ClDescription) as Description, sum(EnWChair+EnDoubleSpace) as WheelChairs, count(*) as archers
+    from Entries
+    inner join Qualifications on QuId=EnId
+    left join Divisions on DivId=EnDivision and DivTournament=EnTournament 
+    left join Classes on ClId=EnClass and ClTournament=EnTournament 
+    where EnTournament={$_SESSION['TourId']}
+    group by QuSession, DivViewOrder, ClViewOrder, EnDivision, EnClass
+    order by DivViewOrder, ClViewOrder, QuSession
+    ");
+while($r=safe_fetch($q)) {
+    if(empty($Categories[$r->CatCode])) {
+        $Categories[$r->CatCode]=[
+            'desc'=>$r->Description,
+            'nums'=>[]
+        ];
+    }
+    $Categories[$r->CatCode]['nums'][$r->QuSession]=[$r->archers,$r->WheelChairs];
+}
+if($Categories) {
+    $TotCats=0;
+    foreach($Categories as $k=>$v) {
+        $TotCats+=count($v);
+    }
+    $Wsession=min(20,($pdf->getPageWidth()-20-$WCode-$WCategory)/(count($SesArray)+1));
+
+    $YORG=$pdf->GetY()+5;
+    if(!$pdf->SamePage(4*count($Categories))+6) {
+        // cannot print all categories in the bottom right square... go to a new page
+        // 3 columns to put the data
+        $pdf->AddPage();
+        $YORG=$pdf->GetY()+5;
+    }
+    $pdf->SetY($YORG);
+
+    $SesTot=[];
+    $SesWheels=[];
+    $pdf->SetFont($pdf->FontStd,'B',10);
+    $pdf->Cell($WCode, 6, '', 0, 0, 'L', 0);
+    $pdf->Cell($WCategory, 6,  get_text('Description'), 1, 0, 'L', 1);
+    foreach($SesArray as $Ses=>$sName) {
+        $SesTot[(int) $Ses]=0;
+        $SesWheels[(int) $Ses]=0;
+        $pdf->Cell($Wsession, 6, $Ses, 1, 0, 'C', 1);
+    }
+    $pdf->SetFont($pdf->FontStd,'B',10);
+    $pdf->Cell($Wsession, 6, get_text('Total'), 1, 0, 'C', 1);
+    $pdf->ln();
+    foreach($Categories as $CatCode => $CatDetails) {
+        $tot=[0,0];
+        $pdf->SetFont($pdf->FontStd,'',8);
+        $pdf->Cell($WCode, 5,  $CatCode, 1, 0, 'C', 1);
+        $pdf->Cell($WCategory, 5,  $CatDetails['desc'], 1, 0, 'L', 0);
+        $pdf->SetFont($pdf->FontStd,'',8);
+        foreach(array_keys($SesArray) as $Ses) {
+            $Ses=(int)$Ses;
+            if($n=$CatDetails['nums'][$Ses]?? '') {
+                $pdf->Cell($Wsession - 8, 5, $n[0]?: '', 'TLB', 0, 'R', 0);
+                $pdf->Cell(8, 5, $n[1] ? '('.$n[1].')' : '- ', 'TRB', 0, 'R', 0);
+                $SesTot[$Ses]+=$n[0];
+                $SesWheels[$Ses]+=$n[1];
+                $tot[0]+=$n[0];
+                $tot[1]+=$n[1];
+            } else {
+                $pdf->Cell($Wsession, 5, '', 1, 0, 'R', 0);
+            }
+        }
+        $pdf->Cell($Wsession - 8, 5, $tot[0]?: '', 'TLB', 0, 'R', 0);
+        $pdf->Cell(8, 5, $tot[1] ? '('.$tot[1].')' : '- ', 'TRB', 0, 'R', 0);
+        $pdf->ln();
+    }
+
+    $tot=[0,0];
+    $pdf->SetFont($pdf->FontStd,'B',1);
+    $pdf->Cell($WCode+$WCategory+$Wsession*(count($SesArray)+1), 0.5, '', 1, 1, 'C', 0);
+    $pdf->SetFont($pdf->FontStd,'B',10);
+    $pdf->Cell($WCode+$WCategory, 5,  get_text('Total'), 1, 0, 'L', 1);
+    $pdf->SetFont($pdf->FontStd,'B',8);
+    foreach(array_keys($SesArray) as $Ses) {
+        $Ses=(int)$Ses;
+        $pdf->Cell($Wsession-8, 5, $SesTot[$Ses]?: '', 'TLB', 0, 'R', 1);
+        $pdf->Cell(8, 5, $SesWheels[$Ses] ? '('.$SesWheels[$Ses].')' : '- ', 'TRB', 0, 'R', 1);
+        $tot[0]+=$SesTot[$Ses];
+        $tot[1]+=$SesWheels[$Ses];
+    }
+    $pdf->SetFont($pdf->FontStd,'B',10);
+    $pdf->Cell($Wsession - 8, 5, $tot[0]?: '', 'TLB', 0, 'R', 1);
+    $pdf->Cell(8, 5,  $tot[1] ? '('.$tot[1].')' : '- ', 'TRB', 0, 'R', 1);
+}
+
+if(!isset($isCompleteResultBook)) {
+    $pdf->Output();
+}

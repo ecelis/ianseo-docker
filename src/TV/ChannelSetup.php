@@ -4,7 +4,7 @@ require_once('Common/Lib/CommonLib.php');
 
 $PAGE_TITLE=get_text('MenuLM_TV Channels');
 $JS_SCRIPT=array(
-	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
+	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.6.0.min.js"></script>',
 	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>',
 	'<script type="text/javascript" src="./ChannelSetup.js"></script>'
 );
@@ -71,7 +71,7 @@ while($r=safe_fetch($q)) {
 				<i class="fa fa-lg fa-refresh mx-1" onclick="update(this,\'Reload\')"></i>
 				<i class="fa fa-lg fa-plus-circle mx-1" onclick="AddSplit(this)" title="'.get_text('NewSplit','Tournament').'"></i>
 				'.get_text('Channel', 'Tournament').' '.$r->TVOId.'
-				<i class="fa fa-lg fa-trash-o float-right mx-1" onclick="deleteChannel(this)" title="'.get_text('DeleteChannel','Tournament').'"></i>
+				<i class="far fa-lg fa-trash-can float-right mx-1" onclick="deleteChannel(this)" title="'.get_text('DeleteChannel','Tournament').'"></i>
 				</th>
 			<th class="Title Left">
 				<span class="mx-1">'.get_text('Name', 'Tournament').'</span> <input type="text" class="TvoName" onchange="update(this, \'Name\')" value="'.htmlspecialchars($r->TVOName).'">
@@ -92,7 +92,7 @@ while($r=safe_fetch($q)) {
 	echo '<td class="Center Bold"><input type="text" onchange="update(this, \'Height\')" value="'.$r->TVOHeight.'" class="TvoHeight"></td>';
 	echo '<td class="Center Bold">
 		<select class="TvoStatus" onchange="update(this, \'Status\')">'.str_replace('value="'.$r->TVORuleType.'"', 'value="'.$r->TVORuleType.'" selected="selected"', $Status).'</select>
-		'.($First ? '' : '<i class="fa fa-lg fa-trash-o float-right mx-1" onclick="deleteSplit(this)" title="'.get_text('DeleteSplit','Tournament').'"></i>').'
+		'.($First ? '' : '<i class="far fa-lg fa-trash-can float-right mx-1" onclick="deleteSplit(this)" title="'.get_text('DeleteSplit','Tournament').'"></i>').'
 		</td>';
 	echo '<td>
 		<div class="TvoRow">

@@ -6,7 +6,6 @@ $lang['CreateStandardCatFull']='Napravi kategoriju i akreditaciju';
 $lang['Credits-Coordination']='IT koordinacija projekta';
 $lang['Credits-CoreGroup']='IANSEO izvorna grupa';
 $lang['Credits-Credits']='Zasluge';
-$lang['Credits-Documentation']='Dokumentacija i Podrška';
 $lang['Credits-HHT']='HHT Integracija';
 $lang['Credits-IanseoTeam']='Ianseo & Ianseo Tim';
 $lang['Credits-License']='IANSEO je izdat pod GNU Generalnom Javnom Licencom - verzija 3 (GPLV3)';

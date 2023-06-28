@@ -27,9 +27,13 @@ function DoImportData($ALL=false) {
 	switch($Sequence[0]) {
 		case 'Q':
 			$qSes=substr($Sequence,2);
-			$SQL="SELECT QuId, QuSession, QuTargetNo, QuD{$Dist}Arrowstring as Arrowstring, IskDtArrowstring, IskDtEndNo, DIDistance, DIEnds, DIArrows, ToGoldsChars, ToXNineChars from Qualifications
+			$SQL="SELECT QuId, QuSession, QuTargetNo, QuD{$Dist}Arrowstring as Arrowstring, IskDtArrowstring, IskDtEndNo, DIDistance, DIEnds, DIArrows, 
+                IF(TfGoldsChars{$Dist}='',IF(TfGoldsChars='',ToGoldsChars,TfGoldsChars),TfGoldsChars{$Dist}) as GoldsChars, 
+                IF(TfXNineChars{$Dist}='',IF(TfXNineChars='',ToXNineChars,TfXNineChars),TfXNineChars{$Dist}) as XNineChars               
+                FROM Qualifications
 				INNER JOIN Entries ON QuId=EnId
 				INNER JOIN Tournament ON ToId=EnTournament
+                INNER JOIN TargetFaces on TfId=EnTargetFace and TfTournament=EnTournament
 				INNER JOIN DistanceInformation ON DITournament=EnTournament AND DISession=QuSession AND DIDistance={$Dist} AND DIType='Q'
 				INNER JOIN IskData ON iskDtTournament=EnTournament AND IskDtMatchNo=0 AND IskDtEvent='' AND IskDtTeamInd=0 AND IskDtType='Q' AND IskDtTargetNo=QuTargetNo AND IskDtDistance={$Dist} AND IskDtEndNo={$End}
 					$Filtre
@@ -43,10 +47,7 @@ function DoImportData($ALL=false) {
 						$arrowString[($r->IskDtEndNo-1)*$r->DIArrows+$i]=$r->IskDtArrowstring[$i];
 					}
 				}
-				$Score=0;
-				$Gold=0;
-				$XNine=0;
-				list($Score,$Gold,$XNine)=ValutaArrowStringGX($arrowString,$r->ToGoldsChars,$r->ToXNineChars);
+				list($Score,$Gold,$XNine)=ValutaArrowStringGX($arrowString,$r->GoldsChars,$r->XNineChars);
 				$Hits=strlen(str_replace(' ', '', $arrowString));
 
 				$Update = "UPDATE Qualifications SET
@@ -113,65 +114,6 @@ function DoImportData($ALL=false) {
 			}
 			$Error=0;
 			break;
-/*
-		case 'E':
-			$Phase=$Sequence[1]-1;
-			$Session=substr($Sequence, 2);
-			if(!empty($Options['Category']) and preg_match('/^[a-z0-9_.-]+$/sim', $Options['Category'])) {
-				$Filtre=" AND ElEventCode='{$Options['Category']}'";
-			}
-			$SQL="SELECT ElId, ElTargetNo, ElArrowstring as Arrowstring, IskDtArrowstring, IskDtEndNo, if(ElElimPhase=0, EvE1Ends, EvE2Ends) as DIEnds, if(ElElimPhase=0, EvE1Arrows, EvE2Arrows) as DIArrows, ToGoldsChars, ToXNineChars
-				from Eliminations
-				INNER JOIN Events ON EvTournament=ElTournament and EvTeamEvent=0 and EvCode=ElEventCode
-				INNER JOIN Tournament ON ToId=ElTournament
-				INNER JOIN IskData ON IskDtTournament=ElTournament AND IskDtMatchNo=0 AND IskDtEvent='' AND IskDtTeamInd=0 AND IskDtType='E{$Sequence[1]}' AND IskDtTargetNo=ElTargetNo AND IskDtEndNo={$End}
-					$Filtre
-				WHERE ElTournament={$CompId} and ElSession={$Session} and ElElimPhase=$Phase";
-			$updated=array();
-			$q=safe_r_sql($SQL);
-			while($r=safe_fetch($q)) {
-				$arrowString = str_pad($r->Arrowstring,$r->DIArrows*$r->DIEnds);
-				for($i=0; $i<$r->DIArrows; $i++){
-					if($r->IskDtArrowstring[$i]!=' '){
-						$arrowString[($r->IskDtEndNo-1)*$r->DIArrows+$i]=$r->IskDtArrowstring[$i];
-					}
-				}
-				$Score=0;
-				$Gold=0;
-				$XNine=0;
-				list($Score,$Gold,$XNine)=ValutaArrowStringGX($arrowString,$r->ToGoldsChars,$r->ToXNineChars);
-				$Hits=strlen(str_replace(' ', '', $arrowString));
-
-				$Update = "UPDATE Eliminations SET
-					ElScore={$Score}, ElGold={$Gold}, ElXnine={$XNine}, ElArrowString='{$arrowString}', ElHits={$Hits},
-					ElDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . "
-					WHERE  ElElimPhase=$Phase and ElId={$r->ElId}";
-				safe_w_SQL($Update);
-				if(safe_w_affected_rows()) {
-					$updated[] = $r->ElId;
-				}
-				$Update = "DELETE FROM IskData
-					WHERE IskDtTournament={$CompId} AND IskDtMatchNo=0 AND IskDtEvent='' AND IskDtTeamInd=0 AND IskDtType='E{$Sequence[1]}'
-					AND IskDtTargetNo='{$r->ElTargetNo}' AND IskDtEndNo={$End} AND IskDtArrowstring='{$r->IskDtArrowstring}'";
-				safe_w_SQL($Update);
-			}
-			if(count($updated)) {
-				// needs to recalculate ranks
-				$q="SELECT distinct ElEventCode FROM Eliminations WHERE ElId IN (" . implode(",",$updated) . ") AND ElElimPhase={$Phase} and ElEventCode!=''";
-				$r=safe_r_sql($q);
-				while($row=safe_fetch($r)) {
-					if ($Phase==0) {
-						ResetElimRows($row->ElEventCode,2, $CompId);
-					}
-
-					Obj_RankFactory::create('ElimInd',array('tournament'=>$CompId,'eventsC'=>array($row->ElEventCode.'@'.($Phase+1))))->calculate();
-
-					ResetShootoff ( $row->ElEventCode, 0, $Phase+1, $CompId);
-				}
-			}
-			$Error=0;
-			break;
-*/
 		case 'I':
 		case 'T':
 			$fSes=substr($Sequence,1);

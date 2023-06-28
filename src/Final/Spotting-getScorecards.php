@@ -180,8 +180,8 @@ for($pSo=0; $pSo<$JSON['config']['soEnds']; $pSo++ ) {
 	if($pSo==0) {
         $JSON['scoreL'].='<th class="Alternate" rowspan="'.($JSON['config']['soEnds']).'"><input class="ShootsFirst" so="1" type="radio" id="first[' . $TeamEvent.']['.$Event.']['.$MatchIdL.']['.$JSON['config']['ends'].']" name="first[so]" onclick="setShootingFirst(this)" '.($ShootsFirstL ? 'checked="checked"' : '').'></th>';
         $JSON['scoreR'].='<th class="Alternate" rowspan="'.($JSON['config']['soEnds']).'"><input class="ShootsFirst" so="1" type="radio" id="first[' . $TeamEvent.']['.$Event.']['.$MatchIdR.']['.$JSON['config']['ends'].']" name="first[so]" onclick="setShootingFirst(this)" '.($ShootsFirstR ? 'checked="checked"' : '').'></th>';
-        $JSON['scoreL'].='<th rowspan="'.($JSON['config']['soEnds']).'">S.O.</th>';
-        $JSON['scoreR'].='<th rowspan="'.($JSON['config']['soEnds']).'">S.O.</th>';
+        $JSON['scoreL'].='<th rowspan="'.($JSON['config']['soEnds']).'">'.get_text('ShotOffShort', 'Tournament').'</th>';
+        $JSON['scoreR'].='<th rowspan="'.($JSON['config']['soEnds']).'">'.get_text('ShotOffShort', 'Tournament').'</th>';
 
     }
 

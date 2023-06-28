@@ -112,6 +112,7 @@ class Obj_Rank_FinalTeam_3_SetFRChampsD1DNAP extends Obj_Rank_FinalTeam
 		for($n=1;$n<=15;$n++) {
 			$this->data['meta']['Game'.$n] = get_text('GameNumber', 'Tournament', $n);
 		}
+		$this->data['meta']['allInOne'] = $this->AllInOne;
 
 		/*
 		 * Select general items

@@ -32,9 +32,9 @@ function rotFin($TVsettings, $RULE) {
 		$Arr_Ev = explode('|', $TVsettings->TVPEventInd);
 		$Group='';
 		if(preg_match('/^##([0-9]+)##$/', $Arr_Ev[0], $Group)) {
-			if ($IskGroup = getModuleParameter('ISK', 'Sequence', '', $RULE->TVRTournament)) {
+			if ($IskGroup = getModuleParameter('ISK', 'Sequence', '', $RULE->TVRTournament) OR $IskGroup=getModuleParameter('ISK-NG', 'Sequence', '', $RULE->TVRTournament)) {
 				$Group = $IskGroup[$Group[1]];
-				if($Group['type']=='I') {
+				if($Group['type']=='I' OR ($Group['type']=='M' AND $Group['subtype']=='I')) {
 					// get the events and phases of that session!!!
 					$options['schedule']=substr($Group['session'], 0, 10).' '.substr($Group['session'], -8);
 					$q=safe_r_sql("select distinct FSEvent, GrPhase from FinSchedule inner join Grids on GrMatchNo=FSMatchNo where FSTeamEvent=0 and FSScheduledDate='".substr($Group['session'], 0, 10)."' and FSScheduledTime='".substr($Group['session'], -8)."' and FSTournament=$RULE->TVRTournament");
@@ -222,14 +222,23 @@ function rotFin($TVsettings, $RULE) {
 				$tmp1.='<div class="Target Rev1'.$Class.'">'.ltrim($item['target'],'0').'</div>';
 				$tmp2.='<div class="Target Rev1'.$Class.'">'.ltrim($item['oppTarget'],'0').'</div>';
 
-				$tmp1.='<div class="CountryCode Rotate Rev1'.$Class.'">'.$item['countryCode'].'</div>';
-				$tmp2.='<div class="CountryCode Rotate Rev1'.$Class.'">'.$item['oppCountryCode'].'</div>';
+				if($ViewCode) {
+					$tmp1.='<div class="CountryCode Rotate Rev1'.$Class.'">'.$item['countryCode'].'</div>';
+					$tmp2.='<div class="CountryCode Rotate Rev1'.$Class.'">'.$item['oppCountryCode'].'</div>';
+				}
 
-				$tmp1.='<div class="FlagDiv">'.get_flag_ianseo($item['countryCode'], '', '', $IsCode).'</div>';
-				$tmp2.='<div class="FlagDiv">'.get_flag_ianseo($item['oppCountryCode'], '', '', $IsCode).'</div>';
+				if($ViewFlag) {
+					$tmp1.='<div class="FlagDiv">'.get_flag_ianseo($item['countryCode'], '', '', $IsCode).'</div>';
+					$tmp2.='<div class="FlagDiv">'.get_flag_ianseo($item['oppCountryCode'], '', '', $IsCode).'</div>';
+				}
 
 				$tmp1.='<div class="Athlete">'.$item['athlete'].'</div>';
 				$tmp2.='<div class="Athlete">'.$item['oppAthlete'].'</div>';
+
+				if($ViewTeams) {
+					$tmp1.='<div class="CountryName">'.$item['countryName'].'</div>';
+					$tmp2.='<div class="CountryName">'.$item['oppCountryName'].'</div>';
+				}
 
 				if($ViewEnds) {
 					$ends1=explode('|', $item['setPoints']);

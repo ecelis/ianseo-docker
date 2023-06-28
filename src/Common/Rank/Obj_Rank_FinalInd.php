@@ -358,7 +358,7 @@
 					GrPhase, EvProgr, IndRankFinal, IndIrmTypeFinal,
 					f1.FinIrmType IrmType, f2.FinIrmType OppIrmType, i1.IrmType IrmText, i2.IrmType OppIrmText, i1.IrmShowRank, i1.IrmHideDetails as HideDetails,
 					@ArBit:=(EvMatchArrowsNo & pow(2, if(f1.FinMatchNo=0, 0, floor(LOG(2, f1.FinMatchNo))))),
-					if(@ArBit=0, EvFinArrows, EvElimArrows) Arrows, if(@ArBit=0, EvElimEnds, EvFinEnds) Ends, if(@ArBit=0, EvElimSO, EvFinSO) SO
+					if(@ArBit=0, EvFinArrows, EvElimArrows) Arrows, if(@ArBit=0, EvFinEnds, EvElimEnds) Ends, if(@ArBit=0, EvFinSO, EvElimSO) SO
 					FROM Finals AS f1
 					INNER JOIN Events
 						ON EvTournament=f1.FinTournament AND EvCode=f1.FinEvent AND EvTeamEvent=0 AND EvShootOff=1
@@ -380,7 +380,7 @@
 					GrPhase, EvProgr, IndRankFinal, IndIrmTypeFinal,
 					f1.FinIrmType IrmType, f2.FinIrmType OppIrmType, i1.IrmType IrmText, i2.IrmType OppIrmText, i1.IrmShowRank, i1.IrmHideDetails as HideDetails,
 					@ArBit:=(EvMatchArrowsNo & pow(2, if(f1.FinMatchNo=0, 0, floor(LOG(2, f1.FinMatchNo))))),
-					if(@ArBit=0, EvFinArrows, EvElimArrows) Arrows, if(@ArBit=0, EvElimEnds, EvFinEnds) Ends, if(@ArBit=0, EvElimSO, EvFinSO) SO
+					if(@ArBit=0, EvFinArrows, EvElimArrows) Arrows, if(@ArBit=0, EvFinEnds, EvElimEnds) Ends, if(@ArBit=0, EvFinSO, EvElimSO) SO
 					FROM Finals AS f1
 					INNER JOIN Events
 						ON EvTournament=f1.FinTournament AND EvCode=f1.FinEvent AND EvTeamEvent=0 AND EvShootOff=1

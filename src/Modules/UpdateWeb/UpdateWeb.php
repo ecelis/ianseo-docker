@@ -57,8 +57,6 @@ $CurrentTime=date('Y-m-d H:i:s');
 $UpdateBase       = false;
 $UpdateFins       = false;
 $UpdateTeam       = false;
-$UpdateFinsReview = false;
-$UpdateTeamReview = false;
 $Timed            = false;
 $TournamentId	  = $_SESSION['OnlineId'];
 $EventName        = false;
@@ -81,10 +79,6 @@ if(isset($argv)) {
 			$UpdateFins = true;
 		} elseif($argv[$ii]=='UpdateTeam') {
 			$UpdateTeam = true;
-		} elseif($argv[$ii]=='UpdateFinsReview') {
-			$UpdateFinsReview = true;
-		} elseif($argv[$ii]=='UpdateTeamReview') {
-			$UpdateTeamReview = true;
 		} elseif($argv[$ii]=='UpdateTourImg') {
 			$UpdateTourImg = true;
 		} elseif($argv[$ii]=='UpdateFinImg') {
@@ -103,8 +97,6 @@ if($_GET) {
 	$UpdateBase       = isset($_GET['UpdateBase']);
 	$UpdateFins       = isset($_GET['UpdateFins']);
 	$UpdateTeam       = isset($_GET['UpdateTeam']);
-	$UpdateFinsReview = isset($_GET['UpdateFinsReview']);
-	$UpdateTeamReview = isset($_GET['UpdateTeamReview']);
 	$Timed            = isset($_GET['Timed']);
 	if(isset($_GET['EventName'])) $EventName  = stripslashes($_GET['EventName']);
 	if(isset($_GET['EventPhase'])) $EventPhase = stripslashes($_GET['EventPhase']);
@@ -114,9 +106,9 @@ if($_GET) {
 }
 
 
-if(IsBlocked(BIT_BLOCK_PUBBLICATION) or !$AllParamGood or (!$UpdateBase and !$UpdateFinImg and !$UpdateTourImg and !$UpdateFins and !$UpdateTeam and !$UpdateFinsReview and !$UpdateTeamReview) ) {
+if(IsBlocked(BIT_BLOCK_PUBBLICATION) or !$AllParamGood or (!$UpdateBase and !$UpdateFinImg and !$UpdateTourImg and !$UpdateFins and !$UpdateTeam) ) {
 	if(isset($argv)) {
-		echo "\n\nSyntax: " . basename(__FILE__) . " [UpdateBase] [UpdateTourImg] [UpdateFins] [UpdateTeam] [UpdateFinsReview] [UpdateTeamReview] [Timed | TimeStamp=n] [TournamentId=n] [EventName=n] [EventPhase=n]\n\n";
+		echo "\n\nSyntax: " . basename(__FILE__) . " [UpdateBase] [UpdateTourImg] [UpdateFins] [UpdateTeam] [Timed | TimeStamp=n] [TournamentId=n] [EventName=n] [EventPhase=n]\n\n";
 	} else {
 		print_config();
 	}
@@ -164,8 +156,7 @@ if($UpdateBase) {
 	/*********************
 	  select countries
 	**********************/
-	$query = "select `CoTournament`, `CoCode`, `CoName` from `Countries`";
-	$query.=" where `CoTournament`='".addslashes($_SESSION['TourId'])."'";
+	$query = "select `CoTournament`, `CoCode`, `CoName` from `Countries` where `CoTournament`='".addslashes($_SESSION['TourId'])."'";
 
 	$q = safe_r_sql($query);
 	while($r = safe_fetch($q)) {
@@ -327,7 +318,7 @@ if($UpdateFins) {
 		$quer[] = "`FinMatchNo`='".addslashes($r->FinMatchNo)."'";
 		$quer[] = "`FinTournament`='".addslashes($TournamentId)."'";
 		$quer[] = "`FinRank`='".addslashes($r->FinRank)."'";
-		$quer[] = "`FinAthlete`='".addslashes($r->FinAthlete)."'";
+		$quer[] = "`FinAthlete`='".addslashes($r->FinAthlete??'')."'";
 		$quer[] = "`FinScore`='".addslashes($r->FinScore)."'";
 		$quer[] = "`FinSetScore`='".addslashes($r->FinSetScore)."'";
 		$quer[] = "`FinSetPoints`='".addslashes($r->FinSetPoints)."'";
@@ -366,77 +357,6 @@ if($UpdateFins) {
 	}
 
 
-}
-
-/***************************************************************
-CHECK IF UPDATE INDIVIDUAL OR TEAM FINAL'S REVIEWS IS SELECTED
-****************************************************************/
-if($UpdateFinsReview || $UpdateTeamReview ) {
-	// update table Reviews
-
-	/*********************
-	  select Reviews
-	**********************/
-	$query = "select";
-	$query.= " `RevEvent`,";
-	$query.= " `RevMatchNo`,";
-	$query.= " `RevTournament`,";
-	$query.= " `RevTeamEvent`,";
-	$query.= " `RevLanguage1`,";
-	$query.= " `RevLanguage2`,";
-	$query.= " `RevDateTime` ";
-	$query.= "FROM `Reviews` ";
-	$filter=array();
-
-	$filter[]="`RevTournament`='".addslashes($_SESSION['TourId'])."'";
-	if($UpdateFinsReview) $filter[]="`RevTeamEvent`='0'";
-	if($UpdateTeamReview) $filter[]="`RevTeamEvent`='1'";
-	if($EventName) $filter[]="`RevEvent`='".addslashes($EventName)."'";
-	if($EventPhase) {
-		$query.= "LEFT JOIN `Grids` ";
-		$query.= "   on `Reviews`.`RevMatchNo` = `Grids`.`GrMatchNo` ";
-		$filter[]="`GrPhase`='".addslashes($EventPhase)."'";
-	}
-	if($Timed) {
-		$filter[]="`RevDateTime` > `RevSyncro`";
-	} elseif($TimeStamp) {
-		$filter[]="`RevDateTime` > '".date('Y-m-d H:i:s', $TimeStamp)."'";
-	}
-
-	if($filter) {
-		$query.= ' where ' . implode(' and ', $filter);
-	}
-	$q = safe_r_sql($query);
-
-	while($r = safe_fetch($q)) {
-		// UPDATE DESTINATION Finals
-		$quer=array();
-		$quer[] = "`RevEvent`='".addslashes($r->RevEvent)."'";
-		$quer[] = "`RevMatchNo`='".addslashes($r->RevMatchNo)."'";
-		$quer[] = "`RevTournament`='".addslashes($TournamentId)."'";
-		$quer[] = "`RevTeamEvent`='".addslashes($r->RevTeamEvent)."'";
-		$quer[] = "`RevLanguage1`='".addslashes($r->RevLanguage1)."'";
-		$quer[] = "`RevLanguage2`='".addslashes($r->RevLanguage2)."'";
-		$quer[] = "`RevDateTime`='".addslashes($r->RevDateTime)."'";
-
-		$DATA['QUERIES'][] = "INSERT INTO `Reviews` set " . implode(', ', $quer) . " ON DUPLICATE KEY UPDATE " . implode(', ', $quer);
-
-		// updates original data that have been transmitted
-		// this should be done always to take track of what has been updated and what not!
-		// WARNING! WARNING! WARNING!
-		// => RevDateTime MUST BE SET TO ITSELF to preserve
-		// =>   whatever time it has at the moment of the update
-		$upd  = "UPDATE `Reviews` set ";
-		$upd .= " `RevDateTime`=`RevDateTime`,";
-		$upd .= " `RevSyncro`='".addslashes($CurrentTime)."' ";
-		$upd .= "WHERE";
-		$upd .= " `RevEvent`='".addslashes($r->RevEvent)."'";
-		$upd .= " AND `RevMatchNo`='".addslashes($r->RevMatchNo)."'";
-		$upd .= " AND `RevTournament`='".addslashes($r->RevTournament)."'";
-		$upd .= " AND `RevTeamEvent`='".addslashes($r->RevTeamEvent)."'";
-
-		$UPDATES[] = $upd;
-	}
 }
 
 /*************************************
@@ -507,7 +427,7 @@ if($UpdateTeam) {
 		$quer[] = "`TfEvent`='".addslashes($r->TfEvent)."'";
 		$quer[] = "`TfMatchNo`='".addslashes($r->TfMatchNo)."'";
 		$quer[] = "`TfTournament`='".addslashes($TournamentId)."'";
-		$quer[] = "`TfTeam`='".addslashes($r->TfTeam)."'";
+		$quer[] = "`TfTeam`='".addslashes($r->TfTeam??'')."'";
 		$quer[] = "`TfRank`='".addslashes($r->TfRank)."'";
 		$quer[] = "`TfScore`='".addslashes($r->TfScore)."'";
 		$quer[] = "`TfSetScore`='".addslashes($r->TfSetScore)."'";
@@ -585,7 +505,8 @@ if(isset($_GET) and isset($_SERVER) /*and $Timed and ($UpdateTeam or $UpdateFins
 	// so we are pretty sure we are on a web URL CALL
 	// BUT it only makes sense if we are on a "timed" sessione
 	// that is, if we have to update Finals and TeamFinals every X seconds!
-?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -608,98 +529,97 @@ if($REFRESH) {
 	if($UpdateBase) $gets[]='UpdateBase=1';
 	if($UpdateFins) $gets[]='UpdateFins=1';
 	if($UpdateTeam) $gets[]='UpdateTeam=1';
-	if($UpdateFinsReview) $gets[]='UpdateFinsReview=1';
-	if($UpdateTeamReview) $gets[]='UpdateTeamReview=1';
 
 	echo '<meta http-equiv="refresh" content="' . $REFRESH . ';url=' . $url . implode('&', $gets) . '" />';
 }
 ?>
 <title>Sync</title>
+    <style type="text/css">
+        table, th, td {
+            border: 1px solid black;
+            border-spacing: 0;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        th, td {
+            padding: 5px;
+            background-color: unset;
+        }
+    </style>
 </head>
 <body>
-<h1 align="center">Syncro Data</h1>
+<h1 style="text-align: center; font-weight: bold; font-size: xxx-large; color: darkred;">Syncro Data</h1>
 <?php
-echo '<center><table cellpadding="2" cellspacing="0" border="1">';
+echo '<table>';
 
 
 
-echo '<tr valign="top">';
-echo '<td align="center" colspan="2"><B><a href="'.$_SERVER['PHP_SELF'].($STOP?"?$STOP":'').'">STOP UPDATING!</a></B></td>';
+echo '<tr style="vertical-align: top;">';
+echo '<td style="text-align: center; background-color: darkred; font-size: x-large; font-weight: bold;" colspan="2"><a style="color: white; text-decoration: none;" href="'.$_SERVER['PHP_SELF'].($STOP?"?$STOP":'').'">STOP UPDATING!</a></td>';
 echo '</tr>';
 
-echo '<tr valign="top">';
-echo '<td align="right"><B>Last Update</B></td>';
+echo '<tr style="vertical-align: top;">';
+echo '<td style="text-align: right; font-weight: bold;">Last Update</td>';
 echo '<td>' . $CurrentTime . '</td>';
 echo '</tr>';
 
-echo '<tr valign="top">';
-echo '<td align="right"><B>Refresh time</B></td>';
+echo '<tr style="vertical-align: top;">';
+echo '<td style="text-align: right; font-weight: bold;">Refresh time</td>';
 echo '<td>' . $REFRESH . '</td>';
 echo '</tr>';
 
-echo '<tr valign="top">';
-echo '<td align="right"><B>Update Base Info</B></td>';
+echo '<tr style="vertical-align: top;">';
+echo '<td style="text-align: right; font-weight: bold;">Update Base Info</td>';
 echo '<td>' . ($UpdateBase?'YES':'no') . '</td>';
 echo '</tr>';
 
-echo '<tr valign="top">';
-echo '<td align="right"><B>Update Individual Finals Scores</B></td>';
+echo '<tr style="vertical-align: top;">';
+echo '<td style="text-align: right; font-weight: bold;">Update Individual Finals Scores</td>';
 echo '<td>' . ($UpdateFins?'YES':'no') . '</td>';
 echo '</tr>';
 
-echo '<tr valign="top">';
-echo '<td align="right"><B>Update Individual Finals Reviews</B></td>';
-echo '<td>' . ($UpdateFinsReview?'YES':'no') . '</td>';
-echo '</tr>';
-
-echo '<tr valign="top">';
-echo '<td align="right"><B>Update Team Finals Scores</B></td>';
+echo '<tr style="vertical-align: top;">';
+echo '<td style="text-align: right; font-weight: bold;">Update Team Finals Scores</td>';
 echo '<td>' . ($UpdateTeam?'YES':'no') . '</td>';
 echo '</tr>';
 
-echo '<tr valign="top">';
-echo '<td align="right"><B>Update Team Finals Reviews</B></td>';
-echo '<td>' . ($UpdateTeamReview?'YES':'no') . '</td>';
-echo '</tr>';
-
-echo '<tr valign="top">';
-echo '<td align="right"><B>Update changes since last update</B></td>';
+echo '<tr style="vertical-align: top;">';
+echo '<td style="text-align: right; font-weight: bold;">Update changes since last update</td>';
 echo '<td>' . ($Timed?'YES':'no') . '</td>';
 echo '</tr>';
 
-echo '<tr valign="top">';
-echo '<td align="right"><B>Update changes since</B></td>';
+echo '<tr style="vertical-align: top;">';
+echo '<td style="text-align: right; font-weight: bold;">Update changes since</td>';
 echo '<td>' . ($TimeStamp?$TimeStamp:'-') . '</td>';
 echo '</tr>';
 
-echo '<tr valign="top">';
-echo '<td align="right"><B>Tournament Id</B></td>';
+echo '<tr style="vertical-align: top;">';
+echo '<td style="text-align: right; font-weight: bold;">Tournament Id</td>';
 echo '<td>' . $_SESSION['TourId'] . '</td>';
 echo '</tr>';
 
-echo '<tr valign="top">';
-echo '<td align="right"><B>Remote Tournament Code</B></td>';
+echo '<tr style="vertical-align: top;">';
+echo '<td style="text-align: right; font-weight: bold;">Remote Tournament Code</td>';
 echo '<td>' . ($TournamentId?$TournamentId:'ALL') . '</td>';
 echo '</tr>';
 
-echo '<tr valign="top">';
-echo '<td align="right"><B>Event Name</B></td>';
+echo '<tr style="vertical-align: top;">';
+echo '<td style="text-align: right; font-weight: bold;">Event Name</td>';
 echo '<td>' . ($EventName?$EventName:'ALL') . '</td>';
 echo '</tr>';
 
-echo '<tr valign="top">';
-echo '<td align="right"><B>Event Phase</B></td>';
+echo '<tr style="vertical-align: top;">';
+echo '<td style="text-align: right; font-weight: bold;">Event Phase</td>';
 echo '<td>' . ($EventPhase?$EventPhase:'ALL') . '</td>';
 echo '</tr>';
 
-echo '</table></center>';
+echo '</table>';
 ?>
 </body>
-</html><?php
+</html>
+    <?php
 
-}
-else
-{
+} else {
 	print "Done<br>";
 	print '<a href="' . $_SERVER["PHP_SELF"] . '?TournamentId=' . $TournamentId . '">Back</a>';
 }
@@ -716,80 +636,82 @@ function print_config() {
 	echo '<meta http-equiv="Pragma" content="no-cache" />';
 	echo '<meta http-equiv="Expires" content="-1" />';
 	echo '<title>Sync</title>';
+    echo '<style type="text/css">
+        table, th, td {
+            border: 1px solid black;
+            border-spacing: 0;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        th, td {
+            padding: 5px;
+            background-color: unset;
+        }
+        </style>';
 	echo '</head>';
 	echo '<body>';
-	echo '<h1>Configuration</h1>';
+	echo '<h1 style="text-align: center; font-weight: bold; font-size: xxx-large; color: darkblue;">Configuration</h1>';
 ?>
 
 <form action="" method="get">
-<center>
-<table cellpadding="2" cellspacing="0" border="1">
-<tr valign="top">
+<table>
+<tr style="vertical-align: top;">
 	<td><b>Tournament</b></td>
 	<td colspan="2"><?php echo $TournamentId ?> - <?php echo $_SESSION['TourName']; ?></td>
 </tr>
-<tr valign="top">
+<tr style="vertical-align: top;">
 	<td nowrap="nowrap"><b>Reload Time</b></td>
 	<td colspan="2"><input type="text" name="Refresh" value="<?php echo $REFRESH ?>" size="5"/> (AutoUpdate)</td>
 </tr>
-<tr valign="top">
+<tr style="vertical-align: top;">
 	<td nowrap="nowrap"><b>Update Base info</b></td>
 	<td colspan="2"><input type="checkbox" name="UpdateBase"/></td>
 </tr>
-<tr valign="top">
+<tr style="vertical-align: top;">
 	<td nowrap="nowrap" rowspan="3"><b>Update Tournament </b></td>
 	<td rowspan="3"><input type="checkbox" name="UpdateTourImg"/></td>
 	<td><input type="text" name="UpdateTourTopLURL"/>TopLeft URL</td>
 </tr>
-<tr valign="top">
+<tr style="vertical-align: top;">
 	<td><input type="text" name="UpdateTourTopRURL"/>TopRight URL</td>
 </tr>
-<tr valign="top">
+<tr style="vertical-align: top;">
 	<td><input type="text" name="UpdateTourBotURL"/>Bottom URL</td>
 </tr>
-<tr valign="top">
+<tr style="vertical-align: top;">
 	<td nowrap="nowrap"><b>Update Final pictures</b></td>
 	<td colspan="2"><input type="checkbox" name="UpdateFinImg"/></td>
 </tr>
-<tr valign="top">
+<tr style="vertical-align: top;">
 	<td nowrap="nowrap"><b>Update Finals info</b></td>
 	<td><input type="checkbox" name="UpdateFins"/></td>
-	<td rowspan="4"><table cellpadding="2" cellspacing="0" border="0">
-		<tr valign="top">
+	<td rowspan="2"><table cellpadding="2" cellspacing="0" border="0">
+		<tr style="vertical-align: top;">
 			<td nowrap="nowrap"><b>Update changes since last update</b></td>
 			<td><input type="checkbox" name="Timed"<?php echo ($Timed?' checked':'') ?>/></td>
 		</tr>
-		<tr valign="top">
+		<tr style="vertical-align: top;">
 			<td nowrap="nowrap"><b>Update changes since</b> (Unix Timestamp)</td>
 			<td><input type="text" name="TimeStamp" value="<?php echo $TimeStamp ?>"/></td>
 		</tr>
-		<tr valign="top">
+		<tr style="vertical-align: top;">
 			<td nowrap="nowrap"><b>Update Event</b></td>
 			<td><input type="text" name="EventName" value="<?php echo $EventName ?>"/></td>
 		</tr>
-		<tr valign="top">
+		<tr style="vertical-align: top;">
 			<td nowrap="nowrap"><b>Update Phase</b></td>
 			<td><input type="text" name="EventPhase" value="<?php echo $EventPhase ?>"/></td>
 		</tr>
 	</table></td>
 </tr>
-<tr valign="top">
-	<td nowrap="nowrap"><b>Update Finals Reviews</b></td>
-	<td><input type="checkbox" name="UpdateFinsReview"/></td>
-</tr>
-<tr valign="top">
+<tr style="vertical-align: top;">
 	<td nowrap="nowrap"><b>Update TeamFinals info</b></td>
 	<td><input type="checkbox" name="UpdateTeam"/></td>
 </tr>
-<tr valign="top">
-	<td nowrap="nowrap"><b>Update TeamFinals Reviews</b></td>
-	<td><input type="checkbox" name="UpdateTeamReview"/></td>
-</tr>
-<tr valign="top" align="center">
+<tr style="vertical-align: top;" align="center">
 	<td colspan="3"><input type="submit" value="Start Syncro"/></td>
 </tr>
 </table>
-</center>
 </form>
 <?php
 	echo '</body>';

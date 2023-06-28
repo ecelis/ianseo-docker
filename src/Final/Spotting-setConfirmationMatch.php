@@ -26,11 +26,22 @@ $Table=($Team ? 'Team' : '');
 // updates the confirmation of the match
 safe_w_sql("update {$Table}Finals set {$TabPrefix}Status=1, {$TabPrefix}Confirmed=1, {$TabPrefix}DateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " where {$TabPrefix}Tournament={$_SESSION['TourId']} and {$TabPrefix}Event='$Event' and {$TabPrefix}MatchNo in ($m[0],$m[1])");
 
-$q=safe_r_sql("select {$TabPrefix}WinLose Winner from {$Table}Finals where {$TabPrefix}Tournament={$_SESSION['TourId']} and {$TabPrefix}Event='$Event' and {$TabPrefix}MatchNo in ($m[0],$m[1]) order by {$TabPrefix}MatchNo");
+$q=safe_r_sql("select {$TabPrefix}WinLose as Winner, {$TabPrefix}TbClosest as Closest, {$TabPrefix}TbDecoded as Decoded, {$TabPrefix}MatchNo as MatchNo from {$Table}Finals where {$TabPrefix}Tournament={$_SESSION['TourId']} and {$TabPrefix}Event='$Event' and {$TabPrefix}MatchNo in ($m[0],$m[1]) order by {$TabPrefix}MatchNo");
+
+
 
 $Winner='';
 $Loser='';
 if($r1=safe_fetch($q) and $r2=safe_fetch($q) and $r1->Winner+$r2->Winner) {
+	// check if there is a "tie" tiebreak
+	if($r1->Decoded and $r1->Decoded==$r2->Decoded and $r1->Closest==$r2->Closest) {
+		if($r1->Winner) {
+			// the closest is on the $r1
+			safe_w_sql("update {$Table}Finals set {$TabPrefix}TbClosest=1, {$TabPrefix}TbDecoded=".StrSafe_DB($r1->Decoded.'+')." where {$TabPrefix}Tournament={$_SESSION['TourId']} and {$TabPrefix}Event='$Event' and {$TabPrefix}MatchNo=$r1->MatchNo");
+		} else {
+			safe_w_sql("update {$Table}Finals set {$TabPrefix}TbClosest=1, {$TabPrefix}TbDecoded=".StrSafe_DB($r2->Decoded.'+')." where {$TabPrefix}Tournament={$_SESSION['TourId']} and {$TabPrefix}Event='$Event' and {$TabPrefix}MatchNo=$r2->MatchNo");
+		}
+	}
 	$JSON['winner']=$r1->Winner ? 'L' : 'R';
 }
 

@@ -5,90 +5,6 @@ var activeField='';
 var activeWhat='';
 
 
-function insertInput(cell, what){
-	var url='';
-	if(rowId)
-		resetCell(activeWhat);
-
-	rowId=cell.parentNode.id;
-
-	activeCell=cell;
-	activeValue=cell.innerHTML.replace(/<br>/ig,"");
-
-	activeCell.onclick=null;
-
-	activeWhat=what;
-
-	switch(what) {
-	case 'AwOrder':
-	case 'FirstLanguageCode':
-	case 'SecondLanguageCode':
-	case 'AwEventTrans':
-		activeField=document.createElement('input');
-		activeField.maxlength='3';
-		activeField.size='5';
-
-		break;
-	case 'AwPositions':
-		activeField=document.createElement('select');
-		arrValues = Array('1','1,2,3','1,2,3,4','1,2,4,3');
-		for(var i=0; i<arrValues.length; i++) {
-			var opt = document.createElement('option');
-			opt.text = arrValues[i];
-			if(arrValues[i]=='1,2,4,3') opt.text = '1,2,3-3';
-			opt.value = arrValues[i];
-			try {
-				activeField.add(opt,null); // standard
-			} catch(ex) {
-				activeField.add(opt); // IE ....
-			}
-		}
-		break;
-	case 'AwDescription-1':
-	case 'AwAwarders-1':
-	case 'AwAwarders-2':
-		activeField=document.createElement('select');
-		var opt = document.createElement('option');
-		opt.text = '==>';
-		opt.value = '';
-		try {
-			activeField.add(opt,null); // standard
-		} catch(ex) {
-			activeField.add(opt); // IE ....
-		}
-		for(var i=0; i<AwKeys.length; i++) {
-			var opt = document.createElement('option');
-			opt.text = AwValues[i];
-			opt.value = AwKeys[i];
-			try {
-				activeField.add(opt,null); // standard
-			} catch(ex) {
-				activeField.add(opt); // IE ....
-			}
-		}
-		break;
-	default:
-		activeField=document.createElement('textarea');
-		activeField.style.width='100%';
-		activeField.rows = ((what=='AwAwarders-1' || what=='AwAwarders-2' ) ? 5 : 3);
-		activeField.cols=80;
-		break;
-	}
-
-	if (activeField.addEventListener)
-		activeField.addEventListener("blur", function () {updateField (this);}, false);
-	else if (activeField.attachEvent)
-		activeField.attachEvent("onblur",  function () {updateField (this);});
-
-	activeField.value=activeValue;
-	activeField.id='f'+cell.parentNode.id;
-	activeField.name=what;
-
-	while(activeCell.childNodes.length > 0) activeCell.removeChild(activeCell.childNodes.item(0));
-	activeCell.appendChild(activeField);
-	activeField.focus();
-}
-
 
 function resetCell(activeCtrl) {
 	if (activeCell.addEventListener)
@@ -104,54 +20,6 @@ function resetCell(activeCtrl) {
 	activeWhat='';
 }
 
-function updateField(field) {
-	var XMLHttp=CreateXMLHttpRequestObject();
-	if (XMLHttp) {
-		try {
-			if ((XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)) {
-				XMLHttp.open("GET","UpdateAwardings.php?id="+field.id+"&field="+field.name+"&value="+encodeURIComponent(field.value) ,true);
-				XMLHttp.onreadystatechange=function() {
-					if (XMLHttp.readyState!=XHS_COMPLETE) return;
-					if (XMLHttp.status!=200) return;
-					try {
-						var XMLResp=XMLHttp.responseXML;
-						// intercetto gli errori di IE e Opera
-						if (!XMLResp || !XMLResp.documentElement) throw(XMLResp.responseText);
-
-						// Intercetto gli errori di Firefox
-						var XMLRoot;
-						if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror") throw("ParseError");
-
-						XMLRoot = XMLResp.documentElement;
-
-						var Error = XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
-						activeValue=activeField.value;
-
-						if(Error==0) {
-							var Field = XMLRoot.getElementsByTagName('field').item(0).firstChild.data;
-							var Value = XMLRoot.getElementsByTagName('value').item(0).firstChild.data;
-							activeValue=Value;
-							field.value=Value;
-							field.parentNode.style.backgroundColor='';
-							resetCell(Field);
-						} else {
-							field.parent.style.backgroundColor='yellow';
-							resetCell(activeWhat);
-						}
-
-					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
-					}
-
-				};
-				XMLHttp.send();
-			}
-		} catch (e) {
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
-		}
-	}
-}
-
 
 
 function DeleteAwards(Event,FinEv,TeamEv,Message){
@@ -161,10 +29,6 @@ if (confirm(Message))
 
 function switchEnabled(Event,FinEv,TeamEv) {
 	window.location.href='ManAwards.php?Command=SWITCH&EvSwitch=' + Event + '&FinEv=' + FinEv+ '&TeamEv=' + TeamEv;
-}
-
-function switchOption(Option) {
-	window.location.href='ManAwards.php?Command=OPTION&OptSwitch=' + Option;
 }
 
 function Manage(obj) {
@@ -198,15 +62,118 @@ function Manage(obj) {
 						}
 
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
 
 				};
 				XMLHttp.send();
 			}
 		} catch (e) {
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
 
+// switched to Ajax done!
+
+function updateField(obj) {
+	let ref=$(obj).attr('ref');
+	console.log(ref);
+	let form={
+		act:'updateField',
+		fld:ref,
+		val:$(obj).val(),
+		id:$(obj).closest('tr').attr('id'),
+	};
+	$.getJSON('ManAwards-action.php', form, function(data) {
+		if(data.error==0) {
+			switch(ref) {
+				case 'FirstLanguageCode':
+				case 'SecondLanguageCode':
+					// these are SPAN and not DIV
+					$(obj).replaceWith('<span ref="'+ref+'">'+data.val+'</span>');
+					break;
+				case 'AwOrder':
+				case 'AwPositions':
+				case 'AwEventTrans':
+					$(obj).replaceWith('<span ref="'+ref+'|'+$(obj).closest('tr').attr('id')+'">'+data.val+'</span>');
+					break;
+				case 'Aw-Award-new':
+				case 'Aw-Awarder-new':
+					$(obj).replaceWith('<div ref="'+ref+'" style="height:1em;"></div>');
+					$('#'+data.body).append('<tr>' +
+						'<th colspan="6" class="Right" nowrap="nowrap">'+data.title+'</th>' +
+						'<td onclick="insertInput(\''+data.key1+'\')"><div ref="'+data.key1+'">'+data.val1+'</div></td>' +
+						'<td onclick="insertInput(\''+data.key2+'\')"><div ref="'+data.key2+'" class="SecondLanguage"></div></td>' +
+						'<td class="Center"><input type="button" value="'+btnDelete+'" onClick="window.location.href=\'?'+data.del+'\'"></td>' +
+						'</tr>');
+					break;
+				default:
+					$(obj).replaceWith('<div ref="'+ref+'" onclick="insertInput(this)">'+data.val+'</div>');
+			}
+		}
+	});
+}
+
+function insertInput(id){
+	let obj = $('[ref="'+id+'"]')[0];
+	if(obj.nodeName!='DIV' && obj.nodeName!='SPAN') {
+		return;
+	}
+
+	// can turn into an input field
+	let cell=$(obj).closest('td');
+	let value=$(obj).html();
+	let ref=$(obj).attr('ref');
+	if(ref.indexOf('|') !== -1) {
+		ref = ref.substr(0, ref.indexOf('|'))
+	}
+	cell.attr('oldval', value);
+	switch(ref) {
+		case 'AwOrder':
+		case 'FirstLanguageCode':
+		case 'SecondLanguageCode':
+			$(obj).replaceWith('<input type="text" maxlength="3" size="5" ref="'+ref+'" onblur="updateField(this)" value="'+value+'">');
+			break;
+		case 'AwEventTrans':
+			$(obj).replaceWith('<input type="text" style="min-width:15em" ref="'+ref+'" onblur="updateField(this)" value="'+value+'">');
+			break;
+		case 'AwPositions':
+			$(obj).replaceWith('<select ref="'+ref+'" onblur="updateField(this)">' +
+				'<option value="1">1</option>' +
+				'<option value="1,2,3">1,2,3</option>' +
+				'<option value="1,2,3,4">1,2,3,4</option>' +
+				'<option value="1,2,4,3">1,2,3-3</option>' +
+				'</select>');
+			if(value=='1,2,3-3') {
+				value='1,2,4,3';
+			}
+			break;
+		default:
+			$(obj).replaceWith('<textarea ref="'+ref+'" onblur="updateField(this)" style="width:100%;height:6em"></textarea>');
+			break;
+
+	}
+	cell.find('[ref="'+ref+'"]').val(value);
+	cell.find('[ref="'+ref+'"]').focus();
+}
+
+function switchOption(obj) {
+	let form={
+		act:'switchOption',
+		fld:obj.id,
+	};
+	$.getJSON('ManAwards-action.php', form, function(data) {
+		if(data.error==0) {
+			$(obj).prop('src', data.src);
+			$.each(data.rows, function() {
+				$('#'+this.id).html(this.val);
+			});
+			if(typeof data.showSecondLanguage != 'undefined') {
+				$('.SecondLanguage').toggleClass('d-none', data.showSecondLanguage==0)
+			}
+		}
+		if(data.msg!='') {
+			alert(data.msg);
+		}
+	});
+	// window.location.href='ManAwards.php?Command=OPTION&OptSwitch=' + Option;
+}

@@ -32,7 +32,7 @@ class IanseoPdf extends TCPDF {
 	var $ShowStaff=true;
 	var $StaffCategories=array();
 
-	var $PageSize='A4', $FontStd='helvetica', $FontFix='courier', $Currency='';
+	var $PageSize='A4', $FontStd='helvetica', $FontFix='courier', $FontSymbol='zapfdingbats', $Currency='';
 	var $docUpdate;
 
 	// patch
@@ -110,7 +110,7 @@ class IanseoPdf extends TCPDF {
 		$this->SetFont($this->FontStd,'',8);
 		$this->SetLineWidth(0.1);
 		$this->pushMargins();
-		$this->setFontSubsetting(empty(($tmp) OR empty($tmp->ToPrintChars)) ? false : ($tmp->ToPrintChars >= 2));
+        $this->setFontSubsetting((empty($tmp) OR empty($tmp->ToPrintChars)) ? false : ($tmp->ToPrintChars >= 2));
 		$this->setViewerPreferences(array('PrintScaling' => 'none'));
 	}
 
@@ -130,20 +130,17 @@ class IanseoPdf extends TCPDF {
 		parent::Cell($w, $h, $txt, $border, $ln, $align, $fill, $link, $stretch, $ignore_min_height, $calign, $valign);
 	}
 
-	function SetDefaultColor()
-	{
+	function SetDefaultColor() {
 		$this->SetDrawColor(0x33, 0x33, 0x33);
 		$this->SetFillColor(0xE0,0xE0,0xE0);
 		$this->SetTextColor(0x00, 0x00, 0x00);
 	}
 
-	function getSideMargin()
-	{
+	function getSideMargin() {
 		return IanseoPdf::sideMargin;
 	}
 
-	function getTopMargin()
-	{
+	function getTopMargin() {
 		return IanseoPdf::topMargin;
 	}
 
@@ -151,19 +148,16 @@ class IanseoPdf extends TCPDF {
 		$this->setY($this->getY()+$y, $resetX);
 	}
 
-	function writeCurrency()
-	{
+	function writeCurrency() {
 		return $this->Currency;
 	}
 
-	function Header()
-	{
+	function Header() {
 		global $CFG;
 		$this->SetDefaultColor();
 		$LeftStart = IanseoPdf::sideMargin;
 		$RightStart = IanseoPdf::sideMargin;
 		$ImgSizeReq=15;
-		//if(strlen($this->Judge . $this->Resp . $this->Dos . $this->Jury))
 		if (count($this->StaffCategories)>0) $ImgSizeReq+=5;
 		if($this->ToPaths['ToLeft']) {
 			$this->Image($this->ToPaths['ToLeft'], IanseoPdf::sideMargin, 5, 0, $ImgSizeReq);
@@ -174,10 +168,6 @@ class IanseoPdf extends TCPDF {
 			$this->Image($this->ToPaths['ToRight'], (($this->w-IanseoPdf::sideMargin) - ($im[0] * $ImgSizeReq / $im[1])), 5, 0, $ImgSizeReq);
 			$RightStart += ($im[0] * $ImgSizeReq / $im[1]);
 		}
-
-		//if($this->BarcodeHeader) {
-			//$RightStart += $this->BarcodeHeader + 10;
-		//}
 
     	$this->SetFont($this->FontStd,'B',13);
 		$this->SetXY($LeftStart,5);
@@ -191,10 +181,8 @@ class IanseoPdf extends TCPDF {
 		$this->Cell($this->w-$LeftStart-$RightStart, 4,  ($this->Where . ", " . $this->TournamentDate2String ), 0, 1, 'L', 0);
     	$this->SetFont($this->FontStd,'',6);
 
-    	if ($this->ShowStaff && count($this->StaffCategories)>0)
-    	{
-    		foreach ($this->StaffCategories as $c=>$v)
-    		{
+    	if ($this->ShowStaff && count($this->StaffCategories)>0) {
+    		foreach ($this->StaffCategories as $c=>$v) {
     			$this->SetX($LeftStart);
     			$this->Cell($this->w-$LeftStart-$RightStart, 3,  $c .': ' . $v, 0, 1, 'L', 0);
     		}
@@ -231,22 +219,19 @@ class IanseoPdf extends TCPDF {
 		return !($this->checkPageBreak($HowLong,'',false));
 	}
 
-	function pushMargins()
-	{
+	function pushMargins() {
 		$this->savedTopMargin = $this->tMargin;
 		$this->savedSideMargin = $this->lMargin;
 		$this->savedBottomMargin = $this->bMargin;
 	}
 
-	function popMargins()
-	{
+	function popMargins() {
 		$this->tMargin = $this->savedTopMargin;
 		$this->lMargin = $this->savedSideMargin;
 		$this->bMargin = $this->savedBottomMargin;
 	}
 
-	function Rotate($angle,$x=-1,$y=-1)
-	{
+	function Rotate($angle,$x=-1,$y=-1) {
 	    if($x==-1)
     	    $x=$this->x;
 	    if($y==-1)
@@ -254,8 +239,7 @@ class IanseoPdf extends TCPDF {
 	    if($this->angle!=0)
         	$this->_out('Q');
     	$this->angle=$angle;
-	    if($angle!=0)
-    	{
+	    if($angle!=0) {
 	        $angle*=M_PI/180;
     	    $c=cos($angle);
 	        $s=sin($angle);
@@ -287,10 +271,6 @@ class IanseoPdf extends TCPDF {
 		$ret['phase']=array_pop($dash);
 		$ret['dash']=implode(',', $dash);
 
-		// no color get at the moment
-//		if (isset($color)) {
-//			$this->SetDrawColorArray($color);
-//		}
 		return $ret;
 	}
 

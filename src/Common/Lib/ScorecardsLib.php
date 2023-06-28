@@ -128,7 +128,7 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
 			$defScoreW = ($pdf->GetPageHeight()-$pdf->getSideMargin()*4)/3;
 		}
 
-		if(!empty($Options['QRCode'])) {
+		if(!empty($Options['QRCode']) and $ScoreDraw!='Draw') {
 			$QRCodeX=0;
 			$QRCodeY=0;
 			switch($Data->Ath4Target) {
@@ -214,7 +214,7 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
 						$pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, 0, $Cards[3]);
 
 				}
-				if (!empty($Options['QRCode'])) {
+				if (!empty($Options['QRCode']) and $ScoreDraw!='Draw') {
 					foreach ($Options['QRCode'] as $k => $Api) {
 						require_once('Api/' . $Api . '/DrawQRCode.php');
 						$Function = 'DrawQRCode_' . preg_replace('/[^a-z0-9]/sim', '_', $Api);
@@ -462,67 +462,66 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
 					}
 
 				} else {
-
 					$pdf->AddPage(($Data->Ath4Target <= 3) ? 'L' : 'P');
 					switch($Data->Ath4Target) {
 						case 1:
 							if(empty($Cards[0]['Ath'])) {
 								continue 2;
 							}
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, $Cards[0]);
+							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
 							break;
 						case 2:
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, $Cards[0]);
-							$pdf->DrawScoreNew(2*$defScoreX+$defScoreW, $defScoreY, $defScoreW, $defScoreH, $CurDist, $Cards[1]);
+							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
+							$pdf->DrawScoreNew(2*$defScoreX+$defScoreW, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
 							break;
 						case 3:
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, $Cards[0]);
-							$pdf->DrawScoreNew(2*$defScoreX+$defScoreW, $defScoreY, $defScoreW, $defScoreH,$CurDist, $Cards[1]);
-							$pdf->DrawScoreNew(3*$defScoreX+2*$defScoreW, $defScoreY, $defScoreW, $defScoreH,$CurDist,$Cards[2]);
+							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
+							$pdf->DrawScoreNew(2*$defScoreX+$defScoreW, $defScoreY, $defScoreW, $defScoreH,$CurDist, ($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
+							$pdf->DrawScoreNew(3*$defScoreX+2*$defScoreW, $defScoreY, $defScoreW, $defScoreH,$CurDist,(($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C'))));
 							break;
 						case 4:
-							$pdf->DrawScoreNew( $defScoreX,  $defScoreY, $defScoreW, $defScoreH, $CurDist, $Cards[0]);
-							$pdf->DrawScoreNew($defScoreX2,  $defScoreY, $defScoreW, $defScoreH, $CurDist, $Cards[1]);
-							$pdf->DrawScoreNew( $defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist, $Cards[2]);
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, $CurDist, $Cards[3]);
+							$pdf->DrawScoreNew( $defScoreX,  $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
+							$pdf->DrawScoreNew($defScoreX2,  $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
+							$pdf->DrawScoreNew( $defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist, ($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C')));
+							$pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, $CurDist, ($Cards[3] ?? $Data->DefaultScore+array('tNo'=>'D')));
 							break;
 						case 5:
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,$Cards[0]);
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,$Cards[1]);
-							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,$Cards[2]);
+							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
+							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
+							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C')));
 							$pdf->AddPage('P');
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,$Cards[3]);
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,$Cards[4]);
+							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[3] ?? $Data->DefaultScore+array('tNo'=>'D')));
+							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[4] ?? $Data->DefaultScore+array('tNo'=>'E')));
 							break;
 						case 6:
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,$Cards[0]);
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,$Cards[1]);
-							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,$Cards[2]);
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, $CurDist,$Cards[3]);
+							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
+							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
+							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C')));
+							$pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[3] ?? $Data->DefaultScore+array('tNo'=>'D')));
 							$pdf->AddPage('P');
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,$Cards[4]);
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,$Cards[5]);
+							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[4] ?? $Data->DefaultScore+array('tNo'=>'E')));
+							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[5] ?? $Data->DefaultScore+array('tNo'=>'F')));
 							break;
 						case 7:
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,$Cards[0]);
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,$Cards[1]);
-							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,$Cards[2]);
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, $CurDist,$Cards[3]);
+							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
+							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
+							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C')));
+							$pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[3] ?? $Data->DefaultScore+array('tNo'=>'D')));
 							$pdf->AddPage('P');
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,$Cards[4]);
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,$Cards[5]);
-							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,$Cards[6]);
+							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[4] ?? $Data->DefaultScore+array('tNo'=>'E')));
+							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[5] ?? $Data->DefaultScore+array('tNo'=>'F')));
+							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[6] ?? $Data->DefaultScore+array('tNo'=>'G')));
 							break;
 						case 8:
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,$Cards[0]);
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,$Cards[1]);
-							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,$Cards[2]);
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, $CurDist,$Cards[3]);
+							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
+							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
+							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C')));
+							$pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[3] ?? $Data->DefaultScore+array('tNo'=>'D')));
 							$pdf->AddPage('P');
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,$Cards[4]);
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,$Cards[5]);
-							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,$Cards[6]);
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, $CurDist,$Cards[7]);
+							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[4] ?? $Data->DefaultScore+array('tNo'=>'E')));
+							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[5] ?? $Data->DefaultScore+array('tNo'=>'F')));
+							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[6] ?? $Data->DefaultScore+array('tNo'=>'G')));
+							$pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[7] ?? $Data->DefaultScore+array('tNo'=>'H')));
 							break;
 					}
 					if(!empty($Options['QRCode'])) {
@@ -597,54 +596,72 @@ function QualificationScorecards($Session, $FromTgt, $ToTgt, $IncludeEmpty=true,
 	    $Data->Ath4Target*=2;
 	}
 	$Data->Scores=array();
+	$Data->DefaultScore=[];
 
 	if($ScoreDraw=='Draw') {
-		$DrawArray=array("Session"=>$Session, 'Arr0'=>'');
+		$q=safe_r_sql("select ToGolds, ToGoldsChars, ToXNine, ToXNineChars from Tournament where ToId={$_SESSION['TourId']}");
+		$r=safe_fetch($q);
+		$DrawArray=array("Session"=>$Session, 'Arr0'=>'', 'Golds'=>$r->ToGolds, 'XNine'=>$r->ToXNine,
+            'GoldsChars'=>$r->ToGoldsChars, 'XNineChars'=>$r->ToXNineChars);
 		// gets the correct distance/session
 		if($ses[0]->SesType=='Q') {
 			$tmp=getArrowEnds($ses[0]->SesOrder, 1);
 			$DrawArray['NumEnds0']=$tmp[1]['ends'];
 			$DrawArray['NumArrows0']=$tmp[1]['arrows'];
 		}
-        switch($Data->Session[$Session]) {
-            case 1:
-                $Data->Scores[]=array(
-	                $DrawArray+array('tNo'=>'A'),
-                );
-                break;
-            case 2:
-                $Data->Scores[]=array(
-	                $DrawArray+array('tNo'=>'A'),
-	                $DrawArray+array('tNo'=>'B'),
+        if(empty($Data->Session[$Session])) {
+            $Data->Scores[] = array(
+                $DrawArray + array('tNo' => 'A'),
+                $DrawArray + array('tNo' => 'B'),
+                $DrawArray + array('tNo' => 'C'),
+                $DrawArray + array('tNo' => 'D'),
+            );
+        } else {
+            switch ($Data->Session[$Session]) {
+                case 1:
+                    $Data->Scores[] = array(
+                        $DrawArray + array('tNo' => 'A'),
                     );
-                break;
-            case 3:
-                $Data->Scores[]=array(
-	                $DrawArray+array('tNo'=>'A'),
-	                $DrawArray+array('tNo'=>'B'),
-	                $DrawArray+array('tNo'=>'C'),
+                    break;
+                case 2:
+                    $Data->Scores[] = array(
+                        $DrawArray + array('tNo' => 'A'),
+                        $DrawArray + array('tNo' => 'B'),
                     );
-                break;
-            default:
-                $Data->Scores[]=array(
-	                $DrawArray+array('tNo'=>'A'),
-	                $DrawArray+array('tNo'=>'B'),
-	                $DrawArray+array('tNo'=>'C'),
-	                $DrawArray+array('tNo'=>'D'),
+                    break;
+                case 3:
+                    $Data->Scores[] = array(
+                        $DrawArray + array('tNo' => 'A'),
+                        $DrawArray + array('tNo' => 'B'),
+                        $DrawArray + array('tNo' => 'C'),
                     );
+                    break;
+                default:
+                    $Data->Scores[] = array(
+                        $DrawArray + array('tNo' => 'A'),
+                        $DrawArray + array('tNo' => 'B'),
+                        $DrawArray + array('tNo' => 'C'),
+                        $DrawArray + array('tNo' => 'D'),
+                    );
+            }
         }
+		$Data->DefaultScore=$DrawArray;
+
 		return $Data;
     }
 
 	$FillWithArrows=($FillWithArrows and $ScoreDraw!='TargetNo');
 
 	if(!empty($Options['SessionType']) and $Options['SessionType']=='E') {
-		$MyQuery=GetElimScoreBySessionQuery($Session, $Options['x_Phase'], $FromTgt, $ToTgt, $IncludeEmpty, $ScoreDraw, $PersonalScore);
+        if(empty($Options['TourField3D'])) {
+            $IncludeEmpty = true;
+        }
+		$MyQuery=GetElimScoreBySessionQuery($Session, $Options['x_Phase'], $FromTgt, $ToTgt, $IncludeEmpty);
 	} else {
 		if($Category) {
 			$MyQuery=GetScoreByCategoryQuery();
 		} else {
-			$MyQuery=GetScoreBySessionQuery($Session, $FromTgt, $ToTgt, $IncludeEmpty, $ScoreDraw, $PersonalScore, empty($Options['Entry']) ? 0 : intval($Options['Entry']));
+			$MyQuery=GetScoreBySessionQuery($Session, $FromTgt, $ToTgt, $IncludeEmpty, $PersonalScore, empty($Options['Entry']) ? 0 : intval($Options['Entry']));
 		}
 	}
 	$Rs=safe_r_sql($MyQuery);
@@ -672,6 +689,7 @@ function QualificationScorecards($Session, $FromTgt, $ToTgt, $IncludeEmpty=true,
             $MyRow->Tot8='';
         }
         if($ScoreDraw=='TargetNo') {
+            $MyRow->EnCode='';
             $MyRow->Ath='';
             $MyRow->Noc='';
             $MyRow->CoCode='';
@@ -679,6 +697,12 @@ function QualificationScorecards($Session, $FromTgt, $ToTgt, $IncludeEmpty=true,
         }
         $Target=($MyRow->AtTargetNo ? substr($MyRow->AtTargetNo,0,-1) : '-');
         $Data->Scores[$Target][]=(array) $MyRow;
+		if(empty($Data->DefaultScore)) {
+			$Data->DefaultScore=array("Session"=>$MyRow->Session, 'Arr0'=>'', 'Golds'=>$MyRow->Golds, 'XNine'=>$MyRow->XNine,
+					'GoldsChars'=>$MyRow->GoldsChars, 'XNineChars'=>$MyRow->XNineChars,
+				'NumEnds'.$MyRow->Session=>$MyRow->{'NumEnds'.$MyRow->Session}, 'NumArrows'.$MyRow->Session=>$MyRow->{'NumArrows'.$MyRow->Session},
+			);
+		}
 	}
     if($Coalesce) {
     	$Targets=array_keys($Data->Scores);
@@ -705,7 +729,7 @@ function QualificationScorecards($Session, $FromTgt, $ToTgt, $IncludeEmpty=true,
 	return $Data;
 }
 
-function GetElimScoreBySessionQuery($Session, $Phase, $FromTgt, $ToTgt, $IncludeEmpty=true, $ScoreDraw, $PersonalScore) {
+function GetElimScoreBySessionQuery($Session, $Phase, $FromTgt, $ToTgt, $IncludeEmpty=true) {
 	$NoEmpty='';
 	if(!$IncludeEmpty) {
 		$NoEmpty = "INNER JOIN
@@ -726,9 +750,12 @@ function GetElimScoreBySessionQuery($Session, $Phase, $FromTgt, $ToTgt, $Include
             '' as gxD0, ElGold+ElXnine as gxD1,
             length(trim(ElArrowstring)) as Arrows,
        		EvE".($Phase+1)."Ends as NumEnds0, EvE".($Phase+1)."Arrows as NumArrows0,
-       		EvE".($Phase+1)."Ends as NumEnds1, EvE".($Phase+1)."Arrows as NumArrows1
+       		EvE".($Phase+1)."Ends as NumEnds1, EvE".($Phase+1)."Arrows as NumArrows1,
+       		IF(EvGolds='',ToGolds,EvGolds) as Golds, IF(EvXNine='',ToXNine,EvXNine) as XNine,
+            IF(EvGoldsChars='',ToGoldsChars,EvGoldsChars) as GoldsChars, IF(EvXNineChars='',ToXNineChars,EvXNineChars) as XNineChars
 		FROM Eliminations 
 		inner JOIN Events ON EvCode=ElEventCode and EvTeamEvent=0 and EvTournament=ElTournament
+		Inner JOIN Tournament ON EvTournament=ToId
 		left JOIN Entries AS e ON ElId=e.EnId AND EnAthlete=1 
 		left join ExtraData ON EdId=EnId and EdType='E'
 		left JOIN Countries AS c ON e.EnCountry=c.CoId AND e.EnTournament=c.CoTournament 
@@ -741,7 +768,7 @@ function GetElimScoreBySessionQuery($Session, $Phase, $FromTgt, $ToTgt, $Include
 	return $MyQuery;
 }
 
-function GetScoreBySessionQuery($Session, $FromTgt, $ToTgt, $IncludeEmpty=true, $ScoreDraw, $PersonalScore, $EnId=0) {
+function GetScoreBySessionQuery($Session, $FromTgt, $ToTgt, $IncludeEmpty=true, $PersonalScore=false, $EnId=0) {
 	$NoEmpty='';
 	if(!$IncludeEmpty) {
 		$NoEmpty = "INNER JOIN
@@ -752,7 +779,9 @@ function GetScoreBySessionQuery($Session, $FromTgt, $ToTgt, $IncludeEmpty=true, 
 			") as Tgt ON TgtTournament=AtTournament AND TgtNo=AtTarget and TgtSession=AtSession";
 	}
 	$MyQuery = "SELECT concat(AtTarget,AtLetter) as tNo, AtTargetNo, AtTarget, AtSession as Session, '' as Dist, EnCode, QuTimestamp, EnDob as DoB, CoCode, CoName, QuTargetNo, CONCAT(EnFirstName,' ', EnName) AS Ath, CONCAT(CoCode, ' - ', CoName) as Noc, EnDivision as `Div`, EnClass as Cls, EdEmail as Email, 
-            concat(EnDivision, ' ', EnClass) as Cat,
+            concat(EnDivision, ' ', EnClass) as Cat, SesName, 
+            IF(TfGolds='',ToGolds,TfGolds) as Golds, IF(TfXNine='',ToXNine,TfXNine) as XNine,
+            IF(TfGoldsChars='',ToGoldsChars,TfGoldsChars) as GoldsChars, IF(TfXNineChars='',ToXNineChars,TfXNineChars) as XNineChars,
             '' as D0, Td1 as D1, Td2 as D2, Td3 as D3, Td4 as D4, Td5 as D5, Td6 as D6, Td7 as D7, Td8 as D8,
             '' as Arr0, QuD1Arrowstring as Arr1, QuD2Arrowstring as Arr2, QuD3Arrowstring as Arr3, QuD4Arrowstring as Arr4, QuD5Arrowstring as Arr5, QuD6Arrowstring as Arr6, QuD7Arrowstring as Arr7, QuD8Arrowstring as Arr8,
             '' as QuD0, QuD1Score as QuD1, QuD2Score as QuD2, QuD3Score as QuD3, QuD4Score as QuD4, QuD5Score as QuD5, QuD6Score as QuD6, QuD7Score as QuD7, QuD8Score as QuD8,
@@ -769,6 +798,8 @@ function GetScoreBySessionQuery($Session, $FromTgt, $ToTgt, $IncludeEmpty=true, 
 			inner join Entries on EnId=QuId and EnTournament={$_SESSION['TourId']}
 			inner join Countries on CoId=EnCountry and CoTournament=EnTournament
 			inner join Tournament on ToId=EnTournament
+			inner join Session on SesTournament=EnTournament AND SesOrder=QuSession AND SesType='Q'
+			left join TargetFaces ON TfTournament=EnTournament and EnTargetFace=TfId
 			left join ExtraData ON EdId=EnId and EdType='E'
 			left join TournamentDistances ON ToType=TdType and TdTournament=ToId AND CONCAT(TRIM(EnDivision),TRIM(EnClass)) LIKE TdClasses) sqy on QuTargetNo=AtTargetNo
 			left join DistanceInformation d1 on d1.DiTournament=AtTournament and d1.DiType='Q' and d1.DiSession=AtSession and d1.DiDistance=1
@@ -789,7 +820,9 @@ function GetScoreBySessionQuery($Session, $FromTgt, $ToTgt, $IncludeEmpty=true, 
 
 function GetScoreByCategoryQuery($Category='') {
 	$MyQuery = "SELECT EnCode, EnDob as DoB, CoCode, CoName, QuSession as Session, QuTimestamp, QuTargetNo, QuTarget as AtTarget, '' as Dist, SUBSTRING(QuTargetNo,2) as tNo, CONCAT(EnFirstName,' ', EnName) AS Ath, CONCAT(CoCode, ' - ', CoName) as Noc, EnDivision as `Div`, EnClass as Cls, EdEmail as Email, 
-           concat(EnDivision, ' ', EnClass) as Cat,
+           concat(EnDivision, ' ', EnClass) as Cat, SesName,
+            IF(TfGolds='',ToGolds,TfGolds) as Golds, IF(TfXNine='',ToXNine,TfXNine) as XNine,
+            IF(TfGoldsChars='',ToGoldsChars,TfGoldsChars) as GoldsChars, IF(TfXNineChars='',ToXNineChars,TfXNineChars) as XNineChars,
             '' as D0, Td1 as D1, Td2 as D2, Td3 as D3, Td4 as D4, Td5 as D5, Td6 as D6, Td7 as D7, Td8 as D8,
             '' as Arr0, QuD1Arrowstring as Arr1, QuD2Arrowstring as Arr2, QuD3Arrowstring as Arr3, QuD4Arrowstring as Arr4, QuD5Arrowstring as Arr5, QuD6Arrowstring as Arr6, QuD7Arrowstring as Arr7, QuD8Arrowstring as Arr8,
             '' as QuD0, QuD1Score as QuD1, QuD2Score as QuD2, QuD3Score as QuD3, QuD4Score as QuD4, QuD5Score as QuD5, QuD6Score as QuD6, QuD7Score as QuD7, QuD8Score as QuD8,
@@ -805,6 +838,8 @@ function GetScoreByCategoryQuery($Category='') {
         INNER JOIN Qualifications ON EnId = QuId
         INNER JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament
         INNER JOIN Tournament ON EnTournament=ToId
+        INNER JOIN Session on SesTournament=EnTournament AND SesOrder=QuSession AND SesType='Q'
+		left join TargetFaces ON TfTournament=EnTournament and EnTargetFace=TfId
         LEFT JOIN ExtraData ON EdId=EnId and EdType='E'
         LEFT JOIN TournamentDistances ON ToType=TdType and TdTournament=ToId AND CONCAT(TRIM(EnDivision),TRIM(EnClass)) LIKE TdClasses
 		left join DistanceInformation d1 on d1.DiTournament=AtTournament and d1.DiType and d1.DiSession=AtSession and d1.DiDistance=1

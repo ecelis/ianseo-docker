@@ -92,17 +92,18 @@
 		{
 			$date=date('Y-m-d H:i:s');
 
-			$q="
-				UPDATE
-					Individuals
-					INNER JOIN
-						Events
-					ON IndEvent=EvCode AND IndTournament=EvTournament
+			$q="UPDATE Individuals
+				INNER JOIN Events ON IndEvent=EvCode AND IndTournament=EvTournament
+				left join (
+				    select count(*) as sqyQualified, RrPartEvent as sqyEvent, RrPartTournament as sqyTournament
+				    from RoundRobinParticipants
+				    where RrPartSourceLevel=0 and RrPartTournament={$this->tournament} and RrPartEvent='{$event}' and RrPartTeam=0
+				    group by RrPartSourceLevel, RrPartTournament, RrPartEvent, RrPartTeam
+			    ) sqy on sqyEvent=EvCode and sqyTournament=EvTournament
 				SET
-					IndRankFinal=IF(IndRank>IF(EvElim1=0 && EvElim2=0, EvNumQualified, IF(EvElim1=0,EvElim2,EvElim1)),IndRank,0),
+					IndRankFinal=IF(IndRank> coalesce(sqyQualified, IF(EvElim1=0 && EvElim2=0, EvNumQualified, IF(EvElim1=0,EvElim2,EvElim1))), IndRank, 0),
 					IndTimestampFinal='{$date}'
-				WHERE
-					IndTournament={$this->tournament} AND EvCode='{$event}' AND EvTeamEvent=0
+				WHERE IndTournament={$this->tournament} AND EvCode='{$event}' AND EvTeamEvent=0
 
 			";
 			//print $q;exit;

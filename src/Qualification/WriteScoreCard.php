@@ -119,14 +119,16 @@
 				for ($i=1; $i<=$RowTour->TtNumDist; $i++) {
 					$Select .= "QuD" . $i . "Score, QuD" . $i . "Hits, QuD" . $i . "Gold, QuD" . $i . "Xnine, ";
 				}
-				$Select .= "QuScore, QuGold, QuXnine, QuD" . $_REQUEST['x_Dist'] . "ArrowString AS ArrowString,"
-					. "ToId,ToType,ToNumDist AS TtNumDist, ToCategory "
-					. "FROM Entries INNER JOIN Countries ON EnCountry=CoId "
-					. "INNER JOIN Qualifications ON EnId=QuId "
-					. "RIGHT JOIN AvailableTarget ON QuTargetNo=AtTargetNo AND AtTournament=" . StrSafe_DB($_SESSION['TourId']) . " "
-					. "INNER JOIN Tournament ON EnTournament=ToId AND ToId=" . StrSafe_DB($_SESSION['TourId']) . " "
-					. "WHERE EnAthlete=1 AND QuSession=" . StrSafe_DB($_REQUEST['x_Session']) . " "
-					. "AND QuTargetNo LIKE " . StrSafe_DB($_REQUEST['x_Session'] . str_pad($_REQUEST['x_Target'],TargetNoPadding,'0',STR_PAD_LEFT) . "_");
+				$Select .= "QuScore, QuGold, QuXnine, QuD" . $_REQUEST['x_Dist'] . "ArrowString AS ArrowString, 
+					ToId,ToType,ToNumDist AS TtNumDist, ToCategory, IF(TfGolds!='',TfGolds,ToGolds) AS GoldLabel, IF(TfXNine!='',TfXNine,ToXNine) AS XNineLabel
+					FROM Entries 
+					INNER JOIN Qualifications ON EnId=QuId 
+					INNER JOIN Countries ON EnCountry=CoId 
+					RIGHT JOIN AvailableTarget ON QuTargetNo=AtTargetNo AND AtTournament=EnTournament
+					INNER JOIN Tournament ON EnTournament=ToId
+                    LEFT JOIN TargetFaces ON TfTournament=EnTournament and EnTargetFace=TfId
+					WHERE EnAthlete=1 AND QuSession=" . StrSafe_DB($_REQUEST['x_Session']) . " AND ToId=" . StrSafe_DB($_SESSION['TourId']) . "
+					AND QuTargetNo LIKE " . StrSafe_DB($_REQUEST['x_Session'] . str_pad($_REQUEST['x_Target'],TargetNoPadding,'0',STR_PAD_LEFT) . "_");
 				$Rs=safe_r_sql($Select);
 				echo '<table class="Tabella">';
 				echo '<tr>';
@@ -141,8 +143,7 @@
 				echo '<th>' . $RowTour->TtGolds . '</th>';
 				echo '<th>' . $RowTour->TtXNine . '</th>';
 				echo '</tr>';
-				while ($MyRow=safe_fetch($Rs))
-				{
+				while ($MyRow=safe_fetch($Rs)) {
 					echo '<tr onClick="document.getElementById(\'x_Target\').value=\'' .$MyRow->Target . '\';document.FrmParam.submit();">';
 					echo '<td>' . $MyRow->Target . '</td>';
 					echo '<td>' . $MyRow->EnCode . '</td>';
@@ -159,9 +160,7 @@
 				}
 				echo '</table>';
 
-			}
-			else
-			{
+			} else {
 				$Select
 					= "SELECT EnId,EnCode,EnName,EnFirstName,EnTournament,EnDivision,EnClass,EnCountry,CoCode, (EnStatus <=1) AS EnValid,EnStatus, "
 					. "QuTargetNo, SUBSTRING(QuTargetNo,2) AS Target, (QuTarget-1) as TgtOffset, "
@@ -169,14 +168,16 @@
 				for ($i=1; $i<=$RowTour->TtNumDist; $i++) {
 					$Select .= "QuD" . $i . "Score, QuD" . $i . "Hits, QuD" . $i . "Gold, QuD" . $i . "Xnine, ";
 				}
-				$Select .= "QuScore, QuGold, QuXnine, QuD" . $_REQUEST['x_Dist'] . "ArrowString AS ArrowString,"
-					. "ToId,ToType,ToNumDist AS TtNumDist, ToCategory "
-					. "FROM Entries INNER JOIN Countries ON EnCountry=CoId "
-					. "INNER JOIN Qualifications ON EnId=QuId "
-					. "RIGHT JOIN AvailableTarget ON QuTargetNo=AtTargetNo AND AtTournament=" . StrSafe_DB($_SESSION['TourId']) . " "
-					. "INNER JOIN Tournament ON EnTournament=ToId AND ToId=" . StrSafe_DB($_SESSION['TourId']) . " "
-					. "WHERE EnAthlete=1 AND QuSession=" . StrSafe_DB($_REQUEST['x_Session']) . " "
-					. "AND QuTargetNo =" . StrSafe_DB($_REQUEST['x_Session'] . str_pad($_REQUEST['x_Target'],TargetNoPadding+1,'0',STR_PAD_LEFT));
+				$Select .= "QuScore, QuGold, QuXnine, QuD" . $_REQUEST['x_Dist'] . "ArrowString AS ArrowString, ToId, ToType, ToNumDist AS TtNumDist, 
+				    ToCategory, IF(TfGolds!='',TfGolds,ToGolds) AS GoldLabel, IF(TfXNine!='',TfXNine,ToXNine) AS XNineLabel
+					FROM Entries 
+					INNER JOIN Qualifications ON EnId=QuId 
+					INNER JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament 
+					RIGHT JOIN AvailableTarget ON QuTargetNo=AtTargetNo AND AtTournament=EnTournament
+					INNER JOIN Tournament ON EnTournament=ToId
+                    LEFT JOIN TargetFaces ON TfTournament=EnTournament AND EnTargetFace=TfId
+					WHERE EnAthlete=1 AND QuSession=" . StrSafe_DB($_REQUEST['x_Session']) . " AND ToId = " . StrSafe_DB($_SESSION['TourId']) . "
+					AND QuTargetNo =" . StrSafe_DB($_REQUEST['x_Session'] . str_pad($_REQUEST['x_Target'],TargetNoPadding+1,'0',STR_PAD_LEFT));
 				$Rs=safe_r_sql($Select);
 
 				if (safe_num_rows($Rs)==1) {
@@ -204,7 +205,7 @@
 					echo '<tr><th>' . get_text('Country') . '</th><td colspan="3">' . $MyRow->CoCode . '</td></tr>';
 					echo '<tr><th>' . get_text('Div') . '</th><td>' . $MyRow->EnDivision . '</td><th>' . get_text('Cl') . '</th><td>' . $MyRow->EnClass . '</td></tr>';
 					echo '<tr><td colspan="4"></td></tr>';
-					echo '<tr><th>' . get_text('Distance', 'Tournament') . '</th><th>' . get_text('Score', 'Tournament') . '</th><th>' . $RowTour->TtGolds . '</th><th>' . $RowTour->TtXNine . '</th></tr>';
+					echo '<tr><th>' . get_text('Distance', 'Tournament') . '</th><th>' . get_text('Score', 'Tournament') . '</th><th>' . $MyRow->GoldLabel . '</th><th>' . $MyRow->XNineLabel . '</th></tr>';
 					for ($i=1; $i<=$RowTour->TtNumDist; $i++)
 						echo '<tr><th>' . $i . '</th><td class="Bold Right"><div id="idScore_' . $i . '_' . $MyRow->EnId . '">' . $MyRow->{"QuD" . $i . "Score"} . '</div></td><td class="Right"><div id="idGold_' . $i . '_' . $MyRow->EnId . '">' . $MyRow->{"QuD" . $i . "Gold"} . '</div></td><td class="Right"><div id="idXNine_' . $i . '_' . $MyRow->EnId . '">' . $MyRow->{"QuD" . $i . "Xnine"} . '</div></td></tr>';
 					echo '<tr><th>' . get_text('Total') . '</th><td class="Bold Right"><div id="idScore_' . $MyRow->EnId . '">' . $MyRow->QuScore . '</div></td><td class="Right"><div id="idGold_' . $MyRow->EnId . '">' . $MyRow->QuGold . '</div></td><td class="Right"><div id="idXNine_' . $MyRow->EnId . '">' . $MyRow->QuXnine . '</div></td></tr>';
@@ -238,14 +239,16 @@
 					$ArrowString = str_pad($MyRow->ArrowString,$RowTour->MaxArrows,' ',STR_PAD_RIGHT);
 					$TotRunning=0;
 					$TotEndRun=0;
-					for($i=0; $i<$NumEnds; $i++)
-					{
+					for($i=0; $i<$NumEnds; $i++) {
 						echo '<tr>';
-						echo '<th>' . ((($i+$OffSet)%$NumEnds)+1) . '</th>';
+                        if(!$MultiLine ) {
+                            echo '<th>' . ((($i+$OffSet)%$NumEnds)+1) . '</th>';
+                        } else if($i % 2 == 0) {
+                            echo '<th rowspan="2">' . ((($i+$OffSet)%$NumEnds)/2+1) . '</th>';
+                        }
 						$ArrNo = (($i+$OffSet)%$NumEnds) * $NumArrows;
 						$TotEnd=0;
-						for($j=0; $j<$NumArrows; $j++)
-						{
+						for($j=0; $j<$NumArrows; $j++) {
 							echo '<td class="Center">'
 								. '<input type="text" id="arr_' . $_REQUEST['x_Dist'] . '_' . ($ArrNo+$j) . '_' . $MyRow->EnId . '" '
 								. 'size="2" maxlength="2" value="' . DecodeFromLetter($ArrowString[$ArrNo+$j]) . '" '
@@ -271,7 +274,7 @@
 					echo '<tr>';
 					echo '<td colspan="' . ($NumArrows+1) . '">&nbsp;</td>';
 					echo '<th>'. get_text('Total') . '</th>';
-					echo '<td class="Bold Right"><div id="idTotScore_' . $_REQUEST['x_Dist'] . '_' . $MyRow->EnId . '">' . $MyRow->SelScore . '</div></td>';
+					echo '<td '.($MultiLine ? ' colspan="2"' : '').' class="Bold Right"><div id="idTotScore_' . $_REQUEST['x_Dist'] . '_' . $MyRow->EnId . '">' . $MyRow->SelScore . '</div></td>';
 					echo '</tr>';
 					echo '</table>';
 ?>

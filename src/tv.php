@@ -21,12 +21,13 @@ $Page=getMyScheme().'://'.$_SERVER['SERVER_NAME'].$CFG->ROOT_DIR.'TV/ChannelNoCo
 
 if(!empty($_GET)) {
 	foreach($_GET as $k => $v) {
-		if(strtolower($k)=='id')
+		if(strtolower($k)=='id') {
 			$Channel=intval($v);
+		}
 	}
 }
 $Frames='';
-$q=safe_r_sql("SELECT TVOId , TVOSide, TVOHeight, TVOName, TVOUrl, TVOMessage, TVORuleId, TVOTourCode, TVORuleType, TVOFile
+$q=safe_r_sql("SELECT TVOId, TVOSide, TVOHeight, TVOName, TVOUrl, TVOMessage, TVORuleId, TVOTourCode, TVORuleType, TVOFile
 	FROM TVOut
 	where TVORuleType>0 and not (TVOHeight='' or left(TVOHeight,1)='0')
 	order by TVOId=$Channel desc, TVOId, TVOSide");
@@ -46,7 +47,7 @@ while($r=safe_fetch($q)) {
 	switch($r->TVORuleType) {
 		case 1:
 			// HTML text...
-			$Page=getMyScheme().'://'.$_SERVER['SERVER_NAME'].$CFG->ROOT_DIR.'TV/ChannelHtmlContent.php?id='.$r->TVOId;
+			$Page=getMyScheme().'://'.$_SERVER['SERVER_NAME'].$CFG->ROOT_DIR.'TV/ChannelHtmlContent.php?id='.$r->TVOId."&side={$r->TVOSide}";
 			break;
 		case 2:
 			// URL...

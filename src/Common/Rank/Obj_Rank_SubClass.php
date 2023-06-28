@@ -187,7 +187,7 @@
 					{$MyRank} AS `Rank`, " . (!empty($comparedTo) ? 'IFNULL(QopSubClassRank,0)' : '0') . " as OldRank, Qu{$dd}Score AS Score, Qu{$dd}Gold AS Gold,Qu{$dd}Xnine AS XNine,
 					QuTimestamp,
 					ToGolds AS GoldLabel, ToXNine AS XNineLabel,
-					ToNumDist,ToDouble, QuIrmType, IrmType, IrmShowRank
+					ToNumDist,ToDouble, QuIrmType, IrmType, IrmShowRank, hasShootOff
 				FROM Tournament
 				INNER JOIN Entries ON ToId=EnTournament
 				INNER JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament AND EnTournament={$this->tournament}
@@ -195,6 +195,12 @@
 				INNER JOIN IrmTypes ON IrmId=QuIrmType
 				INNER JOIN Classes ON EnClass=ClId AND ClTournament={$this->tournament}
 				INNER JOIN Divisions ON EnDivision=DivId AND DivTournament={$this->tournament}
+				inner join (
+					select {$this->SoColumn} as hasShootOff, EnDivision as SoDivision, EnClass as SoClass, EnSubclass as SoSubclass 
+					from Qualifications 
+					inner join Entries on EnId=QuId and EnTournament={$this->tournament}
+					group by EnDivision, EnClass, EnSubclass
+					) hasSO on SoDivision=enDivision and SoClass=EnClass and SoSubclass=EnSubclass 
 				LEFT JOIN TournamentDistances ON ToType=TdType AND TdTournament=ToId AND CONCAT(TRIM(EnDivision),TRIM(EnClass)) LIKE TdClasses ";
 			if(!empty($comparedTo))
 				$q .= "LEFT JOIN QualOldPositions ON EnId=QopId AND QopHits=" . ($comparedTo>0 ? $comparedTo :  "(SELECT MAX(QopHits) FROM QualOldPositions WHERE QopId=EnId AND QopHits!=QuHits) ") . " ";
@@ -311,6 +317,7 @@
 								'fields' => $fields,
 								'subClass' => $myRow->EnSubClass,
 								'lastUpdate' => '0000-00-00 00:00:00',
+								'shootOffStarted'=>$myRow->hasShootOff,
 							)
 						);
 					}
@@ -438,17 +445,18 @@
 
 			if (!empty($this->opts['encode'])) {
 				if (is_array($this->opts['encode'])) {
-					$tmp=array();
-					foreach ($this->opts['encode'] as $e) $tmp[]=StrSafe_DB($e);
-					sort($tmp);
-					$filter="AND EnCode IN (" . implode(',',$tmp) . ")";
+					$filter="AND EnCode IN (" . implode(',', StrSafe_DB($this->opts['encode'])) . ")";
 				} else {
 					$filter="AND EnCode = " . StrSafe_DB($this->opts['encode']) . " ";
 				}
 			}
 
 			if (!empty($this->opts['sessions'])) {
-				$filter.=" AND QuSession in (" . implode($this->opts['sessions'])  . ") " ;
+				$filter.=" AND QuSession in (" . implode(',', $this->opts['sessions'])  . ") " ;
+			}
+
+			if (!empty($this->opts['sc'])) {
+				$filter.=" AND EnSubclass=" . StrSafe_DB($this->opts['sc']) ;
 			}
 
 			return $filter;

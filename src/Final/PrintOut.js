@@ -22,6 +22,12 @@ function CheckIfOrisBrackets(Individual) {
         } else {
             $('#OrisDetails').hide();
         }
+    } else {
+        if($('#IncBracketsTeams').is(':checked') && $('#ShowOrisTeam').is(':checked')) {
+            $('#OrisDetailsTeam').show();
+        } else {
+            $('#OrisDetailsTeam').hide();
+        }
     }
 }
 

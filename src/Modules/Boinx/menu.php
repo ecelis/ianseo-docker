@@ -1,7 +1,7 @@
 <?php
 $version='2011-05-13 08:13:00';
 
-if (!empty($on) AND $acl[AclOutput] == AclReadWrite) {
+if (!empty($on) AND $acl[AclOutput] == AclReadWrite and !empty($ret['MEDI'])) {
 	if(end($ret['MEDI']) != MENU_DIVIDER) {
 		$ret['MEDI'][] = MENU_DIVIDER;
 	}

@@ -439,7 +439,7 @@ function UpdateSetPointsByEnd_20150416($ToId=0) {
 	$sql = "SELECT * from (
 			select
 				EvCode Event, @ArBit:=(EvMatchArrowsNo & pow(2, if(FinMatchNo=0, 0, floor(LOG(2, FinMatchNo))))),
-				if(@ArBit=0, EvFinArrows, EvElimArrows) Arrows, if(@ArBit=0, EvElimEnds, EvFinEnds) Ends,
+				if(@ArBit=0, EvFinArrows, EvElimArrows) Arrows, if(@ArBit=0, EvFinEnds, EvElimEnds) Ends,
 				FinTournament Tournament,
 				FinMatchNo MatchNo,
 				FinSetScore as SetScore,
@@ -486,7 +486,7 @@ function UpdateSetPointsByEnd_20150416($ToId=0) {
 	$sql = "SELECT * from (
 			select
 				EvCode Event, @ArBit:=(EvMatchArrowsNo & pow(2, if(TfMatchNo=0, 0, floor(LOG(2, TfMatchNo))))),
-				if(@ArBit=0, EvFinArrows, EvElimArrows) Arrows, if(@ArBit=0, EvElimEnds, EvFinEnds) Ends,
+				if(@ArBit=0, EvFinArrows, EvElimArrows) Arrows, if(@ArBit=0, EvFinEnds, EvElimEnds) Ends,
 				TfTournament Tournament,
 				TfTeam Team,
 				TfMatchNo MatchNo,
@@ -783,4 +783,20 @@ function updateContacts_20210515($ToId=0) {
 		safe_w_sql("delete from ExtraDataCountries where EdcId=$CoId and EdcType='E'");
 		safe_w_sql("insert into ExtraDataCountries set EdcId=$CoId, EdcType='E', EdcExtra=".StrSafe_DB(serialize($Items)));
 	}
+}
+
+function updateTeamFinComponentsLog_20220320($ToId=0) {
+    safe_w_SQL("INSERT IGNORE INTO `TeamFinComponentLog` (`TfclCoId`, `TfclSubTeam`, `TfclTournament`, `TfclEvent`, `TfclIdPrev`, `TfclIdNext`, `TfclOrder`, `TfclTimeStamp`)
+        SELECT `TcCoId`, `TcSubTeam`, `TcTournament`, `TcEvent`, `TcId`,  `TfcId`, `TcOrder`, `TfcTimeStamp` 
+        FROM `TeamComponent`
+        INNER JOIN `TeamFinComponent` ON `TcCoId`=`TfcCoId` AND `TcSubTeam`=`TfcSubTeam` AND `TcTournament`=`TfcTournament` AND `TcEvent`= `TfcEvent` AND `TcOrder`=`TfcOrder`
+        WHERE ". ($ToId ? "`TcTournament`={$ToId} AND ":"") . "TcFinEvent=1 and `TcId` != `TfcId`");
+    $q = safe_r_SQL("SELECT `TfclCoId`, `TfclSubTeam`, `TfclTournament`, `TfclEvent`, `TfclOrder`, `TfclTimeStamp` 
+        FROM `TeamFinComponentLog` " . ($ToId ? " WHERE `TfclTournament`={$ToId}" : ""));
+    while($r=safe_fetch($q)) {
+        safe_w_SQL("INSERT IGNORE INTO `TeamFinComponentLog` (`TfclCoId`, `TfclSubTeam`, `TfclTournament`, `TfclEvent`, `TfclIdPrev`, `TfclIdNext`, `TfclOrder`, `TfclTimeStamp`)
+        SELECT DISTINCT `TfcCoId`, `TfcSubTeam`, `TfcTournament`, `TfcEvent`, `TfcId`,  `TfcId`, `TfcOrder`, '{$r->TfclTimeStamp}' 
+        FROM `TeamFinComponent`
+        WHERE `TfcCoId`={$r->TfclCoId} AND `TfcSubTeam`={$r->TfclSubTeam} AND `TfcTournament`={$r->TfclTournament} AND `TfcEvent`= '{$r->TfclEvent}' AND `TfcOrder`!= {$r->TfclOrder}");
+    }
 }

@@ -134,20 +134,21 @@ function getPdfHeader($ForOnline=true) {
 	$q=safe_r_sql($query);
 	while($r=safe_fetch($q)) {
 		if(!empty($RET->Flags[$r->FlCode])) continue;
-		$im=imagecreatefromstring(base64_decode($r->FlJPG));
-		// MUST be at most 20 in height
-		$imgx=ceil(20*imagesx($im)/imagesy($im));
+		if($im=imagecreatefromstring(base64_decode($r->FlJPG))) {
+			// MUST be at most 20 in height
+			$imgx=ceil(20*imagesx($im)/imagesy($im));
 
-		$im2=imagecreatetruecolor($imgx, 20);
+			$im2=imagecreatetruecolor($imgx, 20);
 
-		if(!imagecopyresampled($im2, $im, 0, 0, 0, 0, $imgx, 20, imagesx($im), imagesy($im))) continue;
+			if(!imagecopyresampled($im2, $im, 0, 0, 0, 0, $imgx, 20, imagesx($im), imagesy($im))) continue;
 
-		if(!imagetruecolortopalette($im2, false, 255)) continue;
+			if(!imagetruecolortopalette($im2, false, 255)) continue;
 
-		$file=tempnam('/tmp', 'img');
-		imagegif($im2, $file);
-		$RET->Flags[$r->FlCode]=file_get_contents($file);
-		unlink($file);
+			$file=tempnam('/tmp', 'img');
+			imagegif($im2, $file);
+			$RET->Flags[$r->FlCode]=file_get_contents($file);
+			unlink($file);
+		}
 	}
 
 	return $RET;
@@ -204,6 +205,7 @@ function getStartList($ORIS='', $Event='', $Elim=false, $Filled=false, $isPool=f
 		"Nation3"=>get_text('Nation'),
 		"EnSubTeam"=>'EnSubTeam',
 		"TargetFace"=>get_text('TargetType'),
+        "Wheelchair"=>get_text('WheelchairShort','Tournament'),
 		"Poule"=>get_text('Poule', 'Tournament'),
 		"Schedule_Points"=>get_text('Schedule', 'Tournament').' / '.get_text('Points', 'Tournament'),
 		);
@@ -254,8 +256,8 @@ function getStartList($ORIS='', $Event='', $Elim=false, $Filled=false, $isPool=f
 			$Data->MatchTitlesWA=getPoolMatchesWA();
 			$Data->MatchTitlesWAShort=getPoolMatchesShortWA();
 			$Data->MatchSlotsWA=getPoolMatchesWinnersWA();
-			$Data->MatchTitleAB=get_text('PoolName', 'Tournament', 'AB');
-			$Data->MatchTitleCD=get_text('PoolName', 'Tournament', 'CD');
+			$Data->MatchTitleAD=get_text('PoolName', 'Tournament', 'AD');
+			$Data->MatchTitleCB=get_text('PoolName', 'Tournament', 'CB');
 			$Data->MatchTitleGroups=array(
 				1 => get_text('PoolName', 'Tournament', 'A'),
 				2 => get_text('PoolName', 'Tournament', 'B'),
@@ -265,7 +267,7 @@ function getStartList($ORIS='', $Event='', $Elim=false, $Filled=false, $isPool=f
 		}
 	}
 
-	$MyQuery = getStartListQuery($ORIS, $Event, $Elim, $Filled, $isPool, $BySchedule);
+	$MyQuery = getStartListQuery($ORIS, $Event, $Elim, $Filled, $isPool, $BySchedule,$Data->BisTarget,$Data->NumEnd);
 
 	//echo $MyQuery;exit;
 	$Rs=safe_r_sql($MyQuery);
@@ -309,6 +311,294 @@ function getStartList($ORIS='', $Event='', $Elim=false, $Filled=false, $isPool=f
 		} else {
 			$Data->Data['Items'][$MyRow->EventCode][] = $MyRow;
 		}
+	}
+
+	return $Data;
+}
+
+function getRunStartListSession($ORIS='', $Event='', $Type='') {
+	$Data=new StdClass();
+	$Details=false;
+
+	switch($Type) {
+		case 'Country':
+			$Data->Code='C30A';
+			$Data->Description='Start List by Country';
+			$Data->Header=array("NOC","Country","Schedule","Bib","Name","#W. Rank", "Date of Birth", 'Event');
+			$Data->HeaderWidth=array(10,40,25,10,50,15,20,0);
+			$Data->IndexName='Start List by Country';
+			break;
+		case 'Event':
+			$Data->Description='Start List by Event';
+			$Data->Order='3';
+			$Details=true;
+		case 'Alpha':
+			$Data->Description=($Data->Description??'Start List by Entry');
+		default:
+			$Data->Order='1';
+			$Data->Code='C51A';
+			$Data->Description=($Data->Description??'Start List by Schedule');
+			$Data->Header=array("Bib","Name","NOC","Country","#W. Rank", "Date of Birth", 'Event');
+			$Data->HeaderWidth=array(25,10,50,10,40,15,20,0);
+			$Data->IndexName='Start List by Schedule';
+			$Details=true;
+	}
+
+	$Data->Phase='Qualification Round';
+	$Data->OdfCodes=array();
+	$Data->Continue=get_text('Continue');
+	$Data->TournamentDate2String=TournamentDate2String($_SESSION['TourWhenFrom'], $_SESSION['TourWhenTo']);
+
+	$Data->Data=array();
+
+	$Data->Data['Fields']=array(
+		"SesName"=>get_text('SessionDescr', 'Tournament'),
+		"EvCode"=>get_text('EvCode'),
+		"DivDescription"=>get_text('Division'),
+		"ClDescription"=>get_text('Class'),
+		'Category' => get_text('DivisionClass'),
+		"Bib"=>get_text('Code', 'Tournament'),
+		"TgtGrp"=>get_text('Group', 'Tournament'),
+		"Target"=>get_text('Target'),
+		"Athlete"=>get_text('Name', 'Tournament'),
+		"Session"=>get_text('Session'),
+		"StartTime"=>get_text('StartTime','RunArchery'),
+		"NationCode"=>get_text('Country'),
+		"Nation"=>get_text('Nation'),
+		"EventCode"=>get_text('EvCode'),
+		"EventName"=>get_text('Event'),
+		"DOB"=>get_text('DOB', 'Tournament'),
+		"SesAth4Target"=>get_text('Ath4Target', 'Tournament'),
+		"ClassCode"=>get_text('Class'),
+		"DivCode"=>get_text('Division'),
+		"AgeClass"=>get_text('AgeCl'),
+		"SubClass"=>get_text('SubClass', 'Tournament'),
+		"Status"=>get_text('Status', 'Tournament'),
+		"IC"=>'IC',
+		"TC"=>'TC',
+		"IF"=>'IF',
+		"TF"=>'TF',
+		"TM"=>'TM',
+		"NationCode2"=>get_text('Country'),
+		"Nation2"=>get_text('Nation'),
+		"NationCode3"=>get_text('Country'),
+		"Nation3"=>get_text('Nation'),
+		"EnSubTeam"=>'EnSubTeam',
+		"TargetFace"=>get_text('TargetType'),
+		"Poule"=>get_text('Poule', 'Tournament'),
+		"Schedule_Points"=>get_text('Schedule', 'Tournament').' / '.get_text('Points', 'Tournament'),
+		);
+
+	if($ORIS) {
+		$Data->Data['Fields']['StartTime']='Start Time';
+		$Data->Data['Fields']['Athlete']='Name';
+		$Data->Data['Fields']['NationCode']='NOC';
+		$Data->Data['Fields']['Nation']='Country';
+		$Data->Data['Fields']['EventName']='Category';
+	} else {
+		$Data->Header=array(get_text('Target'), get_text('Name', 'Tournament'), get_text('Country'), get_text('Nation'), get_text('DOB', 'Tournament'));
+		$Data->Phase=get_text('QualRound');
+		$Data->IndexName=get_text('ParticipantList', 'RunArchery');
+		$Data->Data['Fields']['Athlete']=get_text('Athlete');
+		$Data->HideCols = GetParameter("IntEvent");
+		$Data->BisTarget = false;
+		$Data->NumEnd = 0;
+	}
+
+	$RsTour=safe_r_sql("SELECT (ToElabTeam!=0) as BisTarget, ToNumEnds AS TtNumEnds, (select max(RankRanking) as IsRanked from Rankings where RankTournament={$_SESSION['TourId']}) as IsRanked
+		FROM Tournament
+		WHERE ToId=" . StrSafe_DB($_SESSION['TourId']));
+	if ($r=safe_fetch($RsTour)) {
+		$Data->BisTarget = $r->BisTarget;
+		$Data->NumEnd = $r->TtNumEnds;
+		$Data->IsRanked = $r->IsRanked;
+	}
+
+	$MyQuery = getRunStartListQuery($Event, $Type, $Details);
+
+	//echo $MyQuery;exit;
+	$Rs=safe_r_sql($MyQuery);
+
+	$OldCode='';
+
+	$Data->Timestamp = '';
+	while ($MyRow=safe_fetch($Rs)) {
+		$MyRow->EvEventName=get_text($MyRow->EvEventName,'','',true);
+		if($MyRow->Timestamp and $MyRow->Timestamp>$Data->Timestamp) {
+			$Data->Timestamp=$MyRow->Timestamp;
+		}
+		if(empty($Data->OdfCodes[$MyRow->EvTeamEvent.'-'.$MyRow->EvCode])) {
+			$Data->OdfCodes[$MyRow->EvTeamEvent.'-'.$MyRow->EvCode]=array('event' => $MyRow->EvEventName, 'ODFevent' => $MyRow->EvOdfCode, 'version' => $MyRow->DocVersion, 'versionDate' => $MyRow->DocVersionDate);
+		}
+
+		$MyRow->Bib=trim($MyRow->RarBib);
+		unset($MyRow->Timestamp);
+		// unset($MyRow->TgtGrp);
+		// unset($MyRow->RarTarget);
+		unset($MyRow->RarBib);
+
+		$MyRow->EvenTitle=$MyRow->EvEventName." ({$MyRow->EvCode})";
+		if($MyRow->RarPhase) {
+			$MyRow->EvenTitle.=" - ".get_text('PhaseName-'.$MyRow->RarPhase, 'RunArchery');
+
+			$MyRow->PoolName=get_text('PoolName', 'Tournament', $MyRow->RarPool);
+			if($MyRow->RarPhase==1) {
+				$MyRow->PoolName=get_text('Final'.$MyRow->RarPool, 'RunArchery');
+			}
+		}
+
+		$MyRow->EvenFullName=$MyRow->EvCode.' - '.$MyRow->EvEventName;
+		if($MyRow->RarPhase) {
+			switch($MyRow->RarPhase) {
+				case '1':
+					$MyRow->EvenFullName.=' ('.get_text('Final'.$MyRow->RarPool, 'RunArchery').')';
+					break;
+				case '2':
+					$MyRow->EvenFullName.=' ('.get_text('PhaseName-'.$MyRow->RarPhase, 'RunArchery').' '.get_text('PoolName', 'Tournament', $MyRow->RarPool).')';
+					break;
+			}
+		}
+
+		$Data->Data['Items'][$MyRow->ItemKey][$MyRow->RarPhase][] = $MyRow;
+	}
+
+	return $Data;
+}
+
+function getRunEntries($ORIS='', $Event='', $Type='') {
+	$Data=new StdClass();
+
+	switch($Type) {
+		case 'Country':
+			$Data->Order='2';
+			$Data->Code='C30A';
+			$Data->Description='Start List by Country';
+			$Data->Header=array("NOC","Country","Schedule","Bib","Name","#W. Rank", "Date of Birth", 'Event');
+			$Data->HeaderWidth=array(10,40,25,10,50,15,20,0);
+			$Data->IndexName='Start List by Country';
+			break;
+		case 'Alpha':
+			$Data->Order='4';
+			$Data->Code='C51A';
+			$Data->Description='Start List by Entry';
+			$Data->Header=array("NOC","Country","Schedule","Bib","Name","#W. Rank", "Date of Birth", 'Event');
+			$Data->HeaderWidth=array(10,40,25,10,50,15,20,0);
+			$Data->IndexName='Start List by Entry';
+			break;
+		default:
+			$Data->Code='C51A';
+			$Data->Description='Start List by Schedule';
+			$Data->Header=array("Schedule","Bib","Name","NOC","Country","#W. Rank", "Date of Birth", 'Event');
+			$Data->HeaderWidth=array(25,10,50,10,40,15,20,0);
+			$Data->IndexName='Start List by Schedule';
+	}
+
+	$Data->Phase='Qualification Round';
+	$Data->OdfCodes=array();
+	$Data->Continue=get_text('Continue');
+	$Data->TournamentDate2String=TournamentDate2String($_SESSION['TourWhenFrom'], $_SESSION['TourWhenTo']);
+
+	$Data->Data=array();
+
+	$Data->Data['Fields']=array(
+		"SesName"=>get_text('SessionDescr', 'Tournament'),
+		"EvCode"=>get_text('EvCode'),
+		"DivDescription"=>get_text('Division'),
+		"ClDescription"=>get_text('Class'),
+		'Category' => get_text('DivisionClass'),
+		"WaId"=>get_text('WaIdShort', 'Tournament'),
+		"Bib"=>get_text('BibNumber', 'BackNumbers'),
+		"TgtGrp"=>get_text('Group', 'Tournament'),
+		"Target"=>get_text('Target'),
+		"BibShort"=>get_text('Code', 'Tournament'),
+		"Athlete"=>get_text('Name', 'Tournament'),
+		"Session"=>get_text('Session'),
+		"StartTime"=>get_text('StartTime','RunArchery'),
+		"NationCode"=>get_text('Country'),
+		"Nation"=>get_text('Nation'),
+		"EventCode"=>get_text('EvCode'),
+		"EventName"=>get_text('Event'),
+		"DOB"=>get_text('DOB', 'Tournament'),
+		"SesAth4Target"=>get_text('Ath4Target', 'Tournament'),
+		"ClassCode"=>get_text('Class'),
+		"DivCode"=>get_text('Division'),
+		"AgeClass"=>get_text('AgeCl'),
+		"SubClass"=>get_text('SubClass', 'Tournament'),
+		"Status"=>get_text('Status', 'Tournament'),
+		"IC"=>'IC',
+		"TC"=>'TC',
+		"IF"=>'IF',
+		"TF"=>'TF',
+		"TM"=>'TM',
+		"NationCode2"=>get_text('Country'),
+		"Nation2"=>get_text('Nation'),
+		"NationCode3"=>get_text('Country'),
+		"Nation3"=>get_text('Nation'),
+		"EnSubTeam"=>'EnSubTeam',
+		"TargetFace"=>get_text('TargetType'),
+		"Poule"=>get_text('Poule', 'Tournament'),
+		"Schedule_Points"=>get_text('Schedule', 'Tournament').' / '.get_text('Points', 'Tournament'),
+		);
+
+	if($ORIS) {
+		$Data->Data['Fields']['StartTime']='Start Time';
+		$Data->Data['Fields']['Athlete']='Name';
+		$Data->Data['Fields']['NationCode']='NOC';
+		$Data->Data['Fields']['Nation']='Country';
+		$Data->Data['Fields']['EventName']='Category';
+	} else {
+		$Data->Header=array(get_text('Target'), get_text('Name', 'Tournament'), get_text('Country'), get_text('Nation'), get_text('DOB', 'Tournament'));
+		$Data->Phase=get_text('QualRound');
+		$Data->IndexName=get_text('ParticipantList', 'RunArchery');
+		$Data->Data['Fields']['Athlete']=get_text('Athlete');
+		$Data->HideCols = GetParameter("IntEvent");
+		$Data->BisTarget = false;
+		$Data->NumEnd = 0;
+	}
+
+	$RsTour=safe_r_sql("SELECT (ToElabTeam!=0) as BisTarget, ToNumEnds AS TtNumEnds, (select max(RankRanking) as IsRanked from Rankings where RankTournament={$_SESSION['TourId']}) as IsRanked
+		FROM Tournament
+		WHERE ToId=" . StrSafe_DB($_SESSION['TourId']));
+	if ($r=safe_fetch($RsTour)) {
+		$Data->BisTarget = $r->BisTarget;
+		$Data->NumEnd = $r->TtNumEnds;
+		$Data->IsRanked = $r->IsRanked;
+	}
+
+	$MyQuery = getRunEntryQuery($Event, $Type);
+
+	//echo $MyQuery;exit;
+	$Rs=safe_r_sql($MyQuery);
+
+	$OldCode='';
+
+	$Data->Legend = [];
+	$Data->Timestamp = '';
+	while ($MyRow=safe_fetch($Rs)) {
+		$MyRow->ItemKey= transliterator_transliterate('Any-Latin; Latin-ASCII; [\u0100-\u7fff] remove', $MyRow->ItemKey);
+		if(!empty($MyRow->Legend)) {
+			foreach(explode('|', $MyRow->Legend) as $l) {
+				if(!in_array($l, $Data->Legend)) {
+					$Data->Legend[]=$l;
+				}
+			}
+		}
+		if($Type!='Country') {
+			// $MyRow->EvEventName=get_text($MyRow->EvEventName,'','',true);
+			// if(empty($Data->OdfCodes[$MyRow->EvTeamEvent.'-'.$MyRow->EvCode])) {
+			// 	$Data->OdfCodes[$MyRow->EvTeamEvent.'-'.$MyRow->EvCode]=array('event' => $MyRow->EvEventName, 'ODFevent' => $MyRow->EvOdfCode, 'version' => $MyRow->DocVersion, 'versionDate' => $MyRow->DocVersionDate);
+			// }
+		}
+		if($MyRow->Timestamp and $MyRow->Timestamp>$Data->Timestamp) {
+			$Data->Timestamp=$MyRow->Timestamp;
+		}
+
+		unset($MyRow->Timestamp);
+		unset($MyRow->TgtGrp);
+		unset($MyRow->RarTarget);
+		unset($MyRow->RarBib);
+
+		$Data->Data['Items'][$MyRow->ItemKey][] = $MyRow;
 	}
 
 	return $Data;
@@ -592,6 +882,7 @@ function getCompetitionOfficials($ORIS=false) {
     $Data->DocVersionNotes='';
     $q=safe_r_sql($Sql);
     while ($r=safe_fetch($q)) {
+		$r->ItDescription=get_text($r->ItDescription, 'Tournament');
         $Data->Data['Items'][$r->ItDescription][]=$r;
         if(!empty($r->DocVersion)) {
             $Data->DocVersion=$r->DocVersion;
@@ -683,6 +974,7 @@ function getStartListByCountries($ORIS=false, $Athletes=false, $orderByName=fals
 		if(!empty($MyRow->EventName)) $MyRow->EventName=get_text($MyRow->EventName,'','',true);
 		$MyRow->DivDescription=get_text($MyRow->DivDescription,'','',true);
 		$MyRow->ClDescription=get_text($MyRow->ClDescription,'','',true);
+		$MyRow->TfName=get_text($MyRow->TfName,'Tournament','',true);
 		$Data->Data['Items'][$MyRow->NationCode][]=$MyRow;
 		if(!empty($MyRow->DocVersion)) {
 			$Data->DocVersion=$MyRow->DocVersion;
@@ -697,8 +989,8 @@ function getStandingRecords($ORIS=true) {
 	$Data=new StdClass();
 
 	$Data->Code='C24';
-	$Data->Order='2';
-	$Data->Description='Records';
+	$Data->Order='3';
+	$Data->Description='Standing Records';
 	$Data->Header=array(
 			"Record Description",
 			"§Score",
@@ -728,11 +1020,10 @@ function getStandingRecords($ORIS=true) {
 		$Data->Data['Fields']['EventName']='Event';
 		$Data->Data['Fields']['Session']='Session';
 	} else {
-		$Data->Description=get_text('EntriesByCountry', 'Tournament');
+		$Data->Description=get_text('StatRecordsStanding', 'Tournament');
 		$Data->Header=array(get_text('Country'), get_text('Nation'), get_text('Name', 'Tournament'), get_text('DOB', 'Tournament')."   #", get_text('Target'), get_text("Event"));
-		$Data->IndexName=get_text('EntriesByCountry', 'Tournament');
+		$Data->IndexName=get_text('StatRecordsStanding', 'Tournament');
 		$Data->HideCols = GetParameter("IntEvent");
-		$Data->Description=get_text('StartlistCountry','Tournament');
 	}
 	$MyQuery = getStandingRecordsQuery($ORIS);
 
@@ -767,7 +1058,7 @@ function getBrokenRecords($ORIS=true) {
 	$Data=new StdClass();
 
 	$Data->Code='C81';
-	$Data->Order='2';
+	$Data->Order='4';
 	$Data->Description='Records Broken';
 	$Data->Header=array(
 			"Record Description",
@@ -776,7 +1067,7 @@ function getBrokenRecords($ORIS=true) {
 			"§NOC\nCode",
 			"#Date");
 	$Data->HeaderWidth=array(50, 30, 55, 15, 0);
-	$Data->IndexName='Records';
+	$Data->IndexName='Records Broken';
 	$Data->Phase='';
 	$Data->DocVersion='';
 	$Data->DocVersionDate='';
@@ -797,11 +1088,10 @@ function getBrokenRecords($ORIS=true) {
 		$Data->Data['Fields']['EventName']='Event';
 		$Data->Data['Fields']['Session']='Session';
 	} else {
-		$Data->Description=get_text('EntriesByCountry', 'Tournament');
+		$Data->Description=get_text('StatRecordsBroken','Tournament');
 		$Data->Header=array(get_text('Country'), get_text('Nation'), get_text('Name', 'Tournament'), get_text('DOB', 'Tournament')."   #", get_text('Target'), get_text("Event"));
-		$Data->IndexName=get_text('EntriesByCountry', 'Tournament');
+		$Data->IndexName=get_text('StatRecordsBroken','Tournament');
 		$Data->HideCols = GetParameter("IntEvent");
-		$Data->Description=get_text('StartlistCountry','Tournament');
 	}
 	$MyQuery = getBrokenRecordsQuery($ORIS);
 
@@ -972,6 +1262,7 @@ function getStartListAlphabetical($ORIS='') {
 		}
 
 		$MyRow->EventName=get_text($MyRow->EventName,'','',true);
+		$MyRow->TfName=get_text($MyRow->TfName,'Tournament','',true);
 		$Data->Data['Items'][$Group][]=$MyRow;
 
 		if(!empty($MyRow->DocVersion)) {
@@ -1063,6 +1354,7 @@ function getStartListCategory($ORIS=false, $orderByTeam=0, $Events=array()) {
 		}
 
 		$MyRow->EventName=get_text($MyRow->EventName,'','',true);
+		$MyRow->TfName=get_text($MyRow->TfName,'Tournament','',true);
 		$Data->Data['Items'][$Group][]=$MyRow;
 
 	}
@@ -1125,6 +1417,7 @@ function getDivClasIndividual($Div='', $Clas='', $Options=array()) {
 	elseif(!empty($_REQUEST["SubClassRank"]))
 	{
 		$family='SubClass';
+		if(!empty($_REQUEST["sc"])) $options['sc']=$_REQUEST['sc'];
 		if(!empty($_REQUEST["SubClassDivRank"])) $options['joinDivs']=true;
 		if(!empty($_REQUEST["SubClassClassRank"])) $options['joinCls']=true;
         if(!empty($_REQUEST["SubClassGenderRank"])) $options['joinGender']=true;
@@ -1246,6 +1539,35 @@ function getQualificationIndividual($EventRequested='', $ORIS=false, $ShowRecord
 	return $Data;
 }
 
+function getRobin($options=[], $ORIS=false) {
+	$Data=new StdClass();
+
+	$Data->Code='ROBIN';
+	$Data->Order='1';
+	$Data->Description='Round Robin Results';
+	$Data->ShotOffShort=get_text('ShotOffShort','Tournament');
+	$Data->ShootOffArrows=get_text('ShootOffArrows','Tournament');
+	$Data->Judge=get_text('Judge','Tournament');
+	$Data->Winner=get_text('Winner');
+	$Data->TargetShort=get_text('TargetShort','Tournament');
+	$Data->CoinTossShort=get_text('CoinTossShort','Tournament');
+	$Data->NumberThousandsSeparator = get_text('NumberThousandsSeparator');
+	$Data->NumberDecimalSeparator = get_text('NumberDecimalSeparator');
+	$Data->Continue=get_text('Continue');
+	$Data->TotalShort=get_text('TotalShort','Tournament');
+	$Data->IndexName=get_text('ResultIndAbs', 'Tournament');
+
+	if(!$ORIS) {
+		$Data->Description=get_text('ResultsRobin','Tournament');
+	}
+
+	$rank=Obj_RankFactory::create('Robin', $options);
+	$rank->read();
+	$Data->rankData=$rank->getData();
+
+	return $Data;
+}
+
 function getEliminationIndividual($EventRequested='', $ORIS=false) {
 	$Data=new StdClass();
 
@@ -1358,7 +1680,7 @@ function getQualificationTeam($EventRequested='', $ORIS=false, $ShowRecords=fals
 	return $Data;
 }
 
-function getBracketsIndividual($EventRequested='', $ORIS=false, $ShowTargetNo=true, $ShowSchedule=true, $ShowSetArrows=true, $ShowRecords=false) {
+function getBracketsIndividual($EventRequested='', $ORIS=false, $ShowTargetNo=true, $ShowSchedule=true, $ShowSetArrows=true, $ShowRecords=false, $MatchNo=null, $extended=false) {
 	$Data=new StdClass();
 
 	$Data->Code='C75A';
@@ -1383,6 +1705,12 @@ function getBracketsIndividual($EventRequested='', $ORIS=false, $ShowTargetNo=tr
 
 	$options=array();
     $options['noElim']=true;
+	if(!is_null($MatchNo)) {
+		$options['matchno']=intval($MatchNo);
+	}
+    if($extended) {
+        $options['extended'] = true;
+    }
 	if($EventRequested) $options['events']=$EventRequested;
 	if($ShowRecords) $options['records']=true;
 
@@ -1425,6 +1753,33 @@ function getRankingIndividual($EventRequested='', $ORIS=false, $ShowRecords=fals
 	return $Data;
 }
 
+function getRankingRunIndividual($EventRequested=[], $ORIS=false, $ByClass=false) {
+	$Data=new StdClass();
+
+	$Data->Code='C76A';
+	$Data->Description='Results Summary';
+	$Data->Phase=get_text('FinalRankInd', 'Tournament');
+	$Data->NumberThousandsSeparator = get_text('NumberThousandsSeparator');
+	$Data->NumberDecimalSeparator = get_text('NumberDecimalSeparator');
+	$Data->Continue=get_text('Continue');
+	$Data->IndexName=get_text('FinalRankInd', 'Tournament');
+
+	if(!$ORIS) {
+		$Data->Description=get_text('RankingInd');
+	}
+
+	$options=array('team'=>0, 'byclass'=>$ByClass);
+	if($EventRequested) {
+		$options['events']=$EventRequested;
+	}
+
+	$rank=Obj_RankFactory::create('Run',$options);
+	$rank->read();
+	$Data->rankData=$rank->getData();
+	$Data->LastUpdate=$Data->rankData['meta']['lastUpdate'];
+	return $Data;
+}
+
 function getRankingTeams($EventRequested='', $ORIS=false, $ShowRecords=false) {
 	$Data=new StdClass();
 
@@ -1454,7 +1809,58 @@ function getRankingTeams($EventRequested='', $ORIS=false, $ShowRecords=false) {
 	return $Data;
 }
 
-function getBracketsTeams($EventRequested='', $ORIS=false, $ShowTargetNo=true, $ShowSchedule=true, $ShowSetArrows=true, $ShowRecords=false) {
+function getTeamsComponentsLog($Event = '', $TeamId = 0) {
+    $Data=new StdClass();
+
+    $Data->Code='C56';
+    $Data->Description=get_text('TeamComponentsLog', 'Tournament');
+    $Data->Phase=get_text('TeamComponentsLog', 'Tournament');
+    $Data->IndexName=get_text('TeamComponentsLog', 'Tournament');
+    $options=array();
+    if($Event) {
+        $options['events'] = $Event;
+    }
+    if($TeamId) {
+        $options['coid'] = $TeamId;
+    }
+
+    $rank=Obj_RankFactory::create('TeamComponents',$options);
+    $rank->read();
+    $Data->rankData=$rank->getData();
+    $Data->LastUpdate=$Data->rankData['meta']['lastUpdate'];
+
+    return $Data;
+}
+
+function getRankingRunTeams($EventRequested=[], $ORIS=false, $ByClass=false) {
+	$Data=new StdClass();
+
+	$Data->Code='C76B';
+	$Data->Description='Results Summary';
+	$Data->Phase=get_text('FinalRankTeams', 'Tournament');
+	$Data->NumberThousandsSeparator = get_text('NumberThousandsSeparator');
+	$Data->NumberDecimalSeparator = get_text('NumberDecimalSeparator');
+	$Data->Bye=get_text('Bye');
+	$Data->IndexName=get_text('FinalRankTeams', 'Tournament');
+
+	if(!$ORIS) {
+		$Data->Description=get_text('RankingSq');
+	}
+
+	$options=array('team'=>1, 'byclass'=>$ByClass);
+	if($EventRequested) {
+		$options['events']=$EventRequested;
+	}
+
+	$rank=Obj_RankFactory::create('Run',$options);
+	$rank->read();
+	$Data->rankData=$rank->getData();
+	$Data->LastUpdate=$Data->rankData['meta']['lastUpdate'];
+
+	return $Data;
+}
+
+function getBracketsTeams($EventRequested='', $ORIS=false, $ShowTargetNo=true, $ShowSchedule=true, $ShowSetArrows=true, $ShowRecords=false, $MatchNo=null, $extended=false) {
 	$Data=new StdClass();
 
 	$Data->Code='C75B';
@@ -1479,7 +1885,12 @@ function getBracketsTeams($EventRequested='', $ORIS=false, $ShowTargetNo=true, $
 	$options=array();
 	if($EventRequested) $options['events']=$EventRequested;
 	if($ShowRecords) $options['records']=true;
-
+	if(!is_null($MatchNo)) {
+		$options['matchno']=intval($MatchNo);
+	}
+    if($extended) {
+        $options['extended'] = true;
+    }
 	$rank=Obj_RankFactory::create('GridTeam',$options);
 	$rank->read();
 	$Data->rankData=$rank->getData();
@@ -2017,3 +2428,4 @@ function getGenericPdf($File, $Name, $Order=10) {
 		'update' => date('Y-m-d H:i:s'),
 		'pdf' => file_get_contents($File['tmp_name']));
 }
+

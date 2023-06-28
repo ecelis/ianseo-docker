@@ -4,6 +4,7 @@ $version='2012-01-24 15:16:00';
 $AllowedTypes=array(3,37,1,2,6,7,41,42,43);
 
 $SetType['NL']['descr']=get_text('Setup-NL', 'Install');
+$SetType['NL']['noc'] = 'NED';
 $SetType['NL']['types']=array();
 $SetType['NL']['rules']=array();
 

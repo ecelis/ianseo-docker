@@ -31,6 +31,9 @@ $Where=" where EvTeamEvent=$Team and EvCode=" . StrSafe_DB($_REQUEST['event']) .
 
 $RedoBrackets=false;
 $ResetSO=false;
+$q=safe_r_sql("select * from Events $Where");
+$r=safe_fetch($q);
+
 switch($_REQUEST['fld']) {
 	case 'persons':
 		$SQL="update Events set EvMaxTeamPerson=" . intval($_REQUEST['val']) . $Where;
@@ -59,6 +62,18 @@ switch($_REQUEST['fld']) {
 	case 'medal':
 		$SQL="update Events set EvMedals=" . ($_REQUEST['val'] ? '1' : '0') . $Where;
 		break;
+	case 'golds':
+		$SQL="update Events set EvGolds=" . StrSafe_DB($_REQUEST['val']) . $Where;
+		break;
+	case 'xnine':
+		$SQL="update Events set EvXNine=" . StrSafe_DB($_REQUEST['val']) . $Where;
+		break;
+	case 'goldschars':
+		$SQL="update Events set EvGoldsChars=" . StrSafe_DB(getLettersFromPrintList(strtoupper($_REQUEST['val']), $r->EvFinalTargetType)) . $Where;
+		break;
+	case 'xninechars':
+		$SQL="update Events set EvXNineChars=" . StrSafe_DB(getLettersFromPrintList(strtoupper($_REQUEST['val']), $r->EvFinalTargetType)) . $Where;
+		break;
 	case 'parent':
 		// check the parent code really exists
         if(!empty($_REQUEST['val'])) {
@@ -80,20 +95,23 @@ if (safe_w_affected_rows()) {
 	safe_w_sql("UPDATE Events SET EvTourRules=''" . $Where );
 }
 
-if($RedoBrackets) {
-	// TODO: need to destroy and recreate the brackets
-	ResetShootoff($_REQUEST['event'], $Team,0);
-} elseif($ResetSO) {
-	// reset of the Event's SO
-	ResetShootoff($_REQUEST['event'], $Team,0);
+if($RedoBrackets OR $ResetSO) {
+// rebuild Teams/Individuals
+    if ($Team) {
+        MakeTeamsAbs(null, null, null);
+    } else {
+        MakeIndAbs();
+    }
+
+    if ($RedoBrackets) {
+        // TODO: need to destroy and recreate the brackets
+        ResetShootoff($_REQUEST['event'], $Team, 0);
+    } elseif ($ResetSO) {
+        // reset of the Event's SO
+        ResetShootoff($_REQUEST['event'], $Team, 0);
+    }
 }
 
-// rebuild Teams/Individuals
-if($Team) {
-	MakeTeamsAbs(null, null, null);
-} else {
-	MakeIndAbs();
-}
 
 $JSON['error']=0;
 

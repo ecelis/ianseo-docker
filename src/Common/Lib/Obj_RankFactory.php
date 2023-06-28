@@ -72,10 +72,10 @@ require_once('Common/Lib/CommonLib.php');
 			$ToSubRule=str_replace('-','',$r->ToTypeSubRule);
 
 		// sicuramente includo la classe base
-			if (!file_exists($CFG->DOCUMENT_PATH . 'Common/Rank/Obj_Rank.php'))
+			if (!file_exists($_baseClass=dirname(__DIR__) . '/Rank/Obj_Rank.php'))
 				return null;
 
-			require_once ('Common/Rank/Obj_Rank.php');
+			require_once ($_baseClass);
 
 		/*
 		 * Adesso in base alla famiglia, al tipo e alla localizzazione
@@ -93,8 +93,8 @@ require_once('Common/Lib/CommonLib.php');
 
 			$name='Obj_Rank_'. $family;
 
-			$rootLoc = $CFG->DOCUMENT_PATH . "Modules/Sets/$ToLocRule/Rank/" . $name . "%s.php";
-			$rootGlobal = $CFG->DOCUMENT_PATH . "Common/Rank/" . $name . "%s.php";
+			$rootLoc = $CFG->INCLUDE_PATH . "/Modules/Sets/$ToLocRule/Rank/" . $name . "%s.php";
+			$rootGlobal = $CFG->INCLUDE_PATH . "/Common/Rank/" . $name . "%s.php";
 
 			if( file_exists($file=sprintf($rootLoc, "_{$ToType}_{$ToSubRule}")) or
 				file_exists($file=sprintf($rootLoc, "_{$ToType}")) or
@@ -120,7 +120,10 @@ require_once('Common/Lib/CommonLib.php');
 				}
 
 				// returns the found class
-				return new $name($opts);
+				$rnk=new $name($opts);
+				$rnk->RankType=$ToType;
+				$rnk->RankSubRule=$ToSubRule;
+				return $rnk;
 			} else {
 				// no class found!
 				return null;

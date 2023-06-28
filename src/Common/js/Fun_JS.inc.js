@@ -217,3 +217,24 @@ var getElementsByClassName = function (className, tag, elm){
 	}
 	return getElementsByClassName(className, tag, elm);
 };
+
+function showAlert(msg, title='') {
+	$.alert({
+		title:title,
+		content:'<div style="font-size:large;">'+msg+'</div>',
+		boxWidth: '50%',
+		useBootstrap: false,
+		escapeKey: true,
+		backgroundDismiss: true,
+	});
+}
+function doAlert(msg) {
+	$.alert({
+		content: msg,
+		title: '',
+		boxWidth: '33%',
+		useBootstrap: false,
+		escapeKey: true,
+		backgroundDismiss: true,
+	});
+}

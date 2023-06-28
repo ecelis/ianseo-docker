@@ -1,4 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <?php
 
 echo '<html>
@@ -11,11 +11,17 @@ print ProgramName . ' ' . ProgramVersion . (defined('ProgramBuild') ? ' ('.Progr
 
 echo '</title>';
 
-$local_JS = array(
-    '<link href="'.$CFG->ROOT_DIR.'Common/Styles/Blue_screen.css" media="screen" rel="stylesheet" type="text/css">',
-    '<link href="'.$CFG->ROOT_DIR.'Common/Styles/Blue_screen-print.css" media="print" rel="stylesheet" type="text/css">',
-    '<link href="'.$CFG->ROOT_DIR.'Common/Styles/Menu.css" rel="stylesheet" type="text/css">',
-);
+$local_JS = array();
+$local_JS[]='<link href="'.$CFG->ROOT_DIR.'Common/Styles/colors.css" media="screen" rel="stylesheet" type="text/css">';
+if($_SESSION['debug']) {
+    $local_JS[]='<link href="'.$CFG->ROOT_DIR.'Common/Styles/colors_debug.css" media="screen" rel="stylesheet" type="text/css">';
+}
+$local_JS[]='<link href="'.$CFG->ROOT_DIR.'Common/Styles/Blue_screen.css" media="screen" rel="stylesheet" type="text/css">';
+$local_JS[]='<link href="'.$CFG->ROOT_DIR.'Common/Styles/Blue_screen-print.css" media="print" rel="stylesheet" type="text/css">';
+$local_JS[]='<link href="'.$CFG->ROOT_DIR.'Common/Styles/Menu.css" rel="stylesheet" type="text/css">';
+if(SelectLanguage()=='tlh'){
+	$local_JS[]= '<link href="'.$CFG->ROOT_DIR.'Common/Styles/klingon.css" rel="stylesheet" type="text/css">';
+}
 
 if(!empty($IncludeFA)) {
 	$local_JS[]= '<link href="'.$CFG->ROOT_DIR.'Common/css/font-awesome.css" rel="stylesheet" type="text/css">';
@@ -23,22 +29,23 @@ if(!empty($IncludeFA)) {
 
 require_once('Common/Menu.php');
 
-if($_SESSION['debug']) {
-	$local_JS[]= '<link href="'.$CFG->ROOT_DIR.'Common/Styles/Blue_screen_debug.css" rel="stylesheet" type="text/css">';
-}
-
-if(SelectLanguage()=='tlh'){
-	$local_JS[]= '<link href="'.$CFG->ROOT_DIR.'Common/Styles/klingon.css" rel="stylesheet" type="text/css">';
-}
-
 if(empty($JS_SCRIPT)) {
     $JS_SCRIPT=array();
 }
+
 if(!empty($IncludeJquery)) {
-	$JS_SCRIPT[]= '<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>';
-	$JS_SCRIPT[]= '<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>';
-	$JS_SCRIPT[]= '<link href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css" rel="stylesheet" type="text/css">';
+	$local_JS[]= '<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.6.0.min.js"></script>';
+	$local_JS[]= '<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>';
+	$local_JS[]= '<link href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css" rel="stylesheet" type="text/css">';
 }
+$local_JS[]= '<script src="'.$CFG->ROOT_DIR.'Common/js/Fun_ResizeImg.inc.js"></script>';
+
+// if(!empty($IncludeJquery)) {
+// 	$local_JS[]= '<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>';
+// 	$local_JS[]= '<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>';
+// 	$local_JS[]= '<link href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css" rel="stylesheet" type="text/css">';
+// }
+
 $JS_SCRIPT = array_merge($local_JS, $JS_SCRIPT);
 
 foreach($JS_SCRIPT as $script) {

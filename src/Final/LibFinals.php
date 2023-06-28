@@ -6,7 +6,7 @@ function SetTargetDb($Key, $Value, $Type='AB', $Letter='') {
 	list($Event, $Team, $Matchno)=explode('_',$Key);
 
 // cerco la fase del matchno
-	$Select = "SELECT GrPhase, EvFinalFirstPhase, EvFinalAthTarget & greatest(1, GrPhase*2) > 0 as Ath4Tgt, EvMatchMultipleMatches & greatest(1, GrPhase*2) > 0 as Match4Tgt
+	$Select = "SELECT GrPhase, EvFinalFirstPhase, EvFinalAthTarget & greatest(1, GrPhase*2) > 0 as Ath4Tgt, EvMatchMultipleMatches & greatest(1, GrPhase*2) > 0 as Match4Tgt, EvNumQualified
 		FROM Events
 		inner join Phases on PhId=EvFinalFirstPhase and (PhIndTeam & pow(2, EvTeamEvent))>0
 		inner join Grids on GrPhase<=greatest(PhId, PhLevel) 
@@ -133,122 +133,96 @@ function SetTargetDb($Key, $Value, $Type='AB', $Letter='') {
 			$val=$Value;
 
 			// cerca i byes, quindi va a prendere la differenza tra il numero di atleti della fase e gli atleti presenti in quell'evento
-			if($Team) {
-				$Sql = "SELECT DISTINCT EcCode, EcTeamEvent, EcNumber FROM EventClass WHERE EcCode='$Event' AND EcTeamEvent!=0 AND EcTournament={$_SESSION['TourId']}";
-				$RsEc=safe_r_sql($Sql);
-				$RuleCnt=0;
-				$MyQuery = "Select COUNT(*) as Quanti, EvFinalFirstPhase as FirstPhase, EvNumQualified ";
-				while($MyRowEc=safe_fetch($RsEc)) {
-					$MyQuery .= (++$RuleCnt == 1 ? "FROM ": "INNER JOIN ");
-					$MyQuery .= "(SELECT EnCountry as C" . $RuleCnt . "
-                  FROM Entries
-                  INNER JOIN EventClass ON EnClass=EcClass AND EnDivision=EcDivision AND EnTournament=EcTournament AND EcTeamEvent=" . $MyRowEc->EcTeamEvent . " AND EcCode='$Event'
-                  WHERE EnTournament={$_SESSION['TourId']} AND EnTeamFEvent=1
-                  group by EnCountry
-                  HAVING COUNT(EnId)>=" . $MyRowEc->EcNumber . ") as sqy";
-					$MyQuery .= ($RuleCnt == 1 ? " ": $RuleCnt . " ON C1=C". $RuleCnt . " ");
-				}
-				$MyQuery.=" inner join Events on EvCode='$Event' and EvTournament={$_SESSION['TourId']} and EvTeamEvent=1 ";
+			$Data=getStatEntriesByEvent();
+			if($Data=($Data->Data[$Team?'TF':'IF']['Data'][$Event] ?? false)) {
 
-				//$Rs=safe_r_sql($Sql);
-				//$tmpQuanti=safe_num_rows($Rs);
-				//$tmpSaved=($Phase>=$FirstPhase ? SavedInPhase($FirstPhase) : SavedInPhase($realPhase));
-				//$tmpQuantiIn = min($NumQualified, maxPhaseRank($realPhase));
-				//$tmpQuantiOut = $tmpQuanti-$tmpQuantiIn;
-				//$tmpBye = ($tmpQuantiOut<0 ? abs($tmpQuantiOut) : 0) + $tmpSaved;
-			} else {
-				$MyQuery = "SELECT COUNT(EnId) as Quanti, EvFinalFirstPhase as FirstPhase, EvNumQualified
+				// $q=safe_r_sql($MyQuery);
+				// $r=safe_fetch($q);
+				$tmpQuanti=$Data['Number'];
+				$tmpSaved=($Phase>=$MyRow->EvFinalFirstPhase ? SavedInPhase($MyRow->EvFinalFirstPhase) : SavedInPhase($realPhase));
+				$tmpQuantiIn = min($MyRow->EvNumQualified, maxPhaseRank($realPhase));
+				$tmpQuantiOut = $tmpQuanti-$tmpQuantiIn;
+				$tmpBye = ($tmpQuantiOut<0 ? abs($tmpQuantiOut) : 0) + $tmpSaved;
+
+				// ci sono byes, quindi va a riempire solo i matchno dei match pieni cioè con una rank superiore all'ultimo bye!
+				// esempio: 1/8, 13 presenti, sono 3 byes, quindi si parte dal 4° in ranking...
+				//
+				$PosToTake=($realPhase==24 or $realPhase==48) ? 'GrPosition2' : 'GrPosition';
+				$MyQuery = "SELECT distinct GrMatchNo, if($PosToTake > EvNumQualified, 0, $PosToTake) as Position
 					FROM Events
-					INNER JOIN Individuals ON EvCode=IndEvent AND EvTournament=IndTournament
-					INNER JOIN Entries ON EnId=IndId AND EnTournament=IndTournament
-					WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvCode='$Event' AND EvTeamEvent=0 AND ((EnIndFEvent=1 AND EnStatus<=1) OR EnId IS NULL)";
-			}
-			$q=safe_r_sql($MyQuery);
-			$r=safe_fetch($q);
-			$tmpQuanti=$r->Quanti;
-			$tmpSaved=($Phase>=$r->FirstPhase ? SavedInPhase($r->FirstPhase) : SavedInPhase($realPhase));
-			$tmpQuantiIn = min($r->EvNumQualified, maxPhaseRank($realPhase));
-			$tmpQuantiOut = $tmpQuanti-$tmpQuantiIn;
-			$tmpBye = ($tmpQuantiOut<0 ? abs($tmpQuantiOut) : 0) + $tmpSaved;
+					inner join Phases on PhId=EvFinalFirstPhase and (PhIndTeam & pow(2,EvTeamEvent))>0
+					inner join Grids on GrPhase<=greatest(PhId, PhLevel)
+					WHERE GrPhase = '$Phase' AND GrMatchNo>= $Matchno and EvCode='$Event' and EvTeamEvent=$Team and EvTournament={$_SESSION['TourId']} 
+					ORDER BY Position <= $tmpBye or Position > $tmpQuanti, GrMatchNo ASC";
+				$q=safe_r_sql($MyQuery);
 
-			// ci sono byes, quindi va a riempire solo i matchno dei match pieni cioè con una rank superiore all'ultimo bye!
-			// esempio: 1/8, 13 presenti, sono 3 byes, quindi si parte dal 4° in ranking...
-			//
-			$PosToTake=($realPhase==24 or $realPhase==48) ? 'GrPosition2' : 'GrPosition';
-			$MyQuery = "SELECT distinct GrMatchNo, if($PosToTake > EvNumQualified, 0, $PosToTake) as Position
-				FROM Events
-				inner join Phases on PhId=EvFinalFirstPhase and (PhIndTeam & pow(2,EvTeamEvent))>0
-				inner join Grids on GrPhase<=greatest(PhId, PhLevel)
-				WHERE GrPhase = '$Phase' AND GrMatchNo>= $Matchno and EvCode='$Event' and EvTeamEvent=$Team and EvTournament={$_SESSION['TourId']} 
-				ORDER BY Position < $tmpBye or Position > $tmpQuanti, GrMatchNo ASC";
-			$q=safe_r_sql($MyQuery);
+				while($r=safe_fetch($q)) {
+					$butt= ($r->Position <= $tmpBye or $r->Position > $tmpQuanti) ? '' : $val;
 
-			while($r=safe_fetch($q)) {
-				$butt= ($r->Position < $tmpBye or $r->Position > $tmpQuanti) ? '' : $val;
-
-				if($butt and $r->Position > $tmpBye) {
-					switch($MyRow->Ath4Tgt.'-'.$MyRow->Match4Tgt) {
-						case '0-0':
-							// one archer per butt, single wave, no letter
-							$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, $val++);
-							break;
-						case '1-0':
-							// two archers per butt, single wave, always A+B
-							$ABCD=($ABCD=='A' ? 'B' : 'A');
-							$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, $val, $ABCD);
-							if($ABCD=='B') {
-								$val++;
-							}
-							break;
-						case '0-1':
-							// one archer per butt, double wave, based on $Type it can be always A, always C or A+A followed by C+C
-							switch($Type) {
-								case 'AB':
-									$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, $val++, 'A');
-									break;
-								case 'CD':
-									$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, $val++, 'C');
-									break;
-								case 'ABCD':
-									// means 1A vs 2A and 1C vs 2C
-									$ABCD=(($ABCD=='A' and $r->GrMatchNo%2) ? 'C' : 'A');
-									$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, $val, $ABCD);
+					if($butt and $r->Position > $tmpBye) {
+						switch($MyRow->Ath4Tgt.'-'.$MyRow->Match4Tgt) {
+							case '0-0':
+								// one archer per butt, single wave, no letter
+								$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, $val++);
+								break;
+							case '1-0':
+								// two archers per butt, single wave, always even=A, odd=B
+								$ABCD=($r->GrMatchNo%2 ? 'B' : 'A');
+								$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, $val, $ABCD);
+								if($r->GrMatchNo%2) {
 									$val++;
-									if($r->GrMatchNo%2 and $ABCD=='A') {
-										// 2nd matchno of the couple, if 'AB' needs to go back 2 targets
-										$val-=2;
-									}
-									break;
-							}
-						case '1-1':
-							// two archers per butt, double wave, based on $Type it can be always A+B, always C+B or A+B followed by C+D
-							switch($Type) {
-								case 'AB': // always AB
-									$ABCD=($ABCD=='A' ? 'B' : 'A');
-									$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, $val, $ABCD);
-									if($ABCD=='B') {
+								}
+								break;
+							case '0-1':
+								// one archer per butt, double wave, based on $Type it can be always A, always C or A+A followed by C+C
+								switch($Type) {
+									case 'AB':
+										$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, $val++, 'A');
+										break;
+									case 'CD':
+										$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, $val++, 'C');
+										break;
+									case 'ABCD':
+										// means 1A vs 2A and 1C vs 2C
+										$ABCD=(($ABCD=='A' and $r->GrMatchNo%2) ? 'C' : 'A');
+										$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, $val, $ABCD);
 										$val++;
-									}
-									break;
-								case 'CD': // always CD
-									$ABCD=($ABCD=='C' ? 'D' : 'C');
-									$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, $val, $ABCD);
-									if($ABCD=='D') {
-										$val++;
-									}
-									break;
-								case 'ABCD':
-									$ABCD=($ABCD=='A' ? 'B' : ($ABCD=='B' ? 'C' : ($ABCD=='C' ? 'D' : 'A')));
-									$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, $val, $ABCD);
-									if($ABCD=='D') {
-										// after 4 matchnos, moves 1 target
-										$val++;
-									}
-									break;
-							}
+										if($r->GrMatchNo%2 and $ABCD=='A') {
+											// 2nd matchno of the couple, if 'AB' needs to go back 2 targets
+											$val-=2;
+										}
+										break;
+								}
+							case '1-1':
+								// two archers per butt, double wave, based on $Type it can be always A+B, always C+B or A+B followed by C+D
+								switch($Type) {
+									case 'AB': // always AB
+										$ABCD=($ABCD=='A' ? 'B' : 'A');
+										$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, $val, $ABCD);
+										if($ABCD=='B') {
+											$val++;
+										}
+										break;
+									case 'CD': // always CD
+										$ABCD=($ABCD=='C' ? 'D' : 'C');
+										$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, $val, $ABCD);
+										if($ABCD=='D') {
+											$val++;
+										}
+										break;
+									case 'ABCD':
+										$ABCD=($ABCD=='A' ? 'B' : ($ABCD=='B' ? 'C' : ($ABCD=='C' ? 'D' : 'A')));
+										$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, $val, $ABCD);
+										if($ABCD=='D') {
+											// after 4 matchnos, moves 1 target
+											$val++;
+										}
+										break;
+								}
+						}
+					} else {
+						$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, '');
 					}
-				} else {
-					$ret[]=SetTargetDbAssign($Event, $Team, $r->GrMatchNo, '');
 				}
 			}
 			break;

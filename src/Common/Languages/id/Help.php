@@ -1,4 +1,7 @@
 <?php
+$lang['AutoCheckinAlreadyDone']='Anda sudah check-in<br>Jika Anda perlu mengubah informasi apa pun, lanjutkan ke meja akreditasi';
+$lang['AutoCheckinConfirm']='Jika semua detail sudah benar, tekan CONFIRM CHECK-IN<br> Jika tidak, tekan CANCEL dan lanjutkan ke meja akreditasi';
+$lang['AutoCheckinSearch']='Scan Kode QR yang Anda terima atau ketik nama Anda';
 $lang['AutoImportSettings']='<b>Hanya untuk Pengguna Ahli</b><br>Mengubah perilaku default akan menghasilkan hasil yang tidak akurat.<br>
 Penting untuk menghitung ulang semua peringkat yang telah diatur sebagai "secara manual" SEBELUM mengirim ke ianseo.net atau mencetak hasil dan secara umum sebelum setiap distribusi dalam bentuk apa pun.';
 $lang['ChangeComponents']='<p>Untuk melanjutkan perubahan, hapus dulu atlet yang tidak ada dalam urutan tim lagi untuk mengaktifkan opsi yang memungkinkan.</p>
@@ -10,6 +13,8 @@ $lang['ISK-LockedSessionHelp']='{$a} ikon menunjukkan apakah aplikasi dapat memp
 $lang['ISK-ServerUrlPin']='<b>JANGAN BAGIKAN NOMOR INI</b><br>Gunakan PIN pilihan Anda (4 Digit Numerik) yang akan digunakan untuk mengakses kompetisi Anda.<br>
 Perangkat dapat memproses skor di kompetisi Anda hanya dengan membaca QR-Code yang dibuat oleh IANSEO.<br>
 Dalam hal input manual di aplikasi Ianseo Scorekeeper LITE, kode Kompetisi yang digunakan adalah <b>{$a}</b>';
+$lang['QrCodeLandscape']='satu atau dua kali "<" akan menggambar panah ke kiri satu atau dua kali ">" akan menggambar panah ke kanan satu atau dua kali "^" akan menggambar panah ke atas satu atau dua kali "v" akan menggambar panah ke bawah';
+$lang['QrCodePortrait']='bidang ini mampu membaca HTML. Jika Anda menyisipkan sesuatu yang ditandai oleh &lt;qrcode&gt;...&lt;/qrcode&gt; maka konten akan diubah menjadi QRCode';
 $lang['ScoreBarCodeShortcuts']='Baca Barcode yang tercetak di kartu skor.<br/>
 Memasukkan # secara manual diikuti dengan nama atlet mencari database untuk menemukan atlet tersebut<br/>
 Memasukkan @ diikuti dengan nomor target akan mencari target tersebut. Jarak HARUS diatur. Sesi harus ditentukan (digit pertama) dan target diisi 0 hingga 3 digit.';

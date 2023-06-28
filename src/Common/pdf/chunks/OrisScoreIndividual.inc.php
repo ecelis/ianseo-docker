@@ -4,8 +4,8 @@ $rankData=$PdfData->rankData;
 
 $First=true;
 foreach($rankData['sections'] as $Event => $section) {
-	$pdf->endPage();
 	$pdf->setOrisCode($PdfData->ScoreCode, '', true);
+	$pdf->endPage();
 	$pdf->setEvent($section['meta']['eventName']);
 	$pdf->Records=array(); // $section['records'];
 	$pdf->setPhase($PdfData->ScorePhase);

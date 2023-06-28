@@ -95,7 +95,6 @@ function GetRuleSel(Id, RuleId) {
 		}
 	}
 	catch (e) {
-		//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 	}
 }
 
@@ -112,7 +111,6 @@ function selectSchedule(Schedule) {
 	}
 	catch (e) {
 		alert(e);
-		//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 	}
 }
 
@@ -125,10 +123,7 @@ function selectSchedule_StateChange() {
 				selectSchedule_Response();
 			}
 			catch(e) {
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
-		} else {
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }

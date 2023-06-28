@@ -109,6 +109,7 @@ $lang['Event']='Esdeveniment';
 $lang['Exit']='Sortida';
 $lang['ExitConfirm']='Segur que voleu sortir de l\'App?';
 $lang['Face']='Paper diana';
+$lang['FieldControl']='Control de Camp';
 $lang['FirstTarget']='1era Diana:';
 $lang['GestureHelp']='Pot desplaçar-se pels arquers i/o tandes utilitzant els gestos que es descriuen a continuació.';
 $lang['Gestures']='Gestos/Moviments';

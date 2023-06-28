@@ -10,6 +10,7 @@ require_once('Common/Lib/CommonLib.php');
 require_once('Common/Fun_Phases.inc.php');
 
 $StartPhase=-1;
+$ActivePhase=($_REQUEST['active']??'');
 
 if (isset($_REQUEST['Command']) && $_REQUEST['Command']=='OK') {
     // verifico se lo spareggio per l'evento è stato fatto
@@ -163,7 +164,7 @@ if(!empty($_REQUEST['d_Event'])) {
             if (safe_num_rows($Rs) > 0) {
                 $obj = getEventArrowsParams($_REQUEST['d_Event'], $CurPhase, 1);
 
-                $Bottone = '<input type="button" name="CmdBlockPhase_' . $CurPhase . '" id="CmdBlockPhase_' . $CurPhase . '" value="' . get_text('CmdEnable') . '" onClick="BlockPhase(' . $CurPhase . ')">';
+                $Bottone = '<input type="button" name="CmdBlockPhase_' . $CurPhase . '" id="CmdBlockPhase_' . $CurPhase . '" value="' . ($ActivePhase==$CurPhase ? get_text('CmdDisable') : get_text('CmdEnable')) . '" onClick="BlockPhase(' . $CurPhase . ')">';
                 // righe di testa della fase
                 for ($i = 0; $i <= $HeadRows + 2; ++$i) {
                     // se sto stampando l'ultima riga di testa scrivo la fase
@@ -196,12 +197,12 @@ if(!empty($_REQUEST['d_Event'])) {
                     // Codice Nazione (o bandiera)
                     $MyGrid[$Row][$Col] .= '<td nowrap class="' . ($AthPrinted == 1 ? 'Bottom ' : '') . 'Top wRight Left"><div id="idCty_' . $Key . '">' . (!is_null($MyRow->CoCode) ? $MyRow->CoCode : '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;') . '</div></td>';
                     // Punteggio
-                    $MyGrid[$Row][$Col] .= '<td  nowrap class="' . ($AthPrinted == 1 ? 'Bottom ' : '') . 'Top Right Left TextRight ph-' . $CurPhase . '"><input type="text" class="disabled" tabindex="' . ($TabIndex++) . '" size="3" name="d_S_' . $Key . '" id="d_S_' . $Key . '" value="' . $MyRow->Score . '" onchange="SendToServer(this);" disabled="disabled"></td>';
+                    $MyGrid[$Row][$Col] .= '<td  nowrap class="' . ($AthPrinted == 1 ? 'Bottom ' : '') . 'Top Right Left TextRight ph-' . $CurPhase . '"><input type="text" class="'.($ActivePhase==$CurPhase ? '' : 'disabled').'" tabindex="' . ($TabIndex++) . '" size="3" name="d_S_' . $Key . '" id="d_S_' . $Key . '" value="' . $MyRow->Score . '" onchange="SendToServer(this);" '.($ActivePhase==$CurPhase ? '' : 'disabled').'></td>';
                     // tie
                     $MyGrid[$Row][$Col] .= '<td nowrap class="Center ' . ($AthPrinted == 1 ? 'wBottom Top' : 'wTop') . ' wRight wLeft ph-' . $CurPhase . '">';
 
                     if (isset($_REQUEST['d_Tie']) && $_REQUEST['d_Tie'] == 1) {
-                        $MyGrid[$Row][$Col] .= '<select  event="M'.$_REQUEST['d_Event'].'" team="1" phase="'.$MyRow->GrPhase.'" class="disabled mr-2" tabindex="' . ($TabIndex++) . '" name="d_T_' . $Key . '" id="d_T_' . $Key . '" onChange="SendToServer(this);" disabled>';
+                        $MyGrid[$Row][$Col] .= '<select  event="M'.$_REQUEST['d_Event'].'" team="1" phase="'.$MyRow->GrPhase.'" class="'.($ActivePhase==$CurPhase ? '' : 'disabled').' mr-2" tabindex="' . ($TabIndex++) . '" name="d_T_' . $Key . '" id="d_T_' . $Key . '" onChange="SendToServer(this);" '.($ActivePhase==$CurPhase ? '' : 'disabled').'>';
                         $MyGrid[$Row][$Col] .= '<option value="0"' . ($MyRow->TfTie == 0 ? ' selected' : '') . '>' . get_text('NoTie', 'Tournament') . '</option>';
                         $MyGrid[$Row][$Col] .= '<option value="1"' . ($MyRow->TfTie == 1 ? ' selected' : '') . '>' . get_text('TieWinner', 'Tournament') . '</option>';
                         $MyGrid[$Row][$Col] .= '<option value="2"' . ($MyRow->TfTie == 2 ? ' selected' : '') . '>' . get_text('Bye') . '</option>';
@@ -209,7 +210,7 @@ if(!empty($_REQUEST['d_Event'])) {
                             $MyGrid[$Row][$Col].= '<option value="'.($irm->IrmShowRank ? 'irm-'.$irm->IrmId : 'man').'"' . ($MyRow->TfIrmType==$irm->IrmId ? ' selected' : '') . '>' . $irm->IrmType . '</option>' . "\n";
 	                    }
                         $MyGrid[$Row][$Col] .= '</select>&nbsp;';
-	                    $MyGrid[$Row][$Col] .= '<input disabled type="checkbox" class="disabled" name="d_cl_' . $Key . '" id="d_cl_' . $Key . '" '.($MyRow->TfTbClosest ? 'checked="checked"' : '').' onclick="SendToServer(this);">&nbsp;'.get_text('ClosestShort', 'Tournament');
+	                    $MyGrid[$Row][$Col] .= '<input '.($ActivePhase==$CurPhase ? '' : 'disabled').' type="checkbox" class="'.($ActivePhase==$CurPhase ? '' : 'disabled').'" name="d_cl_' . $Key . '" id="d_cl_' . $Key . '" '.($MyRow->TfTbClosest ? 'checked="checked"' : '').' onclick="SendToServer(this);">&nbsp;'.get_text('ClosestShort', 'Tournament');
 	                    $MyGrid[$Row][$Col].= '<br/>';
 
                         $TieBreak = str_pad($MyRow->TfTiebreak, $obj->so, ' ', STR_PAD_RIGHT);
@@ -217,11 +218,11 @@ if(!empty($_REQUEST['d_Event'])) {
 	                        $MyGrid[$Row][$Col].= '<div>';
                             for ($i = 0; $i < $obj->so; ++$i) {
                                 $ArrI = $i+($pSo*$obj->so);
-                                $MyGrid[$Row][$Col] .= '<input  class="disabled" tabindex="' . ($TabIndex++) . '" type="text" size="1" maxlength="3" name="d_t_' . $Key . '_' . $ArrI . '" id="d_t_' . $Key . '_' . $ArrI . '" value="' . (!empty($TieBreak[$ArrI]) ? DecodeFromLetter($TieBreak[$ArrI]):'') . '" onchange="SendToServer(this);" disabled>';
+                                $MyGrid[$Row][$Col] .= '<input  class="'.($ActivePhase==$CurPhase ? '' : 'disabled').'" tabindex="' . ($TabIndex++) . '" type="text" size="1" maxlength="3" name="d_t_' . $Key . '_' . $ArrI . '" id="d_t_' . $Key . '_' . $ArrI . '" value="' . (!empty($TieBreak[$ArrI]) ? DecodeFromLetter($TieBreak[$ArrI]):'') . '" onchange="SendToServer(this);" '.($ActivePhase==$CurPhase ? '' : 'disabled').'>';
                             }
 	                        $MyGrid[$Row][$Col].= '</div>';
                         }
-                        //$MyGrid[$Row][$Col] .= '<br/><input disabled="disabled" value="' . $MyRow->TfNotes . '" tabindex="' . ($TabIndex++) . '" name="d_N_' . $Key . '" id="d_N_' . $Key . '" onChange="SendToServer(this);">';
+                        //$MyGrid[$Row][$Col] .= '<br/><input '.($ActivePhase==$CurPhase ? '' : 'disabled').' value="' . $MyRow->TfNotes . '" tabindex="' . ($TabIndex++) . '" name="d_N_' . $Key . '" id="d_N_' . $Key . '" onChange="SendToServer(this);">';
                     } else {
                         $MyGrid[$Row][$Col] .= '&nbsp;';
                     }
@@ -319,7 +320,7 @@ if(!empty($_REQUEST['d_Event'])) {
             $Ultima = 0;
             $MiddleRows = 2;
             // righe di testa della fase
-            $Bottone = '<input type="button" name="CmdBlockPhase_0" id="CmdBlockPhase_0" value="' . get_text('CmdEnable') . '" onClick="BlockPhase(0)">';
+            $Bottone = '<input type="button" name="CmdBlockPhase_0" id="CmdBlockPhase_0" value="' . ($ActivePhase=='0' ? get_text('CmdDisable') : get_text('CmdEnable')) . '" onClick="BlockPhase(0)">';
             for ($i = 0; $i <= $HeadRows + 2; ++$i) {
                 $Txt = '';
                 if ($i == 1) {
@@ -354,12 +355,12 @@ if(!empty($_REQUEST['d_Event'])) {
                 // Codice Nazione (o bandiera)
                 $MyGrid[$Row][$Col] .= '<td nowrap class="Bottom Top wRight Left"><div id="idCty_' . $Key . '">' . (!is_null($MyRow->CoCode) ? $MyRow->CoCode : '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;') . '</div></td>';
                 // Punteggio
-                $MyGrid[$Row][$Col] .= '<td nowrap class="Bottom Top Right Left TextRight ph-0"><input type="text"  class="disabled" tabindex="' . ($TabIndex++) . '" size="3" name="d_S_' . $Key . '" id="d_S_' . $Key . '" value="' . $MyRow->Score . '" onchange="SendToServer(this)" disabled></td>';
+                $MyGrid[$Row][$Col] .= '<td nowrap class="Bottom Top Right Left TextRight ph-0"><input type="text"  class="'.($ActivePhase=='0' ? '' : 'disabled').'" tabindex="' . ($TabIndex++) . '" size="3" name="d_S_' . $Key . '" id="d_S_' . $Key . '" value="' . $MyRow->Score . '" onchange="SendToServer(this)" '.($ActivePhase=='0' ? '' : 'disabled').'></td>';
                 // tie
                 $MyGrid[$Row][$Col] .= '<td nowrap class="Center ph-0">';
 
                 if (isset($_REQUEST['d_Tie']) && $_REQUEST['d_Tie'] == 1) {
-                    $MyGrid[$Row][$Col] .= '<select event="M'.$_REQUEST['d_Event'].'" team="1" phase="'.$MyRow->GrPhase.'" class="disabled mr-2" tabindex="' . ($TabIndex++) . '" name="d_T_' . $Key . '" id="d_T_' . $Key . '" onChange="SendToServer(this);" disabled>';
+                    $MyGrid[$Row][$Col] .= '<select event="M'.$_REQUEST['d_Event'].'" team="1" phase="'.$MyRow->GrPhase.'" class="'.($ActivePhase=='0' ? '' : 'disabled').' mr-2" tabindex="' . ($TabIndex++) . '" name="d_T_' . $Key . '" id="d_T_' . $Key . '" onChange="SendToServer(this);" '.($ActivePhase=='0' ? '' : 'disabled').'>';
                     $MyGrid[$Row][$Col] .= '<option value="0"' . ($MyRow->TfTie == 0 ? ' selected' : '') . '>' . get_text('NoTie', 'Tournament') . '</option>';
                     $MyGrid[$Row][$Col] .= '<option value="1"' . ($MyRow->TfTie == 1 ? ' selected' : '') . '>' . get_text('TieWinner', 'Tournament') . '</option>';
                     $MyGrid[$Row][$Col] .= '<option value="2"' . ($MyRow->TfTie == 2 ? ' selected' : '') . '>' . get_text('Bye') . '</option>';
@@ -367,7 +368,7 @@ if(!empty($_REQUEST['d_Event'])) {
 		                $MyGrid[$Row][$Col].= '<option value="'.($irm->IrmShowRank ? 'irm-'.$irm->IrmId : 'man').'"' . ($MyRow->TfIrmType==$irm->IrmId ? ' selected' : '') . '>' . $irm->IrmType . '</option>' . "\n";
 	                }
                     $MyGrid[$Row][$Col] .= '</select>';
-	                $MyGrid[$Row][$Col] .= '<input disabled type="checkbox" class="disabled" name="d_cl_' . $Key . '" id="d_cl_' . $Key . '" '.($MyRow->TfTbClosest ? 'checked="checked"' : '').' onclick="SendToServer(this);">&nbsp;'.get_text('ClosestShort', 'Tournament');
+	                $MyGrid[$Row][$Col] .= '<input '.($ActivePhase=='0' ? '' : 'disabled').' type="checkbox" class="'.($ActivePhase=='0' ? '' : 'disabled').'" name="d_cl_' . $Key . '" id="d_cl_' . $Key . '" '.($MyRow->TfTbClosest ? 'checked="checked"' : '').' onclick="SendToServer(this);">&nbsp;'.get_text('ClosestShort', 'Tournament');
 	                $MyGrid[$Row][$Col].= '<br/>';
 
                     $TieBreak = str_pad($MyRow->TfTiebreak, $obj->so, ' ', STR_PAD_RIGHT);
@@ -375,11 +376,11 @@ if(!empty($_REQUEST['d_Event'])) {
                         $MyGrid[$Row][$Col] .= '<div>';
                         for ($i = 0; $i < $obj->so; ++$i) {
                             $ArrI = $i+($pSo*$obj->so);
-                            $MyGrid[$Row][$Col] .= '<input  class="disabled" tabindex="' . ($TabIndex++) . '" type="text" size="1" maxlength="3" name="d_t_' . $Key . '_' . $ArrI . '" id="d_t_' . $Key . '_' . $ArrI . '" value="' . (!empty($TieBreak[$ArrI]) ? DecodeFromLetter($TieBreak[$ArrI]):'') . '" onchange="SendToServer(this);" disabled>';
+                            $MyGrid[$Row][$Col] .= '<input  class="'.($ActivePhase=='0' ? '' : 'disabled').'" tabindex="' . ($TabIndex++) . '" type="text" size="1" maxlength="3" name="d_t_' . $Key . '_' . $ArrI . '" id="d_t_' . $Key . '_' . $ArrI . '" value="' . (!empty($TieBreak[$ArrI]) ? DecodeFromLetter($TieBreak[$ArrI]):'') . '" onchange="SendToServer(this);" '.($ActivePhase=='0' ? '' : 'disabled').'>';
                         }
                         $MyGrid[$Row][$Col] .= '</div>';
                     }
-                    //$MyGrid[$Row][$Col] .= '<br/><input disabled="disabled" value="' . $MyRow->TfNotes . '" tabindex="' . ($TabIndex++) . '" name="d_N_' . $Key . '" id="d_N_' . $Key . '" onChange="SendToServer(this);">';
+                    //$MyGrid[$Row][$Col] .= '<br/><input '.($ActivePhase=='0' ? '' : 'disabled').' value="' . $MyRow->TfNotes . '" tabindex="' . ($TabIndex++) . '" name="d_N_' . $Key . '" id="d_N_' . $Key . '" onChange="SendToServer(this);">';
                 } else {
                     $MyGrid[$Row][$Col] .= '&nbsp;';
                 }

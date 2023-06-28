@@ -26,9 +26,9 @@ $Cols=0;
 $SesCols=array('Q'=>0,'E'=>0,'I'=>0,'T'=>0);
 $Headers=array();
 while($r=safe_fetch($q)) {
-	$Sessions[$r->SesType][$r->Description][$r->Distance]=$r;
-	$Cols=max($Cols, count($Sessions[$r->SesType][$r->Description]));
-	$SesCols[$r->SesType]=max($SesCols[$r->SesType], count($Sessions[$r->SesType][$r->Description]));
+	$Sessions[$r->SesType][($r->SesType == 'Q' ? $r->Order2 . '. ' : '') . $r->Description][$r->Distance]=$r;
+	$Cols=max($Cols, count($Sessions[$r->SesType][($r->SesType == 'Q' ? $r->Order2 . '. ' : '') . $r->Description]));
+	$SesCols[$r->SesType]=max($SesCols[$r->SesType], count($Sessions[$r->SesType][($r->SesType == 'Q' ? $r->Order2 . '. ' : '') . $r->Description]));
 }
 
 foreach($Sessions as $Type => $Events) {
@@ -75,7 +75,7 @@ foreach($Sessions as $Type => $Events) {
 			if($SesCols[$Type]<$Cols) {
 				echo '<th class="Title" colspan="'.($Cols-$SesCols[$Type]).'"></th>';
 			}
-			echo '<th class="Title" style="padding:0.5rem;"><i class="fa fa-lg fa-file-pdf-o" onclick="window.open(\'PdfCheck.php\')"></i></th>';
+			echo '<th class="Title" style="padding:0.5rem;"><i class="far fa-lg fa-file-pdf" onclick="window.open(\'PdfCheck.php\')"></i></th>';
 			echo '</tr>';
 		}
 		echo '<tr><th class="NoWrap Right">'.$Event.'</th>';
@@ -93,7 +93,7 @@ foreach($Sessions as $Type => $Events) {
 		if($SesCols[$Type]<$Cols) {
 			echo '<td colspan="'.($Cols-$SesCols[$Type]).'"></td>';
 		}
-		echo '<td class="Center"><i class="fa fa-2x fa-file-pdf-o" onclick="window.open(\'PdfCheck.php?ses='.$item->LockKey.'\')"></i></td>';
+		echo '<td class="Center"><i class="far fa-2x fa-file-pdf" onclick="window.open(\'PdfCheck.php?ses='.$item->LockKey.'\')"></i></td>';
 		echo '</tr>';
 		$First=false;
 	}

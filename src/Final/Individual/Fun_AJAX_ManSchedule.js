@@ -32,7 +32,6 @@ function WriteSchedule(Field)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Error: ' + e.toString();
 		}
 	}
 }
@@ -51,12 +50,10 @@ function WriteSchedule_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Error: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Error: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -116,7 +113,6 @@ function WriteScheduleAll(Event,Phase)
 				if(document.getElementById('d_FSScheduledLenAll_' + Event + '_' + Phase))
 					QueryString += '&d_FSScheduledLenAll=' + document.getElementById('d_FSScheduledLenAll_' + Event + '_' + Phase).value
 				XMLHttp.open("GET","WriteDateTimeAll.php" + QueryString,true);
-				//document.getElementById('idOutput').innerHTML="WriteDateTimeAll.php" + QueryString;
 				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 				XMLHttp.onreadystatechange=WriteScheduleAll_StateChange;
 				XMLHttp.send(null);
@@ -124,7 +120,6 @@ function WriteScheduleAll(Event,Phase)
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Error: ' + e.toString();
 		}
 	}
 }
@@ -148,7 +143,6 @@ function WriteScheduleAll_StateChange()
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Error: ' +XMLHttp.statusText;
 		}
 	}
 }

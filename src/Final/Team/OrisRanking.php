@@ -11,16 +11,16 @@ $EventRequested=(!empty($EventRequested) ? $EventRequested : '');
 
 $PdfData=getRankingTeams($EventRequested, true);
 
-if(!isset($isCompleteResultBook))
-	$pdf = new OrisPDF($PdfData->Code, $PdfData->Description);
-else
-	$pdf->setOrisCode('', $PdfData->Description);
+if(!isset($isCompleteResultBook)) {
+    $pdf = new OrisPDF($PdfData->Code, $PdfData->Description);
+} else {
+    $pdf->setOrisCode('', $PdfData->Description);
+}
 
 require_once(PdfChunkLoader('OrisRankTeam.inc.php'));
 
 
-if(!isset($isCompleteResultBook))
-{
+if(!isset($isCompleteResultBook)) {
 	if(isset($_REQUEST['ToFitarco']))
 	{
 		$Dest='D';
@@ -31,4 +31,3 @@ if(!isset($isCompleteResultBook))
 	else
 		$pdf->Output();
 }
-?>

@@ -80,10 +80,11 @@
 						$Dist=substr($Cosa,3,1);
 						$Select
 							= "SELECT QuD" . $Dist . "Score AS Score,QuD" . $Dist . "Gold AS Gold,QuD" . $Dist . "Xnine AS Xnine,"
-							. "ToGoldsChars AS TtGolds,ToXNineChars AS TtXNine "
+							. "IF(TfGoldsChars".$Dist."='',IF(TfGoldsChars='',ToGoldsChars,TfGoldsChars),TfGoldsChars".$Dist.") AS TtGolds, IF(TfXNineChars".$Dist."='',IF(TfXNineChars='',ToXNineChars,TfXNineChars),TfXNineChars".$Dist.") AS TtXNine "
 							. "FROM Qualifications "
 							. "INNER JOIN Entries ON QuId=EnId  "
 							. "INNER JOIN Tournament ON EnTournament=ToId "
+							. "LEFT JOIN TargetFaces ON EnTournament=TfTournament and EnTargetFace=TfId "
 							. "WHERE QuId=" . StrSafe_DB($Atleta) . " AND ToId=" . StrSafe_DB($_SESSION['TourId']) . " ";
 
 						$RsGX=safe_r_sql($Select);

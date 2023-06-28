@@ -5,8 +5,9 @@ $(function() {
 
 function CheckIRM(Field) {
 	if(Field.value=='man') {
+		var Opener=window;
 		var IrmWin=window.open(ROOT_DIR+'Partecipants/ManIrmStatus.php?team='+$(Field).attr('team')+'&event='+$(Field).attr('event')+'&phase='+$(Field).attr('phase'));
-		$(IrmWin).bind('beforeunload', function() {window.location.reload();});
+		$(IrmWin).on('unload', function() {Opener.location.reload();});
 		return;
 	} else if(Field.value.substr(0,4)=='irm-') {
 		// move the opponent's Tie selector to "Bye" if it is set to 0

@@ -6,17 +6,17 @@ The name of this function in the other modules MUST BE
 DrawQRCode_[Api Directory]
 
 */
-function DrawQRCode_ISK_Lite(&$pdf, $X, $Y, $Session=0, $Distance=0, $Target='', $Phase='', $Stage='Q', $Individual=false, $DistName='') {
-	DrawQRCode_ISK($pdf, $X, $Y, $Session, $Distance, $Target, $Phase, $Stage, $Individual, $DistName);
+function DrawQRCode_ISK_Lite(&$pdf, $X, $Y, $Session=0, $Distance=0, $Target='', $Phase='', $Stage='Q', $Individual=false, $DistName='', $small=false) {
+	DrawQRCode_ISK($pdf, $X, $Y, $Session, $Distance, $Target, $Phase, $Stage, $Individual, $DistName, $small);
 }
 
-function DrawQRCode_ISK(TCPDF &$pdf, $X, $Y, $Session=0, $Distance=0, $Target='', $Phase='', $Stage='Q', $Individual=false, $DistName='') {
+function DrawQRCode_ISK(TCPDF &$pdf, $X, $Y, $Session=0, $Distance=0, $Target='', $Phase='', $Stage='Q', $Individual=false, $DistName='', $small=false) {
 	global $CFG;
 	static 	$OptsU, $OptsC;
 
 
-	$Width=25;
-	$Height=25;
+	$Width = ($small ? 15 : 25);
+	$Height = ($small ? 15 : 25);
 	if(!$X) {
 		$X=($pdf->getPageWidth()-$Width)/2;
 	}
@@ -61,7 +61,7 @@ function DrawQRCode_ISK(TCPDF &$pdf, $X, $Y, $Session=0, $Distance=0, $Target=''
 	if($Individual and $Stage=='Q' and $Distance) {
 		// draws a white background square
 		$pdf->Rect($X, $Y, $Width, $Height, 'FD', array('all'=>array('color'=>100)), array(255));
-		$pdf->Image('@'.$img, $X+2.5, $Y+2.5, $Width-5, $Height-5, 'PNG');
+		$pdf->Image('@'.$img, $X+($small? 1 : 2.5), $Y+($small? 1 : 2.5), $Width-($small? 2 : 5), $Height-($small? 2 : 5), 'PNG');
 
 		$pdf->SetFont($pdf->FontStd,'',8);
 		$pdf->StartTransform();
@@ -76,7 +76,7 @@ function DrawQRCode_ISK(TCPDF &$pdf, $X, $Y, $Session=0, $Distance=0, $Target=''
 	} else {
 		// draws a white background square
 		$pdf->Rect($X, $Y, $Width, $Height, 'FD', array('all'=>array('color'=>100)), array(255));
-		$pdf->Image('@'.$img, $X+2.5, $Y+2.5, $Width-5, $Height-5, 'PNG');
+		$pdf->Image('@'.$img, $X+($small? 1 : 2.5), $Y+($small? 1 : 2.5), $Width-($small? 2 : 5), $Height-($small? 2 : 5), 'PNG');
 	}
 
 	$pdf->setXY($Oldx, $Oldy);

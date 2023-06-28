@@ -1,0 +1,65 @@
+
+
+select,input {margin:0 0.5rem;}
+
+table.Tabella#MyTable {width:auto;margin:auto;box-sizing: border-box;}
+
+.navtab {
+    background-color: transparent!important;
+    padding-bottom:0;
+    text-align:left!important;
+    border-bottom:1px solid #004488;
+    padding:1em 0 0 1em!important;
+}
+
+.tab {
+    display: inline-block;
+    border: 1px solid #004488;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom:1px solid #F0F8FF;
+    padding:0.25em 0.5em;
+    background-color: #F0F8FF;
+    color:#004488;
+}
+
+.tab.active {
+    background-color: #004488;
+    border-bottom:1px solid #004488;
+    color:#F0F8FF;
+}
+
+.w-3ch {width:3ch;}
+.w-5ch {width:5ch;}
+.w-10ch {width:10ch;}
+.w-15ch {width:15ch;}
+
+.em-5 {width:5em;}
+.danger {background-color: #ec9b9b;}
+.success {background-color: #b9ec9b;}
+.warning {background-color: #ece89b;}
+
+.round-row th, .round-row td {
+    padding:0!important;
+}
+
+.opp-badge1, .opp-badge2 {font-size: 10px;display:inline-block;width:2em;height:2em;border-radius: 1em;border:solid 1px #bbb;text-align:center;color:black;background-color:#D0D0D0;line-height: 2em;font-weight: bold; margin:0 0.25em;}
+.opp-badge2.active {background-color:#00A000;border-color:#00A000; color:white}
+.opp-badge1.active {background-color: #00FF00;border-color:#00A000; color:black}
+.opp-multimatch {font-size: 10px;display:inline-block;width:2em;height:2em;border-radius: 1.1em;border:solid 1px #00A0F0;text-align:center;color:#bbb;background-color:#fff;line-height: 2em;font-weight: bold;margin:0 0.25em;}
+.opp-multimatch::before {content:"1x"}
+.opp-multimatch.active {background-color:#00A0F0;color:white;}
+.opp-multimatch.active::before {content:"2x"}
+
+[name="set2all"] {
+    max-width: 40ch;
+}
+
+.Center > table[group][round] {margin:auto;}
+
+.SoCell {
+    display: flex;
+    align-items: center;
+}
+.SoCell > div > div {padding:0.1em 0;}
+.SoCell span {margin-right:0.5em;white-space: nowrap;}

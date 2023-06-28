@@ -131,6 +131,7 @@ $lang['PrintBackNo']='Tulosta selkänumerot';
 $lang['PrintHasPlastic']='Vain kortinpidikkeelliset kortit';
 $lang['PrintSpecificBadges']='Tulosta Automaattiparitetut Kortit';
 $lang['Q-Badge']='Alkukilpailun Kilpailijanumero';
+$lang['QRScore']='Alkukilpailun tulos';
 $lang['RandomImage']='Arvottu Kuva';
 $lang['Ranking']='Alkukilpailun Sijoitus';
 $lang['ReadSeparator']='Lue erottelija';

@@ -118,7 +118,6 @@ $lang['Score']='Wertung';
 $lang['Scorecard']='Standblatt';
 $lang['ScoredPoints']='Gewertete Punkte';
 $lang['ScoreHelp']='Hilfe';
-$lang['ScoreHelpDesc']='Dieser Bildschirm ermöglicht die Wertung der geschossenen Pfeile. Informationen zur aktuellen Distanz, dem Scheibentyp und Informationen zum Athleten werden ebenfalls angezeigt. Gibt die Pfeilwerte über die nummerierten Buttons ein.';
 $lang['ScoringEntry']='Punkte Eingabe';
 $lang['SelDist']='Bitte wähle die Distanz und versuche es erneut';
 $lang['SelTgtNum']='Bitte wähle die Scheibennummer und versuche es erneut';

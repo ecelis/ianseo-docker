@@ -1,4 +1,6 @@
 <?php
-$lang['Aggiorna']='새로 고치기, 갱신';
+$lang['Aggiorna']='갱신 / 업데이트';
+$lang['CA-B']='베어보우';
+$lang['CA-C']='컴파운드';
 $lang['OK']='확인';
 ?>

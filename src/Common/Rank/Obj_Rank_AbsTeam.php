@@ -191,6 +191,26 @@ require_once('Common/Lib/ArrTargets.inc.php');
 				}
 			}
 
+			$EnFilter='';
+			if (!empty($this->opts['encode'])) {
+				$f='';
+				if (is_array($this->opts['encode'])) {
+					$tmp=array();
+					foreach ($this->opts['encode'] as $e) {
+						$tmp[]=StrSafe_DB($e);
+					}
+					sort($tmp);
+					$f="EnCode IN (" . implode(',',$tmp) . ")";
+				} else {
+					$f="EnCode = " . StrSafe_DB($this->opts['encode']) . " ";
+				}
+				$EnFilter="INNER JOIN (".
+					"select TcCoId, TcSubTeam, TcEvent, TcTournament, TcFinEvent
+					from TeamComponent 
+					inner join Entries on EnId=TcId and $f
+					where TcTournament={$this->tournament}
+					) tce ON Teams.TeCoId=tce.TcCoId AND Teams.TeSubTeam=tce.TcSubTeam AND Teams.TeEvent=tce.TcEvent AND Teams.TeTournament=tce.TcTournament AND Teams.TeFinEvent=tce.TcFinEvent";
+			}
 
 			$q="
 				SELECT
@@ -198,9 +218,9 @@ require_once('Common/Lib/ArrTargets.inc.php');
 					EvMaxTeamPerson, EvProgr, EvFinalFirstPhase,EvOdfCode, QuConfirm, EvMixedTeam, 
 					ClDescription, DivDescription,
 					EnId,EnCode,ifnull(EdExtra,EnCode) as LocalBib, EnSex,EnNameOrder,EnFirstName,upper(EnFirstName) EnFirstNameUpper,EnName,EnClass,EnDivision,EnAgeClass,EnSubClass,EnCoCode,EnDob,
-					EvNumQualified AS QualifiedNo, EvFirstQualified, EvQualPrintHead,
+					coalesce(RrLevGroups*RrLevGroupArchers, EvNumQualified) AS QualifiedNo, EvFirstQualified, EvQualPrintHead,
 					SUBSTRING(QuTargetNo,1,1) AS Session, SUBSTRING(QuTargetNo,2) AS TargetNo,
-					TeHits AS Arrows_Shot, QuScore, QuGold, QuXnine, TeScore,TeRank, TeGold, TeXnine, ToGolds, ToXNine,TeHits,
+					TeHits AS Arrows_Shot, QuScore, QuGold, QuXnine, TeScore,TeRank, TeGold, TeXnine, IF(EvGolds!='',EvGolds,ToGolds) AS GoldLabel, IF(EvXNine!='',EvXNine,ToXNine) AS XNineLabel, TeHits,
 				    concat(rtrim(QuD1Arrowstring),rtrim(QuD2Arrowstring),rtrim(QuD3Arrowstring),rtrim(QuD4Arrowstring),rtrim(QuD5Arrowstring),rtrim(QuD6Arrowstring),rtrim(QuD7Arrowstring),rtrim(QuD8Arrowstring)) as DetailedArrows,
 					TeRank, EvRunning, IF(EvRunning=1,IFNULL(ROUND(TeScore/TeHits,3),0),0) as RunningScore,
 					ABS(TeSO) AS RankBeforeSO,
@@ -230,6 +250,8 @@ require_once('Common/Lib/ArrTargets.inc.php');
 					INNER JOIN Qualifications ON EnId=QuId
 					INNER JOIN Divisions ON EnDivision=DivId AND EnTournament=DivTournament
 					INNER JOIN Classes ON EnClass=ClId AND EnTournament=ClTournament
+				    {$EnFilter}
+					left join RoundRobinLevel on RrLevTournament=ToId and RrLevTeam=EvTeamEvent and RrLevEvent=EvCode and RrLevLevel=1 and EvElimType=5
 				    left join ExtraData on EdId=EnId and EdType='Z'
 				/* Contatori per CT (gialli)*/
 					LEFT JOIN (
@@ -239,13 +261,9 @@ require_once('Common/Lib/ArrTargets.inc.php');
 						WHERE TeTournament = {$this->tournament} AND TeFinEvent=1 AND TeSO!=0 {$filter}
 						GROUP BY TeTournament, TeFinEvent, TeEvent, TeSO
 						) AS sqY
-					ON sqY.sqyRank=TeSO AND sqY.sqyEvent=Teams.TeEvent AND Teams.TeFinEvent=1 AND sqY.sqyTournament=Teams.TeTournament
-					LEFT JOIN
-						TournamentDistances
-					ON ToType=TdType AND TdTournament=ToId AND TeEvent like TdClasses
-					LEFT JOIN
-						Flags
-						ON FlIocCode='FITA' and FlCode=CoCode and FlTournament=ToId
+						ON sqY.sqyRank=TeSO AND sqY.sqyEvent=Teams.TeEvent AND Teams.TeFinEvent=1 AND sqY.sqyTournament=Teams.TeTournament
+					LEFT JOIN TournamentDistances ON ToType=TdType AND TdTournament=ToId AND TeEvent like TdClasses
+					LEFT JOIN Flags ON FlIocCode='FITA' and FlCode=CoCode and FlTournament=ToId
 					left join DistanceInformation on EnTournament=DiTournament and DiSession=1 and DiDistance=1 and DiType='Q'
 					LEFT JOIN DocumentVersions DV1 on EvTournament=DV1.DvTournament AND DV1.DvFile = 'QUAL-TEAM' and DV1.DvEvent=''
 					LEFT JOIN DocumentVersions DV2 on EvTournament=DV2.DvTournament AND DV2.DvFile = 'QUAL-TEAM' and DV2.DvEvent=EvCode
@@ -317,10 +335,11 @@ require_once('Common/Lib/ArrTargets.inc.php');
 							'rankBeforeSO'	=> '',
 							'score' 		=> ($row->EvRunning==1 ? get_text('ArrowAverage') : get_text('TotaleScore')),
 							'completeScore' => get_text('TotalShort','Tournament'),
-							'gold' 			=> $row->ToGolds,
-							'xnine' 		=> $row->ToXNine,
+							'gold' 			=> $row->GoldLabel,
+							'xnine' 		=> $row->XNineLabel,
 							'hits'			=> get_text('Arrows','Tournament'),
 							'tiebreak' 		=> get_text('TieArrows'),
+							'tiebreakClosest' => get_text('Close2Center', 'Tournament'),
 							'tie' 			=> get_text('Tie'),
 							'ct' 			=> get_text('CoinTossShort','Tournament'),
 							'so' 			=> get_text('ShotOffShort','Tournament')
@@ -379,14 +398,6 @@ require_once('Common/Lib/ArrTargets.inc.php');
 							$section['meta']['hasShootOff']=max($section['meta']['hasShootOff'], ceil($countArr/$row->EvMaxTeamPerson));
 						}
 
-						if($row->TeRank==127) {
-                            $tmpRank = 'DSQ';
-                        } else if ($row->TeRank==126) {
-                            $tmpRank = 'DNS';
-                        } else {
-                            $tmpRank= $row->TeRank;
-                        }
-
 						$item=array(
 							'id' 			=> $row->CoId,
 							'countryCode' 	=> $row->CoCode,
@@ -395,7 +406,7 @@ require_once('Common/Lib/ArrTargets.inc.php');
 							'countryName' 	=> $row->CoName,
 							'subteam' 		=> $row->TeSubTeam,
 							'athletes'		=> array(),
-							'rank'			=> $row->IrmShowRank ? $tmpRank : '',
+							'rank'			=> $row->IrmShowRank ? $row->TeRank : '',
 							'rankBeforeSO'	=> $row->RankBeforeSO,
 							'score' 		=> $row->IrmShowRank ? ($row->EvRunning==1 ? $row->RunningScore : $row->TeScore) : $row->IrmType,
 							'completeScore' => $row->TeScore,

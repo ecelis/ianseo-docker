@@ -10,8 +10,8 @@ require_once('Common/Lib/Fun_Phases.inc.php');
  * SS - Start of the end (1 beep)
  * AT - Every Second, with info about timing, side and what we are shooting (Individual Matches, Team Matches - means hold time or reset time on athlete change)
  * AE - End of the end (3 beeps)
- * 
- * Data: 
+ *
+ * Data:
  * Msg  - can be one among ST,AB,SS,AT,AE
  * Side - can be L (left), R (right), <empty> (undefined) for not alternate shooting
  * Time - time in seconds and side identified by Side
@@ -24,7 +24,7 @@ require_once('Common/Lib/Fun_Phases.inc.php');
  * SS - Msg, Side, End
  * AT - Msg, Side, Time, Color, Beep
  * AE - Msg
- *  
+ *
  */
 
 $TourId = 0;
@@ -60,7 +60,7 @@ if(isset($_REQUEST['Time']) && preg_match("/^[0-9]+$/", $_REQUEST['Time'])) {
 }
 
 $color = 'red';
-if(isset($_REQUEST['Color']) && preg_match("/^(red|yellow|green)+$/i", $_REQUEST['Color'])) {
+if(isset($_REQUEST['Color']) && preg_match("/^(red|yellow|green|redblink)+$/i", $_REQUEST['Color'])) {
 	$color = mb_strtolower($_REQUEST['Color']);
 }
 
@@ -69,13 +69,18 @@ if(isset($_REQUEST['Beep']) && preg_match("/^(-1)|(-3)|[01235]$/", $_REQUEST['Be
 	$beep = intval($_REQUEST['Beep']);
 }
 
+$seq = '';
+if(isset($_REQUEST['Seq']) AND !empty($_REQUEST['Seq'])) {
+    $seq = $_REQUEST['Seq'];
+}
+
 
 $json_array=array("Error"=>1, "Info"=>"");
 
 switch ($msgType) {
 	case 'ST':
 		if($side==0) {
-			continue;
+			break;
             $json_array["Error"]=0;
 		} else if($end != 0 OR $end == 'T'){
 		    $json_array["Info"] = " Shooting First " . ($side==1 ? "Left":"Right") . " - End " . (is_numeric($end) ? $end : "S.O.") ;
@@ -94,13 +99,12 @@ switch ($msgType) {
 		$json_array["Error"]=0;
 		break;
 	case 'AT':
-		if($side==0) {
-			runJack("Timing", $TourId, array("Time"=>$time ,"Side"=>"Left", "Color"=>$color, "Beeps"=>$beep, "TourId"=>$TourId));
-			runJack("Timing", $TourId, array("Time"=>$time ,"Side"=>"Right", "Color"=>$color, "Beeps"=>$beep, "TourId"=>$TourId));
+		if(intval($side ?? 0)==0) {
+			runJack("Timing", $TourId, array("Time"=>$time ,"Side"=>"Both", "Color"=>$color, "Beeps"=>$beep, "Sequence"=>$seq, "TourId"=>$TourId));
 			$json_array["Info"] = "Timing, Both sides to {$time} seconds, {$beep} beeps";
 		} else {
 			$tmpSide = ($side==1 ? "Left":"Right");
-			runJack("Timing", $TourId, array("Time"=>$time ,"Side"=>$tmpSide, "Color"=>$color, "Beeps"=>$beep, "TourId"=>$TourId));
+			runJack("Timing", $TourId, array("Time"=>$time ,"Side"=>$tmpSide, "Color"=>$color, "Beeps"=>$beep, "Sequence"=>$seq, "TourId"=>$TourId));
 			$json_array["Info"] = "Timing, {$tmpSide} to {$time} seconds, {$beep} beeps";
 		}
 		$json_array["Error"]=0;
