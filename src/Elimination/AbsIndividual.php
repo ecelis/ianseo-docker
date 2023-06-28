@@ -241,11 +241,12 @@ if (isset($_REQUEST['R']) AND !IsBlocked(BIT_BLOCK_ELIM)) {
                     "FROM Events INNER JOIN Grids ON GrMatchNo in (" . implode(',', $GridMatchNos) . ") " .
                     "WHERE EvCode = " . StrSafe_DB($EventCode) . " AND EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=0");
                 // insert the people...
-                $Sql = "SELECT IndId, IndRank, IndEvent, IndTournament " .
-                    "FROM Individuals ".
-                    "INNER JOIN Events ON IndTournament=EvTournament AND IndEvent=EvCode AND EvTeamEvent=0 ".
-                    "WHERE IndRank between ".$FirstQualified." and ".($FirstQualified+$NumQualified-1)." and IndTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvCode = " . StrSafe_DB($EventCode) .
-                    " ORDER BY IndRank ASC ";
+                $Sql = "SELECT IndId, IndRank, IndEvent, IndTournament
+                	FROM Individuals
+                	INNER JOIN Entries ON EnId=IndId AND EnIndFEvent=1
+                	INNER JOIN Events ON IndTournament=EvTournament AND IndEvent=EvCode AND EvTeamEvent=0
+                	WHERE IndRank between ".$FirstQualified." and ".($FirstQualified+$NumQualified-1)." and IndTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvCode = " . StrSafe_DB($EventCode) ."
+                	ORDER BY IndRank ASC ";
                 $q = safe_r_sql($Sql);
                 while ($r = safe_fetch($q)) {
                     if (!empty($GridPositions[$r->IndRank])) {
@@ -317,11 +318,12 @@ if (isset($_REQUEST['R']) AND !IsBlocked(BIT_BLOCK_ELIM)) {
                 WHERE EvCode = " . StrSafe_DB($EventCode) . " AND EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=0");
 
             // insert the people...
-            $Sql = "SELECT IndId, IndRank, IndEvent, IndTournament " .
-                "FROM Individuals ".
-                "INNER JOIN Events ON IndTournament=EvTournament AND IndEvent=EvCode AND EvTeamEvent=0 ".
-                "WHERE IndRank between ".$FirstQualified." and ".($FirstQualified+$NumQualified-1)." and IndTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvCode = " . StrSafe_DB($EventCode) .
-                " ORDER BY IndRank ASC ";
+            $Sql = "SELECT IndId, IndRank, IndEvent, IndTournament
+            	FROM Individuals
+                INNER JOIN Entries ON EnId=IndId AND EnIndFEvent=1
+            	INNER JOIN Events ON IndTournament=EvTournament AND IndEvent=EvCode AND EvTeamEvent=0
+            	WHERE IndRank between ".$FirstQualified." and ".($FirstQualified+$NumQualified-1)." and IndTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvCode = " . StrSafe_DB($EventCode) . "
+            	ORDER BY IndRank ASC ";
             if($ElimRequest==2 AND $rowEv->EvElimType==2) {
                 $Sql = "SELECT ElId IndId, ElRank IndRank, ElEventCode IndEvent, ElTournament IndTournament " .
                     "FROM Eliminations ".

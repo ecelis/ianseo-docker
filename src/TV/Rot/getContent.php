@@ -15,7 +15,9 @@ $pagine=array();
 $q=safe_r_sql("select TVRules.*, ToPrintLang from TVRules inner join Tournament on TVRTournament=ToId where TVRTournament=$TourId order by TVRId=$Rule desc, TVRId limit 1");
 if(!($RULE=safe_fetch($q))) die('no rules... create one!');
 
-@define('PRINTLANG', $RULE->ToPrintLang);
+if(!defined('PRINTLANG')) {
+	@define('PRINTLANG', $RULE->ToPrintLang);
+}
 
 // Estraggo gli spezzoni di regola
 $Select = "SELECT * FROM TVSequence "
@@ -147,6 +149,7 @@ function create_Comp_rot($TVsettings, $RULE) {
 		case 'ELIM':
 		case 'FIN':
 		case 'FINT':
+		case 'RRI':
 		case 'BLABS':
 		case 'RANK':
 		case 'RANKT':

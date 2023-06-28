@@ -110,8 +110,8 @@ div.blocco#scrolltopEnd {margin:0}
 .Link {font-weight:bold; color: #666666; text-decoration:none;}
 .Link:hover {text-decoration:underline;}
 
-div#content {height:<?php echo $_SESSION['WINHEIGHT']-6 ?>px; overflow:hidden; }
-div.MM, div.MM0, table.MM { height:<?php echo $_SESSION['WINHEIGHT']-6 ?>px; overflow:hidden; }
+div#content {height:<?php echo intval($_SESSION['WINHEIGHT'])-6 ?>px; overflow:hidden; }
+div.MM, div.MM0, table.MM { height:<?php echo intval($_SESSION['WINHEIGHT'])-6 ?>px; overflow:hidden; }
 table.DB {}
 
 table tr.bg, tr.bg td {background-color:#dddddd; height:10px; font-size:5px; }

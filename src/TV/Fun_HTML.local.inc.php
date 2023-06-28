@@ -44,6 +44,7 @@
 			'ELIM'  => get_text('Elimination'),//'Elimination_Ind_rot.php'),
 			'FIN'   => get_text('I-Session', 'Tournament'),//'Final_Ind_rot.php'),
 			'FINT'  => get_text('T-Session', 'Tournament'),//'Final_Team_rot.php'),
+			'RRI'  => get_text('R-Session', 'Tournament').' '.get_text('Individual'),//'Final_Team_rot.php'),
 			'MEDL'  => get_text('MedalList'),//'MedalList_rot.php')
 			'RAND'  => get_text('AthleteSummary','Tournament'),//'Session_rot.php')
 			'RANK'  => get_text('FinalRankInd','Tournament'),//'Session_rot.php')

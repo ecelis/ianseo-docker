@@ -30,8 +30,13 @@ function getHomeURL() {
 function StrSafe_DB($TheString, $RemoveQuotes=false) {
 	global $WRIT_CON, $ERROR_REPORT;
 	if(!$WRIT_CON) $WRIT_CON=safe_w_con();
-	$ret='';
-	if(is_array($TheString)) {
+    if(is_null($TheString)) {
+        if($RemoveQuotes) {
+            return "";
+        } else {
+            return "''";
+        }
+    } else if(is_array($TheString)) {
 		$ret=array();
 		foreach($TheString as $st) {
 			$ret[]=StrSafe_DB($st, $RemoveQuotes);
@@ -76,12 +81,19 @@ function DelParameter($ParId) {
 function safe_w_con($error=false) {
 	global $ERROR_REPORT, $CFG, $Collations;
 	if($ERROR_REPORT) $GLOBALS['safe_SQL']['w_connect']++;
+    mysqli_report(MYSQLI_REPORT_OFF);
 	$a=mysqli_connect($CFG->W_HOST, $CFG->W_USER, $CFG->W_PASS);
 	if(!$a) {
+		$msg='';
+
+		if(php_uname('s')=='Windows NT') {
+			$msg='<div><b style="color:red">If MYSQL did not start in control panel, you can try repairing database <a href="./RepairXAMPP.php">clicking here</a></b></div>';
+		}
+
 		if($error) {
 			return 'CONNECTION_FAILED';
 		} else {
-			safe_error("Write Server not reachable");
+			safe_error($msg."Write Server not reachable");
 		}
 	}
 	$b=mysqli_select_db($a, $CFG->DB_NAME);
@@ -102,6 +114,7 @@ function safe_w_con($error=false) {
 function safe_r_con() {
 	global $ERROR_REPORT, $CFG;
 	if($ERROR_REPORT) $GLOBALS['safe_SQL']['r_connect']++;
+    mysqli_report(MYSQLI_REPORT_OFF);
 	$a=mysqli_connect($CFG->R_HOST, $CFG->R_USER, $CFG->R_PASS) or safe_error("Read Server not reachable");
 	mysqli_select_db($a, $CFG->DB_NAME) or safe_error(mysqli_error($a));
 	mysqli_set_charset($a, "utf8");
@@ -303,7 +316,7 @@ function CD_redirect($home='') {
 			}
 		} else {
 			$Scheme=$_SERVER["REQUEST_SCHEME"];
-			if(($_SERVER["REQUEST_SCHEME"]!='http' AND $_SERVER['SERVER_PORT']!=80) OR ($_SERVER["REQUEST_SCHEME"]!='https' AND $_SERVER['SERVER_PORT']!=443)) {
+			if(($_SERVER["REQUEST_SCHEME"]=='http' AND $_SERVER['SERVER_PORT']!=80) OR ($_SERVER["REQUEST_SCHEME"]=='https' AND $_SERVER['SERVER_PORT']!=443)) {
 			    $port=':'.$_SERVER['SERVER_PORT'];
 	        }
 		}

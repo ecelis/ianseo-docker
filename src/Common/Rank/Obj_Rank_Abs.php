@@ -1,5 +1,6 @@
 <?php
 	require_once('Common/Lib/ArrTargets.inc.php');
+	require_once('Common/Rank/Obj_Rank_Abs.php');
 /**
  * Obj_Rank_Abs
  * Implementa l'algoritmo di default per il calcolo della rank di qualificazione assoluta individuale
@@ -95,6 +96,7 @@
 	 *
 	 * @return mixed: false se non c'è filtro oppure la stringa da inserire nella where delle query
 	 */
+
 		protected function safeFilter()
 		{
 			$ret=array();
@@ -170,7 +172,19 @@
 			}
 
 			$EnFilter  = (empty($this->opts['enid']) ? '' : " AND EnId=" . intval($this->opts['enid'])) ;
+			$EnFilter .= (empty($this->opts['includeAll']) ? ' and (QuHits>0 or QuScore>0 or IndRank != 0)' : '') ;
 			$EnFilter .= (empty($this->opts['coid']) ? '' : " AND EnCountry=" . intval($this->opts['coid'])) ;
+			$EnFilter .= (empty($this->opts['subclass']) ? '' : " AND EnSubclass=" . StrSafe_DB($this->opts['subclass'])) ;
+			$EnFilter .= (empty($this->opts['country']) ? '' : " AND CoCode=" . StrSafe_DB($this->opts['country'])) ;
+			$EnFilter .= (empty($this->opts['encodeEvents']) ? '' : " AND concat_ws('|', EnCode, EvCode) IN (" . implode(',', StrSafe_DB($this->opts['encodeEvents'])) . ")");
+			if (!empty($this->opts['encode'])) {
+				if (is_array($this->opts['encode'])) {
+					$EnFilter.=" and EnCode IN (" . implode(',',StrSafe_DB($this->opts['encode'])) . ")";
+				} else {
+					$EnFilter=" and EnCode = " . StrSafe_DB($this->opts['encode']) . " ";
+				}
+			}
+
 
 			if (array_key_exists('cutRank',$this->opts)) {
 				if(is_numeric($this->opts['cutRank']) && $this->opts['cutRank']>0) {
@@ -208,17 +222,20 @@
 			}
 
 			$MyRank="Ind{$dd}Rank";
+			if($this->Flighted) {
+				$MyRank="if(EnSubClass, QuSubClassRank, $MyRank)";
+			}
 
 			$only4zero="";
 			if ($this->opts['dist']==0 && empty($this->opts['runningDist']))
 				$only4zero=", IndTiebreak, IndTbClosest, IndTbDecoded, (IndSO>0) as isSO, IFNULL(sqY.Quanti,1) AS `NumCT`,ABS(IndSO) AS RankBeforeSO ";
 
 			$q="
-				SELECT
-					EnId, EnCode, ifnull(EdExtra, EnCode) as LocalId, if(EnDob=0, '', EnDob) as BirthDate, EnOdfShortname, EnSex, EnNameOrder, upper(EnIocCode) EnIocCode, EnName AS Name, EnFirstName AS FirstName, upper(EnFirstName) AS FirstNameUpper, SUBSTRING(QuTargetNo,1,1) AS Session,
+				SELECT ".($this->Flighted ? "concat(EvCode,EnSubClass)" : "EvCode")." as EventKey,
+					EnId, EnCode, ifnull(EdExtra, EnCode) as LocalId, if(EnDob=0, '', EnDob) as BirthDate, EnOdfShortname, EnSex, EnNameOrder, upper(EnIocCode) EnIocCode, EnName AS Name, EnFirstName AS FirstName, upper(EnFirstName) AS FirstNameUpper, QuSession as Session, SesName,
 					SUBSTRING(QuTargetNo,2) AS TargetNo, FlContAssoc,
-					EvProgr, ToNumEnds,ToNumDist,ToMaxDistScore,
-					CoId, CoCode, CoName, CoMaCode, CoCaCode, EnClass, EnDivision,EnAgeClass,  EnSubClass,
+					EvProgr, ToNumEnds,ToNumDist,ToMaxDistScore, FdiDetails,
+					CoId, CoCode, CoName, CoMaCode, CoCaCode, EnClass, EnDivision,EnAgeClass,  EnSubClass,  ScDescription,
 					IFNULL(Td1,'.1.') as Td1, IFNULL(Td2,'.2.') as Td2, IFNULL(Td3,'.3.') as Td3, IFNULL(Td4,'.4.') as Td4, IFNULL(Td5,'.5.') as Td5, IFNULL(Td6,'.6.') as Td6, IFNULL(Td7,'.7.') as Td7, IFNULL(Td8,'.8.') as Td8,
 					QuD1Score, IndD1Rank, QuD2Score, IndD2Rank, QuD3Score, IndD3Rank, QuD4Score, IndD4Rank,
 					QuD5Score, IndD5Rank, QuD6Score, IndD6Rank, QuD7Score, IndD7Rank, QuD8Score, IndD8Rank,
@@ -229,7 +246,7 @@
 					IF(EvRunning=1,IFNULL(ROUND(QuScore/QuHits,3),0),0) as RunningScore,
 					EvCode,EvEventName,EvRunning, EvFinalFirstPhase, EvElim1, EvElim2, EvIsPara,
 					{$tmp} AS Arrows_Shot,
-					IF(EvElim1=0 && EvElim2=0, EvNumQualified ,IF(EvElim1=0,EvElim2,EvElim1)) as QualifiedNo, EvFirstQualified, EvQualPrintHead as PrintHeader,
+					coalesce(RrLevGroups*RrLevGroupArchers, IF(EvElim1=0 && EvElim2=0, EvNumQualified ,IF(EvElim1=0,EvElim2,EvElim1))) as QualifiedNo, EvFirstQualified, EvQualPrintHead as PrintHeader,
 					{$MyRank} AS `Rank`, " . (!empty($comparedTo) ? 'IFNULL(IopRank,0)' : '0') . " as OldRank, Qu{$dd}Score AS Score, Qu{$dd}Gold AS Gold,Qu{$dd}Xnine AS XNine, Qu{$dd}Hits AS Hits, 
 					IndIrmType, IrmType, IrmShowRank, IrmHideDetails, ";
 			$q.="IndRecordBitmap as RecBitLevel, EvIsPara, CoMaCode, CoCaCode, "; // records management
@@ -252,11 +269,11 @@
 			}
 
 			$q .= "IndTimestamp,
-					ToGolds AS GoldLabel, ToXNine AS XNineLabel,
+					IF(EvGolds!='',EvGolds,ToGolds) AS GoldLabel, IF(EvXNine!='',EvXNine,ToXNine) AS XNineLabel,
 					ToDouble, DiEnds, DiArrows,
 					ifnull(concat(DV2.DvMajVersion, '.', DV2.DvMinVersion) ,concat(DV1.DvMajVersion, '.', DV1.DvMinVersion)) as DocVersion,
 					date_format(ifnull(DV2.DvPrintDateTime, DV1.DvPrintDateTime), '%e %b %Y %H:%i UTC') as DocVersionDate,
-					ifnull(DV2.DvNotes, DV1.DvNotes) as DocNotes
+					ifnull(DV2.DvNotes, DV1.DvNotes) as DocNotes, hasShootOff
 					{$only4zero}
 				FROM Tournament
 				INNER JOIN Entries ON ToId=EnTournament
@@ -265,11 +282,26 @@
 				INNER JOIN Individuals ON IndTournament=EnTournament AND EnId=IndId
 				INNER JOIN IrmTypes ON IrmId=IndIrmType
 				INNER JOIN Events ON EvCode=IndEvent AND EvTeamEvent=0 AND EvTournament=EnTournament
+				inner join (
+					select max(QuD5Score) as hasShootOff, IndEvent as SOevent 
+					from Qualifications 
+					inner join Individuals on IndId=QuId and IndTournament={$this->tournament}
+					group by IndEvent
+					) hasSO on SOevent=IndEvent 
+				left join Session on SesTournament=ToId and SesOrder=QuSession and SesType='Q'
+				left join SubClass on ScTournament=ToId and ScId=EnSubClass
+				left join RoundRobinLevel on RrLevTournament=ToId and RrLevTeam=EvTeamEvent and RrLevEvent=EvCode and RrLevLevel=1 and EvElimType=5
 				left join ExtraData on EdId=EnId and EdType='Z'
 				LEFT JOIN DocumentVersions DV1 on EvTournament=DV1.DvTournament AND DV1.DvFile = 'QUAL-IND' and DV1.DvEvent=''
 				LEFT JOIN DocumentVersions DV2 on EvTournament=DV2.DvTournament AND DV2.DvFile = 'QUAL-IND' and DV2.DvEvent=EvCode
 				LEFT JOIN TournamentDistances ON ToType=TdType AND TdTournament=ToId AND CONCAT(TRIM(EnDivision),TRIM(EnClass)) LIKE TdClasses
-				left join DistanceInformation on EnTournament=DiTournament and DiSession=1 and DiDistance=1 and DiType='Q' ";
+				left join DistanceInformation on EnTournament=DiTournament and DiSession=1 and DiDistance=1 and DiType='Q' 
+				left join (
+					select DiSession as FdiSession, group_concat(concat_ws('|', DiDistance, DiEnds, DiArrows) order by DiDistance separator ',') as FdiDetails
+					from DistanceInformation
+					where DiTournament={$this->tournament} and DiType='Q'
+					group by DiSession
+					) FullDistanceInfo on FdiSession=QuSession ";
 			if(!empty($comparedTo)) {
 				$q .= "LEFT JOIN IndOldPositions ON IopId=EnId AND IopEvent=EvCode AND IopTournament=EnTournament AND IopHits=" . ($comparedTo>0 ? $comparedTo :  "(SELECT MAX(IopHits) FROM IndOldPositions WHERE IopId=EnId AND IopEvent=EvCode AND IopTournament=EnTournament AND IopHits!=QuHits) ") . " ";
 			}
@@ -288,16 +320,19 @@
 
 				WHERE
 					EnAthlete=1 AND EnIndFEvent=1 AND EnStatus <= 1  
-					AND (QuScore != 0 OR IndRank != 0) 
 					AND ToId = {$this->tournament}
 					{$filter}
 					{$EnFilter}
 				ORDER BY
 					EvProgr, EvCode, if(IrmShowRank=1, 0, IndIrmType), ";
-			if(!empty($this->opts['runningDist']) && $this->opts['runningDist']>0)
+			if($this->Flighted) {
+				$q.="ScViewOrder, ";
+			}
+			if(!empty($this->opts['runningDist']) && $this->opts['runningDist']>0) {
 				$q .= "OrderScore DESC, OrderGold DESC, OrderXnine DESC, FirstName, Name ";
-			else
-				$q .= "RunningScore DESC, Ind{$dd}Rank ASC, FirstName, Name ";
+			} else {
+				$q .= "RunningScore DESC, Ind{$dd}Rank=0, Ind{$dd}Rank ASC, FirstName, Name ";
+			}
 			$r=safe_r_sql($q);
 
 			$this->data['meta']['title']=get_text('ResultIndAbs','Tournament');
@@ -352,6 +387,17 @@
 					// qui ci sono le descrizioni dei campi
 						$distFields=array();
 						$distValid=$myRow->ToNumDist;
+
+						// adding the full distance info here
+						$FullDistInfo=[];
+						foreach(explode(',',$myRow->FdiDetails) as $d) {
+							$t=explode('|', $d);
+							$FullDistInfo['dist_' . $t[0]]=[
+								'ends'=>$t[1],
+								'arr'=>$t[2],
+							];
+						}
+
 						foreach(range(1,8) as $n) {
 							$distFields['dist_' . $n]=$myRow->{'Td' . $n};
 							if($distFields['dist_' . $n]=='-') {
@@ -404,10 +450,11 @@
 						$section=array(
 							'meta' => array(
 								'event' => $curEvent,
+								'eventRealCode' => $myRow->EvCode,
 								'firstPhase' => $myRow->EvFinalFirstPhase,
 								'elimination1' => $myRow->EvElim1,
 								'elimination2' => $myRow->EvElim2,
-								'descr' => get_text($myRow->EvEventName,'','',true),
+								'descr' => get_text($myRow->EvEventName,'','',true).($this->Flighted && $myRow->ScDescription ? ' '.$myRow->ScDescription : ''),
 								'numDist' => $distValid,
 								'qualifiedNo' => $myRow->QualifiedNo,
                                 'firstQualified' => $myRow->EvFirstQualified,
@@ -426,6 +473,8 @@
 								'versionNotes' => $myRow->DocNotes,
 								'lastUpdate' => '0000-00-00 00:00:00',
 								'hasShootOff' => '',
+								'distanceInfo'=>$FullDistInfo,
+								'shootOffStarted'=>$myRow->hasShootOff,
 							),
 							'records' => array(),
 						);
@@ -476,6 +525,7 @@
 						'tvname' => $myRow->EnOdfShortname,
 						'birthdate' => $myRow->BirthDate,
 						'session' => $myRow->Session,
+						'sessionName' => $myRow->SesName,
 						'target' => $myRow->TargetNo,
 						'athlete' => $myRow->FirstNameUpper . ' ' . $myRow->Name,
 						'familyname' => $myRow->FirstName,
@@ -517,6 +567,9 @@
 							'ct' => $myRow->NumCT,
 							'so' => $myRow->isSO
 						);
+                        if(trim($myRow->IndTiebreak)) {
+                            $section['meta']['hasShootOff']=max($section['meta']['hasShootOff'], strlen(trim($myRow->IndTiebreak)));
+                        }
 					}
 
 					$distFields=array();

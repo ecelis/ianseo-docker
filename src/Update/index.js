@@ -31,6 +31,7 @@ function doUpdate(force) {
             $('#endDialog').append('<div>' +
                 '<div class="Button" onclick="closeDialog()">'+cmdClose+'</div>' +
                 '</div>')
+            $('#endDialog')[0].scrollIntoView();
         });
 
         showProcess();

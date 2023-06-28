@@ -255,7 +255,7 @@ if($DataSource) {
 					continue;
 				}
             } elseif($tmpString[0]== "##TARGETNO##") {
-                if(count($tmpString)!=4) {
+                if(count($tmpString)<4) {
                     $ImportResult['Refused'][]='<tr class="error"><td>Row ' . $Line  . ' incorrect, wrong number of fields<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
                     continue;
                 }
@@ -267,11 +267,14 @@ if($DataSource) {
                     $ImportResult['Refused'][]='<tr class="error"><td>Row ' . $Line  . ' incorrect, Invalid target No. reference<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
                     continue;
                 }
-                // gets the EnIds, class and division of the archer with that EnCode
-                $Sql="
-					SELECT EnId
-					FROM Entries
-					WHERE EnCode=".StrSafe_DB($tmpString[1])." AND EnTournament={$_SESSION['TourId']}";
+                // gets the EnIds of the archer with that EnCode
+                $Sql="SELECT EnId
+                    FROM Entries
+                    WHERE EnCode=".StrSafe_DB($tmpString[1])." AND EnTournament={$_SESSION['TourId']}";
+                if(count($tmpString)==6) {
+                    // we also have div and class to consider
+                    $Sql.=" and EnDivision=".StrSafe_DB($tmpString[4])." and EnClass=".StrSafe_DB($tmpString[5]);
+                }
                 $q=safe_r_SQL($Sql);
                 $tgt=intval(substr($tmpString[3],0,-1));
                 $letter=strtoupper(substr($tmpString[3],-1,1));
@@ -306,7 +309,7 @@ if($DataSource) {
 					INNER JOIN `TargetFaces` ON EnTournament=TfTournament
 					WHERE EnCode=".StrSafe_DB($tmpString[1])." AND EnTournament={$_SESSION['TourId']}
 					AND EnClass=".StrSafe_DB($tmpString[3])." AND EnDivision=".StrSafe_DB($tmpString[2])."
-					AND (CONCAT(EnDivision,EnClass) like TfClasses OR CONCAT(EnDivision,EnClass) REGEXP TfRegExp)
+					AND (CONCAT(EnDivision,EnClass) like TfClasses OR if(TfRegExp!='', CONCAT(EnDivision,EnClass) REGEXP TfRegExp, true))
 					ORDER BY TfId
 					LIMIT " . $tmpString[4] . ",1";
 				$q=safe_r_SQL($Sql);
@@ -368,29 +371,73 @@ if($DataSource) {
 				$ImportResult['Imported']++;
 
 			} elseif($tmpString[0]== "##ID-OC##") {
-				//  format is ##ID-OC##[tab]EnCode[tab]LocalID
+                //  format is ##ID-OC##[tab]EnCode[tab]LocalID
+                if (count($tmpString) != 3) {
+                    $ImportResult['Refused'][] = '<tr class="error"><td>Row ' . $Line . ' incorrect, wrong number of fields<br/>Row not imported</td><td>' . implode('</td><td>', $tmpString) . "</td></tr>";
+                    continue;
+                }
+                if (!preg_match('/^[a-z0-9_.-]+$/sim', $tmpString[1]) || !preg_match('/^[a-z0-9_.-]+$/sim', $tmpString[2])) {
+                    $ImportResult['Refused'][] = '<tr class="error"><td>Row ' . $Line . ' incorrect, Invalid data<br/>Row not imported</td><td>' . implode('</td><td>', $tmpString) . "</td></tr>";
+                    continue;
+                }
+                // gets the EnIds of the archer with that EnCode
+                $q = safe_r_SQL("select EnId from Entries where EnCode=" . StrSafe_DB($tmpString[1]) . " and EnTournament={$_SESSION['TourId']}");
+                if (safe_num_rows($q)) {
+                    while ($r = safe_fetch($q)) {
+                        safe_w_sql("insert into ExtraData set EdId=$r->EnId, EdType='Z', EdExtra=" . StrSafe_DB($tmpString[2]) . " on duplicate key update EdExtra=" . StrSafe_DB($tmpString[2]) . "");
+                        $ImportResult['Inserted'][] = '<tr><td>Inserted/updated</td><td>' . $tmpString[1] . '</td><td>' . $tmpString[2] . '</td></tr>';
+                        $ImportResult['Imported']++;
+                    }
+                } else {
+                    $ImportResult['Refused'][] = '<tr class="error"><td>Row ' . $Line . ' incorrect, Invalid Entry Code<br/>Row not imported</td><td>' . implode('</td><td>', $tmpString) . "</td></tr>";
+                    continue;
+                }
+            } elseif($tmpString[0]== "##SUBCLASS##") {
+                    //  format is ##SUBCLASS##[tab]EnCode[tab]Subclass
 				if(count($tmpString)!=3) {
-					$ImportResult['Refused'][]='<tr class="error"><td>Row ' . $Line  . ' incorrect, wrong number of fields<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
-					continue;
-				}
+                    $ImportResult['Refused'][]='<tr class="error"><td>Row ' . $Line  . ' incorrect, wrong number of fields<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
+                    continue;
+                }
 				if(!preg_match('/^[a-z0-9_.-]+$/sim', $tmpString[1]) || !preg_match('/^[a-z0-9_.-]+$/sim', $tmpString[2])) {
-					$ImportResult['Refused'][]='<tr class="error"><td>Row ' . $Line  . ' incorrect, Invalid data<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
-					continue;
-				}
+                    $ImportResult['Refused'][]='<tr class="error"><td>Row ' . $Line  . ' incorrect, Invalid data<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
+                    continue;
+                }
 				// gets the EnIds of the archer with that EnCode
 				$q=safe_r_SQL("select EnId from Entries where EnCode=".StrSafe_DB($tmpString[1])." and EnTournament={$_SESSION['TourId']}");
 				if(safe_num_rows($q)) {
-					while($r=safe_fetch($q)) {
-						safe_w_sql("insert into ExtraData set EdId=$r->EnId, EdType='Z', EdExtra=".StrSafe_DB($tmpString[2])." on duplicate key update EdExtra=".StrSafe_DB($tmpString[2])."");
-						$ImportResult['Inserted'][]='<tr><td>Inserted/updated</td><td>'.$tmpString[1].'</td><td>'.$tmpString[2].'</td></tr>';
-						$ImportResult['Imported']++;
-					}
-				} else {
-					$ImportResult['Refused'][]='<tr class="error"><td>Row ' . $Line  . ' incorrect, Invalid Entry Code<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
+                    while($r=safe_fetch($q)) {
+                        safe_w_sql("UPDATE Entries SET EnSubClass =".StrSafe_DB($tmpString[2])." WHERE EnId=$r->EnId");
+                        $ImportResult['Inserted'][]='<tr><td>Inserted/updated</td><td>'.$tmpString[1].'</td><td>'.$tmpString[2].'</td></tr>';
+                        $ImportResult['Imported']++;
+                    }
+                } else {
+                    $ImportResult['Refused'][]='<tr class="error"><td>Row ' . $Line  . ' incorrect, Invalid Entry Code<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
+                    continue;
+                }
+            } elseif($tmpString[0]== "##TEAM2##" or $tmpString[0]== "##TEAM3##") {
+                //  format is ##TEAM2##[tab]EnCode[tab]NocCode[tab]NocName
+                //  format is ##TEAM3##[tab]EnCode[tab]NocCode[tab]NocName
+				if(count($tmpString)!=4) {
+					$ImportResult['Refused'][]='<tr class="error"><td>Row ' . $Line  . ' incorrect, wrong number of fields<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
 					continue;
 				}
+                $EnCode=$tmpString[1];
+                $NocCode=mb_strtoupper($tmpString[2], 'UTF-8');
+                $NocName=$tmpString[3];
+                // check if the NOC is already there, otherwise creates the nation
+                $q=safe_r_sql("select CoId from Countries where CoCode=".StrSafe_DB($NocCode)." and CoTournament={$_SESSION['TourId']}");
+                if($r=safe_fetch($q)) {
+                    $NocId=$r->CoId;
+                } else {
+                    safe_w_sql("insert into Countries set CoTournament={$_SESSION['TourId']}, CoCode=".StrSafe_DB($NocCode).", CoName=".StrSafe_DB($NocName).", CoNameComplete=".StrSafe_DB($NocName).", CoLevelBitmap=4");
+                    $NocId=safe_w_last_id();
+                }
+                // add this as second/third team
+                $CoField=($tmpString[0]== "##TEAM2##" ? 'EnCountry2' : 'EnCountry3');
+                safe_w_sql("update Entries set $CoField=$NocId where EnTournament={$_SESSION['TourId']} and EnCode=".StrSafe_DB($EnCode));
+				$ImportResult['Inserted'][]='<tr><td>Inserted/updated</td><td>'.$tmpString[1].'</td><td>'.$tmpString[2].'</td></tr>';
+				$ImportResult['Imported']++;
 			} elseif($tmpString[0]== "##OC-PRACTICE##") {
-				//  format is ##ID-OC##[tab]EnCode[tab]LocalID
 				if(count($tmpString)!=3) {
 					$ImportResult['Refused'][]='<tr class="error"><td>Row ' . $Line  . ' incorrect, wrong number of fields<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
 					continue;
@@ -481,17 +528,17 @@ if($DataSource) {
 			}
 
 			if(count($tmpString)>=14 && strlen($tmpString[13])>10) {
-				$ImportResult['Refused'][]= '<tr class="error"><td>Country Code ['.$tmpString[13].'] too long (max 5 characters)<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
+				$ImportResult['Refused'][]= '<tr class="error"><td>Country Code ['.$tmpString[13].'] too long (max 10 characters)<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
 				continue;
 			}
 
 			if(count($tmpString)>=19 && strlen($tmpString[17])>10) {
-				$ImportResult['Refused'][]= '<tr class="error"><td>Country Code ['.$tmpString[17].'] too long (max 5 characters)<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
+				$ImportResult['Refused'][]= '<tr class="error"><td>Country Code ['.$tmpString[17].'] too long (max 10 characters)<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
 				continue;
 			}
 
 			if(count($tmpString)>=21 && strlen($tmpString[19])>10) {
-				$ImportResult['Refused'][]= '<tr class="error"><td>Country Code ['.$tmpString[19].'] too long (max 5 characters)<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
+				$ImportResult['Refused'][]= '<tr class="error"><td>Country Code ['.$tmpString[19].'] too long (max 10 characters)<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
 				continue;
 			}
 
@@ -989,8 +1036,8 @@ if(!$DataSource) {
 <table class="Tabella">
 <tr><th class="Title" colspan="3"><?php print get_text('ListLoad', 'Tournament');?></th></tr>
 <tr>
-<th class="SubTitle" width="50%"><?php print get_text('AthleteList', 'Tournament');?></th>
-<th class="SubTitle" width="50%" colspan="2"><?php print get_text('AthleteFile', 'Tournament');?></th>
+<th class="SubTitle w50"><?php print get_text('AthleteList', 'Tournament');?></th>
+<th class="SubTitle w-50" colspan="2"><?php print get_text('AthleteFile', 'Tournament');?></th>
 </tr>
 <tr>
 <td class="Center" rowspan="2">
@@ -1024,7 +1071,7 @@ echo "21)&nbsp;" . get_text('Nation') . " 3<br>";
 echo "</td><td>";
 
 echo '<div>'.get_text('SpecialImports', 'Tournament').'</div>';
-foreach(array('Wheelchair', 'Address' , 'Email', 'Target', 'TargetNo', 'DOB', 'NOC', 'Session', 'Caption', 'ID-OC', 'PhotoName') as $Special) {
+foreach(array('Session', 'ID-OC', 'DOB', 'Caption', 'SubClass', 'Wheelchair', 'NOC', 'Email', 'Target', 'TargetNo', 'Team2', 'Team3', 'Address', 'TeamContact') as $Special) {
 	echo '<div><br/><b>##'.strtoupper($Special).'##</b><br/>'.get_text('Desc'.$Special, 'Tournament').'</div>';
 }
 ?>

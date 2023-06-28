@@ -15,8 +15,12 @@
 			<td><input type="text" name="First" value="" style="width:100%"></td>
 		</tr>
 		<tr>
-			<th class="TitleLeft" style="width:15%;"><?php print get_text('Row-2','Tournament'); ?></th>
-			<td><input type="text" name="Second" value="" style="width:100%"></td>
+			<th class="TitleLeft" style="width:15%;"><?php print get_text('Row-2','Tournament'); ?>*</th>
+			<td><input type="text" name="Second" value="" style="width:100%"><div><?= get_text('QrCodeLandscape','Help') ?></div></td>
+		</tr>
+		<tr>
+			<th class="TitleLeft" style="width:15%;"><?php print get_text('QR-Code','Tournament'); ?></th>
+			<td><input type="text" name="QRCode" value="" style="width:100%"></td>
 		</tr>
 		<tr><td class="Center" colspan="2"><input type="submit" name="PrintSign" value="<?php print get_text('Print', 'Tournament'); ?>"></td></tr>
 		<tr><th colspan="2" class="Title"><?php print get_text('Document','Tournament'); ?></th></tr>
@@ -30,7 +34,7 @@
 		</tr>
 		<tr>
 			<th class="TitleLeft" style="width:15%;"><?php print get_text('Text','Tournament'); ?></th>
-			<td><textarea name="Body" style="width:100%"></textarea></td>
+			<td><textarea name="Body" style="width:100%"></textarea><div><?= get_text('QrCodePortrait','Help') ?></div></td>
 		</tr>
 		<tr><td class="Center" colspan="2"><input type="submit" name="PrintDocument" value="<?php print get_text('Print', 'Tournament'); ?>"></td></tr>
 	</table>

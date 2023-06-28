@@ -160,7 +160,6 @@ function SelectAgeClass()
 			{
 				XMLHttpAgeClass.open("GET","SelectAgeClass.php?d_e_EnAgeClass=" + AgeClass+'&d_e_EnDivision=' + Division+'&NoCheckEntry=',true);
 				XMLHttpAgeClass.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-				//document.getElementById('idOutput').innerHTML="SelectAgeClass.php?EnId=" + MyId + "&d_e_EnAgeClass=" + AgeClass+'&NoCheckEntry=';
 				XMLHttpAgeClass.onreadystatechange=AgeClass_StateChange;
 				XMLHttpAgeClass.send();
 			}
@@ -250,7 +249,6 @@ function GetClassesByGender()
 			{
 				XMLHttp2.open("GET","GetClassesByGender.php?sex=" + sex + '&div=' + div + '&age=' + age, false);
 				XMLHttp2.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-				//document.getElementById('idOutput').innerHTML="CheckTargetNo_Par.php?d_q_QuSession=" + d_q_QuSession + "&d_q_QuTargetNo=" + d_q_QuTargetNo;
 				//XMLHttp.onreadystatechange=GetClassByGender_Par_StateChange;
 				XMLHttp2.send(null);
 
@@ -299,7 +297,6 @@ function SelectCountryCode(which)
 			{
 				var Code = encodeURIComponent(document.getElementById('d_c_CoCode' + which + '_').value);
 				XMLHttp.open("GET","SelectCountryCode.php?Code=" + Code + '&which='+which);
-				//document.getElementById('idOutput').innerHTML="SelectCountryCode.php?IdEntry=" + IdEntry + "&Code=" + Code;
 				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 				XMLHttp.onreadystatechange=SelectCountryCode_StateChange;
 				XMLHttp.send(null);
@@ -403,7 +400,6 @@ function CercaMatr(add2Cache)
 					var FromCache = CacheMatr.shift();
 					XMLHttp2.open("POST","Matr_FindOnEdit.php",true);
 					XMLHttp2.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-					//document.getElementById('idOutput').innerHTML="Matr_FindOnEdit_Par.php?Matr="  + Matr;
 					XMLHttp2.onreadystatechange=CercaMatr_StateChange;
 					XMLHttp2.send(FromCache);
 				}
@@ -532,14 +528,12 @@ function CheckTargetNo()
 			{
 				XMLHttp.open("GET","CheckTargetNo.php?d_q_QuSession=" + d_q_QuSession + "&d_q_QuTargetNo=" + d_q_QuTargetNo,true);
 				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-				//document.getElementById('idOutput').innerHTML="CheckTargetNo_Par.php?d_q_QuSession=" + d_q_QuSession + "&d_q_QuTargetNo=" + d_q_QuTargetNo;
 				XMLHttp.onreadystatechange=CheckTargetNo_StateChange;
 				XMLHttp.send(null);
 			}
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -613,14 +607,12 @@ function SelectSession()
 				var Id = document.getElementById('d_e_EnId_').value;
 				XMLHttp.open("GET","CheckSession.php?Session=" + Session + '&Id=' + Id);
 				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-				//document.getElementById('idOutput').innerHTML="CheckSession_Par.php?Session=" + Session + '&Id=' + Id;
 				XMLHttp.onreadystatechange=SelectSession_StateChange;
 				XMLHttp.send(null);
 			}
 		}
 		catch (e)
 		{
-			//document.getElementById('idOutput').innerHTML+='Errore: ' + e.toString() + '<br>';
 		}
 	}
 
@@ -640,12 +632,10 @@ function SelectSession_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML+='Errore: ' + e.toString() + '<br>';
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML+='Errore: ' +XMLHttp.statusText + '<br>';
 		}
 	}
 }
@@ -779,7 +769,6 @@ function FindArchers()
 
 				XMLHttp.open("GET","HtmlFindArchers.php"+qs,true);
 				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-				//document.getElementById('idOutput').innerHTML="CheckCtrlCode_Par.php?d_e_EnCtrlCode=" + d_e_EnCtrlCode;
 				XMLHttp.onreadystatechange=FindArchers_StateChange;
 				XMLHttp.send(null);
 			}
@@ -806,12 +795,10 @@ function FindArchers_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML+='Errore: ' + e.toString() + '<br>';
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML+='Errore: ' +XMLHttp.statusText + '<br>';
 		}
 	}
 }

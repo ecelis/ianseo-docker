@@ -4,9 +4,11 @@ CheckTourSession(true);
 
 checkACL(AclTeams, AclReadWrite, false);
 
+$IsRunArchery=($_SESSION['TourType']==48);
+
 $JSON=array('error'=>1);
 
-$EvCode = (!empty($_REQUEST["EvCode"]) ? filter_var($_REQUEST["EvCode"], FILTER_SANITIZE_STRING) : '' );
+$EvCode = (!empty($_REQUEST["EvCode"]) ? filter_var($_REQUEST["EvCode"], FILTER_SANITIZE_FULL_SPECIAL_CHARS) : '' );
 $CoId = (!empty($_REQUEST["CoId"]) ? intval($_REQUEST["CoId"]) : 0 );
 $TeamId = (!empty($_REQUEST["TeamId"]) ? intval($_REQUEST["TeamId"]) : 0 );
 $TeamSubId = (!empty($_REQUEST["TeamSubId"]) ? intval($_REQUEST["TeamSubId"]) : 0 );
@@ -19,6 +21,7 @@ if(!empty($EvCode) AND !empty($TeamId)) {
         }
         $toRemove = array();
         $toAdd = array();
+        $toLog = array();
         $grpPositions = array();
         $Sql = "SELECT EnId as `Id`, EcTeamEvent as `Group`, IFNULL(TfcId,0) as `Existing`, IFNULL(TfcOrder,0) as `Order` " .
             "FROM Entries " .
@@ -30,9 +33,12 @@ if(!empty($EvCode) AND !empty($TeamId)) {
             "AND IF(EvTeamCreationMode=3, EnCountry3, if(EvTeamCreationMode=2, EnCountry2, if((EvTeamCreationMode=0 and EnCountry2=0) or EvTeamCreationMode=1, EnCountry, EnCountry2)))={$TeamId} " .
             "AND IF(EvMixedTeam=0, EnTeamFEvent, EnTeamMixEvent) = 1 ".
             "AND EnId NOT IN (SELECT TfcId FROM TeamFinComponent WHERE TfcCoId={$TeamId} AND TfcSubTeam!={$TeamSubId} AND TfcTournament={$_SESSION['TourId']} AND TfcEvent='{$EvCode}') ".
-            "ORDER BY TfcId IS NOT NULL DESC, EnId";
+            "ORDER BY TfcId IS NOT NULL DESC, EcTeamEvent, IFNULL(TfcOrder,0), EnId";
         $q=safe_r_SQL($Sql);
         while($r = safe_fetch($q)) {
+            if($r->Existing!=0) {
+                $toLog[$r->Order] = array($r->Existing, $r->Existing);
+            }
             if(array_key_exists($r->Id,$newIds) AND $r->Existing == 0) {
                 if($newIds[$r->Id]==$r->Group) {
                     $toAdd[$r->Id] = $r;
@@ -45,16 +51,22 @@ if(!empty($EvCode) AND !empty($TeamId)) {
                 $grpPositions[$r->Group][] = $r->Order;
             }
         }
-        if(count($toAdd)==count($toRemove)) {
-            $now = date('Y-m-d H:i:s');
+        if(count($toAdd)==count($toRemove) AND count($toAdd)!=0) {
+            $now = (!empty($_REQUEST["changeTs"]) ? str_replace('T',' ',$_REQUEST["changeTs"].':00') : date('Y-m-d H:i:s'));
             foreach ($toAdd as $k=>$v) {
                 $v->Order = array_shift($grpPositions[$v->Group]);
+                $toLog[$v->Order][1] = $v->Id;
                 $Sql = "INSERT INTO `TeamFinComponent` (`TfcCoId`, `TfcSubTeam`, `TfcTournament`, `TfcEvent`, `TfcId`, `TfcOrder`, `TfcTimeStamp`) VALUES".
                     "({$TeamId}, {$TeamSubId}, {$_SESSION['TourId']}, '{$EvCode}', {$v->Id}, {$v->Order}, '$now')";
                 safe_w_SQL($Sql);
             }
             $Sql = "DELETE FROM TeamFinComponent WHERE TfcCoId={$TeamId} AND TfcSubTeam={$TeamSubId} AND TfcTournament={$_SESSION['TourId']} AND TfcEvent='{$EvCode}' AND TfcId IN (".implode(',',$toRemove).")";
             safe_w_SQL($Sql);
+            foreach ($toLog as $k=>$v) {
+                $Sql = "INSERT INTO `TeamFinComponentLog` (`TfclCoId`, `TfclSubTeam`, `TfclTournament`, `TfclEvent`, `TfclIdPrev`, `TfclIdNext`, `TfclOrder`, `TfclTimeStamp`) VALUES ".
+                    "({$TeamId}, {$TeamSubId}, {$_SESSION['TourId']}, '{$EvCode}', {$v[0]}, {$v[1]}, {$k}, '$now')";
+                safe_w_SQL($Sql);
+            }
             $JSON['error'] = 0;
         }
     } else {
@@ -88,7 +100,7 @@ if(!empty($EvCode) AND !empty($TeamId)) {
 
 $Sql = "SELECT DISTINCT EvCode, EvEventName ".
     "FROM Events ".
-    "WHERE EvTournament={$_SESSION['TourId']} AND EvTeamEvent=1 AND EvFinalFirstPhase!=0 AND EvShootOff!=0 ";
+    "WHERE EvTournament={$_SESSION['TourId']} AND EvTeamEvent=1 ".($IsRunArchery ? '' : " AND EvFinalFirstPhase!=0 AND EvShootOff!=0 ");
 if(!empty($CoId)) {
     $Sql .= "AND EvCode IN (SELECT TeEvent FROM Teams WHERE TeTournament={$_SESSION['TourId']} AND TeCoId={$CoId} AND TeFinEvent=1 AND TeSO!=0) ";
 }
@@ -105,7 +117,7 @@ $Sql = "SELECT DISTINCT TeCoId, CoCode, IF(CoNameComplete='',CoName,CoNameComple
     "FROM Events ".
     "INNER JOIN Teams ON EvTournament=TeTournament AND TeEvent=EvCode AND TeFinEvent=1 AND TeSO!=0 " .
     "INNER JOIN Countries on CoId=TeCoId AND CoTournament=TeTournament " .
-    "WHERE EvTournament={$_SESSION['TourId']} AND EvTeamEvent=1 AND EvFinalFirstPhase!=0 AND EvShootOff!=0 ";
+    "WHERE EvTournament={$_SESSION['TourId']} AND EvTeamEvent=1 ".($IsRunArchery ? '' : " AND EvFinalFirstPhase!=0 AND EvShootOff!=0 ");
 if(!empty($EvCode)) {
     $Sql .= "AND TeEvent='{$EvCode}' ";
 }
@@ -126,7 +138,7 @@ if(!empty($CoId) OR !empty($EvCode)) {
         "INNER JOIN TeamFinComponent ON TfcCoId=TeCoId AND TfcSubTeam=TeSubTeam AND TfcTournament=TeTournament AND TfcEvent=TeEvent " .
         "INNER JOIN Entries ON TfcId=EnId AND TfcTournament=EnTournament " .
         "LEFT JOIN TeamComponent ON TcCoId=TeCoId AND TcSubTeam=TeSubTeam AND TcTournament=TeTournament AND TcEvent=TeEvent AND TcFinEvent=TeFinEvent AND TcId=TfcId " .
-        "WHERE EvTournament={$_SESSION['TourId']} AND EvTeamEvent=1 AND EvFinalFirstPhase!=0 AND EvShootOff!=0 ";
+        "WHERE EvTournament={$_SESSION['TourId']} AND EvTeamEvent=1 ".($IsRunArchery ? '' : " AND EvFinalFirstPhase!=0 AND EvShootOff!=0 ");
     if(!empty($CoId)) {
         $Sql .= "AND TeCoId='{$CoId}' ";
     }

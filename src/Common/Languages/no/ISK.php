@@ -172,7 +172,6 @@ $lang['Score']='Poeng';
 $lang['Scorecard']='Scorekort';
 $lang['ScoredPoints']='Poeng';
 $lang['ScoreHelp']='Hjelp';
-$lang['ScoreHelpDesc']='Dette skjermbildet lar deg scorer pilene som ble skutt. Informasjon om gjeldende distanse, skivetypen, og skytterinformasjonen vises også. Tast pilverdiene ved hjelp av tallknappene.';
 $lang['ScoringEntry']='Legg inn pilverdier';
 $lang['SelDist']='Velg avstand og prøv igjen';
 $lang['SelTgtNum']='Velg mattenummer og prøv igjen';

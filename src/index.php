@@ -9,7 +9,7 @@ require_once('Common/Fun_FormatText.inc.php');
 panicACL();
 checkGPL();
 
-$PAGE_TITLE=get_text('TitleTourMenu', 'Tournament');
+//$PAGE_TITLE=get_text('TitleTourMenu', 'Tournament');
 
 $JS_SCRIPT[]='<script>
     var dateVar = new Date();
@@ -22,7 +22,12 @@ include('Common/Templates/head.php');
 
 ?>
 <table class="Tabella">
-<tr><th class="Main" colspan="6"><?php print get_text('TitleTourMenu', 'Tournament');?></th></tr>
+<tr><th class="Title" colspan="6">
+        <?php
+        echo '<div style="font-size: large; line-height: 2em;">' . get_text('TitleTourMenu', 'Tournament') . '</div>' . ProgramName . ' ' . ProgramVersion . (defined('ProgramBuild') ? ' ('.ProgramBuild.')' : '')
+        ?>
+    </th>
+</tr>
 
 <?php if (ProgramRelease!='HEAD' && CheckLastSWUpdate()) { ?>
 	<tr class="Divider"><td colspan="6"></td></tr>

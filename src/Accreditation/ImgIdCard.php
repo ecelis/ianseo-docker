@@ -36,8 +36,9 @@ imagefilledrectangle($img, 0, 0, $RowBn->Settings["Width"]*2-1, $RowBn->Settings
 //Immagine di Sfondo
 if(strlen( $RowBn->Background) > 0) {
 	// inserisci immagine di sfondo
-	$sf=imagecreatefromstring($RowBn->Background);
-	imagecopyresampled ($img , $sf , $RowBn->Settings["IdBgX"]*2 , $RowBn->Settings["IdBgY"]*2 , 0 , 0 , $RowBn->Settings["IdBgW"]*2 , $RowBn->Settings["IdBgH"]*2 , imagesx($sf) , imagesy($sf) );
+	if($sf=imagecreatefromstring($RowBn->Background)) {
+		imagecopyresampled ($img , $sf , $RowBn->Settings["IdBgX"]*2 , $RowBn->Settings["IdBgY"]*2 , 0 , 0 , $RowBn->Settings["IdBgW"]*2 , $RowBn->Settings["IdBgH"]*2 , imagesx($sf) , imagesy($sf) );
+	}
 } else {
 	// filetto grigino di contorno
 	imagerectangle($img, 0, 0, $RowBn->Settings["Width"]*2-1, $RowBn->Settings["Height"]*2-1, $ColBlk);

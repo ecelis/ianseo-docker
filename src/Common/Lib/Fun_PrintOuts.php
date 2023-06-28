@@ -5,7 +5,7 @@ function CleanEvents($Events, $Field) {
 	if (is_array($Events)) {
 		$tmp=array();
 		foreach ($Events as $ev) {
-			@list($e, $p)=explode('@', $ev);
+			@list($e, $p)=@explode('@', $ev);
 			if(!in_array($e, $tmp) and preg_match('/^[0-9A-Z-]+$/i',$e)) $tmp[]="'$e'";
 		}
 		if ($tmp) {
@@ -30,4 +30,12 @@ function CleanEvents($Events, $Field) {
 
 	return $ret;
 }
-?>
+
+function getTopEvent($Event, $Team, $TourId) {
+	$q=safe_r_sql("select EvCodeParent from Events where EvTeamEvent=$Team and EvCode='$Event' and EvTournament=$TourId");
+	if($r=safe_fetch($q) and $r->EvCodeParent) {
+		return getTopEvent($r->EvCodeParent, $Team, $TourId);
+	}
+
+	return $Event;
+}

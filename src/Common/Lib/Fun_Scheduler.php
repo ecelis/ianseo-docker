@@ -7,6 +7,7 @@ Class Scheduler {
 	var $SingleDay='';
 	var $FromDay='';
 	var $TourId=0;
+	var $TourCode='';
 	var $ROOT_DIR='/';
 	var $DayByDay=false;
 	var $Finalists=false;
@@ -42,7 +43,20 @@ Class Scheduler {
 	}
 
 	function __construct($TourId=0) {
-		$this->TourId=($TourId ? $TourId : $_SESSION['TourId']);
+		if($TourId) {
+			$q=safe_r_sql("select ToCode, ToId from Tournament where ToId={intval($TourId)}");
+			if($r=safe_fetch($q)) {
+				$this->TourId=$r->ToId;
+				$this->TourCode=$r->ToCode;
+			}
+		} else {
+			$this->TourId=$_SESSION['TourId'];
+			$this->TourCode=$_SESSION['TourCode'];
+		}
+		if(!$this->TourId) {
+			return false;
+		}
+
 		if(!empty($_SESSION['ActiveSession'])) {
 			$this->ActiveSessions=$_SESSION['ActiveSession'];
 		} elseif($tmp=Get_Tournament_Option('ActiveSession', '', $this->TourId)) {
@@ -101,12 +115,13 @@ Class Scheduler {
 		$this->PoolMatchesWA=getPoolMatchesShortWA();
 
 		// Get all Events by Session
-		$t=safe_r_SQL("select distinct EvCode, EvTeamEvent, QuSession, EnAthlete
+		$t=safe_r_SQL("select EvCode, EvTeamEvent, QuSession, EnAthlete
 			from Entries
 			INNER JOIN Qualifications on QuId=EnId
 			INNER JOIN EventClass ON EcClass=EnClass AND EcDivision=EnDivision AND EcTournament=EnTournament and if(EcSubClass='', true, EcSubClass=EnSubClass)
 			INNER JOIN Events on EvCode=EcCode AND EvTeamEvent=IF(EcTeamEvent!=0, 1,0) AND EvTournament=EcTournament
 			where EnTournament=$this->TourId
+			group by EvCode, EvTeamEvent, QuSession, EnAthlete
 			order by EvTeamEvent, EvProgr");
 		while($u=safe_fetch($t)) {
 			$this->RunningEvents[$u->QuSession][$u->EvTeamEvent][]='Event[]='.$u->EvCode;
@@ -134,9 +149,14 @@ Class Scheduler {
 		}
 
 		// if a shift is defined then changes the shift
-		if(strlen($r->SchDelay)) {
-			$Shift=$r->SchDelay;
-			$Day=$r->Day;
+		if(!empty($r->SchDelay)) {
+			if($r->SchDelay==-1) {
+				$Shift=0;
+				$Day='';
+			} else {
+				$Shift=$r->SchDelay;
+				$Day=$r->Day;
+			}
 		}
 
 		$tmp->Type=$r->Type;
@@ -156,6 +176,7 @@ Class Scheduler {
 		$tmp->SO=$r->EvShootOff;
 		$tmp->grPos=$r->grPos;
 		$tmp->ElimType=$r->EvElimType;
+		$tmp->UID=$r->UID;
 
 		switch($r->Type) {
 			case 'Q':
@@ -173,6 +194,31 @@ Class Scheduler {
 				$tmp->SubTitle=$r->Options;
 				$tmp->Text=$r->Events;
 				$tmp->Target=$r->Target;
+				break;
+			case 'R':
+				list($Level, $Group, $Round)=explode('-', $r->Session);
+				$tmp->Title=get_text('LevelNum', 'RoundRobin', $Level).' '.get_text('GroupNum', 'RoundRobin', $Group).' '.get_text('RoundNum', 'RoundRobin', $Round);
+				$tmp->SubTitle=$r->Options;
+				$tmp->Text=$r->Events;
+				$tmp->Target=$r->Target;
+				break;
+			case 'RA':
+				list($Phase, $Pool, $Group)=explode('-', $r->Session);
+				$tmp->Title=get_text('PhaseName-'.$Phase, 'RunArchery');
+				$tmp->SubTitle=$r->Options;
+				$tmp->Text=$r->Events;
+				$tmp->Target=$r->Target;
+				if($Phase==1) {
+					// finals
+					$tmp->Events=get_text('Final'.$Pool,'RunArchery');
+				} elseif($Phase==2) {
+					$tmp->Events=get_text('PoolName','Tournament', $Pool);
+				} elseif($Group) {
+					$tmp->Events=get_text('GroupNum','RoundRobin', $Group);
+				} else {
+					// $tmp->Events=get_text('AllEntries','Tournament');
+					$tmp->Events='';
+				}
 				break;
 			default:
 				$ses=namePhase($r->Distance, $r->Session);
@@ -206,7 +252,7 @@ Class Scheduler {
 		}
 
 		if($Warmup) {
-			$tmp->Start=$r->WarmStart;
+			$tmp->Start=($r->WarmStart?:$r->grPos);
 			$tmp->Duration=$r->WarmDuration;
 			$tmp->Comments=$r->Options;
 		} else {
@@ -223,6 +269,13 @@ Class Scheduler {
 			$this->Schedule[$tmp->Day][$tmp->Start][$Session][$r->Distance][] = $tmp;
 		}
 		$this->Groups[$tmp->Type][$Session][$r->Distance][$tmp->Day][$tmp->Start][]=$tmp;
+		if($tmp->Type=='RA' and $Warmup and $r->WarmStart and $r->grPos) {
+			$tmp2=clone $tmp;
+			$tmp2->Start=$r->grPos;
+			$tmp2->Duration=0;
+			$this->Schedule[$tmp2->Day][$tmp2->Start][$Session][$r->Distance][] = $tmp2;
+			$this->Groups[$tmp2->Type][$Session][$r->Distance][$tmp2->Day][$tmp2->Start][]=$tmp2;
+		}
 	}
 
 	function GetSchedule() {
@@ -266,6 +319,7 @@ Class Scheduler {
 		// getting them first to seed the array!
 		if(!$this->SesType or strstr($this->SesType, 'Z')) {
 			$SQL[]="select distinct
+                    SchUID as UID,
 					'' EvShootOff,
 					'1' EvFirstRank,
 					'' EvElimType,
@@ -321,6 +375,7 @@ Class Scheduler {
 					$DistanceNames.=" Td{$i} on DiDistance={$i} and concat(EnDivision,EnClass) like Td{$i}Classes ";
 				}
 				$SQL[]="select distinct
+    					concat_ws('-', DiDistance, DiSession, DiType) as UID,
 						'' EvShootOff,
 						'1' EvFirstRank,
 						'' EvElimType,
@@ -373,6 +428,7 @@ Class Scheduler {
 				}
 
 				$SQL[]="select distinct
+    					concat_ws('-', DiDistance, DiSession, DiType) as UID,
 						'' EvShootOff,
 						'1' EvFirstRank,
 						'' EvElimType,
@@ -413,6 +469,7 @@ Class Scheduler {
 		// Then gets the Elimination rounds
 		if(!$this->SesType or strstr($this->SesType, 'E')) {
 			$SQL[]="select distinct
+                    concat_ws('-', DiDistance, DiSession, DiType) as UID,
 					'' EvShootOff,
 					'1' EvFirstRank,
 					'' EvElimType,
@@ -449,6 +506,7 @@ Class Scheduler {
 		// Get all the Free warmups
 		if(!$this->SesType or strstr($this->SesType, 'F')) {
 			$SQL[]="select distinct
+                group_concat(distinct FwEvent order by FwEvent separator '-') as UID,
 				'' EvShootOff,
 				'1' EvFirstRank,
 				'' EvElimType,
@@ -485,6 +543,7 @@ Class Scheduler {
 		if(!$this->SesType or strstr($this->SesType, 'F')) {
 			// get all the named sessions
 			$SQL[]="select distinct
+	                '' as UID,
 					'' EvShootOff,
 					'1' EvFirstRank,
 					'' EvElimType,
@@ -517,6 +576,7 @@ Class Scheduler {
 				order by SesDtStart";
 
 			$SQL[]="select distinct
+                concat_ws('-', FsTeamEvent, group_concat(distinct FsEvent order by EvProgr separator '-'), sum(FsMatchNo)) as UID,
 				EvShootOff,
 				EvWinnerFinalRank as EvFirstRank,
 				EvElimType,
@@ -549,8 +609,95 @@ Class Scheduler {
 					and FsScheduledDate>0 and (FsScheduledTime>0 or FwTime>0) and FsTarget!=0
 					".($this->SingleDay ? " and FsScheduledDate='$this->SingleDay'" : '')."
 					".($this->FromDay ? " and FsScheduledDate>='$this->FromDay'" : '')."
-				group by if(EvElimType>=3, FsMatchNo, 0), FsTeamEvent, FsScheduledDate, FsScheduledTime, Locations, if(EvWinnerFinalRank>1, EvWinnerFinalRank*100-GrPhase, GrPhase), FwTime
+				group by /*if(EvElimType>=3, FsMatchNo, 0), */FsTeamEvent, FsScheduledDate, FsScheduledTime, Locations, if(EvWinnerFinalRank>1, EvWinnerFinalRank*100-GrPhase, GrPhase), FwTime
 				order by FsTeamEvent, FsScheduledDate, FsScheduledTime, EvFirstRank, GrPhase, FwTime
+				";
+		}
+
+		// Get all the Round Robins
+		if(!$this->SesType or strstr($this->SesType, 'F')) {
+			$LocationFields=sprintf($LocField, 'RrMatchTarget*1');
+			$Date="RrMatchScheduledDate>0";
+			if($this->SingleDay) {
+				$Date="RrMatchScheduledDate='$this->SingleDay'";
+			} elseif($this->FromDay) {
+				$Date="RrMatchScheduledDate>='$this->FromDay'";
+			}
+			$SQL[]="select distinct
+                concat_ws('-',group_concat(distinct RrMatchEvent order by EvProgr separator '-'), (RrMatchLevel*1000000)+(RrMatchGroup*10000)+(RrMatchRound*100), sum(RrMatchMatchNo)) as UID,
+				EvShootOff,
+				EvWinnerFinalRank as EvFirstRank,
+				EvElimType,
+				EvFinalFirstPhase=48 or EvFinalFirstPhase = 24 As grPos,
+				max(RrMatchTarget*1) as Target,
+				'R' Type,
+				RrMatchScheduledDate Day,
+				concat_ws('-', RrMatchLevel, RrMatchGroup, RrMatchRound) Session,
+				RrMatchRound Distance,
+				EvDistance as RealDistance,
+				EvMedals as Medal,
+				if(RrMatchScheduledTime=0, '', date_format(RrMatchScheduledTime, '%H:%i')) Start,
+				RrMatchScheduledLength Duration,
+				if(FwTime=0, '', date_format(FwTime, '%H:%i')) WarmStart,
+				FwDuration WarmDuration,
+				FwOptions Options,
+				'' SesName,
+				if(count(*)<=2 and EvCodeParent='', group_concat(distinct EvEventName order by EvProgr separator ', '), group_concat(distinct RrMatchEvent order by EvProgr separator ', ')) Events,
+				group_concat(distinct RrMatchEvent order by EvProgr separator '\',\'') Event,
+				$LocationFields
+				(RrMatchLevel*1000000)+(RrMatchGroup*10000)+(RrMatchRound*100) as OrderPhase,
+				'' SchDelay,
+					'' TD1, '' TD2, '' TD3, '' TD4, '' TD5, '' TD6, '' TD7, '' TD8
+				from RoundRobinMatches
+				inner join Events on EvCode=RrMatchEvent and EvTeamEvent=RrMatchTeam and EvTournament=RrMatchTournament
+				left join FinWarmup on FwEvent=RrMatchEvent and FwTeamEvent=RrMatchTeam and FwTournament=RrMatchTournament and FwDay=RrMatchScheduledDate and FwMatchTime=RrMatchScheduledTime
+				where RrMatchTournament=$this->TourId
+					and $Date and (RrMatchScheduledTime>0 or FwTime>0) and RrMatchTarget!=0
+				group by RrMatchTeam, RrMatchScheduledDate, RrMatchScheduledTime, Locations, FwTime
+				order by RrMatchTeam, RrMatchScheduledDate, RrMatchScheduledTime, OrderPhase, FwTime
+				";
+		}
+
+		// Get all the RunArchery Schedules
+		if(!$this->SesType or strstr($this->SesType, 'F')) {
+			$LocationFields=sprintf($LocField, '0');
+			$Date="RarStartlist>0";
+			if($this->SingleDay) {
+				$Date="date(RarStartlist)='$this->SingleDay'";
+			} elseif($this->FromDay) {
+				$Date="date(RarStartlist)>='$this->FromDay'";
+			}
+			$SQL[]="select distinct
+                concat_ws('-', RarTeam, RarEvent, RarPhase, RarPool, RarGroup) as UID,
+				EvShootOff,
+				EvWinnerFinalRank as EvFirstRank,
+				EvElimType,
+				if(RarCallTime=0, '', date_format(RarCallTime, '%H:%i')) As grPos,
+				max(RarGroup) as Target,
+				'RA' Type,
+				date(RarStartlist) Day,
+				concat_ws('-', RarPhase, RarPool, RarGroup) Session,
+				18 as Distance,
+				EvDistance as RealDistance,
+				EvMedals as Medal,
+				if(RarStartlist=0, '', date_format(min(RarStartlist), '%H:%i')) Start,
+				RarDuration Duration,
+				if(RarWarmup=0, '', date_format(RarWarmup, '%H:%i')) as WarmStart,
+				RarWarmupDuration WarmDuration,
+				RarNotes Options,
+				'' SesName,
+				group_concat(distinct EvEventName order by EvProgr separator ', ') as Events,
+				group_concat(distinct RarEvent order by EvProgr separator '\',\'') Event,
+				$LocationFields
+				(RarPhase*1000000)+(RarPool*10000)+(RarGroup*100) as OrderPhase,
+				RarShift as SchDelay,
+					'' TD1, '' TD2, '' TD3, '' TD4, '' TD5, '' TD6, '' TD7, '' TD8
+				from RunArcheryRank
+				inner join Events on EvCode=RarEvent and EvTeamEvent=RarTeam and EvTournament=RarTournament
+				where RarTournament=$this->TourId
+					and $Date and RarStartlist>0
+				group by RarTeam, if(EvElimType=0 or RarPhase>0, RarStartlist, EvCode), if(EvElimType=0 or RarPhase>0, RarPool, RarGroup), Locations
+				order by RarTeam, RarStartlist, OrderPhase
 				";
 		}
 
@@ -563,11 +710,11 @@ Class Scheduler {
 		$debug=array();
 
 		while($r=safe_fetch($q)) {
-			if($r->WarmStart) {
+			if($r->WarmStart or ($r->Type=='RA' and $r->grPos)) {
 				$this->push($r, true);
 			}
 			if($r->Start) {
-				$this->push($r, false, $r->WarmStart);
+				$this->push($r, false, $r->WarmStart or ($r->Type=='RA' and $r->grPos));
 			}
 				//$debug[]=$r;
 		}
@@ -621,6 +768,15 @@ Class Scheduler {
 								// free text
 								$timing=$Item->Start.($Item->Duration ? '-'.addMinutes($Item->Start, $Item->Duration) : '');
 
+								if(empty($Item->UID) and $Type=='SET') {
+									$SchUid=md5(uniqid(mt_rand(), true));
+									$Item->UID=$SchUid;
+									safe_w_SQL("update ignore Scheduler set SchUID='$SchUid'
+										where SchTournament={$this->TourId} 
+										and SchOrder={$Item->Order} 
+										and SchDay='{$Item->Day}' 
+										and SchStart='{$Item->Start}'");
+								}
 								if($OldTitle!=$Item->Title and $Item->Title) {
 									if(!$IsTitle) {
 										$tmp='<tr name="'.$key.'"'.(($ActiveSession and !$Item->SubTitle and !$Item->Text) ? ' class="active"' : '').'><td>';
@@ -681,7 +837,7 @@ Class Scheduler {
 									$OldSubTitle='';
 									$IsTitle=true;
 								}
-								if($OldSubTitle!=$Item->SubTitle) {
+								if($OldSubTitle!=$Item->SubTitle and $Item->Type!='RA') {
 									// SubTitle
 									$ret[]='<tr><td></td><td class="SchSubTitle">'.$Item->SubTitle.'</td></tr>';
 									$OldSubTitle=$Item->SubTitle;
@@ -842,18 +998,41 @@ Class Scheduler {
 												.'</td><td class="SchItem">'.$lnk.'</td></tr>';
 											$IsTitle=false;
 											break;
+										case 'R':
+											break;
+										case 'RA':
+											$lnk=$Item->Text.($Item->Events ? ': '.$Item->Events : '');
+											if($Item->SubTitle) {
+												$lnk.=' - '.$Item->SubTitle;
+											}
+											$Class='';
+											if($Type=='SET') {
+												$lnk='<a href="?Activate='.urlencode($key).'">'.strip_tags(str_replace('<br>', ' / ', $lnk), '<div>').'</a>';
+											}
+											$ret[]='<tr name="'.$key.'" class="'.$Class.($ActiveSession ? ' active' : '').'"><td>'
+												. $timing . ($Item->Shift && $timing ? ($Type=='IS' ? '<span class="SchDelay">' : '') . '&nbsp;+' . $Item->Shift . ($Type=='IS' ? '</span>' : ''): "")
+												.'</td><td class="SchItem">'.$lnk.'</td></tr>';
+											$IsTitle=false;
+											break;
 										default:
 // 											debug_svela($Item);
 									}
 
 								} else {
-									if($Item->Comments) {
+									if($Item->Comments and $Item->Type!='RA') {
 										$lnk=$Item->Comments;
 									} else {
 										switch($Item->Type) {
 											case 'I':
 											case 'T':
 												$lnk=$Item->Text.': '.$Item->Events.' '.'warmup';
+												break;
+											case 'RA':
+												if($Time==$Item->grPos) {
+													$lnk=get_text('CallTimeToRoom', 'RunArchery', $Item->Text.' '.$Item->Events);
+												} else {
+													$lnk=get_text('OfficialPracticeForEvents', 'RunArchery', $Item->Text.' '.$Item->Events);
+												}
 												break;
 											default:
 												$lnk.=' Warmup';
@@ -1317,7 +1496,7 @@ Class Scheduler {
 									if($Item->Shift and $timing) {
 										$pdf->Cell($DelayWidth, $CellHeight, $timingDelayed, 0, 0);
 										$pdf->Cell($TimingWidth, $CellHeight, $timing, 0, 0);
-										$pdf->Line($StartX, $y=$pdf->GetY()+($CellHeight/2), $StartX+$TimingWidth-$FontAdjust, $y);
+										// $pdf->Line($StartX, $y=$pdf->GetY()+($CellHeight/2), $StartX+$TimingWidth-$FontAdjust, $y);
 									} else {
 										$pdf->SetX($StartX+$DelayWidth);
 										$pdf->Cell($TimingWidth, $CellHeight, $timing, 0, 0);
@@ -1615,18 +1794,49 @@ Class Scheduler {
 												$pdf->Cell($descrSize, $CellHeight, $lnk, 0, 1, 'L', 0);
 											}
 											break;
+										case 'RA':
+											$lnk=$Item->Text.($Item->Events ? ': '.$Item->Events : '');
+											if($Item->SubTitle) {
+												$lnk.=' - '.$Item->SubTitle;
+											}
+											if($Item->Shift and $timing) {
+												$pdf->SetX($StartX);
+												$pdf->Cell($DelayWidth, $CellHeight, $timingDelayed, 0, 0);
+												$pdf->Cell($TimingWidth, $CellHeight, $timing, 0, 0);
+											} else {
+												$pdf->SetX($StartX+$DelayWidth);
+												$pdf->Cell($TimingWidth, $CellHeight, $timing, 0, 0);
+											}
+											if($timing and $Item->Duration) {
+												$pdf->SetFont('', 'I');
+												$pdf->setColor('text', 75);
+												$pdf->Cell($DurationWidth, $CellHeight, sprintf('%02d:%02d', $Item->Duration/60, $Item->Duration%60), 0, 0, 'R');
+												$pdf->SetFont('', '');
+												$pdf->setColor('text', 0);
+											}
+											$pdf->SetX($StartX+$TimeColumns);
+											$IsTitle=false;
+											$pdf->Cell($descrSize, $CellHeight, $lnk, 0, 1, 'L', 0);
+											break;
 										default:
 // 											debug_svela($Item);
 									}
 
 								} else {
-									if($Item->Comments) {
+									if($Item->Comments and $Item->Type!='RA') {
 										$lnk=$Item->Comments;
 									} else {
 										switch($Item->Type) {
 											case 'I':
 											case 'T':
 												$lnk=$Item->Text.': '.$Item->Events.' '.'warmup';
+												break;
+											case 'RA':
+												if($Time==$Item->grPos) {
+													$lnk=get_text('CallTimeToRoom', 'RunArchery', $Item->Text.' '.$Item->Events);
+												} else {
+													$lnk=get_text('OfficialPracticeForEvents', 'RunArchery', $Item->Text.' '.$Item->Events);
+												}
 												break;
 											default:
 												$lnk.=' Warmup';
@@ -1663,6 +1873,277 @@ Class Scheduler {
 			}
 		}
 		return $pdf;
+	}
+
+	function getScheduleICS($Download=false) {
+		// UID could be based on type
+		// Z: ToCode+Type+SchUid (generated once)
+		// Q: ToCode+Type+Session+Distance
+		// E: ToCode+Type+Round+Events
+		// RA: ToCode+Type+Phase+Group+Events
+		// I: ToCode+Type+Phase+Events+sum(matchno)
+		// M: ToCode+Type+Phase+Events+sum(matchno)
+		// RR: ToCode+Type+Level+Group+Phase+Events+sum(matchno)
+		require_once(__DIR__.'/ics-class.php');
+		$q=safe_r_SQL("select ToTimeZone, ToCode, ToName, ToVenue, ToWhere, ToCountry from Tournament where ToId={$this->TourId}");
+		if(!($COMP=safe_fetch($q))) {
+			return '';
+		}
+		$Name=$COMP->ToName;
+		$Location=$COMP->ToWhere." ({$COMP->ToCountry})";
+		if($COMP->ToVenue) {
+			$Location=$Location.' - '.$COMP->ToVenue;
+		}
+		$ICS=new IanseoCalendar($this->TourId, $Name, $Location, $COMP->ToCode.'-Schedule', $COMP->ToTimeZone, $this->SchedVersion??'');
+		$ICS->Reset=isset($_REQUEST['reset']);
+
+		foreach($this->GetSchedule() as $Date => $Times) {
+			// DAY
+
+			$OldTitle='';
+			$OldSubTitle='';
+			$OldType='';
+			$OldStart='';
+			$OldEnd='';
+			$IsTitle=false;
+			$FirstTitle=true;
+
+			$OldComment='';
+			ksort($Times);
+			foreach($Times as $Time => $Sessions) {
+				$Singles=array();
+				foreach($Sessions as $Session => $Distances) {
+					foreach($Distances as $Distance => $Items) {
+						foreach($Items as $k => $Item) {
+							if(!$Item->Duration) {
+								continue;
+							}
+							if($Item->Comments) {
+								$SingleKey="{$Item->Duration}-{$Item->Title}-{$Item->SubTitle}-{$Item->Comments}";
+								if(in_array($SingleKey, $Singles)) {
+									continue;
+								}
+								$Singles[]=$SingleKey;
+							}
+							$cal=[
+								'start' => $Date.' '.$Time,
+								'description' => [$Name],
+								'comment' => [],
+								'summary' => '',
+								'location' => ($Item->Location??$Location),
+								'uid' => md5($Item->UID),
+							];
+
+							if($Item->Duration) {
+								$cal['duration']="PT{$Item->Duration}M";
+							}
+							if($Item->Shift) {
+								$cal['comment'][] = '+'.$Item->Shift;
+							}
+
+							if($Item->Type=='Z') {
+								// free text
+								$timing=$Item->Start.($Item->Duration ? '-'.addMinutes($Item->Start, $Item->Duration) : '');
+								if($OldTitle!=$Item->Title and $Item->Title) {
+									if(!$IsTitle) {
+										$cal['summary']=strip_tags($Item->Title);
+										$RepeatTitle=$Item->Title;
+									}
+									$OldTitle=$Item->Title;
+									$OldSubTitle='';
+									$IsTitle=true;
+								}
+								if($OldSubTitle!=$Item->SubTitle and $Item->SubTitle) {
+									if(!$Item->Text) {
+										$timing='';
+									}
+									if($cal['summary']) {
+										$cal['description'][]=strip_tags($Item->SubTitle);
+									} else {
+										$cal['summary']=strip_tags($Item->SubTitle);
+									}
+									$OldSubTitle=$Item->SubTitle;
+									$IsTitle=false;
+								}
+								if($Item->Text) {
+									if($cal['summary']) {
+										$cal['description'][]=strip_tags($Item->Text);
+									} else {
+										$cal['summary']=strip_tags($Item->Text);
+									}
+									$timing='';
+									$IsTitle=false;
+								}
+								$OldStart=$Item->Start;
+								$OldEnd=$Item->Duration;
+								$OldComment='';
+							} else {
+								// all other kind of texts have a title and the items
+								// subtitle will always be the SUMMARY if present
+								if($Item->SubTitle) {
+									$cal['summary']=strip_tags($Item->SubTitle);
+									$OldSubTitle=$Item->SubTitle;
+									$IsTitle=false;
+								}
+
+								if(!$IsTitle) {
+									if($cal['summary']) {
+										$cal['description'][]=strip_tags($Item->Title);
+									} else {
+										$cal['summary']=strip_tags($Item->Title);
+									}
+									$RepeatTitle=$Item->Title;
+								}
+								$OldTitle=$Item->Title;
+								$IsTitle=true;
+								$OldSubTitle='';
+
+								$timing='';
+								if($OldStart != $Item->Start or $OldEnd != $Item->Duration) {
+									$timing=$Item->Start.($Item->Duration ? '-'.addMinutes($Item->Start, $Item->Duration) : '');
+									$OldStart=$Item->Start;
+									$OldEnd=$Item->Duration;
+								}
+
+								$lnk=strip_tags($Item->Text);
+								if(!$Item->Warmup) {
+									// not a warmup!
+									$OldComment='';
+									switch($Item->Type) {
+										case 'Q':
+										case 'E':
+											$lnk='';
+											if($Item->Comments) {
+												$cal['comment'][]=$Item->Comments;
+												$timing='';
+											}
+
+											if(count($this->Groups[$Item->Type][$Session])==1) {
+												$txt=$Item->Text.$lnk;
+											} elseif($tmp=@end($this->Groups[$Item->Type][$Session]) and $tmp=@end($tmp) and $tmp=@end($tmp) and $Item==@end($tmp)) {
+												$txt=$Item->DistanceName.$lnk;
+											} else {
+												$txt=$Item->DistanceName;
+												// more distances defined so format is different...
+											}
+
+											if($cal['summary']) {
+												$cal['description'][]=strip_tags($txt);
+											} else {
+												$cal['summary']=strip_tags($txt);
+											}
+											$IsTitle=false;
+											break;
+										case 'I':
+										case 'T':
+											$lnk=$Item->Text.': '.$Item->Events;
+											$IsTitle=false;
+											if($Item->Type=='I' and $Item->ElimType>=3) { // && $Item->Session<=1) {
+												$SQL="select distinct ind1.IndRank LeftRank, ind2.IndRank RightRank, concat(upper(e1.EnFirstname), ' ', e1.EnName, ' (', c1.CoCode, ')') LeftSide,
+														concat('(', c2.CoCode, ') ', upper(e2.EnFirstname), ' ', e2.EnName) RightSide,
+														GrMatchNo, tf1.FinEvent as EvCode
+													from Finals tf1
+													inner join Finals tf2 on tf1.FinEvent=tf2.FinEvent and tf1.FinTournament=tf2.FinTournament and tf2.FinMatchNo=tf1.FinMatchNo+1 and tf2.FinMatchNo%2=1
+													inner join FinSchedule fs1 on tf1.FinTournament=fs1.FsTournament and tf1.FinEvent=fs1.FsEvent and tf1.FinMatchNo=fs1.FsMatchNo and fs1.FsTeamEvent=0 and fs1.FsScheduledDate='$Date' and fs1.FsScheduledTime='$Time'
+													inner join FinSchedule fs2 on tf2.FinTournament=fs2.FsTournament and tf2.FinEvent=fs2.FsEvent and tf2.FinMatchNo=fs2.FsMatchNo and fs2.FsTeamEvent=0 and fs2.FsScheduledDate='$Date' and fs2.FsScheduledTime='$Time'
+													inner join Events on EvTournament=tf1.FinTournament and EvTeamEvent=0 and EvCode=tf1.FinEvent
+													inner join Grids on tf1.FinMatchNo=GrMatchNo and GrPhase=$Item->Session
+													left join Entries e1 on e1.EnId=tf1.FinAthlete and tf1.FinEvent IN ('$Item->Event')
+													left join Entries e2 on e2.EnId=tf2.FinAthlete and tf2.FinEvent IN ('$Item->Event')
+													left join Individuals ind1 on e1.EnId=ind1.IndId and tf1.FinEvent=ind1.IndEvent
+													left join Individuals ind2 on e2.EnId=ind2.IndId and tf2.FinEvent=ind2.IndEvent
+													left join Countries c1 on e1.EnCountry=c1.CoId and c1.CoTournament=$this->TourId
+													left join Countries c2 on e2.EnCountry=c2.CoId and c2.CoTournament=$this->TourId
+													where tf1.FinTournament=$this->TourId
+													order by GrMatchNo";
+												$q=safe_r_SQL($SQL);
+												if(!safe_num_rows($q)) {
+													continue 2;
+												}
+												$tmp=array();
+												while($r=safe_fetch($q)) {
+													if($Item->ElimType==3) {
+														// ElimPool... writes who or a generic sentence
+														$opps=array();
+														if(isset($this->PoolMatchWinners[$r->GrMatchNo])) {
+															$opps[]=($this->Ranking ? '#'.$r->LeftRank.' ' : '') . $this->PoolMatchWinners[$r->GrMatchNo];
+														}
+														if(isset($this->PoolMatchWinners[$r->GrMatchNo+1])) {
+															$opps[]=$this->PoolMatchWinners[$r->GrMatchNo+1]. ($this->Ranking ? ' #'.$r->RightRank : '');
+														}
+
+														$tmp[(isset($this->PoolMatches[$r->GrMatchNo]) ? $this->PoolMatches[$r->GrMatchNo] : $Item->Text).($opps ? '' : ': '.$Item->Events)][]=($opps ? $r->EvCode.': '.implode(' - ', $opps) : '');
+													} elseif($Item->ElimType==4) {
+														// ElimPool... writes who or a generic sentence
+														$opps=array();
+														if(isset($this->PoolMatchWinnersWA[$r->GrMatchNo])) {
+															$opps[]=($this->Ranking ? '#'.$r->LeftRank.' ' : '') . $this->PoolMatchWinnersWA[$r->GrMatchNo];
+														}
+														if(isset($this->PoolMatchWinnersWA[$r->GrMatchNo+1])) {
+															$opps[]=$this->PoolMatchWinnersWA[$r->GrMatchNo+1]. ($this->Ranking ? ' #'.$r->RightRank : '');
+														}
+
+														$tmp[(isset($this->PoolMatchesWA[$r->GrMatchNo]) ? $this->PoolMatchesWA[$r->GrMatchNo] : $Item->Text).($opps ? '' : ': '.$Item->Events)][]=($opps ? $r->EvCode.': '.implode(' - ', $opps) : '');
+													} else {
+														$tmp[$lnk][]= '#'.$r->LeftRank.' - #'.$r->RightRank;
+													}
+												}
+
+												if($tmp) {
+													ksort($tmp);
+													$cal['summary']= $Item->Title.' '.implode(' + ', array_keys($tmp));
+													foreach($tmp as $Category => $Opponents) {
+														foreach($Opponents as $Opponent) {
+															if(!$Opponent) {
+																continue;
+															}
+															$cal['description'][]=$Opponent;
+														}
+													}
+												} elseif($Item->ElimType==4) {
+													// no tmp and should be, so empty event...
+													continue 2;
+												}
+											} else {
+												$cal['summary']=$Item->Title.' - '.strip_tags($lnk);
+											}
+											break;
+										default:
+// 											debug_svela($Item);
+									}
+
+								} else {
+									if($Item->Comments) {
+										$lnk=$Item->Comments;
+									} else {
+										switch($Item->Type) {
+											case 'I':
+											case 'T':
+												$lnk=$Item->Text.': '.$Item->Events.' '.'warmup';
+												break;
+											default:
+												$lnk.=' Warmup';
+										}
+									}
+									if($OldComment==$lnk) continue;
+									$OldComment=$lnk;
+									if($cal['summary']) {
+										$cal['description'][]=strip_tags($lnk);
+									} else {
+										$cal['summary']=strip_tags($lnk);
+									}
+									$IsTitle=false;
+								}
+							}
+							$FirstTitle=false;
+							$cal['summary']=$COMP->ToCode.': '.$cal['summary'];
+							$ICS->addEvent($cal);
+						}
+					}
+				}
+			}
+		}
+		return $ICS->output($Download);
 	}
 
 	function getScheduleBoinx() {
@@ -3267,6 +3748,7 @@ Class Scheduler {
 											break;
 										case 'I':
 										case 'T':
+										case 'R':
 											if($Item->Title and !in_array($Item->Title, $FOP[$Date]['times'][$Time]['text'])) {
 												$FOP[$Date]['times'][$Time]['text'][]=strip_tags($Item->Title);
 											}
@@ -3350,27 +3832,49 @@ Class Scheduler {
 												}
 
 												// Now get the targets with the matches
-												$MyQuery = "SELECT '' as Warmup, FSEvent, FSTeamEvent, GrPhase, FsMatchNo, FsTarget, '' as TargetTo, EvMatchArrowsNo, EvMatchMode, EvMixedTeam, EvTeamEvent, UNIX_TIMESTAMP(FSScheduledDate) as SchDate, DATE_FORMAT(FSScheduledTime,'" . get_text('TimeFmt') . "') as SchTime, EvFinalFirstPhase,
-														@bit:=if(GrPhase=0, 1, pow(2, ceil(log2(GrPhase))+1)) & EvMatchArrowsNo,
-														IF(@bit=0,EvFinEnds,EvElimEnds) AS `ends`,
-														IF(@bit=0,EvFinArrows,EvElimArrows) AS `arrows`,
-														IF(@bit=0,EvFinSO,EvElimSO) AS `so`,
-														EvMaxTeamPerson, group_concat(distinct if(instr('ABCD', right(FsLetter,1))>0, right(FsLetter,1), '') order by right(FsLetter,1) separator '') as Persons,
-														FSScheduledDate,
-														FSScheduledTime, EvDistance, TarDescr, EvTargetSize,
-														EvWinnerFinalRank
-													FROM FinSchedule
-													INNER JOIN Grids ON FSMatchNo=GrMatchNo
-													INNER JOIN Events ON FSEvent=EvCode AND FSTeamEvent=EvTeamEvent AND FSTournament=EvTournament
-													inner join Phases on EvFinalFirstPhase in (PhId, PhLevel) and (PhIndTeam & pow(2, EvTeamEvent))>0 and PhRuleSets in ('', '{$_SESSION['TourLocRule']}')
-													left join Targets on EvFinalTargetType=TarId
-													WHERE FSTournament=" . StrSafe_DB($this->TourId) . "
-														AND FSScheduledDate='$Date' and FSScheduledTime='$Time'
-														and FsTarget!=''
-														AND GrPhase<=greatest(ifnull(PhId,0), ifnull(PhLevel,0), EvFinalFirstPhase)
-														group by FsEvent, FsTarget, GrPhase
-													".($this->TargetsInvolved ? ' HAVING '.sprintf($this->TargetsInvolved, 'FsTarget+0') : '')."
-														ORDER BY Warmup ASC, FsEvent, FSTarget ASC, FSMatchNo ASC";
+												if($Item->Type=='R') {
+													$TimeFormat=get_text('TimeFmt');
+													$MyQuery = "SELECT '' as Warmup, RrMatchEvent as FSEvent, RrMatchTeam as FSTeamEvent, concat_ws('-', RrMatchLevel, RrMatchGroup, RrMatchRound) as GrPhase, RrMatchMatchNo as FsMatchNo, RrMatchTarget as FsTarget, '' as TargetTo, RrLevArrows as EvMatchArrowsNo, RrLevMatchMode as EvMatchMode, EvMixedTeam, EvTeamEvent, UNIX_TIMESTAMP(RrMatchScheduledDate) as SchDate, DATE_FORMAT(RrMatchScheduledTime,'$TimeFormat') as SchTime, EvFinalFirstPhase,
+															RrLevEnds AS `ends`,
+															RrLevArrows AS `arrows`,
+															RrLevSO AS `so`,
+															EvMaxTeamPerson, group_concat(distinct if(instr('ABCD', right(RrMatchTarget,1))>0, right(RrMatchTarget,1), '') order by right(RrMatchTarget,1) separator '') as Persons,
+															RrMatchScheduledDate as FSScheduledDate,
+															RrMatchScheduledTime as FSScheduledTime, EvDistance, TarDescr, EvTargetSize,
+															EvWinnerFinalRank
+														FROM RoundRobinMatches
+														INNER JOIN RoundRobinLevel ON RrLevTournament=RrMatchTournament AND RrLevTeam=RrMatchTeam and RrLevEvent=RrMatchEvent and RrLevLevel=RrMatchLevel
+														INNER JOIN Events ON EvCode=RrMatchEvent AND EvTeamEvent=RrMatchTeam AND EvTournament=RrMatchTournament
+														left join Targets on EvFinalTargetType=TarId
+														WHERE RrMatchTournament=$this->TourId
+															AND RrMatchScheduledDate='$Date' and RrMatchScheduledTime='$Time'
+															and RrMatchTarget!=''
+															group by RrMatchEvent, RrMatchTarget+0
+														".($this->TargetsInvolved ? ' HAVING '.sprintf($this->TargetsInvolved, 'FsTarget+0') : '')."
+															ORDER BY Warmup ASC, RrMatchEvent, RrMatchTarget ASC, RrMatchMatchNo ASC";
+												} else {
+													$MyQuery = "SELECT '' as Warmup, FSEvent, FSTeamEvent, GrPhase, FsMatchNo, FsTarget, '' as TargetTo, EvMatchArrowsNo, EvMatchMode, EvMixedTeam, EvTeamEvent, UNIX_TIMESTAMP(FSScheduledDate) as SchDate, DATE_FORMAT(FSScheduledTime,'" . get_text('TimeFmt') . "') as SchTime, EvFinalFirstPhase,
+															@bit:=if(GrPhase=0, 1, pow(2, ceil(log2(GrPhase))+1)) & EvMatchArrowsNo,
+															IF(@bit=0,EvFinEnds,EvElimEnds) AS `ends`,
+															IF(@bit=0,EvFinArrows,EvElimArrows) AS `arrows`,
+															IF(@bit=0,EvFinSO,EvElimSO) AS `so`,
+															EvMaxTeamPerson, group_concat(distinct if(instr('ABCD', right(FsLetter,1))>0, right(FsLetter,1), '') order by right(FsLetter,1) separator '') as Persons,
+															FSScheduledDate,
+															FSScheduledTime, EvDistance, TarDescr, EvTargetSize,
+															EvWinnerFinalRank
+														FROM FinSchedule
+														INNER JOIN Grids ON FSMatchNo=GrMatchNo
+														INNER JOIN Events ON FSEvent=EvCode AND FSTeamEvent=EvTeamEvent AND FSTournament=EvTournament
+														inner join Phases on EvFinalFirstPhase in (PhId, PhLevel) and (PhIndTeam & pow(2, EvTeamEvent))>0 and PhRuleSets in ('', '{$_SESSION['TourLocRule']}')
+														left join Targets on EvFinalTargetType=TarId
+														WHERE FSTournament=" . StrSafe_DB($this->TourId) . "
+															AND FSScheduledDate='$Date' and FSScheduledTime='$Time'
+															and FsTarget!=''
+															AND GrPhase<=greatest(ifnull(PhId,0), ifnull(PhLevel,0), EvFinalFirstPhase)
+															group by FsEvent, FsTarget, GrPhase
+														".($this->TargetsInvolved ? ' HAVING '.sprintf($this->TargetsInvolved, 'FsTarget+0') : '')."
+															ORDER BY Warmup ASC, FsEvent, FSTarget ASC, FSMatchNo ASC";
+												}
 												$t = safe_r_sql($MyQuery);
 												while($u=safe_fetch($t)) {
 													$EndsArrows=get_text('EventDetailsShort', 'Tournament', array($u->ends, $u->arrows));
@@ -3400,12 +3904,16 @@ Class Scheduler {
 													$rows[$u->FSEvent][$u->FsTarget]['p']=$u->Persons;
 													$rows[$u->FSEvent][$u->FsTarget]['mp']=$u->EvMaxTeamPerson;
 													$rows[$u->FSEvent][$u->FsTarget]['w']=0;
-													if($u->GrPhase==0) {
-														$rows[$u->FSEvent][$u->FsTarget]['ph']=$u->EvWinnerFinalRank==1 ? get_text('0_Phase') : ($u->EvWinnerFinalRank) . ' vs ' . ($u->EvWinnerFinalRank+1);
-													} elseif($u->GrPhase==1) {
-														$rows[$u->FSEvent][$u->FsTarget]['ph']=$u->EvWinnerFinalRank==1 ? get_text('1_Phase') : ($u->EvWinnerFinalRank+2) . ' vs ' . ($u->EvWinnerFinalRank+3);
+													if($Item->Type=='R') {
+														$rows[$u->FSEvent][$u->FsTarget]['ph']='';
 													} else {
-														$rows[$u->FSEvent][$u->FsTarget]['ph']=get_text(namePhase($u->EvFinalFirstPhase, $u->GrPhase) . '_Phase');
+														if($u->GrPhase==0) {
+															$rows[$u->FSEvent][$u->FsTarget]['ph']=$u->EvWinnerFinalRank==1 ? get_text('0_Phase') : ($u->EvWinnerFinalRank) . ' vs ' . ($u->EvWinnerFinalRank+1);
+														} elseif($u->GrPhase==1) {
+															$rows[$u->FSEvent][$u->FsTarget]['ph']=$u->EvWinnerFinalRank==1 ? get_text('1_Phase') : ($u->EvWinnerFinalRank+2) . ' vs ' . ($u->EvWinnerFinalRank+3);
+														} else {
+															$rows[$u->FSEvent][$u->FsTarget]['ph']=get_text(namePhase($u->EvFinalFirstPhase, $u->GrPhase) . '_Phase');
+														}
 													}
 												}
 
@@ -3891,7 +4399,7 @@ Class Scheduler {
 				$pdf->Cell($TimeWidth, 0, $Block['time'], 0, 1);
 				$pdf->SetFont('', '', 7);
 				foreach($Block['text'] as $txt) {
-					$txt=substr($txt, 0, 30);
+                    $txt=mb_substr($txt, 0, 30, 'UTF-8');
 					$pdf->Cell($TimeWidth, 3, $txt, '', 1);
 				}
 				$pdf->setY($Y);

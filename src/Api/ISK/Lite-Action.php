@@ -42,6 +42,7 @@ switch($_REQUEST['act']) {
     case 'CalcClDivTeam':
     case 'CalcFinInd':
     case 'CalcFinTeam':
+    case 'CalcFinRobin':
 		if(isset($_REQUEST['val'])) {
 			setModuleParameter('ISK', $_REQUEST['act'], intval($_REQUEST['val']));
 		} else {
@@ -56,10 +57,12 @@ switch($_REQUEST['act']) {
 		} else {
 
                 // we import EVERYTHING related to this competition...
-			$SQL="SELECT Qualifications.*, IskDtArrowstring, IskDtDistance, IskDtEndNo, DIDistance, DIEnds, DIArrows, ToGoldsChars, ToXNineChars 
+			$SQL="SELECT Qualifications.*, IskDtArrowstring, IskDtDistance, IskDtEndNo, DIDistance, DIEnds, DIArrows, IF(TfGoldsChars='',ToGoldsChars,TfGoldsChars) as GoldsChars, IF(TfXNineChars='',ToXNineChars,TfXNineChars) as XNineChars,
+                    `TfGoldsChars1`, `TfXNineChars1`, `TfGoldsChars2`, `TfXNineChars2`, `TfGoldsChars3`, `TfXNineChars3`, `TfGoldsChars4`, `TfXNineChars4`, `TfGoldsChars5`, `TfXNineChars5`, `TfGoldsChars6`, `TfXNineChars6`, `TfGoldsChars7`, `TfXNineChars7`, `TfGoldsChars8`, `TfXNineChars8`
 				from Qualifications
 				INNER JOIN Entries ON QuId=EnId
 				INNER JOIN Tournament ON ToId=EnTournament
+                INNER JOIN TargetFaces on TfId=EnTargetFace and TfTournament=EnTournament
 				INNER JOIN DistanceInformation ON DITournament=EnTournament AND DISession=QuSession AND DIType='Q'
 				INNER JOIN IskData ON iskDtTournament=EnTournament AND IskDtMatchNo=0 AND IskDtEvent='' AND IskDtTeamInd=0 AND IskDtType='Q' AND IskDtTargetNo=QuTargetNo AND IskDtDistance=DIDistance
 				WHERE EnTournament={$_SESSION['TourId']}";
@@ -76,7 +79,7 @@ switch($_REQUEST['act']) {
 				$Score=0;
 				$Gold=0;
 				$XNine=0;
-				list($Score,$Gold,$XNine)=ValutaArrowStringGX($arrowString,$r->ToGoldsChars,$r->ToXNineChars);
+				list($Score,$Gold,$XNine)=ValutaArrowStringGX($arrowString,(empty($r->{"TfGoldsChars".$Dist}) ? $r->GoldsChars : $r->{"TfGoldsChars".$Dist}), (empty($r->{"TfXNineChars".$Dist}) ? $r->XNineChars : $r->{"TfXNineChars".$Dist}));
 				$Hits=strlen(str_replace(' ', '', $arrowString));
 
 				$Update = "UPDATE Qualifications SET

@@ -16,7 +16,6 @@ $lang['Credits-BeiterCredits']='De barcode module valt onder freeware en is gema
 $lang['Credits-Coordination']='IT-Project coordinatie';
 $lang['Credits-CoreGroup']='IANSEO ontwikkelgroep';
 $lang['Credits-Credits']='Medewerkers';
-$lang['Credits-Documentation']='Documentatie en ondersteuning';
 $lang['Credits-FitarcoCredits']='Wat is Ianseo. Het is een pakket voor het bijhouden van de resultaten van een handboogevenement. Het is een open source project met dank aan de italiaanse handboogbond voor de financiele ondersteuning zodat het overal gebruikt kan worden. Het is vertaald in verschillende talen.  Ianseo gebruikt de meest recente World Archery regels. Het is ontwikkeld tot een compleet pakket voor het leiden van een handboogwedstrijd. in al zijn facetten; accreditatie van de atleten and officers to every kind of printouts utilities, from network and online integration to FOP design.';
 $lang['Credits-HHT']='HHT Integratie';
 $lang['Credits-IanseoTeam']='Ianseo & Ianseo Team';

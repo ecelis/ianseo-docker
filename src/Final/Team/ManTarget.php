@@ -159,7 +159,7 @@ if (!empty($_REQUEST['Command'])) {
                     }
                     // posizione
                     $MyGrid[$Row][$Col].= '<td nowrap class="'. ($AthPrinted==1 ? 'Bottom ' : '') . 'Top wRight Left Center">' . (useGrPostion2($StartPhase, $CurPhase) ? ($MyRow->GrPosition2 ? $MyRow->GrPosition2 : '&nbsp;') : $MyRow->GrPosition) . '</td>';
-	                $MyGrid[$Row][$Col] .= '<td nowrap class="' . ($AthPrinted == 1 ? 'Bottom ' : '') . 'Top wRight Left Center"><span phase="'.$MyRow->GrPhase.'" id="Letter-'.$MyRow->GrMatchNo.'">' . ltrim($MyRow->FsLetter, '0123456789') . '</span></td>';
+	                $MyGrid[$Row][$Col] .= '<td nowrap class="' . ($AthPrinted == 1 ? 'Bottom ' : '') . 'Top wRight Left Center"><span phase="'.$MyRow->GrPhase.'" id="Letter-'.$MyRow->GrMatchNo.'">' . ltrim(($MyRow->FsLetter ?? ''), '0123456789') . '</span></td>';
                     // target
                     $Target = (!is_null($MyRow->FSTarget) ? $MyRow->FSTarget : '');
 	                $id = $MyRow->TfEvent . '_' . $MyRow->EvTeamEvent . '_' . $MyRow->GrMatchNo;
@@ -313,7 +313,7 @@ if (!empty($_REQUEST['Command'])) {
 
                 // posizione
                 $MyGrid[$Row][$Col].= '<td nowrap class="'. ($AthPrinted==1 ? 'Bottom ' : '') . 'Top wRight Left Center">' . (useGrPostion2($StartPhase, $CurPhase) ? ($MyRow->GrPosition2 ? $MyRow->GrPosition2 : '&nbsp;') : $MyRow->GrPosition) . '</td>';
-	            $MyGrid[$Row][$Col] .= '<td nowrap class="' . ($AthPrinted == 1 ? 'Bottom ' : '') . 'Top wRight Left Center"><span phase="'.$MyRow->GrPhase.'" id="Letter-'.$MyRow->GrMatchNo.'">' . ltrim($MyRow->FsLetter, '0123456789') . '</span></td>';
+	            $MyGrid[$Row][$Col] .= '<td nowrap class="' . ($AthPrinted == 1 ? 'Bottom ' : '') . 'Top wRight Left Center"><span phase="'.$MyRow->GrPhase.'" id="Letter-'.$MyRow->GrMatchNo.'">' . ltrim(($MyRow->FsLetter ?? ''), '0123456789') . '</span></td>';
                 // target
                 $Target = (!is_null($MyRow->FSTarget) ? $MyRow->FSTarget : '');
 

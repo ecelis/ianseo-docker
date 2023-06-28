@@ -159,14 +159,12 @@ function ConfirmPrinted() {
 
 						ShowEntries();
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
 
 				};
 				XMLHttp.send();
 			}
 		} catch (e) {
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }

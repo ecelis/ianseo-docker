@@ -3,7 +3,7 @@ var toRefresh = 0;
 var toLastUpload = 0;
 
 $(function() {
-	toggleOris();
+	buildPage(new FormData($('#uploads')[0]));
 });
 
 function toggleDeleteColor(obj) {
@@ -45,13 +45,13 @@ function doUpload() {
 	$('#msg').html('');
 	// var sendData='';
 
-	// aborts if a file ise being upload without a name
+	// aborts if a file is being uploaded without a name
 	if($('#FIL').val()!='' && $('#FILname').val()=='') {
 		alert('Missing name');
 		return;
 	}
 
-	// aborts if a file ise being upload without a name
+	// aborts if an URLe is being uploaded without a name
 	if($('#URL').val()!='' && $('#URLname').val()=='') {
 		alert('Missing description');
 		return;
@@ -110,84 +110,7 @@ function doUpload() {
 	}).fail(function(){
 		console.log("An error occurred, the files couldn't be sent!");
 	}).always(function () {
-		$.getJSON('UploadResults-status.php', function (data) {
-
-			$('#sel_IndAbs').html(data.IndAbs);
-			if(data.IndAbs !== '') {
-				$('#tit_IndAbs').show();
-			} else {
-				$('#tit_IndAbs').hide();
-			}
-			$('#sel_TeamAbs').html(data.TeamAbs);
-			if(data.TeamAbs !== '') {
-				$('#tit_TeamAbs').show();
-			} else {
-				$('#tit_TeamAbs').hide();
-			}
-			if(data.IndAbs !== '' || data.TeamAbs !== '') {
-				$('.tit_Abs').show();
-			} else {
-				$('.tit_Abs').hide();
-			}
-
-			$('#sel_IndBra').html(data.IndBra);
-			if(data.IndBra !== '') {
-				$('#tit_IndBra').show();
-			} else {
-				$('#tit_IndBra').hide();
-			}
-			$('#sel_TeamBra').html(data.TeamBra);
-			if(data.TeamBra !== '') {
-				$('#tit_TeamBra').show();
-			} else {
-				$('#tit_TeamBra').hide();
-			}
-			if(data.IndBra !== '' || data.TeamBra !== '') {
-				$('.tit_Bra').show();
-			} else {
-				$('.tit_Bra').hide();
-			}
-			$('#sel_IndFin').html(data.IndFin);
-			if(data.IndFin !== '') {
-				$('#tit_IndFin').show();
-			} else {
-				$('#tit_IndFin').hide();
-			}
-			$('#sel_TeamFin').html(data.TeamFin);
-			if(data.TeamFin !== '') {
-				$('#tit_TeamFin').show();
-			} else {
-				$('#tit_TeamFin').hide();
-			}
-			if(data.IndFin !== '' || data.TeamFin !== '') {
-				$('.tit_Fin').show();
-			} else {
-				$('.tit_Fin').hide();
-			}
-
-			if(data.Medals || data.FinalBook) {
-				$('.tit_MedBook').show();
-			} else {
-				$('.tit_MedBook').hide();
-			}
-			if(data.Medals) {
-				$('.tit_Med').show();
-			} else {
-				$('.tit_Med').hide();
-			}
-			if(data.FinalBook) {
-				$('.tit_Book').show();
-			} else {
-				$('.tit_Book').hide();
-			}
-
-			['QualificationInd[]','EliminationInd[]','FinalInd[]','BracketsInd[]','QualificationTeam[]','FinalTeam[]','BracketsTeam[]'].forEach(function (ph) {
-				fdata.getAll(ph).forEach(function (item) {
-					$("input[name='"+ph+"'][value='"+item+"']").prop('checked', true);
-				});
-			});
-			AutoUpload();
-		})
+		buildPage(fdata);
 	});
 }
 
@@ -229,4 +152,100 @@ function AutoUpload() {
 function refreshCountDown() {
 	endTime = new Date();
 	$('#toCountDown').html((parseInt($('#AutoUploadTimer').val())*60 - ((endTime - toLastUpload) / 1000)).toFixed(0));
+}
+
+function buildPage(fdata) {
+	$.getJSON('UploadResults-status.php', function (data) {
+
+		$('#sel_IndAbs').html(data.IndAbs);
+		if(data.IndAbs !== '') {
+			$('#tit_IndAbs').show();
+		} else {
+			$('#tit_IndAbs').hide();
+		}
+		$('#sel_TeamAbs').html(data.TeamAbs);
+		if(data.TeamAbs !== '') {
+			$('#tit_TeamAbs').show();
+		} else {
+			$('#tit_TeamAbs').hide();
+		}
+		if(data.IndAbs !== '' || data.TeamAbs !== '') {
+			$('.tit_Abs').show();
+		} else {
+			$('.tit_Abs').hide();
+		}
+
+		$('#sel_Elim').html(data.Elim);
+		if(data.Elim !== '') {
+			$('#sel_Elim').show();
+			$('.tit_Elim').show();
+		} else {
+			$('#sel_Elim').hide();
+			$('.tit_Elim').hide();
+		}
+
+		$('#sel_IndBra').html(data.IndBra);
+		if(data.IndBra !== '') {
+			$('#tit_IndBra').show();
+		} else {
+			$('#tit_IndBra').hide();
+		}
+		$('#sel_TeamBra').html(data.TeamBra);
+		if(data.TeamBra !== '') {
+			$('#tit_TeamBra').show();
+		} else {
+			$('#tit_TeamBra').hide();
+		}
+		if(data.IndBra !== '' || data.TeamBra !== '' || data.IndFin !== '' || data.TeamFin !== '') {
+			$('.tit_Bra').show();
+		} else {
+			$('.tit_Bra').hide();
+		}
+		$('#sel_IndFin').html(data.IndFin);
+		if(data.IndFin !== '') {
+			$('#tit_IndFin').show();
+		} else {
+			$('#tit_IndFin').hide();
+		}
+		$('#sel_TeamFin').html(data.TeamFin);
+		if(data.TeamFin !== '') {
+			$('#tit_TeamFin').show();
+		} else {
+			$('#tit_TeamFin').hide();
+		}
+		if(data.IndFin !== '' || data.TeamFin !== '') {
+			$('.tit_Fin').show();
+		} else {
+			$('.tit_Fin').hide();
+		}
+
+		if(data.Medals || data.FinalBook) {
+			$('.tit_MedBook').show();
+		} else {
+			$('.tit_MedBook').hide();
+		}
+		if(data.Medals) {
+			$('.tit_Med').show();
+		} else {
+			$('.tit_Med').hide();
+		}
+		if(data.FinalBook) {
+			$('.tit_Book').show();
+		} else {
+			$('.tit_Book').hide();
+		}
+
+		['QualificationInd[]','EliminationInd[]','FinalInd[]','BracketsInd[]','QualificationTeam[]','FinalTeam[]','BracketsTeam[]'].forEach(function (ph) {
+			fdata.getAll(ph).forEach(function (item) {
+				$("input[name='"+ph+"'][value='"+item+"']").prop('checked', true);
+			});
+		});
+
+		toggleOris();
+		AutoUpload();
+	});
+}
+
+function doRefresh() {
+	buildPage(new FormData($('#uploads')[0]));
 }

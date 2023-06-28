@@ -222,7 +222,7 @@ foreach($rankData['sections'] as $Event => $section) {
 				$pdf->SetXY($LineXstart,$OrgY);
 			}
 
-			if($ShowSchedule and $Match['scheduledTime']!='00:00' and $Match['scheduledDate']!='00-00-0000' and (trim($Match['scheduledTime']) or trim($Match['scheduledDate'])) ) {
+			if($ShowSchedule and $Match['scheduledTime']!='00:00' and $Match['scheduledDate']!='00-00-0000' and (trim($Match['scheduledTime']) or trim($Match['scheduledDate'])) and !($Match['score'] or $Match['setScore']) and !($Match['oppScore'] or $Match['oppSetScore']) and !$Match['tie'] and !$Match['oppTie']) {
 				if($FirstPhase && $section['meta']['firstPhase']<24) {
 					$pdf->SetY($OrgY-3, false);
 					$pdf->SetFont($pdf->FontStd,'I',6);
@@ -294,9 +294,9 @@ foreach($rankData['sections'] as $Event => $section) {
 			if($PrintCountry) {
 				$MyX=$pdf->GetX();
 				$pdf->SetFont($pdf->FontStd,'',5);
-				if($DrawMatch or $Match['saved']) $pdf->Cell($MisCountry, $Cella, $Match['countryCode'], ($Match['position']!=0 || $Match['oppTie']==2 ? 1 : 0), 0, 'C', 0);	//Nazione
+				if($DrawMatch or $Match['saved']) $pdf->Cell($MisCountry, $Cella, ($Match['countryCode'] ?? ''), ($Match['position']!=0 || $Match['oppTie']==2 ? 1 : 0), 0, 'C', 0);	//Nazione
 				$pdf->SetXY($MyX,$OrgY+$Cella);
-				if($DrawMatch or $Match['oppSaved']) $pdf->Cell($MisCountry, $Cella, $Match['oppCountryCode'], ($Match['oppPosition']!=0 || $Match['tie']==2 ? 1 : 0), 0, 'C', 0);	//Nazione
+				if($DrawMatch or $Match['oppSaved']) $pdf->Cell($MisCountry, $Cella, ($Match['oppCountryCode'] ?? ''), ($Match['oppPosition']!=0 || $Match['tie']==2 ? 1 : 0), 0, 'C', 0);	//Nazione
 				$pdf->SetXY($MyX+$MisCountry,$OrgY);
 			}
 

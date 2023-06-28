@@ -16,7 +16,6 @@ $lang['Credits-BeiterCredits']='Svītru koda Modulis ir publiskots visai I@nseo 
 $lang['Credits-Coordination']='IT projektu koordinators';
 $lang['Credits-CoreGroup']='IANSEO Core Group';
 $lang['Credits-Credits']='Izstrādātāji';
-$lang['Credits-Documentation']='Dokumentācija un atbalsts';
 $lang['Credits-FitarcoCredits']='Kas ir Ianseo? Ianseo ir programma, kas domāta Lokšaušanas Sacensību rezultātu pārvaldei; tas ir Open Source Projekts ir attīstīts pateicoties finansiālajam atbalstam no Itālijas Lokšaušanas Federācijas, kas ir nolēmusi to izplatīt bez maksas visā Eiropā. Tulkota vairākās valodās, Ianseo ir modernākā un attīstītākā pasaulē, iekļaujot visus World Archery noteikumus. Tā ir kļuvusi par visaptverošu Lokšaušanas sacensību vadības rīku: sākot no atlētu  un pārstāvju akreditācijas līdz visa veida izdrukām, no tīkla un tiešsaistes integrācijas līdz pat FOP dizainam.';
 $lang['Credits-HHT']='HHT integrācija';
 $lang['Credits-IanseoTeam']='IANSEO & IANSEO komanda';

@@ -134,7 +134,7 @@ if(!empty($_REQUEST["Id"]) && $EnId=intval($_REQUEST["Id"])) {
 		}
 	}
 
-	$Sql = "SELECT EnId, EnCode, CONCAT(EnDivision, '-',EnClass) as Category, CONCAT(CoName, ' (' ,CoCode,')') as Country, CONCAT(UPPER(EnFirstName),' ' ,EnName) as Athlete, PhPhoto as Photo "
+	$Sql = "SELECT EnId, EnCode, CONCAT(EnDivision, '-',EnClass) as Category, CONCAT(CoName, ' (' ,CoCode,')') as Country, CONCAT(UPPER(EnFirstName),' ' ,EnName) as Athlete, PhPhoto as Photo, EnTournament "
 		. "FROM Entries "
 		. "LEFT JOIN Countries ON EnCountry=CoId "
 		. "LEFT JOIN Photos ON EnId=PhEnId "
@@ -144,6 +144,7 @@ if(!empty($_REQUEST["Id"]) && $EnId=intval($_REQUEST["Id"])) {
 		$Errore=intval($row->Photo=='' and (!empty($_REQUEST["picEncoded"]) or !empty($_REQUEST["picURL"])));
 		$Answer .= '<athlete id="' . $row->EnId . '" ath="' . htmlspecialchars($row->Athlete) . '" team="' . htmlspecialchars($row->Country) . '" cat="' . $row->Category . '">'
 			. '<id>' . $row->EnId . '</id>'
+            . '<tourid>' . $row->EnTournament . '</tourid>'
 			. '<ath><![CDATA[' . $row->Athlete . ']]></ath>'
 			. '<team><![CDATA[' . $row->Country . ']]></team>'
 			. '<cat><![CDATA[' . $row->Category . ']]></cat>'

@@ -4,68 +4,87 @@ function tour_delete($TourId) {
 	require_once('Common/CheckPictures.php');
 	$TourCode=getCodeFromId($TourId);
 	$TableArray=array(
-	"AccColors" => "AcTournament",
-	"AccEntries" => "AETournament",
-	"AccPrice" => "APTournament",
-	"ACL" => "AclTournament",
-	'AclDetails' => 'AclDtTournament',
-	"AvailableTarget" => "AtTournament",
-	"Awards" => "AwTournament",
-	"Awarded" => "AwTournament",
-	"BackNumber" => "BnTournament",
-	"BoinxSchedule" => "BsTournament",
-	"CasScore"=>"CaSTournament",
-	"CasTeam"=>"CaTournament",
-	"CasTeamFinal"=>"CTFTournament",
-	"CasTeamTarget"=>"CTTTournament",
-	"Classes" => "ClTournament",
-	"Countries" => "CoTournament",
-	"DistanceInformation" => "DiTournament",
-	"Divisions" => "DivTournament",
-	"Eliminations" => "ElTournament",
-	"Emails" => "EmTournament",
-	"Entries" => "EnTournament",
-	"EventClass" => "EcTournament",
-	"Events" => "EvTournament",
-	"Individuals" => "IndTournament",
-	"FinalReportA" => "FraTournament",
-	"Finals" => "FinTournament",
-	"FinSchedule" => "FSTournament",
-	"Flags" => 'FlTournament',
-	"GateLog" => "GLTournament",
-    "HeartBeat"=>"HbTournament",
-	"HhtData" => "HdTournament",
-	"HhtEvents" => "HeTournament",
-	"HhtSetup" => "HsTournament",
-	"IdCardElements" => "IceTournament",
-	"IdCards" => "IcTournament",
-	"Images" => "ImTournament",
-	"IskDevices" => "IskDvTournament",
-	'ModulesParameters' => 'MpTournament',
-	'OnLineIds' => 'OliTournament', // This table gets deleted and recreated everytime so no need to import/export it but needs to be deleted for housekeeping!
-	'Rankings' => 'RankTournament',
-	'RecBroken' => 'RecBroTournament',
-	'RecTournament' => 'RtTournament',
-	"Reviews" => "RevTournament",
-	"Scheduler" => "SchTournament",
-	"Session" => "SesTournament",
-	"SubClass" => "ScTournament",
-	"TargetFaces" => "TfTournament",
-	"TargetGroups" => "TgTournament",
-	"TeamComponent" => "TcTournament",
-	"TeamDavis" => "TeDaTournament",
-	"TeamFinals" => "TfTournament",
-	"TeamFinComponent" => "TfcTournament",
-	"Teams" => "TeTournament",
-	"Tournament" => "ToId",
-	"TournamentDistances" => "TdTournament",
-	"TournamentInvolved" => "TiTournament",
-	"TourRecords" => "TrTournament",
-	"TVContents" => "TVCTournament",
-	"TVParams" => "TVPTournament",
-	"TVRules" => "TVRTournament",
-	"TVSequence" => "TVSTournament",
-	"VegasAwards" => "VaTournament",
+		"ACL" => "AclTournament",
+		"AccColors" => "AcTournament",
+		"AccEntries" => "AETournament",
+		"AccPrice" => "APTournament",
+		"AclDetails" => 'AclDtTournament',
+		"AvailableTarget" => "AtTournament",
+		"Awarded" => "AwTournament",
+		"Awards" => "AwTournament",
+		"BackNumber" => "BnTournament",
+		"BoinxSchedule" => "BsTournament",
+		"ClubTeamScore"=>"CTSTournament",
+		"CasScore"=>"CaSTournament",
+		"CasTeam"=>"CaTournament",
+		"CasTeamFinal"=>"CTFTournament",
+		"CasTeamTarget"=>"CTTTournament",
+		"Classes" => "ClTournament",
+        'ClassWaEquivalents' => 'ClWaEqTournament',
+		"Countries" => "CoTournament",
+		"DistanceInformation" => "DiTournament",
+		"DocumentVersions" => "DvTournament",
+		"Divisions" => "DivTournament",
+		"Eliminations" => "ElTournament",
+		"Emails" => "EmTournament",
+		"Entries" => "EnTournament",
+		"EventClass" => "EcTournament",
+		"Events" => "EvTournament",
+		"FinSchedule" => "FSTournament",
+		"FinalReportA" => "FraTournament",
+		"Finals" => "FinTournament",
+        "FinOdfTiming" => "FinOdfTournament",
+		"FinWarmup" => "FwTournament",
+		"Flags" => 'FlTournament',
+		"GateLog" => "GLTournament",
+		"HeartBeat"=>"HbTournament",
+		"HhtData" => "HdTournament",
+		"HhtEvents" => "HeTournament",
+		"HhtSetup" => "HsTournament",
+		"IdCardElements" => "IceTournament",
+		"IdCards" => "IcTournament",
+		"Images" => "ImTournament",
+		"IndOldPositions" => "IopTournament",
+		"Individuals" => "IndTournament",
+        "IskData" => "IskDtTournament",
+		"Logs" => "LogTournament",
+		"ModulesParameters" => 'MpTournament',
+		"OdfDocuments" => 'OdfDocTournament',
+		"OdfMessageStatus" => 'OmsTournament',
+		"OdfTranslations" => 'OdfTrTournament',
+		"OnLineIds" => 'OliTournament', // This table gets deleted and recreated everytime so no need to import/export it but needs to be deleted for housekeeping!
+		"Rankings" => 'RankTournament',
+		"RecBroken" => 'RecBroTournament',
+		"RecTournament" => 'RtTournament',
+		"Reviews" => "RevTournament",
+		"RoundRobinGrids" => "RrGridTournament",
+		"RoundRobinGroup" => "RrGrTournament",
+		"RoundRobinLevel" => "RrLevTournament",
+		"RoundRobinMatches" => "RrMatchTournament",
+		"RoundRobinParticipants" => "RrPartTournament",
+		'RunArchery' => 'RaTournament',
+		'RunArcheryRank' => 'RarTournament',
+		'RunArcheryParticipants' => 'RapTournament',
+		"Scheduler" => "SchTournament",
+		"Session" => "SesTournament",
+		"SubClass" => "ScTournament",
+		"TVContents" => "TVCTournament",
+		"TVParams" => "TVPTournament",
+		"TVRules" => "TVRTournament",
+		"TVSequence" => "TVSTournament",
+		"TargetFaces" => "TfTournament",
+		"TargetGroups" => "TgTournament",
+		"TeamComponent" => "TcTournament",
+		"TeamDavis" => "TeDaTournament",
+		"TeamFinComponent" => "TfcTournament",
+        "TeamFinComponentLog" => "TfclTournament",
+		"TeamFinals" => "TfTournament",
+		"Teams" => "TeTournament",
+		"TourRecords" => "TrTournament",
+		"Tournament" => "ToId",
+		"TournamentDistances" => "TdTournament",
+		"TournamentInvolved" => "TiTournament",
+		"VegasAwards" => "VaTournament",
 	);
 
 	foreach($TableArray as $Key=>$Value)
@@ -74,6 +93,8 @@ function tour_delete($TourId) {
 		safe_w_sql($Sql);
 	}
 	$Sql = "DELETE FROM Qualifications WHERE QuId NOT IN (SELECT EnId From Entries) ";
+	safe_w_sql($Sql);
+	$Sql = "DELETE FROM QualOldPositions WHERE QopId NOT IN (SELECT EnId From Entries) ";
 	safe_w_sql($Sql);
 	$Sql = "DELETE FROM ElabQualifications WHERE EqId NOT IN (SELECT EnId From Entries) ";
 	safe_w_sql($Sql);
@@ -89,7 +110,8 @@ function tour_delete($TourId) {
 	safe_w_sql($Sql);
 	$Sql = "DELETE FROM ExtraDataCountries WHERE EdcId NOT IN (SELECT CoId From Countries) ";
 	safe_w_sql($Sql);
-
+    $Sql = "UPDATE IskDevices SET IskDvTournament=0 WHERE IskDvTournament = " . StrSafe_DB($TourId);
+    safe_w_sql($Sql);
 	// removea all media
 	RemoveMedia($TourCode);
 }
@@ -121,6 +143,7 @@ function tour_import($filename, $isString=false) {
 		'CasTeamFinal' => 'CTF',
 		'CasTeamTarget' => 'CTT',
 		'Classes' => 'Cl',
+		'ClassWaEquivalents' => 'ClWaEq',
 		'ClubTeam' => 'CT',
 		'ClubTeamScore' => 'CTS',
 		'Countries' => 'Co',
@@ -146,7 +169,7 @@ function tour_import($filename, $isString=false) {
 		'IdCardElements' => 'Ice',
 		'IdCards' => 'Ic',
 		'Images' => 'Im',
-		'IskDevices' => 'IskDv',
+        'IskData' => 'IskDt',
 		'Logs' => 'Log',
 		'ModulesParameters' => 'Mp',
 // 		'OnLineIds' => 'Oli', // this table gets deleted/inserted if local TourId changes so no need to import/export it
@@ -157,12 +180,22 @@ function tour_import($filename, $isString=false) {
 		'RecBroken' => 'RecBro',
 		'RecTournament' => 'Rt',
 		'Reviews' => 'Rev',
+		"RoundRobinGrids" => "RrGrid",
+		"RoundRobinGroup" => "RrGr",
+		"RoundRobinLevel" => "RrLev",
+		"RoundRobinMatches" => "RrMatch",
+		"RoundRobinParticipants" => "RrPart",
+		'RunArchery' => 'Ra',
+		'RunArcheryRank' => 'Rar',
+		'RunArcheryParticipants' => 'Rap',
 		'SubClass' => 'Sc',
 		'TargetFaces' => 'Tf',
+		'TargetGroups' => 'Tg',
 		'TeamComponent' => 'Tc',
 		'TeamFinals' => 'Tf',
 		'TeamDavis' => 'TeDa',
 		'TeamFinComponent' => 'Tfc',
+        'TeamFinComponentLog' => 'Tfcl',
 		'Teams' => 'Te',
 		'TournamentDistances' => 'Td',
 		'TournamentInvolved' => 'Ti',
@@ -187,6 +220,7 @@ function tour_import($filename, $isString=false) {
 		'TeamComponent' => 'TcCoId',
 		'TeamFinals' => 'TfTeam',
 		'TeamFinComponent' => 'TfcCoId',
+        'TeamFinComponentLog' => 'TfclCoId',
 		'Teams' => 'TeCoId',
 		'TournamentInvolved' => 'TiCountry',
 		);
@@ -206,13 +240,20 @@ function tour_import($filename, $isString=false) {
 		'Photos' => 'PhEnId',
 		'Qualifications' => 'QuId',
 		'RecBroken' => 'RecBroAthlete',
+		'RunArchery' => 'RaArcher',
         'TeamFinals' => 'TfCoach',
 		'TeamComponent' => 'TcId',
 		'TeamFinComponent' => 'TfcId',
+        'TeamFinComponentLog' => array('TfclIdPrev','TfclIdNext'),
 		'Vegas' => 'VeId',
 		);
 
-    // Tabelle che hanno il codice Entries
+    // Tabelle che hanno il codice Entries in un array
+    $tab_to_entryarray=array(
+        'TeamFinals' => 'TfShootingArchers'
+    );
+
+    // Tabelle che hanno il codice entriesInvolved
     $tab_to_tourinvolved=array(
         'FinSchedule' => array('FsLJudge','FsTJudge'),
     );
@@ -230,6 +271,7 @@ function tour_import($filename, $isString=false) {
 		'CasTeamFinal',
 		'CasTeamTarget',
 		'Classes',
+		'ClassWaEquivalents',
 		'ClubTeamScore',
 		'DistanceInformation',
 		'DocumentVersions',
@@ -246,6 +288,7 @@ function tour_import($filename, $isString=false) {
 		'HhtSetup',
 		'IdCardElements',
 		'IdCards',
+        'IskData',
 		'Images',
 		'ModulesParameters',
 // 		'OnLineIds', see comments above
@@ -255,8 +298,12 @@ function tour_import($filename, $isString=false) {
 		'Rankings',
 		'RecTournament' ,
 		'Reviews',
+		"RoundRobinGrids",
+		"RoundRobinGroup",
+		"RoundRobinLevel",
 		'SubClass',
 		'TargetFaces',
+		'TargetGroups',
 		'TeamDavis',
 		'TournamentDistances',
         //'TournamentInvolved',
@@ -270,6 +317,14 @@ function tour_import($filename, $isString=false) {
 		'Eliminations',
 		'VegasAwards',
 	);
+
+	$RoundRobins=[
+		"RoundRobinMatches" => ['RrMatchTeam', 'RrMatchAthlete'],
+		"RoundRobinParticipants" => ['RrPartTeam', 'RrPartParticipant'],
+		"RunArchery" => ['RaTeam', 'RaEntry'],
+		"RunArcheryRank" => ['RarTeam', 'RarEntry'],
+		"RunArcheryParticipants" => ['RapTeamEvent', 'RapEntry'],
+	];
 
 	if($isString) {
 		$Gara=unserialize(gzuncompress($filename));
@@ -329,8 +384,7 @@ function tour_import($filename, $isString=false) {
 
 	// inserisce i paesi e mantieni l'array per il cambio country
 	$Countries=array();
-	if(array_key_exists('Countries',$Gara) && is_array($Gara['Countries']) && count($Gara['Countries'])>0)
-	{
+	if(array_key_exists('Countries',$Gara) && is_array($Gara['Countries']) && count($Gara['Countries'])>0) {
 		foreach($Gara['Countries'] as $record) {
 			$query=array();
 			foreach($record as $key=>$val) {
@@ -345,8 +399,7 @@ function tour_import($filename, $isString=false) {
 	//aggiorna CoParent1 della Countries stessa
 	$tmpSql = "SELECT DISTINCT CoParent1 FROM Countries WHERE CoTournament=" . $TourId . " AND CoParent1!=0";
 	$tmpRs = safe_r_sql($tmpSql);
-	if(safe_num_rows($tmpRs)!=0)
-	{
+	if(safe_num_rows($tmpRs)!=0) {
 		while($tmpRow=safe_fetch($tmpRs))
 			safe_w_sql("UPDATE Countries SET CoParent1=". $Countries[$tmpRow->CoParent1] . " WHERE CoParent1=" . $tmpRow->CoParent1 . " AND CoTournament=" . $TourId);
 		safe_free_result($tmpRs);
@@ -354,8 +407,7 @@ function tour_import($filename, $isString=false) {
 	//aggiorna CoParent2 della Countries stessa
 	$tmpSql = "SELECT DISTINCT CoParent2 FROM Countries WHERE CoTournament=" . $TourId . " AND CoParent2!=0";
 	$tmpRs = safe_r_sql($tmpSql);
-	if(safe_num_rows($tmpRs)!=0)
-	{
+	if(safe_num_rows($tmpRs)!=0) {
 		while($tmpRow=safe_fetch($tmpRs))
 		safe_w_sql("UPDATE Countries SET CoParent2=". $Countries[$tmpRow->CoParent2] . " WHERE CoParent2=" . $tmpRow->CoParent2 . " AND CoTournament=" . $TourId);
 		safe_free_result($tmpRs);
@@ -363,8 +415,7 @@ function tour_import($filename, $isString=false) {
 
 	// aggiorna i paesi nelle tabelle che ne fanno uso
 	foreach($tab_to_country as $tab=>$field) {
-		if(array_key_exists($tab, $Gara))
-		{
+		if(array_key_exists($tab, $Gara)) {
 			foreach($Gara[$tab] as $key=>$record) {
 				if(is_array($field)) {
 					foreach($field as $ff) {
@@ -381,8 +432,7 @@ function tour_import($filename, $isString=false) {
 
     // inserisce le TournamentInvolved e mantieni l'array per il cambio TiId
     $TiEntries=array();
-    if(array_key_exists('TournamentInvolved',$Gara) && is_array($Gara['TournamentInvolved']) && count($Gara['TournamentInvolved'])>0)
-    {
+    if(array_key_exists('TournamentInvolved',$Gara) && is_array($Gara['TournamentInvolved']) && count($Gara['TournamentInvolved'])>0) {
         foreach($Gara['TournamentInvolved'] as $record) {
             if(isset($record['TiId'])) {
                 $query = array();
@@ -417,8 +467,7 @@ function tour_import($filename, $isString=false) {
 
 	// inserisce le Entries e mantieni l'array per il cambio Entry
 	$Entries=array();
-	if(array_key_exists('Entries',$Gara) && is_array($Gara['Entries']) && count($Gara['Entries'])>0)
-	{
+	if(array_key_exists('Entries',$Gara) && is_array($Gara['Entries']) && count($Gara['Entries'])>0) {
 		foreach($Gara['Entries'] as $record) {
 			$query=array();
 			foreach($record as $key=>$val) {
@@ -432,29 +481,63 @@ function tour_import($filename, $isString=false) {
 	}
 	// aggiorna le rimanenti tabelle con le Entries corrette
 	foreach($tab_to_entry as $tab=>$field) {
-		if(array_key_exists($tab, $Gara))
-		{
+		if(array_key_exists($tab, $Gara)) {
             foreach($Gara[$tab] as $key=>$record) {
                 if(is_array($field)) {
                     foreach($field as $ff) {
-                        if(array_key_exists($ff,$record) && $record[$ff])
-                            $Gara[$tab][$key][$ff]=$Entries[$record[$ff]];
+                        if(array_key_exists($ff,$record) && $record[$ff]) {
+                            $Gara[$tab][$key][$ff] = $Entries[$record[$ff]];
+                        }
                     }
                 } else {
-                    if(array_key_exists($field,$record) AND $record[$field] AND array_key_exists($record[$field],$Entries))
-                        $Gara[$tab][$key][$field]=$Entries[$record[$field]];
+                    if(array_key_exists($field,$record) AND $record[$field] AND array_key_exists($record[$field],$Entries)) {
+                        $Gara[$tab][$key][$field] = $Entries[$record[$field]];
+                    }
                 }
             }
+		}
+	}
+    //Update TeamFinals to update the shooter order
+    foreach ($tab_to_entryarray as $tab => $field) {
+        if (array_key_exists($tab, $Gara)) {
+            foreach ($Gara[$tab] as $key => $record) {
+                if(array_key_exists($field,$record) AND $record[$field] != '' AND $tmpArchers = json_decode($record[$field], true)) {
+                    foreach ($tmpArchers as $kArc => $vArc) {
+                        $tmpArchers[$kArc] = $Entries[$vArc] ?? 0;
+                    }
+                    $Gara[$tab][$key][$field] = (count($tmpArchers) ? json_encode($tmpArchers) : '');
+                }
+            }
+        }
+    }
+
+	// updates the tables that have a mixed country/entry based on the "team" flag
+	foreach($RoundRobins as $tab => $flags) {
+		if(array_key_exists($tab, $Gara)) {
+			foreach($Gara[$tab] as $key=>$record) {
+				if(array_key_exists($flags[0], $record)) {
+					if($record[$flags[0]]) {
+						// team so gets the country
+						if(array_key_exists($record[$flags[1]], $Countries)) {
+							$Gara[$tab][$key][$flags[1]]=$Countries[$record[$flags[1]]];
+						}
+					} else {
+						// Entries
+						if(array_key_exists($record[$flags[1]], $Entries)) {
+							$Gara[$tab][$key][$flags[1]]=$Entries[$record[$flags[1]]];
+						}
+					}
+				}
+			}
 		}
 	}
 
 	// inserisce le tabelle restanti
 	unset($tab_to_country['Entries']);
     unset($tab_to_country['TournamentInvolved']);
-    $final_tabs = array_unique(array_merge(array_keys($tab_to_country), array_keys($tab_to_entry), array_keys($tab_to_tourinvolved)));
+    $final_tabs = array_unique(array_merge(array_keys($tab_to_country), array_keys($tab_to_entry), array_keys($tab_to_tourinvolved), array_keys($RoundRobins)));
 	foreach($final_tabs as $tab) {
-		if(array_key_exists($tab, $Gara))
-		{
+		if(array_key_exists($tab, $Gara)) {
 			foreach($Gara[$tab] as $record) {
 				$query=array();
 				foreach($record as $key=>$val) {
@@ -470,8 +553,7 @@ function tour_import($filename, $isString=false) {
 	}
 
 	//Gestisce la tabella Flags
-	if(array_key_exists('Flags',$Gara) && is_array($Gara['Flags']) && count($Gara['Flags'])>0)
-	{
+	if(array_key_exists('Flags',$Gara) && is_array($Gara['Flags']) && count($Gara['Flags'])>0) {
 		foreach($Gara['Flags'] as $record) {
 			if($record['FlTournament']!=-1)
 				$record['FlTournament']=$TourId;
@@ -480,6 +562,17 @@ function tour_import($filename, $isString=false) {
 				$query[]="$key = " . strsafe_db($val) ;
 			}
 			safe_w_sql("insert into Flags set ". implode(', ', $query). " on duplicate key update ". implode(', ', $query));
+		}
+	}
+
+	// manages record areas not maintained by World Archery
+	if(!empty($Gara['RecAreas'])) {
+		foreach($Gara['RecAreas'] as $record) {
+			$query=array();
+			foreach($record as $key=>$val) {
+				$query[]="$key = " . strsafe_db($val) ;
+			}
+			safe_w_sql("insert into RecAreas set ". implode(', ', $query). " on duplicate key update ". implode(', ', $query));
 		}
 	}
 

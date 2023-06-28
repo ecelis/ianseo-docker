@@ -1,8 +1,11 @@
 
 function SendToServer(Field) {
 	if(Field.value=='man') {
+		let Opener=window;
 		var IrmWin=window.open(ROOT_DIR+'Partecipants/ManIrmStatus.php?team='+$(Field).attr('team')+'&event='+$(Field).attr('event')+'&phase='+$(Field).attr('phase'));
-		$(IrmWin).bind('beforeunload', function() {window.location.reload();});
+		$(IrmWin).on('unload', function() {
+			Opener.location.reload();
+		});
 		return;
 	}
 	$.getJSON('WriteScore_Bra.php?'+Field.id+'='+(Field.type=='checkbox' ? (Field.checked ? 1 : 0) : Field.value), function(data) {

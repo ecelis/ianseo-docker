@@ -9,8 +9,8 @@ if($PdfData->DocVersion) {
 	$Version=trim('Vers. '.$PdfData->DocVersion . " ($PdfData->DocVersionDate) $PdfData->DocVersionNotes");
 }
 $pdf->setComment($Version);
-$pdf->AddPage();
 $pdf->setOrisCode($PdfData->Code, $PdfData->Description);
+$pdf->AddPage();
 $pdf->Bookmark($PdfData->IndexName, 0);
 
 $ONLINE=isset($PdfData->HTML);
@@ -30,22 +30,22 @@ if(empty($PdfData->Data['Items'])) {
 		if(!$pdf->samePage(5, 3.5, $pdf->lastY)) {
 			$first=true;
 		}
-		$AddPage=true;
+		//$AddPage=true;
 		$pdf->SamePage(count($Rows), 3.5, $pdf->lastY);
 		$lstPictures = array();
 		$lstDoB = array();
 
 		foreach($Rows as $RecType => $MyRows) {
-			if(!$pdf->samePage(9, 3.5, $pdf->lastY)) {
-				/// must keep at least the space before header, header and captions and 1 line of record, so 9 standard rows is a fair number
+			if(!$pdf->samePage(4+intval($MyRows[0]->RtRecComponents), 3.5, $pdf->lastY)) {
+				/// must keep at least the space before header, header and captions and 1 line of record
 				$first=true;
 			}
-			$pdf->printSectionTitle($PdfData->SubSections[$Team][$RecType].'§', $pdf->lastY+($first ? 0 : 10));
+			$pdf->printSectionTitle($PdfData->SubSections[$Team][$RecType].'§', $pdf->lastY+($first ? 0 : 5));
 			$pdf->ln();
 			$pdf->PrintHeader($pdf->GetX(), $pdf->GetY()+1);
 			foreach($MyRows as $MyRow) {
-				if(!$pdf->samePage(2, 3.5, $pdf->lastY)) {
-					$pdf->printSectionTitle($PdfData->SubSections[$Team][$RecType].' (continue...)§', $pdf->lastY);
+				if(!$pdf->samePage(1+intval($MyRow->RtRecComponents), 3.5, $pdf->lastY)) {
+					$pdf->printSectionTitleWContinue($PdfData->SubSections[$Team][$RecType].'§', $pdf->lastY);
 					$pdf->ln();
 					$pdf->PrintHeader($pdf->GetX(), $pdf->GetY()+1);
 				}

@@ -17,6 +17,7 @@ $pdf->FontFix2=$pdf->FontFix;
 $pdf->SetFont($pdf->FontStd,'',8);
 $pdf->FirstLang=(getModuleParameter('Awards', 'FirstLanguageCode') ? getModuleParameter('Awards', 'FirstLanguageCode') : ($_SESSION['TourPrintLang'] ? $_SESSION['TourPrintLang'] : SelectLanguage())); // set to empty string to avoid double printout
 $pdf->SecondLang=''; // set to empty string to avoid double printout
+$pdf->ReverseNameFunction=getModuleParameter('Awards','ReverseNameFunction',0);
 $pdf->lBorder=0;
 $pdf->setPhase(get_text('MenuLM_PrintAwards'));
 if(getModuleParameter('Awards', 'SecondLanguage')) {
@@ -258,16 +259,46 @@ function writeData($pdf, $data, $Description, $Category, $Awarders, $indEvent, $
 		}
 		$pdf->SetFont($pdf->FontStd,'',13);
 		list($Name, $Title) = @explode(',', getModuleParameter('Awards', 'Aw-Awarder-1-'.$v), 2);
-		$lines2=$pdf->MultiCell($LangCol, 6, get_text_eval(getModuleParameter('Awards', 'Aw-Award-1-'.$k), $Title), $pdf->lBorder, 'L', 0, 0);
-		$lines=0;
-		if($pdf->SecondLang) {
-			list(, $Title) = @explode(',', getModuleParameter('Awards', 'Aw-Awarder-2-'.$v), 2);
-			$pdf->SetFont($pdf->FontStd2,'',13);
-			$lines=$pdf->MultiCell($LangCol, 6, get_text_eval(getModuleParameter('Awards', 'Aw-Award-2-'.$k), $Title), 'L', 'L', 0, 0);
+		if($pdf->ReverseNameFunction) {
+			$lines2=$pdf->MultiCell($LangCol, 6, get_text_eval(getModuleParameter('Awards', 'Aw-Award-1-'.$k), ''), $pdf->lBorder, 'L', 0, 0);
+			$lines=0;
+			if($pdf->SecondLang) {
+				$lines=$pdf->MultiCell($LangCol, 6, get_text_eval(getModuleParameter('Awards', 'Aw-Award-2-'.$k), ''), 'L', 'L', 0, 0);
+			}
+			$pdf->ln(6*max($lines, $lines2));
+
+			$pdf->SetFont($pdf->FontStd,'B',13);
+			$pdf->MultiCell(0, 6, $Name, 0, 'C', 0, 1);
+			$pdf->ln(2);
+
+			$pdf->SetFont($pdf->FontStd,'',13);
+			$lines2=$pdf->MultiCell($LangCol, 6, $Title, $pdf->lBorder, 'C', 0, 0);
+			$lines=0;
+			if($pdf->SecondLang) {
+				$tmp=trim(getModuleParameter('Awards', 'Aw-Awarder-2-'.$v));
+				if($tmp) {
+					list(, $Title) = @explode(',', $tmp, 2);
+				}
+				$pdf->SetFont($pdf->FontStd2,'',13);
+				$lines=$pdf->MultiCell($LangCol, 6, $Title, 'L', 'C', 0, 0);
+			}
+			$pdf->ln(6*max($lines, $lines2));
+
+		} else {
+			$lines2=$pdf->MultiCell($LangCol, 6, get_text_eval(getModuleParameter('Awards', 'Aw-Award-1-'.$k), $Title), $pdf->lBorder, 'L', 0, 0);
+			$lines=0;
+			if($pdf->SecondLang) {
+				$tmp=trim(getModuleParameter('Awards', 'Aw-Awarder-2-'.$v));
+				if($tmp) {
+					list(, $Title) = @explode(',', $tmp, 2);
+				}
+				$pdf->SetFont($pdf->FontStd2,'',13);
+				$lines=$pdf->MultiCell($LangCol, 6, get_text_eval(getModuleParameter('Awards', 'Aw-Award-2-'.$k), $Title), 'L', 'L', 0, 0);
+			}
+			$pdf->ln(6*max($lines, $lines2));
+			$pdf->SetFont($pdf->FontStd,'B',13);
+			$pdf->MultiCell(0, 6, $Name, 0, 'C', 0, 1);
 		}
-		$pdf->ln(6*max($lines, $lines2));
-		$pdf->SetFont($pdf->FontStd,'B',13);
-		$pdf->MultiCell(0, 6, $Name, 0, 'C', 0, 1);
 		$pdf->ln(2);
 	}
 
@@ -422,7 +453,7 @@ function writeData($pdf, $data, $Description, $Category, $Awarders, $indEvent, $
 			// second place
 			if(isset($data[1][3])) {
 				$pdf->setXY($X, $Y);
-				$pdf->cell(24,6,'2-'.$data[1][3], '','','C');
+				$pdf->cell(24,6,$data[1][0].'-'.$data[1][3], '','','C');
 				$CountryFlag='';
 				if(file_exists($CountryFlag=$CFG->DOCUMENT_PATH.'TV/'.'Photos/'.$_SESSION['TourCode'].'-FlSvg-'.$data[1][3].'.svg')) {
 					$pdf->ImageSVG($CountryFlag,$X,$Y+6,24,16,'','','','1');
@@ -435,7 +466,7 @@ function writeData($pdf, $data, $Description, $Category, $Awarders, $indEvent, $
 			// First place
 			if(isset($data[0][3])) {
 				$pdf->setXY($X, $Y);
-				$pdf->cell(24,0,'1-'.$data[0][3], '','','C');
+				$pdf->cell(24,0,$data[0][0].'-'.$data[0][3], '','','C');
 				$CountryFlag='';
 				if(file_exists($CountryFlag=$CFG->DOCUMENT_PATH.'TV/'.'Photos/'.$_SESSION['TourCode'].'-FlSvg-'.$data[0][3].'.svg')) {
 					$pdf->ImageSVG($CountryFlag,$X,$Y+6,24,16,'','','','1');
@@ -448,7 +479,7 @@ function writeData($pdf, $data, $Description, $Category, $Awarders, $indEvent, $
 			// third place
 			if(isset($data[2][3])) {
 				$pdf->setXY($X, $Y);
-				$pdf->cell(24,0,'3-'.$data[2][3], '','','C');
+				$pdf->cell(24,0,$data[2][0].'-'.$data[2][3], '','','C');
 				$CountryFlag='';
 				if(file_exists($CountryFlag=$CFG->DOCUMENT_PATH.'TV/'.'Photos/'.$_SESSION['TourCode'].'-FlSvg-'.$data[2][3].'.svg')) {
 					$pdf->ImageSVG($CountryFlag,$X,$Y+6,24,16,'','','','1');

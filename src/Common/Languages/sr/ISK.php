@@ -115,7 +115,6 @@ $lang['ScanQRCode']='Skeniraj QR kod';
 $lang['Score']='Rezultat';
 $lang['Scorecard']='Zapisnik';
 $lang['ScoredPoints']='Uneseni poeni';
-$lang['ScoreHelpDesc']='Ovaj prikaz vam omogućuje da unesete pogodke strela. Prikazane su i informacije o trenutnoj distanci, vrsti lica i streličaru. Unesite pogodke koristeći tastere sa brojevima.';
 $lang['ScoringEntry']='Unos pogodaka';
 $lang['SelDist']='Molimo vas odaberite distancu i pokušajte ponovo.';
 $lang['SelTgtNum']='Molimo vas odaberite broj mete i pokušajte ponovo';

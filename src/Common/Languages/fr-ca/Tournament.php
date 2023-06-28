@@ -9,7 +9,6 @@ $lang['Accreditation']='Accréditation';
 $lang['Action']='Action';
 $lang['ActualFlag']='Drapeaux utilisé';
 $lang['AddMaxRows']='Ajouter toutes les rangées disponibles';
-$lang['AdvancedParams']='Paramètres avancés';
 $lang['AfterDistance']='Classement APRÈS distance suivante:';
 $lang['AfterXDistance']='Résultats APRÈS distance $a';
 $lang['AllDistances']='Tous';

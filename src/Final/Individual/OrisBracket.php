@@ -29,7 +29,7 @@ if(!isset($isCompleteResultBook)) {
 	//$pdf->setOrisCode('', $PdfData->Description);
 }
 
-$pdf->OrisPages = isset($_REQUEST['OrisAB']) ? $_REQUEST['OrisAB'] : 'AB';
+$pdf->OrisPages = isset($_REQUEST['OrisABD']) ? $_REQUEST['OrisABD'] : 'AB';
 
 require_once(PdfChunkLoader('OrisBracketIndividual.inc.php'));
 
@@ -46,6 +46,3 @@ if(!isset($isCompleteResultBook))
 	else
 		$pdf->Output();
 }
-
-
-?>

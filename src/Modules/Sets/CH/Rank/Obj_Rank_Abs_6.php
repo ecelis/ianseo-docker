@@ -274,7 +274,7 @@
 			if(!empty($this->opts['runningDist']) && $this->opts['runningDist']>0)
 				$q .= "OrderScore DESC, OrderGold DESC, OrderXnine DESC, FirstName, Name ";
 			else
-				$q .= "RunningScore DESC, Ind{$dd}Rank ASC, FirstName, Name ";
+				$q .= "RunningScore DESC, Ind{$dd}Rank=0, Ind{$dd}Rank ASC, FirstName, Name ";
 
 				//print $q;exit;
 			$r=safe_r_sql($q);

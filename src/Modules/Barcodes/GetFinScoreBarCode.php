@@ -48,7 +48,7 @@ Aggiunto il campo FinConfirmed e TfConfirmed (int(4)) nelle rispettive tabelle p
 		if(!empty($_GET['C'])) {
 			$C=$_GET['C'];
 			unset($_GET['C']);
-			if($Match and !IsBlocked(BIT_BLOCK_QUAL)) {
+			if($Match and (!IsBlocked(BIT_BLOCK_IND) or !IsBlocked(BIT_BLOCK_TEAM))) {
 				switch(strtoupper($C)) {
 					case 'EDIT':
 						$GoBack=$_SERVER['SCRIPT_NAME'].go_get().'&return=1';
@@ -203,7 +203,7 @@ if($Match) {
 		echo '<div class="LetteraGrande td">'.str_replace("|",",&nbsp;",$Match->setPoints1).'</div>';
 		echo '</div>';
 	}
-	echo '<div class="th"><div>'.get_text('ShotOffShort', 'Tournament').'</div><div class="LetteraGrande td">'.(!empty($Match->tiebreak1) ? (strlen($Match->tiebreak1)>1 ? implode(DecodeFromString($Match->tiebreak1, false),',') : DecodeFromString($Match->tiebreak1, false)):'&nbsp;').'</div></div>';
+	echo '<div class="th"><div>'.get_text('ShotOffShort', 'Tournament').'</div><div class="LetteraGrande td">'.(!empty(trim($Match->tiebreak1)) ? (strlen(trim($Match->tiebreak1))>1 ? implode(DecodeFromString(trim($Match->tiebreak1), false),',') : DecodeFromString(trim($Match->tiebreak1), false)):'&nbsp;').'</div></div>';
 
 	if($Closest1 or $Closest2) {
         echo '<div class="th"><div>'.get_text('ClosestShort', 'Tournament').'</div><div class="LetteraGrande td">'.($Closest1 ? '<i class="fa fa-check-circle txtGreen"></i>' :'&nbsp;').'</div></div>';
@@ -222,7 +222,7 @@ if($Match) {
 		echo '<div class="LetteraGrande td">'.str_replace("|",",&nbsp;",$Match->setPoints2).'</div>';
 		echo '</div>';
 	}
-	echo '<div class="th"><div>'.get_text('ShotOffShort', 'Tournament').'</div><div class="LetteraGrande td">'.(!empty($Match->tiebreak2) ? (strlen($Match->tiebreak2)>1 ? implode(DecodeFromString($Match->tiebreak2, false),',') : DecodeFromString($Match->tiebreak2, false)):'&nbsp;').'</div></div>';
+	echo '<div class="th"><div>'.get_text('ShotOffShort', 'Tournament').'</div><div class="LetteraGrande td">'.(!empty(trim($Match->tiebreak2)) ? (strlen(trim($Match->tiebreak2))>1 ? implode(DecodeFromString(trim($Match->tiebreak2), false),',') : DecodeFromString(trim($Match->tiebreak2), false)):'&nbsp;').'</div></div>';
 
 	if($Closest1 or $Closest2) {
 		echo '<div class="th"><div>'.get_text('ClosestShort', 'Tournament').'</div><div class="LetteraGrande td">'.($Closest2 ? '<i class="fa fa-check-circle txtGreen"></i>' :'&nbsp;').'</div></div>';
@@ -305,6 +305,7 @@ include('Common/Templates/tail.php');
 
 function getScore($barcode, $strict=false) {
 	@list($matchno, $team, $event) = @explode($_SESSION['BarCodeSeparator'], $barcode, 3);
+    $matchno = ($matchno % 2 ? $matchno-1 : $matchno);
 	$event=str_replace($_SESSION['BarCodeSeparator'], "-", $event);
 	$rs=GetFinMatches($event, null, $matchno, $team, false);
 

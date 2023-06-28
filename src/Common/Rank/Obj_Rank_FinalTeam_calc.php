@@ -61,23 +61,20 @@
 	 * @param string $event: evento su cui lavorare
 	 * @return bool: true ok false altrimenti
 	 */
-		protected function calcFromAbs($event)
-		{
+		protected function calcFromAbs($event) {
 			$date=date('Y-m-d H:i:s');
 
-			$q="
-				UPDATE
-					Teams
-					INNER JOIN
-						Events
-					ON TeEvent=EvCode AND TeTournament=EvTournament AND TeFinEvent=1
-				SET
-					TeRankFinal=IF(TeRank > EvNumQualified, TeRank, 0),
-					TeTimeStampFinal='{$date}'
-				WHERE
-					TeTournament={$this->tournament} AND EvCode='{$event}' AND EvTeamEvent=1
-
-			";
+			// check if the event is a round robin...
+			$q=safe_r_sql("select max(RrPartSourceRank) as NumQualified from RoundRobinParticipants where RrPartSourceLevel=0 and RrPartTournament={$this->tournament} and RrPartEvent='{$event}' and RrPartTeam=1");
+			if($r=safe_fetch($q) and $r->NumQualified) {
+				$Field=$r->NumQualified;
+			} else {
+				$Field='EvNumQualified';
+			}
+			$q="UPDATE Teams 
+    			INNER JOIN Events ON TeEvent=EvCode AND TeTournament=EvTournament AND TeFinEvent=1
+				SET TeRankFinal=IF(TeRank > $Field, TeRank, 0), TeTimeStampFinal='{$date}'
+				WHERE TeTournament={$this->tournament} AND EvCode='{$event}' AND EvTeamEvent=1";
 			//print $q.'<br><br>';
 			$r=safe_w_sql($q);
 

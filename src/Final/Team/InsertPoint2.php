@@ -15,8 +15,11 @@ if(module_exists("Barcodes")) {
     $QrCodeScorecards .= "&Barcode=1";
 }
 foreach(AvailableApis() as $Api) {
-    if(!($tmp=getModuleParameter($Api, 'Mode')) || $tmp=='live' ) {
+    if(!($tmp=getModuleParameter($Api, 'Mode')) || strpos($tmp,'live') !== false ) {
         continue;
+    }
+    if(strpos($tmp,'ng-') === 0) {
+        $Api.= '-NG';
     }
     $QrCodeScorecards .= "&QRCode[]=$Api";
 }
@@ -148,7 +151,7 @@ if(!empty($_REQUEST['x_Session']) and $_REQUEST['x_Session']!=-1) {
 	$useSession=true;
 
 	$ComboArr=array();
-	ComboSession('Teams', $ComboArr);
+	ComboSession('Teams', 'x_Session', $ComboArr);
 
 // schedule attuale
 	$actual=array_search($_REQUEST['x_Session'],$ComboArr);
@@ -301,8 +304,8 @@ if (safe_num_rows($Rs)>0) {
 
         print '<td class="Center">' . $MyRow->FsTarget . '</td>';
         print '<td class="Center">' . (useGrPostion2($MyRow->EvFinalFirstPhase, $MyRow->GrPhase) ? ($MyRow->GrPosition2 ? $MyRow->GrPosition2 : '&nbsp;') : $MyRow->GrPosition) . '</td>';
-        print '<td>' . (!is_null($MyRow->CoCode) ? $MyRow->CoCode : '&nbsp;') . '</td>';
-        print '<td>' . (strlen($MyRow->TeamName)>0 ? $MyRow->TeamName : '&nbsp;') . /*' ' . $MyRow->FinAthlete .*/ '</td>';
+        print '<td>' . (!empty($MyRow->CoCode) ? $MyRow->CoCode : '&nbsp;') . '</td>';
+        print '<td>' . (!empty($MyRow->TeamName) ? $MyRow->TeamName : '&nbsp;') . /*' ' . $MyRow->FinAthlete .*/ '</td>';
         $TextStyle = '';
         if (array_search($MyRow->TfEvent . '_' . $MyRow->GrMatchNo,array_keys($Score_Error))!==false) {
             $TextStyle = 'error';

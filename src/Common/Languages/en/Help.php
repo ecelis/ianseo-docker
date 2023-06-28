@@ -1,4 +1,8 @@
 <?php
+$lang['AutoCheckinAlreadyDone']='You are already checked in<br>If you need to change any information proceed to the accreditation desk';
+$lang['AutoCheckinConfirm']='If all the details are correct press CONFIRM CHECK-IN<br> 
+Otherwise press CANCEL and proceed to the accreditation desk';
+$lang['AutoCheckinSearch']='Scan the QR Code you received or type your name';
 $lang['AutoImportSettings']='<b>Only for Expert Users</b><br>Changing the default behavior should result in inaccurate results.<br>
 It is important to recalculate all the ranks that has been setup as "manually" BEFORE sending to ianseo.net or printing  results and in general before every distribution of any kind.';
 $lang['ChangeComponents']='<p>To proceed with a change first remove the athletes that is not in the team any more in order to activate the possible options.</p>
@@ -10,6 +14,11 @@ $lang['ISK-LockedSessionHelp']='{$a} icons show if the app can score or not in t
 $lang['ISK-ServerUrlPin']='<b>DO NOT SHARE THIS NUMBER</b><br>Use a PIN of your choice (4 Numeric Digits) to be used to access your competition.<br>
 Devices can score in your competition only reading the QR-Code printed by IANSEO.<br>
 In case of manual input in Ianseo Scorekeeper LITE app, the Competition code to use is <b>{$a}</b>';
+$lang['QrCodeLandscape']='a single or double "<" will draw a left arrow
+a single or double ">" will draw a right arrow
+a single or double "^" will draw an up arrow
+a single or double "v" will draw a down arrow';
+$lang['QrCodePortrait']='the field is HTML-capable. If you insert something surrounded by &lt;qrcode&gt;...&lt;/qrcode&gt; the content will be changed into a QrCode';
 $lang['ScoreBarCodeShortcuts']='Read the barcode printed on the scorecard.<br/>
 Inserting manually a # followed by the name of the athlete searches the database to find that athlete<br/>
 Inserting a @ followed by a target number searches for that target. Distance MUST be set. Session should be specified (first digit) and target is 0-padded to 3 digits.';

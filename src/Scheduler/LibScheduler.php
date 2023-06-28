@@ -408,6 +408,7 @@ function DistanceInfoData($r='', $delete=false, $TextScheduler=false) {
 		if(isset($r->DiDay)) $return['day']=$r->DiDay=='0000-00-00' ? '' : $r->DiDay;
 		if(isset($r->DiStart)) $return['start']=$r->DiStart=='00:00:00' ? '' : substr($r->DiStart, 0, 5);
 		if(isset($r->DiDuration)) $return['duration']=$r->DiDuration;
+		if(isset($r->DiCallStart)) $return['calltime']=$r->DiCallStart=='00:00:00' ? '' : substr($r->DiCallStart, 0, 5);
 		if(isset($r->DiWarmStart)) $return['warmtime']=$r->DiWarmStart=='00:00:00' ? '' : substr($r->DiWarmStart, 0, 5);
 		if(isset($r->DiWarmDuration)) $return['warmduration']=$r->DiWarmDuration;
 		if(isset($r->DiShift)) $return['shift']=$r->DiShift;

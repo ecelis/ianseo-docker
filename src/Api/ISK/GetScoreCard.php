@@ -8,7 +8,8 @@ $json_array = Array();
 $tmp=explode('|', $QuTarget);
 if(count($tmp)==3) {
 	// ELIMINATION
-	$SQL="select 'E' as Type, ElTargetNo+0 as Target, ToElabTeam, ElArrowString DiArrowstring, '0' DiDistance, if(ElElimPhase=0, EvE1Ends, EvE2Ends) DiEnds, if(ElElimPhase=0, EvE1Arrows, EvE2Arrows) DiArrows, '' DiName, ToGoldsChars, ToXNineChars, ToGolds, ToXNine
+	$SQL="select 'E' as Type, ElTargetNo+0 as Target, ToElabTeam, ElArrowString DiArrowstring, '0' DiDistance, if(ElElimPhase=0, EvE1Ends, EvE2Ends) DiEnds, if(ElElimPhase=0, EvE1Arrows, EvE2Arrows) DiArrows, '' DiName, 
+       IF(EvGoldsChars='',ToGoldsChars,EvGoldsChars) as GoldsChars, IF(EvXNineChars='',ToXNineChars,EvXNineChars) as XNineChars, IF(EvGolds='',ToGolds,EvGolds) as Golds, IF(EvXNine='',ToXNine,EvXNine) as XNines
 		FROM Eliminations
 		INNER JOIN Entries on EnId = ElId and EnTournament=$CompId
 		INNER JOIN Tournament ON ToId=$CompId
@@ -18,10 +19,14 @@ if(count($tmp)==3) {
 	// QUALIFICATION
 	$Sql=array();
 	for($n=1;$n<=8;$n++) {
-		$Sql[]="SELECT 'Q' as Type, QuTarget as Target, ToElabTeam, QuD{$n}ArrowString DiArrowstring, DiDistance, DiEnds, DiArrows, Td{$n} DiName, ToGoldsChars, ToXNineChars, ToGolds, ToXNine
+		$Sql[]="SELECT 'Q' as Type, QuTarget as Target, ToElabTeam, QuD{$n}ArrowString DiArrowstring, DiDistance, DiEnds, DiArrows, Td{$n} DiName, 
+            IF(TfGoldsChars{$n}='',IF(TfGoldsChars='',ToGoldsChars,TfGoldsChars),TfGoldsChars{$n}) as GoldsChars, 
+            IF(TfXNineChars{$n}='',IF(TfXNineChars='',ToXNineChars,TfXNineChars),TfXNineChars{$n}) as XNineChars, 
+            IF(TfGolds='',ToGolds,TfGolds) as Golds, IF(TfXNine='',ToXNine,TfXNine) as XNine
 		FROM Qualifications
 		INNER JOIN Entries on EnId = Quid and EnTournament=$CompId
 		INNER JOIN Tournament ON ToId=$CompId
+        INNER JOIN TargetFaces on TfId=EnTargetFace and TfTournament=EnTournament
 		INNER join DistanceInformation on DiTournament=$CompId and DiSession=QuSession and DiDistance=$n and DiType='Q'
 		INNER JOIN TournamentDistances ON ToType=TdType and TdTournament=$CompId AND CONCAT(TRIM(EnDivision),TRIM(EnClass)) LIKE TdClasses
 		WHERE QuTargetNo=" . StrSafe_DB($QuTarget);
@@ -68,8 +73,8 @@ while($r=safe_fetch($Rs)) {
 	}
 	$Distance=array(
 		'distancename' => $r->DiName,
-		'goldschar' => $r->ToGolds,
-		'xninechar' => $r->ToXNine,
+		'goldschar' => $r->Golds,
+		'xninechar' => $r->XNine,
 		'endarrows' => $Arrows,
 		'endscores' => array()
 	);
@@ -88,7 +93,7 @@ while($r=safe_fetch($Rs)) {
 			foreach(range(0, $Arrows-1) as $Arrow) {
 				$EndArray['arrowscores'][]=DecodeFromLetter(substr($End, $Arrow, 1));
 			}
-			list($EndArray['endtotal'],$EndArray['endgolds'],$EndArray['endxnine']) = ValutaArrowStringGX($End, $r->ToGoldsChars, $r->ToXNineChars);
+			list($EndArray['endtotal'],$EndArray['endgolds'],$EndArray['endxnine']) = ValutaArrowStringGX($End, $r->GoldsChars, $r->XNineChars);
 			$GrandTotal+=$EndArray['endtotal'];
 			$EndArray['runtotal']=$GrandTotal;
 			$EndNum++;

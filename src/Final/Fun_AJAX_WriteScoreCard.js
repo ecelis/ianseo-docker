@@ -350,12 +350,10 @@ function saveCommentary_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -519,7 +517,6 @@ function setShootingFirst(obj) {
 					} else {
 					}
 				} catch(e) {
-					//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 				}
 			}
 		};
@@ -578,7 +575,6 @@ function ConfirmEnd(obj) {
 					} else {
 					}
 				} catch(e) {
-					//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 				}
 			}
 		};
@@ -619,7 +615,6 @@ function ConfirmMatch(obj) {
 					} else {
 					}
 				} catch(e) {
-					//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 				}
 			}
 		};

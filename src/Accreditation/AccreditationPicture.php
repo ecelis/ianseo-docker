@@ -14,15 +14,31 @@ if(file_exists($CFG->DOCUMENT_PATH."Modules/Accreditation/includeAccreditationPi
 // loads how many accreditation types there are
 $Accreditations=array();
 $q=safe_r_sql("select IcNumber, IcName from IdCards where IcTournament={$_SESSION['TourId']} and IcType='A' order by IcNumber");
-while($r=safe_fetch($q)) $Accreditations[$r->IcNumber]=$r->IcNumber;
+while($r=safe_fetch($q)) {
+    $Accreditations[$r->IcNumber]=$r->IcName;
+}
 
+$SpecificCards=array();
+$TourIds = ((isset($_SESSION['AccreditationTourIds']) and !empty($_SESSION['AccreditationTourIds'])) ? $_SESSION['AccreditationTourIds'] : $_SESSION['TourId']);
+foreach (explode(',',$TourIds) as $ToId) {
+    $SpecificCards[$ToId]=array();
+    if ($Specific = getModuleParameterLike('Accreditation', 'Matches-A-%', $ToId)) {
+        foreach ($Specific as $Id => $Name) {
+            $tmp = explode('-', $Id);
+            foreach(explode(',', $Name) as $tmpCat) {
+                $SpecificCards[$ToId][$tmpCat] = end($tmp);
+            }
+        }
+    }
+}
 
 $PAGE_TITLE=get_text('TakePicture', 'Tournament');
 $JS_SCRIPT[] = phpVars2js(array('ROOT_DIR' => $CFG->ROOT_DIR, 'AreYouSure'=>get_text('MsgAreYouSure'), 'msgPictureThere' => get_text('PictureThere', 'Tournament')));
 $JS_SCRIPT[] = '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>';
-$JS_SCRIPT[] = '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>';
+$JS_SCRIPT[] = '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.6.0.min.js"></script>';
 $JS_SCRIPT[] = '<script type="text/javascript" src="./Fun_AJAX_AccreditationPicture.js"></script>';
 $JS_SCRIPT[] = phpVars2js($param);
+$JS_SCRIPT[] = '<script type="text/javascript">let cardsByCat='.json_encode($SpecificCards).'</script>';
 if($param["source"]==0) {
 	$JS_SCRIPT[] = '<script type="text/javascript" src="./TakePicture.js"></script>';
 } else {
@@ -63,7 +79,6 @@ if(file_exists($CFG->DOCUMENT_PATH."Modules/Accreditation/AccreditationPicturePa
 <input type="text" name="x_Search" id="x_Search" style="width: 80%;" maxlength="50" onBlur="searchAthletes();" onkeyup="searchAthletes();"><br>
 <input type="checkbox" id="x_Country" name="x_Country" value="1" checked onChange="searchAthletes();"><?php echo get_text('Country') ?>&nbsp;&nbsp;&nbsp;
 <input type="checkbox" id="x_Athlete" name="x_Athlete" value="1" checked onChange="searchAthletes();"> <?php echo get_text('Athlete') ?><br>
-<input type="checkbox" id="x_noPhoto" name="x_noPhoto" value="1" checked onChange="searchAthletes();"><?php echo get_text('OnlyWithoutPhoto','Tournament')?>
 <?php
 
 $TourId=$_SESSION['TourId'];
@@ -82,9 +97,11 @@ $q=safe_r_sql("select distinct SesOrder from Session where SesTournament in ($To
 while($r=safe_fetch($q)) {
 	echo '<input type="checkbox" class="x_Sessions" id="x_Sessions['.$r->SesOrder.']" onChange="searchAthletes();">'.get_text('Session').' '.$r->SesOrder.'&nbsp;&nbsp;&nbsp;';
 }
-echo '<input type="checkbox" class="x_NoPrint" id="x_NoPrint" onChange="searchAthletes();">'.get_text('OnlyPhoto', 'Tournament').'
-    <input type="checkbox" id="x_noAcc" name="x_noAcc" value="1" checked onChange="searchAthletes();">'.get_text('OnlyWithoutAcc','Tournament');
-
+echo '<div class="Flex-line w-100 mt-2"><div class="w-25"><input type="radio" id="x_All" name="PhotoStatus" onChange="searchAthletes();">'. get_text('AllEntries','Tournament'). '</div>'.
+    '<div class="w-25"><input type="radio" id="x_noPhoto" name="PhotoStatus" onChange="searchAthletes();">'.get_text('OnlyWithoutPhoto', 'Tournament'). '</div>'.
+    '<div class="w-25"><input type="radio" id="x_NoPrint" name="PhotoStatus" onChange="searchAthletes();">'.get_text('OnlyPhoto', 'Tournament'). '</div>'.
+    '<div class="w-25"><input type="radio" id="x_noAcc" name="PhotoStatus" checked onChange="searchAthletes();">'.get_text('OnlyWithoutAcc','Tournament'). '</div>'.
+    '</div>';
 ?>
 </td>
 </tr>
@@ -122,16 +139,17 @@ echo '<input type="checkbox" class="x_NoPrint" id="x_NoPrint" onChange="searchAt
 		<td style="vertical-align: top; text-align: center;">
 			<input type="hidden" id="selId">
 			<table class="Tabella">
-				<tr><th id="selAth" style="width:40%;"></th><td id="selCat" style="width:20%;"></td><td id="selTeam" style="width:40%;"></td></tr>
+				<tr><th id="selAth" class="w-40"></th><td id="selCat" class="w-20"></td><td id="selTeam" class="w-40"></td></tr>
 			</table>
 			<div id="loadingBar" class="blue LetteraGrande" style="display: none;"></div>
 			<br><img id="athPic" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" width="150">
 			<div id="ManBlock" style="display: none;">
-			<input type="button" id="delete-button" value="<?php echo get_text('PhotoDelete', 'Tournament')?>" onClick="deletePicture();" ><br>
+			<div class="mt-2 mb-3"><input type="button" id="delete-button" value="<?php echo get_text('PhotoDelete', 'Tournament')?>" onClick="deletePicture();" ></div>
 			<?php
-			if($Accreditations) {
+
+            if($Accreditations) {
 				if(count($Accreditations)>1) {
-					echo '<select id="accreditation-number">';
+					echo '<select id="accreditation-number" class="m-2">';
 					foreach($Accreditations as $k => $v) {
 						echo '<option value="'.$k.'">'.$v.'</option>';
 					}
@@ -141,12 +159,12 @@ echo '<input type="checkbox" class="x_NoPrint" id="x_NoPrint" onChange="searchAt
 						echo '<input type="hidden" id="accreditation-number" value="'.$k.'">';
 					}
 				}
-				echo '<input type="button" id="print-button" value="'.get_text('Print', 'Tournament').'" onClick="printAccreditation()" >';
+				echo '<input type="button" id="print-button" class="m-2" value="'.get_text('Print', 'Tournament').'" onClick="printAccreditation()" >';
 			}
 
 			?>
 
-			&nbsp;&nbsp;<input type="button" id="confirm-button" value="<?php echo get_text('BadgeConfirmPrinted', 'Tournament')?>" onClick="ConfirmPrinted()" style="display: none;">
+			&nbsp;&nbsp;<div class="m-3"><input type="button" id="confirm-button" value="<?php echo get_text('BadgeConfirmPrinted', 'Tournament')?>" onClick="ConfirmPrinted()" style="display: none;"></div>
 			</div>
 			<canvas id="screenshot-canvas" style="display: none;"></canvas>
 		</td>

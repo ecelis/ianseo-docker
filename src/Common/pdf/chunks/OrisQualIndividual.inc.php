@@ -64,9 +64,9 @@ if(count($rankData['sections'])) {
 			$arrSizes[] = (!$snapDistance ? array($DistSize-5,5) : $DistSize);
 		}
 
-		$arrTitles[] = "@" .  $section['meta']['fields']['gold'] . "'s#";
+		$arrTitles[] = "@" .  $section['meta']['fields']['gold'] . "#";
 		$arrSizes[] = 10;
-		$arrTitles[] = "@" .  $section['meta']['fields']['xnine'] . "'s#";
+		$arrTitles[] = "@" .  $section['meta']['fields']['xnine'] . "#";
 		$arrSizes[] = 10;
 
 		$arrTitles[] = "Score#";
@@ -89,8 +89,8 @@ if(count($rankData['sections'])) {
 		$pdf->Records=$section['records'];
 
 		//Aggiungo Pagina
-		$pdf->AddPage();
 		$pdf->setOrisCode($PdfData->Code, ($section['meta']['running'] ? 'Running ' : '') . 'Results');
+		$pdf->AddPage();
 		if($First and (empty($pdf->CompleteBookTitle) or $pdf->CompleteBookTitle!=$PdfData->IndexName)) {
 			$pdf->Bookmark($PdfData->IndexName, 0);
 			$pdf->CompleteBookTitle=$PdfData->IndexName;

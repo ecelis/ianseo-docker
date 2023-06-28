@@ -97,6 +97,23 @@ function setupVideo() {
 	canvas = document.querySelector('canvas');
 	ctx = canvas.getContext('2d');
 
+	// if (!('mediaDevices' in navigator) || !('getUserMedia' in navigator.mediaDevices)) {
+	// 	alert('Browser has No Video Support');
+	// 	die();
+	// }
+
+	// navigator.mediaDevices.getUserMedia({video: true});
+	//
+	// navigator.mediaDevices.enumerateDevices()
+	// 	.then((devices) => {
+	// 		devices.forEach((device) => {
+	// 			console.log(`${device.kind}: ${device.label} id = ${device.deviceId}`);
+	// 		});
+	// 	})
+	// 	.catch((err) => {
+	// 		console.error(`${err.name}: ${err.message}`);
+	// 	});
+
 	if (typeof MediaStreamTrack === 'undefined'){
 		alert('This browser does not support MediaStreamTrack.\n\nTry Chrome Canary.');
 	} else {

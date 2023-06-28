@@ -19,7 +19,9 @@ $PdfData=getBracketsTeams($Events,
 	isset($_REQUEST["ShowTargetNo"]),
 	isset($_REQUEST["ShowSchedule"]),
 	isset($_REQUEST["ShowSetArrows"]),
-	true
+	true,
+    null,
+    true
 	);
 
 if(!isset($isCompleteResultBook))

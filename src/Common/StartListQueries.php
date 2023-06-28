@@ -126,7 +126,7 @@ function getStatEntriesByCountriesQuery($ORIS=false, $Athletes=false) {
 }
 
 
-function getStartListQuery($ORIS=false, $Event='', $Elim=false, $Filled=false, $isPool=false, $BySchedule=false) {
+function getStartListQuery($ORIS=false, $Event='', $Elim=false, $Filled=false, $isPool=false, $BySchedule=false, $bisTargets=false, $bisModule=0) {
 	global $CFG;
 
 	if(file_exists($f=$CFG->DOCUMENT_PATH.'Modules/Sets/'.$_SESSION['TourLocRule'].'/func/getStartListQuery.php')) {
@@ -330,7 +330,7 @@ function getStartListQuery($ORIS=false, $Event='', $Elim=false, $Filled=false, $
 				EvCode, EvOdfCode, DivDescription, ClDescription, 
 				Bib, Athlete, SUBSTRING(AtTargetNo,1,1) AS Session, SUBSTRING(AtTargetNo,2) AS TargetNo, NationCode, Nation, RealEventCode, RealEventName,
 				EventCode, EventName, DOB, SesAth4Target, ClassCode, DivCode, AgeClass, SubClass, Status, 
-				`IC`, `TC`, `IF`, `TF`, `TM`, NationCode2, Nation2, NationCode3, Nation3, EnSubTeam, TfName, 
+				`IC`, `TC`, `IF`, `TF`, `TM`, NationCode2, Nation2, NationCode3, Nation3, EnSubTeam, TfName, Wheelchair,
 				concat(DvMajVersion, '.', DvMinVersion) as DocVersion, date_format(DvPrintDateTime, '%e %b %Y %H:%i UTC') as DocVersionDate,
 				DvNotes as DocNotes,
 				ifnull(RankRanking, '') as Ranking, Season, Personal, EnTimestamp
@@ -365,6 +365,7 @@ function getStartListQuery($ORIS=false, $Event='', $Elim=false, $Filled=false, $
 					EnTeamMixEvent as `TM`,
 					DATE_FORMAT(EnDob,'%d %b %Y') as DOB, 
 					TfName, 
+					EnWChair as Wheelchair,
 					" . ($ORIS ? " RankRanking " : "'' ") ." as RankRanking,
 					ifnull(RankSeasonBest, '') as Season, 
 					ifnull(RankPersonalBest, '') as Personal, 
@@ -418,11 +419,183 @@ function getStartListQuery($ORIS=false, $Event='', $Elim=false, $Filled=false, $
 
 		if($ORIS) {
 			$MyQuery.= " AND EventName!='' ";
-			$MyQuery.= " ORDER BY EvProgr, EventName, AtTargetNo, Athlete ";
+			$MyQuery.= " ORDER BY EvProgr, EventName,".($bisTargets ? "((AtTarget-1) % ".$bisModule."), ":"")." AtTargetNo, Athlete ";
 		} else {
-			$MyQuery.= " ORDER BY AtTargetNo, NationCode, Athlete, Nation ";
+			$MyQuery.= " ORDER BY ".($bisTargets ? "((AtTarget-1) % ".$bisModule."), ":"")." AtTargetNo, NationCode, Athlete, Nation ";
 		}
 	}
+	return $MyQuery;
+}
+
+function getRunEntryQuery($Event='', $Type='') {
+	// global $CFG;
+	$Filter='';
+	$Join='left';
+	$Fields="coalesce(group_concat(EvCode order by EvTeamEvent, EvProgr separator ', '),'') as Events, coalesce(group_concat(concat('<b>',EvCode,':</b> ',EvEventName) order by EvTeamEvent, EvProgr separator '|'),'') as Legend";
+	switch($Type) {
+		case 'Alpha':
+			$Key="left(EnFirstName,1)";
+			$OrderBy="EnFirstName, EnName";
+			$GroupBy='Group by EnId';
+			$Fields="coalesce(group_concat(if(RarBib='' or RarTeam=0, EvCode, concat(EvCode, ' (', RarBib,')')) order by EvTeamEvent, EvProgr separator ', '),'') as EventsWithBib, coalesce(group_concat(EvCode order by EvTeamEvent, EvProgr separator ', '),'') as Events, coalesce(group_concat(concat('<b>',EvCode,':</b> ',EvEventName) order by EvTeamEvent, EvProgr separator '|'),'') as Legend";
+			break;
+		case 'Event':
+			$Key="concat_ws(' - ', EvCode, EvEventName)";
+			$OrderBy="EvTeamEvent, EvCode, Entry";
+			break;
+		case 'Country':
+			$Key="concat_ws(' - ', coalesce(RarCoCode, CoCode), coalesce(RarCoName, CoName))";
+			$OrderBy="NocCode, Entry";
+			$GroupBy='Group by coalesce(RarCoCode, CoCode), EnId';
+			$Fields="coalesce(group_concat(if(RarBib='' or RarTeam=0, EvCode, concat(EvCode, ' (', RarBib,')')) order by EvTeamEvent, EvProgr separator ', '),'') as EventsWithBib, coalesce(group_concat(EvCode order by EvTeamEvent, EvProgr separator ', '),'') as Events, coalesce(group_concat(concat('<b>',EvCode,':</b> ',EvEventName) order by EvTeamEvent, EvProgr separator '|'),'') as Legend";
+			break;
+	}
+
+	$MyQuery = "SELECT $Key as ItemKey, $Fields,
+       		max(IndBib) as Bib,
+			SesAth4Target, ClDescription as Category,
+			if(EnDob=0, '', EnDob) as DOB,
+			EnCode,
+			coalesce(RarCoCode, CoCode) as NocCode,
+			coalesce(RarCoName, CoName) as NocName,
+			TgtGrp, RarTarget,
+			concat(upper(EnFirstName), ' ', EnName) as Entry,
+			EnTimestamp as Timestamp,
+			concat(DvMajVersion, '.', DvMinVersion) as DocVersion,
+			date_format(DvPrintDateTime, '%e %b %Y %H:%i UTC') as DocVersionDate,
+			DvNotes as DocNotes
+		FROM Entries
+		INNER JOIN Countries ON CoId=EnCountry AND CoTournament=EnTournament
+		INNER JOIN Tournament on ToId=EnTournament
+	    inner join Session on SesType='Q' and SesOrder=1 and SesTournament=EnTournament
+	    inner join Divisions on DivTournament=EnTournament and DivId=EnDivision
+	    inner join Classes on ClTournament=EnTournament and ClId=EnClass
+		left join (
+		    select RarTeam, EvCode, EvEventName, EvElimType, EvProgr, EvOdfCode, EvTeamEvent, if(RarGroup=0, '', RarGroup) as TgtGrp, if(RarTarget=0, '', RarTarget) as RarTarget, RarBib, RarBib as IndBib,  RarEntry, null as RarCoCode, null as RarCoName, null as TeSubTeam
+		    from RunArcheryRank
+		    inner join Events on EvTournament=RarTournament and EvCode=RarEvent and EvTeamEvent=RarTeam
+		    where RarTeam=0 and RarTournament={$_SESSION['TourId']} and RarPhase=0
+		    union
+		    select RarTeam, EvCode, EvEventName, EvElimType, EvProgr, EvOdfCode, EvTeamEvent, if(RarGroup=0, '', RarGroup) as TgtGrp, if(RarTarget=0, '', RarTarget) as RarTarget, RarBib, 0 as IndBib, TfcId as RarEntry, CoCode as RarCoCode, CoName as RarCoName, TeSubTeam
+			from RunArcheryRank
+		    inner join Events on EvTournament=RarTournament and EvCode=RarEvent and EvTeamEvent=RarTeam
+			inner join Teams on TeTournament=RarTournament and TeEvent=RarEvent and TeCoId=RarEntry and TeSubTeam=RarSubTeam and TeFinEvent=1
+			Inner JOIN TeamFinComponent ON TfcEvent=TeEvent and TfcCoId=TeCoId and TfcSubTeam=TeSubTeam and TfcTournament=TeTournament 
+			INNER JOIN Countries ON CoId=TeCoId AND CoTournament=TeTournament
+			where RarTeam=1 and RarTournament={$_SESSION['TourId']} and RarPhase=0
+		) Team on RarEntry=EnId
+		LEFT JOIN DocumentVersions on DvTournament=EnTournament AND DvFile = 'TGT' 
+		WHERE EnTournament = {$_SESSION['TourId']} $Filter
+		$GroupBy
+		order by $OrderBy";
+	if($Event) {
+		if(!is_array($Event)) {
+			$Event=array($Event);
+		}
+
+		$MyQuery.= " and EvCode in (".implode(',', StrSafe_DB($Event)).") ";
+	}
+
+	return $MyQuery;
+}
+
+function getRunStartListQuery($Event='', $Type='', $Details=false) {
+	// global $CFG;
+	$Filter='';
+	$FilterTeam='';
+	$Join='left';
+	$PhaseFilter=($Details ? "" : "and RarPhase=0");
+	switch($Type) {
+		case 'Alpha':
+			$KeyInd="left(EnFirstName,1)";
+			$KeyTeam="CoCode";
+			$OrderBy="EvTeamEvent, if(EvTeamEvent=1, NocCode, Entry)";
+			break;
+		case 'Event':
+			$KeyInd="concat_ws(' - ', EvCode, EvEventName)";
+			$KeyTeam="concat_ws(' - ', EvCode, EvEventName)";
+			$OrderBy="EvTeamEvent, EvProgr, RarPhase=1, RarPhase, RarPool, RarStartlist, Entry";
+			$Join='inner';
+			break;
+		case 'Country':
+			$KeyInd="concat_ws(' - ', CoCode, CoName)";
+			$KeyTeam="concat_ws(' - ', CoCode, CoName)";
+			$OrderBy="NocCode, EvTeamEvent, Entry";
+			break;
+		default: // schedule
+			$KeyInd="if(EvElimType=0 or RarPhase>0, RarStartlist, EvCode)";
+			$KeyTeam="if(EvElimType=0 or RarPhase>0, RarStartlist, EvCode)";
+			$OrderBy="RarStartlist, RarBib+0, EvTeamEvent, EvProgr, RarPhase=1, RarPhase, RarPool";
+			$Filter='AND EnAthlete=1 and RarStartlist>0';
+			$FilterTeam='and RarStartlist>0';
+			$Join='inner';
+	}
+
+	if($Event) {
+		if(!is_array($Event)) {
+			$Event=array($Event);
+		}
+
+		$Filter.= " and EvCode in (".implode(',', StrSafe_DB($Event)).") ";
+		$FilterTeam.= " and EvCode in (".implode(',', StrSafe_DB($Event)).") ";
+	}
+
+	$MyQuery = "("."SELECT $KeyInd as ItemKey, EvElimType as IsSingle, EvCode, EvProgr, EvEventName, EvOdfCode, EvTeamEvent,
+			coalesce(EdExtra, EnCode) as RarBib, if(RarStartlist=0, '', RarStartlist) as RarStartlist, RarSubTeam, RarPhase, RarPool, SesAth4Target,
+			if(EnDob=0, '', EnDob) as DOB,
+			CoCode as NocCode,
+			CoCode as NocImg,
+			CoName as NocName,
+			concat(upper(EnFirstName), ' ', EnName) as Entry,
+			EnTimestamp as Timestamp,
+			EnAgeClass as AgeClass, EnClass as Class,
+			concat(DvMajVersion, '.', DvMinVersion) as DocVersion,
+			date_format(DvPrintDateTime, '%e %b %Y %H:%i UTC') as DocVersionDate,
+			DvNotes as DocNotes, TgtGrp, Target
+		FROM Entries
+		INNER JOIN Countries ON CoId=EnCountry AND CoTournament=EnTournament
+		INNER JOIN Tournament on ToId=EnTournament
+	    inner join Session on SesType='Q' and SesOrder=1 and SesTournament=EnTournament
+		$Join join (
+		    select EvCode, EvProgr, EvEventName, EvOdfCode, EvTeamEvent, EvElimType, RarPool, if(RarGroup=0, '', RarGroup) as TgtGrp, if(RarTarget=0, '', RarTarget) as Target, if(RarStartlist=0, '', RarStartlist) as RarStartlist, RarPhase, RarBib, RarSubTeam, RarEntry
+		    from Events
+			inner join RunArcheryRank on RarEvent=EvCode and RarTournament=EvTournament and RarTeam=EvTeamEvent $PhaseFilter
+		    where EvTournament={$_SESSION['TourId']} and EvTeamEvent=0
+		) Rar on RarEntry=EnId
+		LEFT JOIN DocumentVersions on DvTournament=EnTournament AND DvFile = 'TGT' 
+		LEFT JOIN ExtraData on EdId=EnId AND EdType = 'Z' 
+		WHERE EnTournament = {$_SESSION['TourId']} $Filter
+		) UNION (
+    	SELECT $KeyTeam as ItemKey, EvElimType as IsSingle, EvCode, EvProgr, EvEventName, EvOdfCode, EvTeamEvent,
+			RarBib, if(RarStartlist=0, '', RarStartlist) as RarStartlist, RarSubTeam, RarPhase, RarPool, SesAth4Target,
+			'' as DOB,
+			concat(CoCode, if(TeSubTeam=0, '', TeSubTeam+1)) as NocCode,
+			CoCode as NocImg,
+			CoName as NocName,
+			Team as Entry,
+			TeTimeStamp as Timestamp,
+			'' as AgeClass, '' as Class,
+			concat(DvMajVersion, '.', DvMinVersion) as DocVersion,
+			date_format(DvPrintDateTime, '%e %b %Y %H:%i UTC') as DocVersionDate,
+			DvNotes as DocNotes, if(RarGroup=0, '', RarGroup) as TgtGrp, if(RarTarget=0, '', RarTarget) as Target
+		FROM RunArcheryRank 
+		inner join Events on EvCode=RarEvent and EvTournament=RarTournament and EvTeamEvent=RarTeam 
+		INNER JOIN Tournament on ToId=RarTournament
+	    inner join Session on SesType='Q' and SesOrder=1 and SesTournament=RarTournament
+		inner JOIN (select TeEvent, TeCoId, TeSubTeam, TeTournament, group_concat(concat_ws(' ', upper(EnFirstName), left(EnName,1)) order by TfcOrder separator ', ') Team,
+				CoCode, CoName, TeTimeStamp, '' CoDob
+			from Teams
+			Inner JOIN TeamFinComponent ON TfcEvent=TeEvent and TfcCoId=TeCoId and TfcSubTeam=TeSubTeam and TfcTournament=TeTournament 
+		    inner join Entries on EnId=TfcId and EnTournament=TfcTournament
+			INNER JOIN Countries ON CoId=TeCoId AND CoTournament=TeTournament
+			where TeTournament={$_SESSION['TourId']} 
+			group by TeCoId, TeSubTeam, TeEvent
+			) as Sq ON TeCoId=RarEntry AND TeSubTeam=RarSubTeam and TeTournament=RarTournament and TeEvent=RarEvent
+		LEFT JOIN DocumentVersions on DvTournament=RarTournament AND DvFile = 'TGT' 
+		WHERE RarTournament = {$_SESSION['TourId']} and RarTeam=1 $PhaseFilter $FilterTeam
+    	)
+		order by $OrderBy";
+
 	return $MyQuery;
 }
 
@@ -495,7 +668,7 @@ function getStartListCountryQuery($ORIS=false, $Athletes=false, $orderByName=fal
 				cNumber, PhPhoto is not null as HasPhoto, EnBadgePrinted>0 as HasAccreditation, PhToRetake, PhEnId, 
 				concat(DvMajVersion, '.', DvMinVersion) as DocVersion,
 				date_format(DvPrintDateTime, '%e %b %Y %H:%i UTC') as DocVersionDate,
-				DvNotes as DocNotes, edmail.EdEmail, edmail.EdExtra, edbib.EdExtra as Bib2, EnDob
+				DvNotes as DocNotes, edmail.EdEmail, edmail.EdExtra, edbib.EdExtra as Bib2, EnDob, '' as TfName
 			FROM Entries AS e
 			INNER JOIN Countries AS c ON e.EnCountry=c.CoId AND e.EnTournament=c.CoTournament
 			INNER JOIN Qualifications AS q ON e.EnId=q.QuId
@@ -892,7 +1065,7 @@ function getBrokenRecordsQuery($ORIS=true) {
 	where RecBroTournament={$_SESSION['TourId']} and RecBroRecTeam=1 and RecBroRecPhase=3
 	group by RecBroRecCode, RecBroTeam, RecBroSubTeam, RecBroRecCategory, RecBroRecMatchno";
 
-	return "(".implode(') UNION (', $SQL).") order by ReArBitLevel desc, TeamEvent, OrderBy, Phase, SubPhase, RtRecDistance desc, NewRecord desc";
+	return "(".implode(') UNION (', $SQL).") order by TeamEvent, ReArBitLevel desc, OrderBy, Phase, SubPhase, RtRecDistance desc, NewRecord desc";
 }
 
 function getStartListAlphaQuery($ORIS=false) {

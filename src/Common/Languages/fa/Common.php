@@ -49,7 +49,6 @@ $lang['HELP']='کمک !';
 $lang['IndEventList']='مسابقات انفرادي';
 $lang['IndFinal']='دور پاياني انفرادي';
 $lang['Individual']='انفرادي';
-$lang['InitFinalGrids']='اطلاعات اوليه طبقه بندي شده انفرادي';
 $lang['JM']='آقايان جوان';
 $lang['jrMultiChoice']='$a(گزینه های چندگانه)';
 $lang['jrSingleChoice']='$a';

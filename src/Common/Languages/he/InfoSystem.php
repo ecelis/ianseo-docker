@@ -18,7 +18,7 @@ $lang['Individual']='אישי';
 $lang['InfoPointAlert']='<b>עשו זאת גם במחשב הנייד שלכם, מחשב הלוח, הסמארטפון:</b><br/>חברו את המכשיר שלכם לחיבור הרשת האלחטי של "ianseo" (חינם - ללא סיסמה), נווטו לכתובת http://ianseo/  ועיקבו בשידור חי!';
 $lang['InfoPointIndex']='השתמשו בתפריט שלמעלה להצגת תוצאות התחרות ולמציאת דירוגו של קשת.';
 $lang['LineToExamine']='לחצו על קו הזינוק שאותו ברצונכם לבחון';
-$lang['Live']='חי';
+$lang['Live']='שידור חי';
 $lang['Matches']='משחקים';
 $lang['NewContent']='מידע חדש זמין';
 $lang['NoDataDisplay']='אין מידע להציג';
@@ -51,6 +51,6 @@ $lang['Record-WR-WA-avg']='ממוצע שיא עולמי';
 $lang['RR_Score']='תוצאת RR';
 $lang['Teams']='קבוצות';
 $lang['TypeName']='הזינו את השם שאותו אתם מחפשים';
-$lang['ViewIndividualResults']='הצג תוצאות אישיות';
-$lang['ViewTeamResults']='הצג תוצאות קבוצתיות';
+$lang['ViewIndividualResults']='הצג תוצאות התמודדות אישיות';
+$lang['ViewTeamResults']='הצג תוצאות התמודדות קבוצתיות';
 ?>

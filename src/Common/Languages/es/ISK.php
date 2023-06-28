@@ -194,7 +194,6 @@ $lang['Scorecard']='Hoja de puntuación';
 $lang['ScorecardsManagement']='Gestión de las hojas de puntuación';
 $lang['ScoredPoints']='Puntos anotados';
 $lang['ScoreHelp']='Ayuda';
-$lang['ScoreHelpDesc']='Esta pantalla le permite tantear las flechas que han sido tiradas. Se muestra también la información relativa a la actual distancia, tipo de diana e información del arquero. Introduzca el valor de las flechas utilizando las teclas numeradas.';
 $lang['ScoringEntry']='Tanda puntuable.';
 $lang['SelDist']='Por favor, elija la distancia e inténtelo de nuevo';
 $lang['SelTgtNum']='Por favor, elija el número de diana e inténtelo de nuevo';

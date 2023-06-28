@@ -6,6 +6,8 @@ require_once('Common/Lib/CommonLib.php');
 //require_once('Common/Fun_FormatText.inc.php');
 //require_once('Fun_Final.local.inc.php');
 
+global $CFG;
+
 $JSON=array('error'=>1, 'msg'=>get_text('Error'));
 
 if(empty($_REQUEST['event']) or !isset($_REQUEST['team']) or !isset($_REQUEST['matchno']) or !isset($_REQUEST['value']) or !CheckTourSession()) {
@@ -21,7 +23,6 @@ if(($team==0 ? IsBlocked(BIT_BLOCK_IND) : IsBlocked(BIT_BLOCK_TEAM)) or checkACL
 	JsonOut($JSON);
 }
 
-$ok=true;
 $JSON['msg']=get_text('CmdOk');
 if ($team) {
 	safe_w_sql("update TeamFinals set TfIrmType=$irm where TfMatchNo=$match and TfEvent='$event' and TfTournament={$_SESSION['TourId']}");
@@ -52,8 +53,9 @@ if ($team) {
 			break;
 		default:
 			$JSON['msg']=get_text('Error');
-			$ok=false;
+			JsonOut($JSON);
 	}
+
 } else {
 	safe_w_sql("update Finals set FinIrmType=$irm where FinMatchNo=$match and FinEvent='$event' and FinTournament={$_SESSION['TourId']}");
 	switch($irm) {
@@ -99,13 +101,14 @@ if ($team) {
 			break;
 		default:
 			$JSON['msg']=get_text('Error');
-			$ok=false;
+			JsonOut($JSON);
 	}
 }
 
-if ($ok) {
-	$JSON['error']=0;
-}
 
+require_once('Final/Fun_ChangePhase.inc.php');
+CheckDoubleIrm($event, $team, $match);
+
+$JSON['error']=0;
 JsonOut($JSON);
 

@@ -4,7 +4,6 @@ $lang['Create']='Crea un novo utente e \'r Databbeis';
 $lang['Credits-Coordination']='Coordinazzione der proggetto';
 $lang['Credits-CoreGroup']='Sviluppatori principali IANZEO';
 $lang['Credits-Credits']='Crediti';
-$lang['Credits-Documentation']='Documentazzione e supporto';
 $lang['Credits-HHT']='Integrazzione HTT';
 $lang['Credits-IanseoTeam']='Ianzeo & Ianzeo Timme';
 $lang['Credits-License']='IANZEO è rilassato sotto la LICENZA PUBBLICA GENNERALE GNU Verzione 3 (GPLV3)';

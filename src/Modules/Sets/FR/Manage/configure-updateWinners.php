@@ -113,9 +113,11 @@ switch($_REQUEST['item']) {
 				if(!$r->CoId) {
 					safe_w_sql("insert into Countries set CoCode=".StrSafe_DB($r->LueCountry).", CoName=".StrSafe_DB($r->LueCoShort).", CoNameComplete=".StrSafe_DB($r->LueCoDescr).", CoTournament={$_SESSION['TourId']}");
 				}
+				$JSON['error']=0;
+			} else {
+				$JSON['msg']=get_text('ClubNotFound', 'Errors');
 			}
 
-			$JSON['error']=0;
 		}
 		break;
 	case 'CONNECTED':

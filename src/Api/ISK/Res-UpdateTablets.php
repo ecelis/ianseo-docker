@@ -572,7 +572,7 @@ switch($Sequence[0]) {
 		// Gets the targets involved
 		$SQL="select tgt1.*, tgt2.*,
 				@ArBit:=(EvMatchArrowsNo & pow(2, if(FsMatchNo1=0, 0, floor(LOG(2, FsMatchNo1))))),
-				if(@ArBit=0, EvFinArrows, EvElimArrows) Arrows, if(@ArBit=0, EvElimEnds, EvFinEnds) Ends, if(@ArBit=0, EvElimSO, EvFinSO) SO
+				if(@ArBit=0, EvFinArrows, EvElimArrows) Arrows, if(@ArBit=0, EvFinEnds, EvElimEnds) Ends, if(@ArBit=0, EvFinSO, EvElimSO) SO
 			from (select TfTeam Entry1, TfArrowstring Arrowstring1, TfTieBreak TieBreak1, FsTarget+0 Target1, substr(FsLetter, length(FsTarget)+1, 1) Letter1, FsLetter FsLetter1, FsMatchNo FsMatchNo1, FsEvent FsEvent1, TfWinLose as Win1
 				from FinSchedule
 				inner join TeamFinals on FsEvent=TfEvent and TfTournament={$_SESSION['TourId']} and FsMatchNo=TfMatchNo
@@ -651,7 +651,7 @@ switch($Sequence[0]) {
 		$SQL="Select IskData.*, concat(FsScheduledDate, ' ', FsScheduledTime) Scheduled, FsTarget+0 Target, substr(FsLetter, length(FsTarget)+1, 1) Letter,
 				trim(IskDtArrowstring) Arrowstring, IskDvCode, IskDtType='T' CorrectSession, IskDvTarget,
 				@ArBit:=(EvMatchArrowsNo & pow(2, if(IskDtMatchNo=0, 0, floor(LOG(2, IskDtMatchNo))))),
-				if(@ArBit=0, EvFinArrows, EvElimArrows) Arrows, if(@ArBit=0, EvElimEnds, EvFinEnds) Ends, if(@ArBit=0, EvElimSO, EvFinSO) SO
+				if(@ArBit=0, EvFinArrows, EvElimArrows) Arrows, if(@ArBit=0, EvFinEnds, EvElimEnds) Ends, if(@ArBit=0, EvFinSO, EvElimSO) SO
 			from IskData
 			left join FinSchedule on FsTournament={$_SESSION['TourId']} and FsMatchNo=IskDtMatchNo and FsEvent=IskDtEvent and FsTeamEvent=1
 			left join IskDevices on IskDvTournament=IskDtTournament and IskDvState>0 and IskDvDevice=IskDtDevice

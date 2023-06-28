@@ -17,8 +17,10 @@ $ChDivisions=array(
 	'R' => 'Recurve',
 	'C' => 'Compound',
 	'BB'=> 'Barebow',
-	'BH'=> 'Bowhunter',
+	'BH'=> 'Traditional',
 	'LB'=> 'Longbow',
+	// 'H' => 'Historicalbow', >> As long as Historical is only permitted in 3D, the bow type is added in
+	// CreateStandardDivisions(). There we have the TourType context.
 
 	/*
 	SwissArchery Guest Divisions (GR, GC, GB, GI) are be added in function CreateStandardDivisions()
@@ -29,27 +31,35 @@ $ChDivisions=array(
 
 $ChClasses=array(
 	/* WorldArchery Age Classes */
-	'VH'=> 'Master Hommes',
-	'VD'=> 'Master Dames',
+	'VH'=> '50+ Hommes',
+	'VD'=> '50+ Dames',
 	'H' => 'Hommes',
 	'D' => 'Dames',
-	'JH'=> 'Junior Hommes',
-	'JD'=> 'Junior Dames',
-	'CH'=> 'Cadet Hommes',
-	'CD'=> 'Cadet Dames',
+	'JH'=> 'U21 Hommes',
+	'JD'=> 'U21 Dames',
+	'CH'=> 'U18 Hommes',
+	'CD'=> 'U18 Dames',
 
 	/* SwissArchery Age Classes */
-	'JE'=> 'Jeunesse',
-	'MI'=> 'Mini',
-	'PI'=> 'Piccolo'
+	'JE'=> 'U15 Jeunesse',
+	'MI'=> 'U13 Mini',
+	'PI'=> 'U11 Piccolo'
 );
 
 function CreateStandardDivisions($TourId, $Type=1, $SubRule=0) {
 	global $ChDivisions;
 	$i=1;
+
+	/* Add Historicalbow only to 3D competitions */
+	if($Type === 11 || $Type === 13) {
+		$ChDivisions['H'] = 'Historicalbow';
+	}
+
 	foreach($ChDivisions as $C => $D) {
 		CreateDivision($TourId, $i++, $C, $D);
 	}
+
+
 
 	/* Add SwissArchery Guest Divisions here to avoid generating match play rounds for guests */
 	CreateDivision($TourId, $i++, 'GR', 'Guest Recurve');
@@ -63,15 +73,15 @@ function CreateStandardClasses($TourId, $SubRule, $Field='', $Type=0) {
 	$i=1;
 	CreateClass($TourId, $i++, 21, 49, 0, 'H', 'H', 'Hommes');
 	CreateClass($TourId, $i++, 21, 49, 1, 'D', 'D', 'Dames');
-	CreateClass($TourId, $i++, 18, 20, 0, 'JH', 'JH,H', 'Junior Hommes');
-	CreateClass($TourId, $i++, 18, 20, 1, 'JD', 'JD,D', 'Junior Dames');
-	CreateClass($TourId, $i++, 50, 99, 0, 'VH', 'VH,H', 'Master Hommes');
-	CreateClass($TourId, $i++, 50, 99, 1, 'VD', 'VD,D', 'Master Dames');
-	CreateClass($TourId, $i++, 15, 17, 0, 'CH', 'CH,JH,H', 'Cadet Hommes');
-	CreateClass($TourId, $i++, 15, 17, 1, 'CD', 'CD,JD,D', 'Cadet Dames');
-	CreateClass($TourId, $i++, 13, 14, -1, 'JE', 'JE,CD,CH,JD,JH,D,H', 'Jeunesse');
-	CreateClass($TourId, $i++, 11, 12, -1, 'MI', 'MI,JE,CD,CH,JD,JH,D,H', 'Mini');
-	CreateClass($TourId, $i++,  1, 10, -1, 'PI', 'PI,MI,JE,CD,CH,JD,JH,D,H', 'Piccolo');
+	CreateClass($TourId, $i++, 18, 20, 0, 'JH', 'JH,H', 'U21 Hommes');
+	CreateClass($TourId, $i++, 18, 20, 1, 'JD', 'JD,D', 'U21 Dames');
+	CreateClass($TourId, $i++, 50, 99, 0, 'VH', 'VH,H', '50+ Hommes');
+	CreateClass($TourId, $i++, 50, 99, 1, 'VD', 'VD,D', '50+ Dames');
+	CreateClass($TourId, $i++, 15, 17, 0, 'CH', 'CH,JH,H', 'U18 Hommes');
+	CreateClass($TourId, $i++, 15, 17, 1, 'CD', 'CD,JD,D', 'U18 Dames');
+	CreateClass($TourId, $i++, 13, 14, -1, 'JE', 'JE,CD,CH,JD,JH,D,H', 'U15 Jeunesse');
+	CreateClass($TourId, $i++, 11, 12, -1, 'MI', 'MI,JE,CD,CH,JD,JH,D,H', 'U13 Mini');
+	CreateClass($TourId, $i++,  1, 10, -1, 'PI', 'PI,MI,JE,CD,CH,JD,JH,D,H', 'U11 Piccolo');
 	CreateClass($TourId, $i++, 1, 99, 0, 'MO', 'MO', 'Men Open', 1, 'C,R');
 	CreateClass($TourId, $i++, 1, 99, 1, 'WO', 'WO', 'Women Open', 1, 'C,R');
 }
@@ -107,10 +117,10 @@ function CreateStandardEvents($TourId, $TourType, $SubRule, $Outdoor=true) {
 
 			// Define default target size & distance per divison
 			if($cD==='BH' || $cD==='LB') {
-				$TgtSize = ($Outdoor ?  122 : 60);
+				$TgtSize = ($Outdoor ?  80 : 40);
 				$Distance = ($Outdoor ?  30 : 18);
 
-				// Full Face also in Indoor (type 1)
+				// Full face also in Indoor (type 1)
 				$Target = ($Outdoor ? $TargetR : 1);
 			} else if ($cD==='C') {
 				$TgtSize = ($Outdoor ?  80 : 40);
@@ -136,7 +146,7 @@ function CreateStandardEvents($TourId, $TourType, $SubRule, $Outdoor=true) {
 					$Dist = ($Outdoor ?  (($cD==='C' || $cD==='R' || $cD==='BB') ? 40:30) : 18);
 
 					// Full Face also in Indoor for Barebow (BH & LB config is already Full Face)
-					$Target = ($Outdoor ? $TargetR : ($cD === 'BB' ? 1 : $Target));
+					$Target = ($Outdoor ? $TargetR : (($cD === 'BB' || $cD === 'BH' || $cD === 'LB') ? 1 : $Target));
 				}
 
 				// Outdoor WA 70/50: Piccolo: 15m, Mini: 25m @ 80cm full face (type 5)
@@ -186,7 +196,7 @@ function CreateStandardEvents($TourId, $TourType, $SubRule, $Outdoor=true) {
 				CreateEvent($TourId, $i++, 1, 0, 0, $Target, 4, 6, 3, 4, 6, 3, $cD.'JT',  $D . ' Team Jeunes', 1, 240, 0, 0, 0, '', '', 122, 40);
 			} else {
 				// C, BB, BH, LB
-				CreateEvent($TourId, $i++, 1, 0, 0, $Target, 4, 6, 3, 4, 6, 3, $cD.'T',  $D . ' Team', ($cD=='C' ? 0 : 1), 240, 0, 0, 0, '', '', ($cD==='C' ? 80 : 122), (($cD==='C' || $cD==='BB') ? 50 : 30));
+				CreateEvent($TourId, $i++, 1, 0, 0, $Target, 4, 6, 3, 4, 6, 3, $cD.'T',  $D . ' Team', ($cD=='C' ? 0 : 1), 240, 0, 0, 0, '', '', (($cD==='C' || $cD==='BH' || $cD==='LB') ? 80 : 122), (($cD==='C' || $cD==='BB') ? 50 : 30));
 				CreateEvent($TourId, $i++, 1, 0, 0, $TargetR, 4, 6, 3, 4, 6, 3, $cD.'JT',  $D . ' Team Jeunes', ($cD=='C' ? 0 : 1), 240, 0, 0, 0, '', '', 122, (($cD==='C' || $cD==='BB') ? 40 : 30));
 			}
 		}
@@ -199,9 +209,11 @@ function CreateStandardEvents($TourId, $TourType, $SubRule, $Outdoor=true) {
 		foreach($ChDivisions as $cD => $D) {
 			/* Ramon Keller 11.05.2017: 'PR' and 'PC' are Obsolete: See above in divisions section */
 			//if($cD=='PR' or $cD=='PC') continue; // not for the para divisions...
-			$Target=($cD==='C' ? $TargetC : $TargetR);
-			CreateEvent($TourId, $i++, 1, 0, 0, $Target, 4, 6, 3, 4, 6, 3, $cD.'T',  $D . ' Team', ($cD=='C' ? 0 : 1), 240, 0, 0, 0, '', '', ($cD=='BH' || $cD=='LB' ? 60 : 40), 18);
-			CreateEvent($TourId, $i++, 1, 0, 0, $Target, 4, 6, 3, 4, 6, 3, $cD.'JT', $D . ' Team Jeunes', ($cD=='C' ? 0 : 1), 240, 0, 0, 0, '', '', 60, 18);
+
+			// Compound: Trispot Comp. / BH & LB: Rec Full-face / ELSE: Trispot Rec.
+			$Target=($cD==='C' ? $TargetC : ($cD==='BH'||$cD==='LB' ? 1 : $TargetR));
+			CreateEvent($TourId, $i++, 1, 0, 0, $Target, 4, 6, 3, 4, 6, 3, $cD.'T',  $D . ' Team', ($cD=='C' ? 0 : 1), 240, 0, 0, 0, '', '', 40, 18);
+			CreateEvent($TourId, $i++, 1, 0, 0, 1, 4, 6, 3, 4, 6, 3, $cD.'JT', $D . ' Team Jeunes', ($cD=='C' ? 0 : 1), 240, 0, 0, 0, '', '', 60, 18);
 		}
 	}
 	
@@ -210,8 +222,8 @@ function CreateStandardEvents($TourId, $TourType, $SubRule, $Outdoor=true) {
 		//$i=1;
 		foreach($ChDivisions as $cD => $D) {
 			$Target=($cD==='C' ? $TargetC : $TargetR);
-			CreateEvent($TourId, $i++, 1, 0, 0, $Target, 4, 6, 3, 4, 6, 3, $cD.'T',  $D . ' Team', ($cD=='C' ? 0 : 1), 240, 0, 0, 0, '', '', ($cD=='BH' || $cD=='LB' ? 80 : 60), 25);
-			CreateEvent($TourId, $i++, 1, 0, 0, $Target, 4, 6, 3, 4, 6, 3, $cD.'JT', $D . ' Team Jeunes', ($cD=='C' ? 0 : 1), 240, 0, 0, 0, '', '', 80, 25);
+			CreateEvent($TourId, $i++, 1, 0, 0, ($cD=='BB' or $cD=='BH' or $cD=='LB') ? 1 : $Target , 4, 6, 3, 4, 6, 3, $cD.'T',  $D . ' Team', ($cD=='C' ? 0 : 1), 240, 0, 0, 0, '', '', 60, 25);
+			CreateEvent($TourId, $i++, 1, 0, 0, 1, 4, 6, 3, 4, 6, 3, $cD.'JT', $D . ' Team Jeunes', ($cD=='C' ? 0 : 1), 240, 0, 0, 0, '', '', 80, 25);
 		}
 	}
 
@@ -275,7 +287,7 @@ function CreateStandardEvents($TourId, $TourType, $SubRule, $Outdoor=true) {
 				case 'BH':
 					CreateEventNew($TourId, $cD.'JT', "$D Team Jeunes", $i++, $SettingsTeam); // U11 - U15
 					CreateEventNew($TourId, $cD.'CT', "$D Team Cadets", $i++, $SettingsTeam); // U18
-					CreateEventNew($TourId, $cD, "$D Team", $i++, $SettingsTeam); // U21 - Master
+					CreateEventNew($TourId, $cD.'T', "$D Team", $i++, $SettingsTeam); // U21 - Master
 					break;
 				case 'LB':
 					CreateEventNew($TourId, $cD.'JT', "$D Team Jeunes", $i++, $SettingsTeam); // U11 - U15
@@ -406,7 +418,7 @@ function InsertStandardEvents($TourId, $TourType, $SubRule, $Outdoor=true) {
 					}
 				} else if($cD === 'LB'){
 					// All LB except JE,MI,PI
-					InsertClassEvent($TourId, 1, 3, $cD, $cD, $cC);
+					InsertClassEvent($TourId, 1, 3, $cD.'T', $cD, $cC);
 				}
 			}
 		}

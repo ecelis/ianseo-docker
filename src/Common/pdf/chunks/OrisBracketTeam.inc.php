@@ -62,6 +62,7 @@ foreach($PdfData->rankData['sections'] as $Event => $section) {
 			$Obj1->GrPosition = $Match['position'];
 			$Obj1->Score = ($section['meta']['matchMode'] ? $Match['setScore'] : $Match['score']);
 			$Obj1->ScoreDetails = '';
+            $Obj1->ScoreNotes = '';
 			$Obj1->ScoreMatch = $Match['score'];
 			$Obj1->ScoreCell = 6;
 			//DOC $Obj1->Score = ($Match['status']==1 ? 'DSQ-':'') . ($section['meta']['matchMode'] ? $Match['setScore'] : $Match['score']);
@@ -92,6 +93,7 @@ foreach($PdfData->rankData['sections'] as $Event => $section) {
 			$Obj2->GrPosition = $Match['oppPosition'];
 			$Obj2->Score = ($section['meta']['matchMode'] ? $Match['oppSetScore'] : $Match['oppScore']);
 			$Obj2->ScoreDetails = '';
+            $Obj2->ScoreNotes = '';
 			$Obj2->ScoreMatch = $Match['oppScore'];
 			$Obj2->ScoreCell = 6;
 			//DOC $Obj2->Score = ($Match['oppStatus']==1 ? 'DSQ-':'') . ($section['meta']['matchMode'] ? $Match['oppSetScore'] : $Match['oppScore']);
@@ -169,21 +171,21 @@ foreach($PdfData->rankData['sections'] as $Event => $section) {
 			}
 
 			if($tmpSetPoint1) {
-				$Obj1->ScoreDetails .= "($tmpSetPoint1)";
-				$Obj2->ScoreDetails .= "($tmpSetPoint2)";
+				$Obj1->ScoreDetails .= " ($tmpSetPoint1)";
+				$Obj2->ScoreDetails .= " ($tmpSetPoint2)";
 			}
 
 			if($Match['irm']) {
-				$Obj1->ScoreDetails.=' '.$Match['irmText'];
+				$Obj1->ScoreNotes.=' '.$Match['irmText'];
 			}
 			if($Match['oppIrm']) {
-				$Obj2->ScoreDetails.=' '.$Match['oppIrmText'];
+				$Obj2->ScoreNotes.=' '.$Match['oppIrmText'];
 			}
 
 			if($Match['record']) {
 				$Obj1->ScoreDetails.=' '.$Match['record'];
 			} elseif($Match['notes']) {
-				$Obj1->ScoreDetails.=' '.$Match['notes'];
+				$Obj1->ScoreNotes.=' '.$Match['notes'];
 			} elseif($Match['tie']==2) {
 				$Obj1->Score='';
 			} elseif($RealScore1==0 and $RealScore2==0) {
@@ -197,7 +199,7 @@ foreach($PdfData->rankData['sections'] as $Event => $section) {
 			if($Match['oppRecord']) {
 				$Obj2->ScoreDetails.=' '.$Match['oppRecord'];
 			} elseif($Match['oppNotes']) {
-				$Obj2->ScoreDetails.=' '.$Match['oppNotes'];
+				$Obj2->ScoreNotes.=' '.$Match['oppNotes'];
 			} elseif($Match['oppTie']==2) {
 				$Obj2->Score='';
 			} elseif($RealScore1==0 and $RealScore2==0) {
@@ -208,8 +210,10 @@ foreach($PdfData->rankData['sections'] as $Event => $section) {
 				}
 			}
 
-			$Obj1->ScoreDetails=trim($Obj1->ScoreDetails);
-			$Obj2->ScoreDetails=trim($Obj2->ScoreDetails);
+			$Obj1->ScoreDetails=rtrim($Obj1->ScoreDetails);
+			$Obj2->ScoreDetails=rtrim($Obj2->ScoreDetails);
+            $Obj1->ScoreNotes=rtrim($Obj1->ScoreNotes);
+            $Obj2->ScoreNotes=rtrim($Obj2->ScoreNotes);
 
 			//Valuto cosa fare se è la prima colonna
 			if($FirstPhase) {
@@ -328,8 +332,8 @@ foreach($PdfData->Events as $Event => $Pages) {
 	} else {
 		$pdf->setComment($Pages->PrintHead);
 	}
-	$pdf->AddPage();
 	$pdf->setOrisCode($section['meta']['OrisCode'], $PdfData->Description);
+	$pdf->AddPage();
 	if($First and (empty($pdf->CompleteBookTitle) or $pdf->CompleteBookTitle!=$PdfData->IndexName)) {
 		$pdf->Bookmark($PdfData->IndexName, 0);
 		$pdf->CompleteBookTitle=$PdfData->IndexName;

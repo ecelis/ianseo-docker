@@ -89,7 +89,7 @@ echo '<tr>';
 echo '<th width="7%" id="tgtOrder" onclick="loadDevicesOrdered(this)" ordertype="ordasc">' . get_text('Target') . '</th>';
 echo '<th width="7%">' . get_text('ISK-AuthRequest', 'Api') . '</th>';
 echo '<th width="8%">' . get_text('Tournament', 'Tournament') . '</th>';
-echo '<th colspan="3" widht="10%" id="codeOrder" onclick="loadDevicesOrdered(this)">' . get_text('ISK-DeviceCode', 'Api') . '</th>';
+echo '<th colspan="3" widht="10%" id="codeOrder" onclick="loadDevicesOrdered(this)">' . get_text('ISK-AppInfo', 'Api') . '</th>';
 echo '<th id="idOrder" onclick="loadDevicesOrdered(this)">' . get_text('ISK-DeviceId', 'Api') . '</th>';
 echo '<th>' . get_text('ISK-DeviceAlive', 'Api') . '</th>';
 echo '<th>' . get_text('ISK-DeviceStatus', 'Api') . '</th>';

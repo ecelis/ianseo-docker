@@ -89,8 +89,8 @@
 			<td class="Center"><a href="javascript:moveBox('II');">Zoom ---</a></td>
 			<td class="Center"><a href="javascript:moveBox('OO');">Zoom +++</a></td>
 		</tr>
-		
-		
+
+
 		<tr>
 			<td colspan="2" class="Center"><a href="javascript:moveBox('GET');">Scatta</a></td>
 		</tr>

@@ -2,9 +2,11 @@
 	require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
 	require_once('Common/Fun_FormatText.inc.php');
 	require_once('Common/pdf/ResultPDF.inc.php');
+	require_once('Common/Fun_FormatText.inc.php');
 	require_once('Common/Lib/ArrTargets.inc.php');
 	require_once('Common/Fun_Phases.inc.php');
 	require_once('Common/Lib/Fun_PrintOuts.php');
+    require_once('Common/Fun_Phases.inc.php');
 	require_once('Common/Lib/Obj_RankFactory.php');
 	checkACL(AclIndividuals, AclReadOnly);
 
@@ -31,17 +33,13 @@
 	$pdf->PrintFlags=(!empty($_REQUEST["ScoreFlags"]));
 
 	$MyQuery="";
-	if (isset($_REQUEST['Blank']))
-	{
+	if (isset($_REQUEST['Blank'])) {
 		$MyQuery = "SELECT DISTINCT
 		 	'' AS Event, '' as CountryName, '' as Athlete, '' as CountryCode, '' as EventDescr, '' as Target, '' as Position, -1 as Phase, EvMatchMode as EvMatchMode, EvElimType, '' as ArrowString, '' as Tie,
 		 	'' as EnId, '' as OppEnId, '' as OppAthlete, '' as OppCountryCode, '' as OppCountryName, '' as OppTarget, '' as OppPosition, '' as OppArrowString, '' as OppTie, '' as QualRank, '' as OppQualRank
 			FROM Events
 			WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=0";
-	}
-	else
-	{
-
+	} else {
 		$options=array('dist'=>0);
 		$family='GridInd';
 		$options['tournament']=$_SESSION['TourId'];
@@ -127,11 +125,10 @@
 		$WhereY=NULL;
 		$AtlheteName=NULL;
 		$FollowingRows=false;
-
 //DrawScore
 		while($MyRow=safe_fetch($Rs)) {
 			set_time_limit(30);
-			if(empty($_REQUEST["Blank"]) &&  empty($_REQUEST["IncEmpty"]) && (empty($MyRow->EnId) || empty($MyRow->OppEnId))) {
+			if(empty($_REQUEST["Blank"]) AND  empty($_REQUEST["IncEmpty"]) && (empty($MyRow->EnId) || empty($MyRow->OppEnId))) {
 				// se è vuoto uno dei due arcieri e non è selezionata l'inclusione
 				$EnIds=array();
 				if(($MyRow->EnId or $MyRow->OppEnId) and $MyRow->EvElimType==4) {
@@ -189,7 +186,6 @@
 				}
 			}
 		}
-
 //END OF DrawScore
 		safe_free_result($Rs);
 	}
@@ -231,6 +227,7 @@ function DrawScore(&$pdf, $MyRow, $Side='L') {
 	$WhereX=$WhereStartX;
 	$WhereY=$WhereStartY;
 //Intestazione Atleta
+    $pdf->SetDefaultColor();
 	$pdf->SetLeftMargin($WhereStartX[$WhichScore]);
 	$pdf->SetY(35);
 // Flag of Country/Club
@@ -277,7 +274,7 @@ function DrawScore(&$pdf, $MyRow, $Side='L') {
    	$pdf->SetFont($pdf->FontStd,'',10);
 	$pdf->Cell(20,6,(get_text('Country')) . ': ', 'L', 0, 'L', 0);
 	$pdf->SetFont($pdf->FontStd,'B',10);
-	$pdf->Cell($NumCol*$ArrowW+2*$TotalW+$GoldW-20,6, ($MyRow->{$Prefix.'CountryName'} . (strlen($MyRow->{$Prefix.'CountryCode'})>0 ?  ' (' . $MyRow->{$Prefix.'CountryCode'}  . ')' : '')), 0, 1, 'L', 0);
+	$pdf->Cell($NumCol*$ArrowW+2*$TotalW+$GoldW-20,6, ($MyRow->{$Prefix.'CountryCode'} ? ($MyRow->{$Prefix.'CountryName'} . ' (' . $MyRow->{$Prefix.'CountryCode'}  . ')') : ''), 0, 1, 'L', 0);
 	$pdf->SetFont($pdf->FontStd,'',10);
 	$pdf->Cell(20,6,(get_text('DivisionClass')) . ': ', 'LB', 0, 'L', 0);
 	$pdf->SetFont($pdf->FontStd,'B',10);
@@ -291,7 +288,7 @@ function DrawScore(&$pdf, $MyRow, $Side='L') {
 	$pdf->Cell(2*$GoldW,6, (get_text('Rank')),'TLR',1,'C',1);
 	$pdf->SetXY($NumCol*$ArrowW+2*$TotalW+$GoldW+$WhereStartX[$WhichScore],$pdf->GetY());
 	$pdf->SetFont($pdf->FontStd,'B',25);
-	$pdf->Cell(2*$GoldW,$RankHeight, $MyRow->{$Prefix.'QualRank'},'BLR',1,'C',1);
+	$pdf->Cell(2*$GoldW,$RankHeight, ($MyRow->{$Prefix.'QualRank'} ?? ''),'BLR',1,'C',1);
 
 //Header
 	$PhaseName='';
@@ -337,7 +334,6 @@ function DrawScore(&$pdf, $MyRow, $Side='L') {
 	}
 	$pdf->Cell($TotalW, $pdf->ScoreCellHeight, get_text(($MyRow->{'EvMatchMode'}==0 ? 'EndTotal':'SetTotal'),'Tournament'),1,0,'C',1);
 
-
 	if($MyRow->{'EvMatchMode'}==0) {
 		$pdf->Cell($TotalW+2*$GoldW, $pdf->ScoreCellHeight, get_text('RunningTotal','Tournament'),1,1,'C',1);
 	} else {
@@ -348,8 +344,7 @@ function DrawScore(&$pdf, $MyRow, $Side='L') {
 //Righe
 	$ScoreTotal = 0;
 	$SetTotal = '';
-	for($i=1; $i<=$NumRow; $i++)
-	{
+	for($i=1; $i<=$NumRow; $i++) {
 		$ScoreEndTotal = 0;
 	   	$pdf->SetFont($pdf->FontStd,'B',10);
 		$pdf->SetXY($WhereX[$WhichScore],$WhereY[$WhichScore]);
@@ -382,8 +377,7 @@ function DrawScore(&$pdf, $MyRow, $Side='L') {
 		$pdf->SetFont($pdf->FontStd,'', ($MyRow->{'EvMatchMode'}==0 ? 10 : 12));
 		$pdf->Cell($TotalW,$pdf->ScoreCellHeight,($FillWithArrows && $IsEndScore ? $ScoreEndTotal : ''),1,0,'C',0);
 
-		//$pdf->Cell($TotalW* ($MyRow->{'EvMatchMode'}==0 ? 1:4/5),$pdf->ScoreCellHeight,($FillWithArrows && $IsEndScore ? $ScoreTotal : ''),1,0,'C',0);
-		if($MyRow->{'EvMatchMode'}==0) {
+		if($MyRow->EvMatchMode==0) {
 			$pdf->SetFont($pdf->FontStd,'', 12);
 			$pdf->Cell($TotalW+2*$GoldW,$pdf->ScoreCellHeight,($FillWithArrows && $IsEndScore ? $ScoreTotal : ''),1,1,'C',0);
 		} else {
@@ -416,8 +410,6 @@ function DrawScore(&$pdf, $MyRow, $Side='L') {
 			}
 			$pdf->Cell($GoldW*2/3,$pdf->ScoreCellHeight,'0',1, 0,'C',0);
 			$pdf->Cell( $TotalW,$pdf->ScoreCellHeight,($IsEndScore && $FillWithArrows ? $SetTotal : ''),1, 1,'C',0);
-
-
 		}
 		$WhereY[$WhichScore]=$pdf->GetY();
 	}
@@ -435,14 +427,18 @@ function DrawScore(&$pdf, $MyRow, $Side='L') {
 	for($i=0; $i<($MyRow->EvElimType ? 1 : 3); $i++) {
 		$pdf->SetX($StartX);
 		for($j=0; $j<$tmp->so; $j++) {
-			$pdf->SetXY($pdf->GetX()+0.5,$pdf->GetY());
-			$pdf->SetFont($pdf->FontStd,'',10);
-			$pdf->Cell($ShootOffW-0.5,$pdf->ScoreCellHeight*3/4,($FillWithArrows ? DecodeFromLetter(substr($MyRow->{$Prefix.'TieBreak'}, $i*$tmp->so + $j ,1)) : ''),1,0,'C',0);
+			$pdf->SetFont($pdf->FontStd,($tmp->so==1 ? 'B' : ''),10);
+			$pdf->Cell($ShootOffW,$pdf->ScoreCellHeight*3/4,($FillWithArrows ? DecodeFromLetter(substr($MyRow->{$Prefix.'TieBreak'}, $i*$tmp->so + $j ,1)) : ''),1,0,'C',0);
 			if($FillWithArrows AND $MyRow->{$Prefix.'TieClosest'} != 0) {
 				$closeToCenter=true;
 			}
-			$pdf->ln();
 		}
+        if($tmp->so>1) {
+            $pdf->SetX($pdf->GetX()+2);
+            $pdf->SetFont($pdf->FontStd,'B',10);
+            $pdf->Cell($TotalW-2, $pdf->ScoreCellHeight*3/4, (($FillWithArrows AND trim(substr($MyRow->{$Prefix.'TieBreak'}??'',$i*$tmp->so,$tmp->so))) ? ValutaArrowstring(substr($MyRow->{$Prefix.'TieBreak'},$i*$tmp->so,$tmp->so)) : ''), 1, 0, 'C', 0);
+        }
+        $pdf->ln();
 	}
 	if($MyRow->{$Prefix.'Tie'}==1) $SetTotal++;
 	//if($NumCol>$j) {
@@ -453,7 +449,7 @@ function DrawScore(&$pdf, $MyRow, $Side='L') {
 	$Errore=($FillWithArrows and (strlen($MyRow->{$Prefix.'ArrowString'}) and ($MyRow->{'EvMatchMode'} ? $MyRow->{$Prefix.'SetScore'}!=$SetTotal : $MyRow->{$Prefix.$ScorePrefix.'Score'}!=$ScoreTotal)));
 	$pdf->SetXY($TopX=$StartX+$ArrowW*$NumCol,$WhereY[$WhichScore]);
 	$pdf->SetFont($pdf->FontStd,'B',10);
-	if($MyRow->{'EvMatchMode'}==0) {
+	if($MyRow->EvMatchMode==0) {
 		$pdf->Cell($TotalW,$pdf->ScoreCellHeight,get_text('Total'),0,0,'R',0);
 		$pdf->SetFont($pdf->FontStd,'B',11);
 		$pdf->Cell($TotalW+2*$GoldW,$pdf->ScoreCellHeight,($FillWithArrows ? $ScoreTotal : ''),1,1,'C',0);
@@ -477,8 +473,8 @@ function DrawScore(&$pdf, $MyRow, $Side='L') {
 	if($Errore) {
 		$pdf->SetX($TopX);
 		$pdf->SetFont($pdf->FontStd,'B',11);
-		$pdf->Cell($MyRow->{'EvMatchMode'} ? 2*$GoldW + $TotalW * 8/5 : $TotalW, $pdf->ScoreCellHeight, (get_text('SignedTotal', 'Tournament') . " "), 0,0,'R',0);
-		$pdf->Cell($MyRow->{'EvMatchMode'} ? 2/5*$TotalW : $TotalW, $pdf->ScoreCellHeight, $MyRow->{$Prefix.$ScorePrefix.'Score'}, 1, 0, 'C', 0);
+		$pdf->Cell($MyRow->EvMatchMode ? 2*$GoldW + $TotalW * 8/5 : $TotalW, $pdf->ScoreCellHeight, (get_text('SignedTotal', 'Tournament') . " "), 0,0,'R',0);
+		$pdf->Cell($MyRow->EvMatchMode ? 2/5*$TotalW : $TotalW, $pdf->ScoreCellHeight, $MyRow->{$Prefix.$ScorePrefix.'Score'}, 1, 0, 'C', 0);
 		$pdf->ln();
 	}
 
@@ -486,8 +482,7 @@ function DrawScore(&$pdf, $MyRow, $Side='L') {
 	$pdf->SetFont($pdf->FontStd,'',9);
 	$pdf->SetXY($WhereX[$WhichScore]+$GoldW+$ShootOffW/2, $WhereY[$WhichScore]+$pdf->ScoreCellHeight*($MyRow->EvElimType ? 1 : 13)/8);
 	$pdf->Cell($ShootOffW/2,$pdf->ScoreCellHeight/2,'',1,0,'R',0);
-	if($closeToCenter)
-	{
+	if($closeToCenter) {
 		$tmpWidth=$pdf->GetLineWidth();
 		$pdf->SetLineWidth($tmpWidth*5);
 		$pdf->Line($WhereX[$WhichScore]+$GoldW+$ShootOffW/2-1,$WhereY[$WhichScore]+$pdf->ScoreCellHeight*($MyRow->EvElimType ? 1 : 13)/8-1,$WhereX[$WhichScore]+$GoldW+$ShootOffW+1,$WhereY[$WhichScore]+$pdf->ScoreCellHeight*(($MyRow->EvElimType ? 1 : 13)+4)/8+1);

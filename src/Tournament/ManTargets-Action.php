@@ -2,8 +2,9 @@
 require_once(dirname(dirname(__FILE__)) . '/config.php');
 require_once('Common/Fun_FormatText.inc.php');
 require_once('Partecipants/Fun_Targets.php');
+require_once('Common/Lib/ArrTargets.inc.php');
 
-$JSON=array('error'=>1);
+$JSON=array('error'=>1, 'warning'=>'', 'msg'=>'');
 
 if(!hasACL(AclCompetition, AclReadWrite) or !CheckTourSession() or empty($_REQUEST['act'])) {
 	JsonOut($JSON);
@@ -98,27 +99,146 @@ switch($_REQUEST['act']) {
 		$rs=safe_w_sql($insert);
 		break;
 	case 'update':
-		if(IsBlocked(BIT_BLOCK_TOURDATA) or empty($_REQUEST['row']) or empty($_REQUEST['dist']) or empty($_REQUEST['target']) or (empty($_REQUEST['diameter']) and !in_array($_REQUEST['target'], $AllowedNullTargets))) {
+		if(IsBlocked(BIT_BLOCK_TOURDATA) or empty($_REQUEST['row'])) {
 			JsonOut($JSON);
 		}
 
 		$Row=intval($_REQUEST['row']);
-		$Dist=intval($_REQUEST['dist']);
-		$Tgt=intval($_REQUEST['target']);
-		$Diam=intval($_REQUEST['diameter']);
-		if($Dist<1 or $Dist>8) {
-			JsonOut($JSON);
-		}
-		// bcheck the target is valid
-		$q=safe_r_sql("select TarId from Targets where TarId=$Tgt");
-		if(!safe_num_rows($q)) {
+		// check that the targetface we are about to update exists
+		$q=safe_r_sql("select TargetFaces.*, ToNumDist from TargetFaces inner join Tournament on ToId=TfTournament where TfTournament={$_SESSION['TourId']} and TfId=$Row");
+		$TOUR=safe_fetch($q);
+		if(safe_num_rows($q)!=1) {
 			JsonOut($JSON);
 		}
 
-		$SQL = "update TargetFaces set 
-			TfT{$Dist}=$Tgt, TfW{$Dist}=$Diam 
-			where TfTournament={$_SESSION['TourId']} AND TfId=$Row";
-		$rs=safe_w_sql($SQL);
+		$SQL=[];
+		$errors=[];
+		foreach($_REQUEST as $tmp=>$Value) {
+			$tmp=explode('-', $tmp);
+			$Field=$tmp[0];
+			$Dist=intval($tmp[1]??0);
+			switch($Field) {
+				case 'act':
+				case 'row':
+					// intercepts the unused requests
+					break;
+				case 'name':
+					if(empty($Value)) {
+						$errors[]=get_text('NameNotEmpty', 'Errors');
+					}
+					$SQL[]="TfName=".StrSafe_DB($Value);
+					break;
+				case 'filter':
+					if(!$Value and empty($TOUR->TfRegExp) and empty($_REQUEST['regexp'])) {
+						$errors[]='<div>'.get_text('FilterNotEmpty', 'Errors').'</div>'.nl2br(get_text('SqlJolly', 'Errors'));
+						if($Advanced) {
+							$errors[]='<div>'.get_text('RegExp', 'Errors', '<a href="https://dev.mysql.com/doc/refman/en/regexp.html">Mysql Regular Expressions</a>').'</div>';
+						}
+					}
+					$SQL[]="TfClasses=".StrSafe_DB($Value);
+					break;
+				case 'regexp':
+					if(!$Advanced) {
+						$errors[]=get_text('NoPrivilege', 'Errors');
+					}
+					if(!$Value and !$TOUR->TfClasses and empty($_REQUEST['filter'])) {
+						$errors[]='<div>'.get_text('FilterNotEmpty', 'Errors').'</div>'.nl2br(get_text('SqlJolly', 'Errors'));
+						if($Advanced) {
+							$errors[].='<div>'.get_text('RegExp', 'Errors', '<a href="https://dev.mysql.com/doc/refman/en/regexp.html">Mysql Regular Expressions</a>').'</div>';
+						}
+					}
+					$SQL[]="TfRegExp=".StrSafe_DB($Value);
+					break;
+				case 'target':
+					$Value=intval($Value);
+					// check the target type exists and distance is in the range
+					$q=safe_r_sql("select * from Targets where TarId=$Value");
+					if(safe_num_rows($q)!=1 or $Dist<1 or $Dist>$TOUR->ToNumDist) {
+						$errors[]=get_text('IllegalTarget', 'Errors');
+					}
+					$SQL[]="TfT{$Dist}=$Value";
+					if(!in_array($Value, $AllowedNullTargets) and !$TOUR->{'TfW'.$Dist}) {
+						$JSON['warning']='[name="diameter-'.$Dist.'"]';
+					}
+					break;
+				case 'diameter':
+					$Value=intval($Value);
+					// check distance is in the range
+					if($Dist<1 or $Dist>$TOUR->ToNumDist) {
+						$errors[]=get_text('DistanceOutRange', 'Errors');
+					}
+					if(!$Value and !in_array($TOUR->{'TfT'.$Dist}, $AllowedNullTargets)) {
+						$errors[]=get_text('DiameterMandatory', 'Errors');
+					}
+					$SQL[]="TfW{$Dist}=$Value";
+					break;
+				case 'default':
+					$Value=intval($Value)?1:0;
+					$SQL[]="TfDefault=$Value";
+					break;
+				case 'golds':
+					$SQL[]="TfGolds=".StrSafe_DB($Value);
+					break;
+				case 'xnine':
+					$SQL[]="TfXNine=".StrSafe_DB($Value);
+					break;
+				case 'goldschars':
+					// defaults to the first target defined!
+					$Value=strtoupper(str_replace(' ','',$Value));
+					if($Dist) {
+						$Chars=getLettersFromPrintList($Value, $TOUR->{'TfT'.$Dist});
+						if(implode(',', DecodeFromString($Chars, false, true))!=$Value) {
+							$errors[]=get_text('IllegalTargetChars','Errors');
+						}
+						$SQL[]="TfGoldsChars{$Dist}=".StrSafe_DB($Chars);
+					} else {
+						$Chars=[];
+						for($i=1;$i<=8;$i++) {
+							if(!$TOUR->{'TfT'.$i}) {
+								continue;
+							}
+							$Chars=array_unique($Chars+preg_split('//', getLettersFromPrintList($Value, $TOUR->{'TfT'.$i}), -1, PREG_SPLIT_NO_EMPTY));
+						}
+						$Chars=implode('', $Chars);
+						if(implode(',', DecodeFromString($Chars, false, true))!=$Value) {
+							$errors[]=get_text('IllegalTargetChars','Errors');
+						}
+						$SQL[]="TfGoldsChars=".StrSafe_DB($Chars);
+					}
+					break;
+				case 'xninechars':
+					// defaults to the first target defined!
+					$Value=strtoupper(str_replace(' ','',$Value));
+					if($Dist) {
+						$Chars=getLettersFromPrintList($Value, $TOUR->{'TfT'.$Dist});
+						if(implode(',', DecodeFromString($Chars, false, true))!=$Value) {
+							$errors[]=get_text('IllegalTargetChars','Errors');
+						}
+						$SQL[]="TfXNineChars{$Dist}=".StrSafe_DB($Chars);
+					} else {
+						$Chars=[];
+						for($i=1;$i<=8;$i++) {
+							if(!$TOUR->{'TfT'.$i}) {
+								continue;
+							}
+							$Chars=array_unique($Chars+preg_split('//', getLettersFromPrintList($Value, $TOUR->{'TfT'.$i}), -1, PREG_SPLIT_NO_EMPTY));
+						}
+						$Chars=implode('', $Chars);
+						if(implode(',', DecodeFromString($Chars, false, true))!=$Value) {
+							$errors[]=get_text('IllegalTargetChars','Errors');
+						}
+						$SQL[]="TfXNineChars=".StrSafe_DB($Chars);
+					}
+					break;
+				default:
+					JsonOut($JSON);
+			}
+		}
+		if($errors) {
+			$JSON['msg']='<div>'.implode('</div><div>', array_unique($errors)).'</div>';
+			JsonOut($JSON);
+		}
+		safe_w_sql("update TargetFaces set ".implode(',', $SQL)." where TfTournament={$_SESSION['TourId']} and TFId=$Row");
 		break;
 	case 'delete':
 		if(empty($_REQUEST['row'])) {
@@ -133,7 +253,8 @@ switch($_REQUEST['act']) {
 
 $JSON['error']=0;
 $JSON['categories']='';
-$JSON['table']='';
+// $JSON['table']='';
+$JSON['rows']=[];
 
 
 $numDist=0;
@@ -155,7 +276,7 @@ while($r=safe_fetch($q)) {
     $SelTargets.='<option value="'.$r->TarId.'">'.get_text($r->TarDescr).'</option>';
 }
 
-$select = "SELECT ToType,ToNumDist AS TtNumDist
+$select = "SELECT ToType,ToNumDist AS TtNumDist, ToGolds, ToXNine, ToGoldsChars, ToXNineChars
     FROM Tournament
     WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " ";
 $rs=safe_r_sql($select);
@@ -187,19 +308,45 @@ foreach($AvDiv as $Div=>$Cl) {
 if ($rsDist) {
     $k=0;
     while ($myRow=safe_fetch($rsDist)) {
-		$JSON['table'].= '<tr ref="'.$myRow->TfId.'">';
-        $JSON['table'].= '<td>'.print_targets($myRow->TfId).'</td>';
-        $JSON['table'].= '<td class="Center">'.get_text($myRow->TfName,'Tournament','',true).'</td>';
-        $JSON['table'].= '<td class="Center" style="width:20%;">'.$myRow->TfClasses.'</td>';
-        $JSON['table'].= '<td class="Center" style="width:20%;">'.$myRow->TfRegExp.'</td>';
-        for ($i=1;$i<=$numDist;++$i) {
-            $JSON['table'].= '<td class="Center" ref="'.$i.'">
-				<select onchange="updateTarget(this)" name="target">'.preg_replace('/(value="'.($myRow->{'TfT' . $i} ? $myRow->{'TfT' . $i} : '').'")/','$1 selected="selected"',$SelTargets).'</select>
-				<br/>ø (cm) <input name="diameter" value="'.($myRow->{'TfW' . $i}) . '" onchange="updateTarget(this)" size="3" maxlength="3">';
-        }
-        $JSON['table'].= '<td class="Center">'.($myRow->TfDefault?get_text('Yes'):'').'</td>';
-        $JSON['table'].= '<td class="Center"><i class="fa fa-2x fa-trash-o text-danger" onclick="deleteTarget(this)"></i></td>';
-        $JSON['table'].= '</tr>';
+		$line=[
+			'id'=>$myRow->TfId,
+			'categories'=>print_targets($myRow->TfId),
+			'name'=>get_text($myRow->TfName,'Tournament','',true),
+			'filter'=>$myRow->TfClasses,
+			'targets'=>[],
+			'default'=>$myRow->TfDefault,
+			'golds'=>$myRow->TfGolds,
+			'xnine'=>$myRow->TfXNine,
+			'goldschars'=>implode(',', array_unique(DecodeFromString($myRow->TfGoldsChars, false, true))),
+			'xninechars'=>implode(',', array_unique(DecodeFromString($myRow->TfXNineChars, false, true))),
+		];
+		if($Advanced) {
+			$line['regexp']=$myRow->TfRegExp;
+		}
+	    for ($i=1;$i<=$numDist;++$i) {
+			$line['targets'][]=[
+				'type'=>$myRow->{'TfT' . $i},
+				'diam'=>$myRow->{'TfW' . $i},
+				'warning'=>(in_array($myRow->{'TfT' . $i}, $AllowedNullTargets) or $myRow->{'TfW' . $i}) ? '' : 'alert-warning',
+				'goldschars'=>implode(',', array_unique(DecodeFromString($myRow->{'TfGoldsChars'.$i}, false, true))),
+				'xninechars'=>implode(',', array_unique(DecodeFromString($myRow->{'TfXNineChars'.$i}, false, true))),
+			];
+	    }
+		$JSON['rows'][]=$line;
+
+		// $JSON['table'].= '<tr ref="'.$myRow->TfId.'">';
+        // $JSON['table'].= '<td>'.print_targets($myRow->TfId).'</td>';
+        // $JSON['table'].= '<td class="Center">'.get_text($myRow->TfName,'Tournament','',true).'</td>';
+        // $JSON['table'].= '<td class="Center" style="width:20%;">'.$myRow->TfClasses.'</td>';
+        // $JSON['table'].= '<td class="Center" style="width:20%;">'.$myRow->TfRegExp.'</td>';
+        // for ($i=1;$i<=$numDist;++$i) {
+        //     $JSON['table'].= '<td class="Center" ref="'.$i.'">
+		// 		<select onchange="updateTarget(this)" name="target">'.preg_replace('/(value="'.($myRow->{'TfT' . $i} ? $myRow->{'TfT' . $i} : '').'")/','$1 selected="selected"',$SelTargets).'</select>
+		// 		<br/>ø (cm) <input name="diameter" value="'.($myRow->{'TfW' . $i}) . '" onchange="updateTarget(this)" size="3" maxlength="3">';
+        // }
+        // $JSON['table'].= '<td class="Center">'.($myRow->TfDefault?get_text('Yes'):'').'</td>';
+        // $JSON['table'].= '<td class="Center"><i class="far fa-2x fa-trash-can text-danger" onclick="deleteTarget(this)"></i></td>';
+        // $JSON['table'].= '</tr>';
         ++$k;
     }
 }

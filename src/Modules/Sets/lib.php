@@ -128,12 +128,12 @@ function CreateSubClass($TourId, $Order, $Id, $Description) {
 		);
 }
 
-function CreateDistanceNew($TourId, $Type, $Classes, $Distances=array()) {
+function CreateDistanceNew($TourId, $Type, $CategoryFilter, $Distances=array()) {
 	$SQL='';
 	foreach($Distances as $k => $Distance) {
 		$SQL.=", Td".($k+1)."=".StrSafe_DB($Distance[0]).", TdDist".($k+1)."=".intval($Distance[1]);
 	}
-	safe_w_sql("INSERT INTO TournamentDistances set TdTournament=$TourId, TdType=$Type, TdClasses=".StrSafe_DB($Classes) . $SQL);
+	safe_w_sql("INSERT INTO TournamentDistances set TdTournament=$TourId, TdType=$Type, TdClasses=".StrSafe_DB($CategoryFilter) . $SQL);
 }
 
 function CreateEvent($TourId, $Order, $Team, $MixTeam, $FirstPhase, $TargetType, $ElimEnds, $ElimArrows, $ElimSO, $FinEnds, $FinArrows, $FinSO, $Code, $Description, $SetMode=0, $MatchArrows=0, $AthTarget=0, $ElimRound1=array(), $ElimRound2=array(), $RecCategory='', $WaCategory='', $tgtSize=0, $shootingDist=0, $parentEvent='', $MultipleTeam=0, $Selected=0, $EvWinnerFinalRank=1, $CreationMode=0, $MultipleTeamNo=0, $PartialTeam=0) {
@@ -337,6 +337,20 @@ function CreateTargetFace($TourId, $Id, $Name, $Classes, $Default, $T1, $W1, $T2
 		. ", TfT8=$T8"
 		. ", TfW8=$W8"
 		);
+}
+
+function TargetFaceGoldsXnines($TourId, $Id, $Golds='', $Xnine='', $GoldsChars='', $XnineChars='', $gDistChars = array('','','','','','','',''), $xDistChars = array('','','','','','','','')) {
+	$Sql = "UPDATE TargetFaces SET TfGolds='{$Golds}', TfXNine='{$Xnine}', TfGoldsChars='{$GoldsChars}', TfXNineChars='{$XnineChars}'";
+	for($i=1; $i<=8; $i++) {
+		if(array_key_exists($i-1,$gDistChars)) {
+			$Sql .= ", TfGoldsChars{$i}='".$gDistChars[$i-1]."'";
+		}
+		if(array_key_exists($i-1,$xDistChars)) {
+			$Sql .= ", TfXNineChars{$i}='".$xDistChars[$i-1]."'";
+		}
+	}
+	$Sql .= " WHERE TfTournament={$TourId} AND TfId={$Id}";
+	safe_w_sql($Sql);
 }
 
 function CreateDistanceInformation($TourId, $Distances, $Targets=0, $Athletes=4, $Session=1, $SesName='') {

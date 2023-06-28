@@ -27,7 +27,7 @@ switch($_REQUEST['act']) {
                 // we have a situation file...
                 if(!$data->finished) {
                     // do nothing and halts
-                    $JSON['msg']=get_text('UpdateInProgress', 'Install');
+                    $JSON['msg']=get_text('UpdateInProgress', 'Install').' (since '.$data->start.')';
                     JsonOut($JSON);
                 }
             }
@@ -47,13 +47,14 @@ switch($_REQUEST['act']) {
         JsonOut($JSON);
         break;
     case 'getInfo':
+        $JSON['msg']='An error has occurred!';
         if(file_exists($file)) {
+            $JSON['msg']='File exists but not readable!';
             if($f=file_get_contents($file) and $data=@json_decode($f,true)) {
                 // we have a situation file...
                 JsonOut($data);
             }
         }
-        $JSON['msg']='An error has occurred!';
         JsonOut($JSON);
         break;
     case 'doUpdate':

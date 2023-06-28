@@ -1,7 +1,7 @@
 /*
 													- Fun_AJAX_ManStatus.js -
 	Contiene le funzioni ajax che riguardano la pagina ManStatus.php
-*/ 		
+*/
 
 /*
 	- UpdateStatus(Field)
@@ -10,7 +10,7 @@
 function UpdateStatus(Field)
 {
 	try
-	{	
+	{
 		if (!document.getElementById('chk_BlockAutoSave').checked)
 		{
 			if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
@@ -18,7 +18,6 @@ function UpdateStatus(Field)
 				var FieldName=encodeURIComponent(Field);
 				var FieldValue=encodeURIComponent(document.getElementById(Field).value);
 				XMLHttp.open("POST","UpdateStatus.php?" + FieldName + "=" + FieldValue,true);
-				//document.getElementById('idOutput').innerHTML="UpdateStatus.php?" + FieldName + "=" + FieldValue;
 				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 				XMLHttp.onreadystatechange=UpdateStatus_StateChange;
 				XMLHttp.send(null);
@@ -27,7 +26,6 @@ function UpdateStatus(Field)
 	}
 	catch (e)
 	{
-		//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 	}
 }
 
@@ -45,12 +43,10 @@ function UpdateStatus_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -62,21 +58,21 @@ function UpdateStatus_Response()
 // intercetto gli errori di IE e Opera
 	if (!XMLResp || !XMLResp.documentElement)
 		throw(XMLResp.responseText);
-	
+
 // Intercetto gli errori di Firefox
 	var XMLRoot;
 	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
 		throw("");
-	
+
 	XMLRoot = XMLResp.documentElement;
-	
+
 	var Error = XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
 	//alert(Error);
 	if (Error==0)
 	{
 		var Id = XMLRoot.getElementsByTagName('id').item(0).firstChild.data;
 		var Status = XMLRoot.getElementsByTagName('new_status').item(0).firstChild.data;;
-		
+
 		switch(Status)
 		{
 			case '0':

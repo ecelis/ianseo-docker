@@ -115,7 +115,7 @@ $lang['FunctionL']='Sintassi funzione estesa (copia-incolla)';
 $lang['FunctionS']='Sintassi funzione standard (copia-incolla)';
 $lang['InstallNewLanguage']='Installa nuova lingua';
 $lang['Lang']='Gestione lingua: lingua «$a[0]» - modulo «$a[1]»';
-$lang['Languages']='Linguaggi disponibili';
+$lang['Languages']='Lingue disponibili';
 $lang['Module']='Modulo';
 $lang['ModulesFound']='Trovati i seguenti risultati per: $a';
 $lang['NoNewLanguage']='Nessuna nuova lingua disponibile...<br/>Se la tua lingua manca, e <b>TU</b> ti offri volontario/a per essere il traduttore ufficiale nella tua lingua,<br/>manda pure una mail a ianseo a <a href="mailto:info@ianseo.net">info@ianseo.net</a>.<br/>Riceverai le istruzioni per far parte del gruppo di traduzione (vedi anche i <a href="../credits.php">Crediti</a>).';

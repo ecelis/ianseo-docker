@@ -6,8 +6,7 @@ require_once('Common/Fun_Sessions.inc.php');
 require_once('Common/Lib/ScorecardsLib.php');
 checkACL(AclQualification, AclReadOnly);
 
-// switch to decide which scorecard type to print
-$_REQUEST['TourField3D']=$_SESSION['TourField3D'];
+// switch to decide which scorecard type to print $_REQUEST['TourField3D']=$_SESSION['TourField3D'];
 
 $Session=intval($_REQUEST['x_Session']);
 

@@ -45,7 +45,8 @@ function DiUpdate(obj) {
 				obj.style.color='green';
 			} else {
 				$(obj).closest('tr').find('input').each(function() {
-					var FldName=this.name.substring(7, this.name.indexOf(']', 7)).toLowerCase();
+					let tmp=this.name.split(/[\[\]]+/);
+					var FldName=(tmp.length>2 ? tmp[2].toLowerCase() : '');
 					if(FldName=='') return;
 					var Data = data[FldName];
 					if(Data && Data!=this.value) {
@@ -116,14 +117,12 @@ function DiDelete(obj) {
 						}
 
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
 
 				};
 				XMLHttp.send();
 			}
 		} catch (e) {
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -174,14 +173,12 @@ function DiInsert(obj) {
 						}
 
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
 
 				};
 				XMLHttp.send();
 			}
 		} catch (e) {
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -266,14 +263,12 @@ function DiDelSubRow(obj, warmTime) {
 						}
 
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
 
 				};
 				XMLHttp.send();
 			}
 		} catch (e) {
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }

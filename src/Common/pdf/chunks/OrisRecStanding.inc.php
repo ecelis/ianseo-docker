@@ -9,8 +9,8 @@ if($PdfData->DocVersion) {
 	$Version=trim('Vers. '.$PdfData->DocVersion . " ($PdfData->DocVersionDate) $PdfData->DocVersionNotes");
 }
 $pdf->setComment($Version);
-$pdf->AddPage();
 $pdf->setOrisCode($PdfData->Code, $PdfData->Description);
+$pdf->AddPage();
 $pdf->Bookmark($PdfData->IndexName, 0);
 
 $ONLINE=isset($PdfData->HTML);
@@ -40,7 +40,11 @@ if(empty($PdfData->Data['Items'])) {
 					if($PrintSection and count($MyRow->RtRecExtra)) {
 	                    $pdf->SamePage($MinRows+6, 3.5, $pdf->lastY);
 					}
-					$pdf->printSectionTitle($PdfData->SubSections[$Team][$RecType].($PrintSection ? '' : ' ('.get_text('Continue').')').'§', $pdf->GetY()+10);
+					if($PrintSection) {
+						$pdf->printSectionTitle($PdfData->SubSections[$Team][$RecType].'§', $pdf->GetY() + 10);
+					} else {
+						$pdf->printSectionTitleWContinue($PdfData->SubSections[$Team][$RecType].'§', $pdf->GetY()+10);
+					}
 					$pdf->ln();
 					$pdf->SetDataHeader($PdfData->Header, $PdfData->HeaderWidth);
 					$pdf->PrintHeader($pdf->GetX(), $pdf->GetY()+1);

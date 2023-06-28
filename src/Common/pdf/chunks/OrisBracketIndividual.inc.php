@@ -53,6 +53,10 @@ foreach($rankData['sections'] as $Event => $section) {
 			$cols=ceil(log($section['meta']['firstPhase'], 2))+1;
 			$tmpTitle=$PhaseTitles;
 			if($section['meta']['firstPhase']==32) $tmpTitle[1]="1/32\nElimin. Round§";
+			if($section['meta']['firstPhase']==64) {
+				$tmpTitle[0]="1/64\nElimin. Round§";
+				$tmpTitle[1]="1/32\nElimin. Round§";
+			}
 			if(empty($PdfData->Events[$Event]->Pages[1]))
 				$PdfData->Events[$Event]->Pages[1] = new stdClass();
 			$PdfData->Events[$Event]->Pages[1]->Header = array_merge($titArray, array_slice($tmpTitle, -1*$cols, -2));
@@ -115,6 +119,7 @@ foreach($rankData['sections'] as $Event => $section) {
 			$Obj1->GrPosition = $item['qualRank'];
 			$Obj1->Score = ($section['meta']['matchMode'] ? $item['setScore'] : $item['score']);
 			$Obj1->ScoreDetails = '';
+            $Obj1->ScoreNotes = '';
 			$Obj1->ScoreMatch = $item['score'];
 			$Obj1->ScoreCell = 6;
 			//DOC $Obj1->Score = ($item['status']==1 ? 'DSQ-':'') . ($section['meta']['matchMode'] ? $item['setScore'] : $item['score']);
@@ -153,6 +158,7 @@ foreach($rankData['sections'] as $Event => $section) {
 			$Obj2->GrPosition = $item['oppQualRank'];
 			$Obj2->Score = ($section['meta']['matchMode'] ? $item['oppSetScore'] : $item['oppScore']);
 			$Obj2->ScoreDetails = '';
+            $Obj2->ScoreNotes = '';
 			$Obj2->ScoreCell = 6;
 			$Obj2->ScoreMatch = $item['oppScore'];
 			//DOC $Obj2->Score = ($item['oppStatus']==1 ? 'DSQ-':'') . ($section['meta']['matchMode'] ? $item['oppSetScore'] : $item['oppScore']);
@@ -219,22 +225,22 @@ foreach($rankData['sections'] as $Event => $section) {
 			}
 
 			if($tmpSetPoint1) {
-				$Obj1->ScoreDetails .= "($tmpSetPoint1)";
-				$Obj2->ScoreDetails .= "($tmpSetPoint2)";
+				$Obj1->ScoreDetails .= " ($tmpSetPoint1)";
+				$Obj2->ScoreDetails .= " ($tmpSetPoint2)";
 			}
 
 			// Has an IRM
 			if($item['irm']) {
-				$Obj1->ScoreDetails.=' '.$item['irmText'];
+				$Obj1->ScoreNotes.=' '.$item['irmText'];
 			}
 			if($item['oppIrm']) {
-				$Obj2->ScoreDetails.=' '.$item['oppIrmText'];
+				$Obj2->ScoreNotes.=' '.$item['oppIrmText'];
 			}
 
 			if($item['record']) {
 				$Obj1->ScoreDetails.=' '.$item['record'];
 			} elseif($item['notes']) {
-				$Obj1->ScoreDetails.=' '.$item['notes'];
+				$Obj1->ScoreNotes.=' '.$item['notes'];
 			} elseif($item['tie']==2) {
 				$Obj1->Score='';
 			} elseif($RealScore1==0 and $RealScore2==0) {
@@ -248,7 +254,7 @@ foreach($rankData['sections'] as $Event => $section) {
 			if($item['oppRecord']) {
 				$Obj2->ScoreDetails.=' '.$item['oppRecord'];
 			} elseif($item['oppNotes']) {
-				$Obj2->ScoreDetails.=' '.$item['oppNotes'];
+				$Obj2->ScoreNotes.=' '.$item['oppNotes'];
 			} elseif($item['oppTie']==2) {
 				$Obj2->Score='';
 			} elseif($RealScore1==0 and $RealScore2==0) {
@@ -259,8 +265,10 @@ foreach($rankData['sections'] as $Event => $section) {
 				}
 			}
 
-			$Obj1->ScoreDetails=trim($Obj1->ScoreDetails);
-			$Obj2->ScoreDetails=trim($Obj2->ScoreDetails);
+			$Obj1->ScoreDetails=rtrim($Obj1->ScoreDetails);
+			$Obj2->ScoreDetails=rtrim($Obj2->ScoreDetails);
+            $Obj1->ScoreNotes=rtrim($Obj1->ScoreNotes);
+            $Obj2->ScoreNotes=rtrim($Obj2->ScoreNotes);
 
 			$PdfData->Events[$Event]->FirstToPrint = ($PdfData->Events[$Event]->FirstToPrint or ($Obj1->FinMatchNo<=8 and ($Obj2->FirstName or $Obj1->FirstName)));
 			$PdfData->Events[$Event]->OtherToPrint = ($PdfData->Events[$Event]->OtherToPrint or ($Obj1->FinMatchNo>8 and ($Obj2->FirstName or $Obj1->FirstName)));
@@ -364,8 +372,8 @@ foreach($PdfData->Events as $Event => $Pages) {
 			$pdf->setComment('');
 		}
 
-		$pdf->AddPage();
 		$pdf->setOrisCode($Pages->Pages[0]->Code, $PdfData->Description);
+		$pdf->AddPage();
 		if($First and (empty($pdf->CompleteBookTitle) or $pdf->CompleteBookTitle!=$PdfData->IndexName)) {
 			$pdf->Bookmark($PdfData->IndexName, 0);
 			$pdf->CompleteBookTitle=$PdfData->IndexName;
@@ -416,9 +424,9 @@ foreach($PdfData->Events as $Event => $Pages) {
 			} else {
 				$pdf->setComment('');
 			}
+			$pdf->setOrisCode($Pages->Pages[$pag]->Code, $PdfData->Description);
 			$pdf->AddPage();
 // 			$pdf->Bookmark($PdfData->Description, 1);
-			$pdf->setOrisCode($Pages->Pages[$pag]->Code, $PdfData->Description);
 
 			$pdf->CellHSp = $FreePageWidth/(ceil(log($Pages->FirstPhase,2))-1);
 			$TopY=$pdf->lastY;

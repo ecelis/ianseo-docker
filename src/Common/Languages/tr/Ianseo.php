@@ -1,6 +1,6 @@
 <?php
 $lang['Category']='Kategori';
-$lang['Cert-Instructor']='Eğitici';
+$lang['Cert-Instructor']='Eğitmen';
 $lang['Cert-Level1']='Tanıtım Kursu';
 $lang['Cert-Level2']='Temel Kurs';
 $lang['Cert-Level3']='İleri Düzey Kurs';

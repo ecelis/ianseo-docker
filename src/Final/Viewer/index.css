@@ -82,7 +82,7 @@ body {padding:0 !important;}
 }
 
 .card {
-    height:100vh;
+    height:calc(100vh - calc(100vh - 100%));
 }
 
 .btnViewMenu {

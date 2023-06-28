@@ -337,6 +337,7 @@ if($archers) {
 		echo '<th>'.get_text('Total').'</th>';
 		echo '<th>'.$TOUR->ToGolds.'</th>';
 		echo '<th>'.$TOUR->ToXNine.'</th>';
+        echo '<th>'.get_text('Arrows','Tournament').'</th>';
 		echo '<th colspan="4"></th>';
 		echo '</tr>';
 	foreach($archers as $archer) {
@@ -353,6 +354,7 @@ if($archers) {
 			echo '<td align="right" style="font-size:100%">'.$archer->tScore.'</td>';
 			echo '<td align="right" style="font-size:100%;padding:0 10px;">'.$archer->tGold.'</td>';
 			echo '<td align="right" style="font-size:100%;padding:0 10px;">'.$archer->tXnine.'</td>';
+            echo '<td align="right" style="padding:0 10px;'.((($archer->Hits OR $archer->expectedArrows) AND $archer->Hits != $archer->expectedArrows) ? 'background-color: red; color: white; font-size:125%;': 'font-size:75%;').'">'.$archer->Hits.'</td>';
 			echo '<td align="center" style="font-size:80%"><b><a href="'.go_get(array('B'=>$archer->EnBib.$_SESSION['BarCodeSeparator'].$archer->EnDivision.$_SESSION['BarCodeSeparator'].$archer->EnClass, 'C' => $archer->EnBib.$_SESSION['BarCodeSeparator'].$archer->EnDivision.$_SESSION['BarCodeSeparator'].$archer->EnClass)).'">CONFIRM</a></b></td>';
 			if($D) {
 				echo '<td align="center" style="font-size:80%"><b><a href="'.go_get(array('B'=>$archer->EnBib.$_SESSION['BarCodeSeparator'].$archer->EnDivision.$_SESSION['BarCodeSeparator'].$archer->EnClass, 'C'=> 'EDIT')).'">Edit arrows</a>
@@ -460,16 +462,22 @@ function getScore($dist, $barcode, $strict=false) {
 		}
 		if(empty($bib) or empty($div) or empty($cls)) return;
 	}
-	$SQL="select QuTargetNo, EnCode EnBib, EnId, EnName, upper(EnFirstname) Firstname, EnDivision, EnClass, QuScore tScore, QuGold tGold, QuXnine tXnine, " .
-		($dist ? "QuD{$dist}Score Score, QuD{$dist}Gold Gold, QuD{$dist}Xnine Xnine" : "QuScore Score, QuGold Gold, QuXnine Xnine") . "
-		from Qualifications inner join Entries on EnId=QuId and EnTournament={$_SESSION['TourId']} where $filter
+	$SQL="select QuTargetNo, EnCode EnBib, EnId, EnName, upper(EnFirstname) Firstname, EnDivision, EnClass, QuScore tScore, QuGold tGold, QuXnine tXnine, IFNULL(DiEnds*DiArrows,0) as expectedArrows, " .
+		($dist ? "QuD{$dist}Score Score, QuD{$dist}Gold Gold, QuD{$dist}Xnine Xnine, QuD{$dist}Hits Hits" : "QuScore Score, QuGold Gold, QuXnine Xnine, QuHits Hits") . "
+		from Qualifications 
+		inner join Entries on EnId=QuId and EnTournament={$_SESSION['TourId']}
+		left join DistanceInformation on DiTournament=EnTournament AND DiSession=QuSession AND DiDistance={$dist} AND DiType='Q'
+		where $filter
 		order by QuTargetNo, EnDivision='$div' desc, EnClass='$cls' desc ";
 	$q=safe_r_sql($SQL, false, true);
 	while($r=safe_fetch($q)) $ret["$r->EnBib"]=$r;
 	if(!$ret) {
-		$SQL="select QuTargetNo, EnCode EnBib, EnId, EnName, upper(EnFirstname) Firstname, EnDivision, EnClass, QuScore tScore, QuGold tGold, QuXnine tXnine, " .
-				($dist ? "QuD{$dist}Score Score, QuD{$dist}Gold Gold, QuD{$dist}Xnine Xnine" : "QuScore Score, QuGold Gold, QuXnine Xnine") . "
-				from Qualifications inner join Entries on EnId=QuId and EnTournament={$_SESSION['TourId']} where $filter2
+		$SQL="select QuTargetNo, EnCode EnBib, EnId, EnName, upper(EnFirstname) Firstname, EnDivision, EnClass, QuScore tScore, QuGold tGold, QuXnine tXnine, IFNULL(DiEnds*DiArrows,0) as expectedArrows, " .
+				($dist ? "QuD{$dist}Score Score, QuD{$dist}Gold Gold, QuD{$dist}Xnine Xnine, QuD{$dist}Hits Hits" : "QuScore Score, QuGold Gold, QuXnine Xnine, QuHits Hits") . "
+				from Qualifications 
+				inner join Entries on EnId=QuId and EnTournament={$_SESSION['TourId']} 
+				left join DistanceInformation on DiTournament=EnTournament AND DiSession=QuSession AND DiDistance={$dist} AND DiType='Q'
+				where $filter2
 				order by QuTargetNo, EnDivision='$div' desc, EnClass='$cls' desc ";
 		$q=safe_r_sql($SQL, false, true);
 		while($r=safe_fetch($q)) $ret["$r->EnBib"]=$r;
@@ -481,25 +489,27 @@ function getScore($dist, $barcode, $strict=false) {
 		$EnBib=$bib;
 
 		if(!$strict and !empty($_GET['Targets'])) {
-			$filter="left(QuTargetNo,4)=(select left(QuTargetNo,4) from Qualifications inner join Entries on EnId=QuId and EnTournament={$_SESSION['TourId']} where $filter)";
+			$filter="left(QuTargetNo,4)=(select left(QuTargetNo,4) from Qualifications inner join Entries on EnId=QuId and EnTournament={$_SESSION['TourId']} inner JOIN ExtraData ON EdType='Z' and EdId=EnId where $filter)";
 		}
 		if(empty($bib) or empty($div) or empty($cls)) return;
 
-		$SQL="select QuTargetNo, EdExtra EnBib, EnId, EnName, upper(EnFirstname) Firstname, EnDivision, EnClass, QuScore tScore, QuGold tGold, QuXnine tXnine, " .
-			($dist ? "QuD{$dist}Score Score, QuD{$dist}Gold Gold, QuD{$dist}Xnine Xnine" : "QuScore Score, QuGold Gold, QuXnine Xnine") . "
+		$SQL="select QuTargetNo, EdExtra EnBib, EnId, EnName, upper(EnFirstname) Firstname, EnDivision, EnClass, QuScore tScore, QuGold tGold, QuXnine tXnine, IFNULL(DiEnds*DiArrows,0) as expectedArrows, " .
+			($dist ? "QuD{$dist}Score Score, QuD{$dist}Gold Gold, QuD{$dist}Xnine Xnine, QuD{$dist}Hits Hits" : "QuScore Score, QuGold Gold, QuXnine Xnine, QuHits Hits") . "
             from Qualifications 
             inner join Entries on EnId=QuId and EnTournament={$_SESSION['TourId']} 
             inner JOIN ExtraData ON EdType='Z' and EdId=EnId
+            left join DistanceInformation on DiTournament=EnTournament AND DiSession=QuSession AND DiDistance={$dist} AND DiType='Q'
             where $filter
             order by QuTargetNo, EnDivision='$div' desc, EnClass='$cls' desc ";
 		$q=safe_r_sql($SQL, false, true);
 		while($r=safe_fetch($q)) $ret["$r->EnBib"]=$r;
 		if(!$ret) {
-			$SQL="select QuTargetNo, EdExtra EnBib, EnId, EnName, upper(EnFirstname) Firstname, EnDivision, EnClass, QuScore tScore, QuGold tGold, QuXnine tXnine, " .
-				($dist ? "QuD{$dist}Score Score, QuD{$dist}Gold Gold, QuD{$dist}Xnine Xnine" : "QuScore Score, QuGold Gold, QuXnine Xnine") . "
+			$SQL="select QuTargetNo, EdExtra EnBib, EnId, EnName, upper(EnFirstname) Firstname, EnDivision, EnClass, QuScore tScore, QuGold tGold, QuXnine tXnine, IFNULL(DiEnds*DiArrows,0) as expectedArrows, " .
+				($dist ? "QuD{$dist}Score Score, QuD{$dist}Gold Gold, QuD{$dist}Xnine Xnine, QuD{$dist}Hits Hits" : "QuScore Score, QuGold Gold, QuXnine Xnine, QuHits Hits") . "
 				from Qualifications 
 				inner join Entries on EnId=QuId and EnTournament={$_SESSION['TourId']} 
                 inner JOIN ExtraData ON EdType='Z' and EdId=EnId
+                left join DistanceInformation on DiTournament=EnTournament AND DiSession=QuSession AND DiDistance={$dist} AND DiType='Q'
 				where $filter2
 				order by QuTargetNo, EnDivision='$div' desc, EnClass='$cls' desc ";
 			$q=safe_r_sql($SQL, false, true);

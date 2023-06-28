@@ -27,10 +27,11 @@ class OrisBracketPDF extends OrisPDF
 		$this->SetFont('','',8);
 		$this->SetXY(OrisPDF::leftMargin,$this->lastY);
 
-		$this->linethrough = $item->strike;
+		$this->linethrough = 0;
 		$this->Cell($this->DataSize[0], $this->CellVSp, is_null($item->FirstName) ? '' : $item->IndRank . '/',0,0,'R');
-		$this->Cell($this->DataSize[1],$this->CellVSp,$item->QuScore,0,0,'R');
-		$this->Cell($this->DataSize[2],$this->CellVSp, $item->QuNotes,0,0,'R');
+        $this->linethrough = $item->strike;
+		$this->Cell($this->DataSize[1],$this->CellVSp,($item->QuScore ?? ''),0,0,'R');
+		$this->Cell($this->DataSize[2],$this->CellVSp, ($item->QuNotes ?? ''),0,0,'R');
 
 		if(!is_null($item->FirstName)) {
 			if($item->Bold) {
@@ -51,7 +52,7 @@ class OrisBracketPDF extends OrisPDF
 		} else {
 			$this->Cell($this->DataSize[3],$this->CellVSp,'',0,0,'L');
 		}
-		$this->Cell($this->DataSize[4],$this->CellVSp,$item->Country,0,0,'L');
+		$this->Cell($this->DataSize[4],$this->CellVSp,($item->Country ?? ''),0,0,'L');
 
 		if($item->Bold) {
 			$this->SetFont('','b');
@@ -62,8 +63,19 @@ class OrisBracketPDF extends OrisPDF
 		$this->Cell($item->ScoreCell,$this->CellVSp, $item->Score, 0,0,'L');
 		$this->SetFont('','');
 		$this->linethrough = $item->strike;
+        $wDetails = $this->GetStringWidth($item->ScoreDetails);
+        $wNotes = $this->GetStringWidth($item->ScoreNotes);
+        if($wDetails AND $wNotes AND (($this->CellHSp - $item->ScoreCell - 1 - $wNotes) < $wDetails)) {
+            $wNotes = ($wNotes/($wNotes+$wDetails))*($this->CellHSp - $item->ScoreCell - 1);
+        }
 		$this->setCellPaddings(0,'',0,'');
-		$this->Cell($this->CellHSp-$item->ScoreCell-1,$this->CellVSp, $item->ScoreDetails, 0,0,'L');
+        if($wDetails OR !$wNotes) {
+            $this->Cell($this->CellHSp - $item->ScoreCell - 1 - $wNotes, $this->CellVSp, $item->ScoreDetails, 0, 0, 'L');
+        }
+        $this->linethrough = 0;
+        if($wNotes) {
+            $this->Cell($wNotes, $this->CellVSp, $item->ScoreNotes, 0, 0, 'L');
+        }
 		$this->setCellPaddings($m['L'],'',$m['R'],'');
 
 		$this->setX($this->getX()+1);
@@ -76,7 +88,7 @@ class OrisBracketPDF extends OrisPDF
 			$this->Line($this->getX(),$this->getY(),$this->getX(),$this->getY()+2*$this->CellVSp);
 			if($item->ScheduledDate != '' && $item->ScheduledTime != '') {
 				//debug_svela($item);
-				$ShowSchedule= ($item->FinTie==0 && $item->OppTie==0 && $item->Score==0 && $item->OppScore==0 && $item->FinRank==0 && $item->OppFinRank==0);
+				$ShowSchedule= ($item->FinTie==0 && $item->OppTie==0 && $item->Score=='' && $item->OppScore==0 && $item->FinRank==0 && $item->OppFinRank==0);
 				$this->SetFont('','',6);
 				$this->SetXY(OrisPDF::leftMargin+$this->DataSize[0]+$this->DataSize[1]+$this->DataSize[2]+$this->DataSize[3]+$this->DataSize[4],$this->getY()+0.4*$this->CellVSp);
 				$this->Cell($this->CellHSp,0.6*$this->CellVSp, ($ShowSchedule ? $item->ScheduledDate : ''), 0, 0, 'R', 0);
@@ -116,9 +128,18 @@ class OrisBracketPDF extends OrisPDF
 		$this->Cell($item->ScoreCell,$this->CellVSp,$item->Score,0,0,'L');
 		$this->SetFont('','');
 		$this->linethrough = $item->strike;
-		$this->setCellPaddings(0,'',0,'');
-		$this->Cell($this->CellHSp-$item->ScoreCell-1,$this->CellVSp,$item->ScoreDetails,0,0,'L');
-		$this->setCellPaddings($m['L'],'',$m['R'],'');
+        $wDetails = $this->GetStringWidth($item->ScoreDetails);
+        $wNotes = $this->GetStringWidth($item->ScoreNotes);
+        if($wNotes AND (($this->CellHSp - $item->ScoreCell - 1 - $wNotes)<$wDetails)) {
+            $wNotes = ($wNotes/($wNotes+$wDetails))*($this->CellHSp - $item->ScoreCell - 1);
+        }
+        $this->setCellPaddings(0,'',0,'');
+        $this->Cell($this->CellHSp - $item->ScoreCell - 1 - $wNotes, $this->CellVSp, $item->ScoreDetails, 0, 0, 'L');
+        $this->linethrough = 0;
+        if($wNotes) {
+            $this->Cell($wNotes, $this->CellVSp, $item->ScoreNotes, 0, 0, 'L');
+        }
+        $this->setCellPaddings($m['L'],'',$m['R'],'');
 		$this->setX($this->getX()+1);
 
 
@@ -272,10 +293,11 @@ class OrisBracketPDF extends OrisPDF
 		$this->SetFont('','', 8);
 		$this->SetXY(OrisPDF::leftMargin,$this->lastY);
 
-		$this->linethrough = $item->strike;
+        $this->linethrough = 0;
 		$this->Cell($this->DataSize[0],1.5*$this->CellVSp,$item->OppTie==2 || is_null($item->Country) ? '' : $item->TeRank . '/',0,0,'R');
-		$this->Cell($this->DataSize[1],1.5*$this->CellVSp, $item->TeScore,0,0,'R');
-		$this->Cell($this->DataSize[2],1.5*$this->CellVSp, $item->TeNotes,0,0,'R');
+        $this->linethrough = $item->strike;
+		$this->Cell($this->DataSize[1],1.5*$this->CellVSp, ($item->TeScore ?? ''),0,0,'R');
+		$this->Cell($this->DataSize[2],1.5*$this->CellVSp, ($item->TeNotes  ?? ''),0,0,'R');
 
 		if($item->Bold) {
 			$this->SetFont('','b');
@@ -294,7 +316,7 @@ class OrisBracketPDF extends OrisPDF
         } elseif(is_null($item->Country)) {
             $this->Cell($this->DataSize[3] + $this->DataSize[4], 1.5 * $this->CellVSp, '', 0, 0, 'L');
         } else {
-			$this->Cell($this->DataSize[3],1.5*$this->CellVSp, mb_convert_case($item->Country, MB_CASE_UPPER, "UTF-8"),0,0,'L');
+			$this->Cell($this->DataSize[3],1.5*$this->CellVSp, mb_convert_case(($item->Country  ?? ''), MB_CASE_UPPER, "UTF-8"),0,0,'L');
 			$this->Cell($this->DataSize[4],1.5*$this->CellVSp, $item->Team,0,0,'L');
 		}
 
@@ -304,9 +326,20 @@ class OrisBracketPDF extends OrisPDF
 		$this->Cell($item->ScoreCell,(1.5 + count($item->Componenti))*$this->CellVSp, $item->Score, 0,0,'L', '','',1,false,'T',$item->TfMatchNo % 2 ? 'B' : 'T');
 		$this->SetFont('','');
 		$this->linethrough = $item->strike;
+        $wDetails = $this->GetStringWidth($item->ScoreDetails);
+        $wNotes = $this->GetStringWidth($item->ScoreNotes);
+        if($wDetails AND $wNotes AND (($this->CellHSp - $item->ScoreCell - 1 - $wNotes) < $wDetails)) {
+            $wNotes = ($wNotes/($wNotes+$wDetails))*($this->CellHSp - $item->ScoreCell - 1);
+        }
 		$this->setCellPaddings(0,'',0,'');
-		$this->Cell($this->CellHSp-$item->ScoreCell-1,(1.5 + count($item->Componenti))*$this->CellVSp, $item->ScoreDetails, 0,0,'L', '','',1,false,'T',$item->TfMatchNo % 2 ? 'B' : 'T');
-		$this->setCellPaddings($m['L'],$m['T'],$m['R'],$m['B']);
+        if($wDetails OR !$wNotes) {
+            $this->Cell($this->CellHSp - $item->ScoreCell - 1 - $wNotes, (1.5 + count($item->Componenti)) * $this->CellVSp, $item->ScoreDetails, 0, 0, 'L', '', '', 1, false, 'T', $item->TfMatchNo % 2 ? 'B' : 'T');
+        }
+        $this->linethrough = 0;
+        if($wNotes) {
+            $this->Cell($wNotes, (1.5 + count($item->Componenti)) * $this->CellVSp, $item->ScoreNotes, 0, 0, 'L');
+        }
+        $this->setCellPaddings($m['L'],$m['T'],$m['R'],$m['B']);
 
 		$this->SetFont('','');
 		$this->linethrough = $item->strike;
@@ -329,13 +362,12 @@ class OrisBracketPDF extends OrisPDF
 			$this->Line($TmpX, $this->lastY,$TmpX+$this->DataSize[4]+$this->CellHSp, $this->lastY);
 			$this->Line($TmpX,$this->lastY+(3+2*count($item->Componenti))*$this->CellVSp,$TmpX+$this->DataSize[4]+$this->CellHSp,$this->lastY+(3+2*count($item->Componenti))*$this->CellVSp);
 			$this->Line($TmpX+$this->DataSize[4]+$this->CellHSp,$this->lastY,$TmpX+$this->DataSize[4]+$this->CellHSp,$this->lastY+(3+2*count($item->Componenti))*$this->CellVSp);
-			if($item->ScheduledDate != '' && $item->ScheduledTime != '')
-			{
+			if($item->ScheduledDate != '' && $item->ScheduledTime != '') {
 				$this->SetFont('','',6);
 				$this->SetXY(OrisPDF::leftMargin+$this->DataSize[0]+$this->DataSize[1]+$this->DataSize[2]+$this->DataSize[3]+$this->DataSize[4],$this->lastY+((3+2*count($item->Componenti))*$this->CellVSp)/2-$this->CellVSp);
-				$this->Cell($this->CellHSp,$this->CellVSp, (($item->TfTie==0 && $item->OppTie==0 && $item->Score==0 && $item->OppScore==0) ? $item->ScheduledDate : ''), 0, 0, 'R', 0);
+				$this->Cell($this->CellHSp,$this->CellVSp, (($item->TfTie==0 AND $item->OppTie==0 AND $item->Score=='' AND $item->OppScore==0) ? $item->ScheduledDate : ''), 0, 0, 'R', 0);
 				$this->SetXY(OrisPDF::leftMargin+$this->DataSize[0]+$this->DataSize[1]+$this->DataSize[2]+$this->DataSize[3]+$this->DataSize[4],$this->lastY+((3+2*count($item->Componenti))*$this->CellVSp)/2);
-				$this->Cell($this->CellHSp,$this->CellVSp, (($item->TfTie==0 && $item->OppTie==0 && $item->Score==0 && $item->OppScore==0) ? $item->ScheduledTime : ''), 0, 0, 'R', 0);
+				$this->Cell($this->CellHSp,$this->CellVSp, (($item->TfTie==0 AND $item->OppTie==0 AND $item->Score=='' AND $item->OppScore=='0') ? $item->ScheduledTime : ''), 0, 0, 'R', 0);
 				$this->SetFont('','','8');
 			}
 		}
@@ -387,8 +419,17 @@ class OrisBracketPDF extends OrisPDF
 		$this->Cell($item->ScoreCell, 1.5*$this->CellVSp, $item->Score, 0, 0, 'L', 0);		//No Tie
 		$this->SetFont('','');
 		$this->linethrough = $item->strike;
+        $wDetails = $this->GetStringWidth($item->ScoreDetails);
+        $wNotes = $this->GetStringWidth($item->ScoreNotes);
+        if($wNotes AND (($this->CellHSp - $item->ScoreCell - 1 - $wNotes)<$wDetails)) {
+            $wNotes = ($wNotes/($wNotes+$wDetails))*($this->CellHSp - $item->ScoreCell - 1);
+        }
 		$this->setCellPaddings(0,'',0,'');
-		$this->Cell($this->CellHSp-$item->ScoreCell-1, 1.5*$this->CellVSp, $item->ScoreDetails, 0, 0, 'L', 0);		//No Tie
+		$this->Cell($this->CellHSp - $item->ScoreCell - 1- $wNotes, 1.5*$this->CellVSp, $item->ScoreDetails, 0, 0, 'L', 0);		//No Tie
+        $this->linethrough = 0;
+        if($wNotes) {
+            $this->Cell($wNotes, $this->CellVSp, $item->ScoreNotes, 0, 0, 'L');
+        }
 		$this->setCellPaddings($m['L'],'',$m['R'],'');
 
 		$this->Line($StartX,$this->lastY,$StartX+$this->CellHSp,$this->lastY);
@@ -399,9 +440,9 @@ class OrisBracketPDF extends OrisPDF
 				if($item->ScheduledDate != '' && $item->ScheduledTime != '') {
 					$this->SetFont('','',6);
 					$this->SetXY($StartX,$this->lastY+($StartY * $this->CellVSp)/2-$this->CellVSp);
-					$this->Cell($this->CellHSp,$this->CellVSp, (($item->TfTie==0 && $item->OppTie==0 && $item->Score==0 && $item->OppScore==0) ? $item->ScheduledDate : ''), 0, 0, 'R', 0);
+					$this->Cell($this->CellHSp,$this->CellVSp, (($item->TfTie==0 && $item->OppTie==0 && $item->Score=='' && $item->OppScore==0) ? $item->ScheduledDate : ''), 0, 0, 'R', 0);
 					$this->SetXY($StartX,$this->lastY+($StartY * $this->CellVSp)/2);
-					$this->Cell($this->CellHSp,$this->CellVSp, (($item->TfTie==0 && $item->OppTie==0 && $item->Score==0 && $item->OppScore==0) ? $item->ScheduledTime : ''), 0, 0, 'R', 0);
+					$this->Cell($this->CellHSp,$this->CellVSp, (($item->TfTie==0 && $item->OppTie==0 && $item->Score=='' && $item->OppScore==0) ? $item->ScheduledTime : ''), 0, 0, 'R', 0);
 					$this->SetFont('','',8);
 				}
 			} else {
@@ -409,9 +450,9 @@ class OrisBracketPDF extends OrisPDF
 				if($item->ScheduledDate != '' && $item->ScheduledTime != '') {
 					$this->SetFont('','',6);
 					$this->SetXY($StartX,$this->lastY+(($PhaseCounter==3 ? 4.5 : (3.5+$NumComponenti)) *$this->CellVSp)/2-$this->CellVSp);
-					$this->Cell($this->CellHSp,$this->CellVSp, (($item->TfTie==0 && $item->OppTie==0 && $item->Score==0 && $item->OppScore==0) ? $item->ScheduledDate : ''), 0, 0, 'R', 0);
+					$this->Cell($this->CellHSp,$this->CellVSp, (($item->TfTie==0 && $item->OppTie==0 && $item->Score=='' && $item->OppScore==0) ? $item->ScheduledDate : ''), 0, 0, 'R', 0);
 					$this->SetXY($StartX,$this->lastY+(($PhaseCounter==3 ? 4.5 : (3.5+$NumComponenti)) *$this->CellVSp)/2);
-					$this->Cell($this->CellHSp,$this->CellVSp, (($item->TfTie==0 && $item->OppTie==0 && $item->Score==0 && $item->OppScore==0) ? $item->ScheduledTime : ''), 0, 0, 'R', 0);
+					$this->Cell($this->CellHSp,$this->CellVSp, (($item->TfTie==0 && $item->OppTie==0 && $item->Score=='' && $item->OppScore==0) ? $item->ScheduledTime : ''), 0, 0, 'R', 0);
 					$this->SetFont('','',8);
 				}
 			}

@@ -20,7 +20,7 @@ $query="SELECT UNIX_TIMESTAMP('".date('Y-m-d H:i:s')."') AS serverDate ";
 $rs=safe_r_sql($query);
 $row=safe_fetch($rs);
 $JSON['serverdate']=$row->serverDate;
-if($IskSequence=getModuleParameter('ISK', 'Sequence')) {
+if($IskSequence=getModuleParameter('ISK', 'Sequence') OR $IskSequence=getModuleParameter('ISK-NG', 'Sequence')) {
 	if(!isset($IskSequence['session'])) {
 		$IskSequence=current($IskSequence);
 	}

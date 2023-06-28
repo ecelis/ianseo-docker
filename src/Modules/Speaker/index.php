@@ -64,7 +64,7 @@ if(empty($CFG->IS)) {
 if($enableHHT) {
 	echo '<input type="checkbox" id="useHHT" checked="checked" onClick="GetSchedule();">'.get_text('FollowHHT','Tournament').'<br>';
 } else {
-	if($IskSequence=getModuleParameter('ISK', 'Sequence')) {
+	if($IskSequence=getModuleParameter('ISK', 'Sequence') OR $IskSequence=getModuleParameter('ISK-NG', 'Sequence')) {
 		echo '<input type="button" id="currentSession" onClick="GetSchedule(true);" value="'.get_text('GoToRunning','Tournament').'"><br>';
 	}
 }

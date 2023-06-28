@@ -54,7 +54,7 @@ $STEP=1;
 if(!empty($_REQUEST['step'])) $STEP=max(0,min(4,intval($_REQUEST['step'])));
 
 // prepara i dati da richiedere
-if(empty($CFG->W_HOST)) $CFG->W_HOST='localhost';
+if(empty($CFG->W_HOST)) $CFG->W_HOST='127.0.0.1';
 if(empty($CFG->R_HOST)) $CFG->R_HOST='';
 if(empty($CFG->W_USER)) $CFG->W_USER='ianseo';
 if(empty($CFG->R_USER)) $CFG->R_USER='';

@@ -79,7 +79,10 @@ function showAdvanced() {
 }
 
 function UpdateData(obj) {
-    $.getJSON('../UpdateRuleParam.php?'+obj.id+'&val='+$(obj).val(), function(data) {
+    let form={
+        val:$(obj).val(),
+    };
+    $.getJSON('../UpdateRuleParam.php?'+obj.id, form, function(data) {
         if (data.error!=0) {
             alert(data.msg);
         }

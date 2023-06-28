@@ -1,6 +1,7 @@
 <?php
 $lang['0_Phase']='Guld';
 $lang['12_Phase']='1/12-dels final';
+$lang['14_Phase']='14-del';
 $lang['16_Phase']='1/16-dels final';
 $lang['1_Phase']='Brons';
 $lang['24_Phase']='1/24-dels final';
@@ -9,6 +10,7 @@ $lang['32_Phase']='1/32-dels final';
 $lang['48_Phase']='1/48-dels final';
 $lang['4_Phase']='Kvartsfinal';
 $lang['64_Phase']='1/64-dels final';
+$lang['7_Phase']='7-del';
 $lang['8_Phase']='1/8-dels final';
 $lang['About']='Om';
 $lang['AfterEachArrow']='Pil för pil (standard)';
@@ -44,7 +46,7 @@ $lang['CantGetAuth']='Kunde inte nå IANSEO att auktorisera enheten. Försök ig
 $lang['CantGetComp']='Kunde inte hämta tävlingsinformationen. V.g. kontrollera tävlingskoden och försök igen.
 
 Felkod [__TEXT__]';
-$lang['CantGetDist']='Kunde inte hämta avståndsinformationen. V.g. försök igen.';
+$lang['CantGetDist']='Kunde inte hämta avståndsinformationen. Kontrollera skyttarnas status och försök igen.';
 $lang['CantGetDist2']='Kunde inte hämta avståndsinformationen. V.g. försök igen
 
 Felkod [__TEXT__]';
@@ -228,13 +230,13 @@ $lang['Score']='Total';
 $lang['Scorecard']='Scorekort';
 $lang['ScoredPoints']='Pilvärden';
 $lang['ScoreHelp']='Hjälp';
-$lang['ScoreHelpDesc']='Denna bild används för registrering av poäng. Information om aktuell rond/avstånd, tapettyp och deltagare visas också. Använd sifferknapparna för att ange pilvärden.';
 $lang['ScoringEntry']='Poängregistrering';
 $lang['SelDist']='V.g. välj avstånd och försök igen';
 $lang['SelTgtNum']='V.g. välj tavelnummer och försök igen';
 $lang['ServerInfo']='Serverinformation';
 $lang['ServerUrl']='Ianseo URL';
 $lang['Session']='Omgång';
+$lang['SettingForGroup']='Inställningar för grupp $a';
 $lang['Setup']='Inställningar';
 $lang['ShootOff']='SO';
 $lang['SrvrOffNotAvail']='Denna funktion är inte tillgänglig när IANSEO inte kan nås. Försök igen senare';

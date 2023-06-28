@@ -1,10 +1,4 @@
 <?php
-// @apache_setenv('no-gzip', 1);
-// @ini_set('zlib.output_compression', 0);
-// @ini_set('implicit_flush', 1);
-// for ($i = 0; $i < ob_get_level(); $i++) { ob_end_flush(); }
-// ob_implicit_flush(1);
-
 require_once(dirname(dirname(__FILE__)) . '/config.php');
 require_once('Common/Fun_FormatText.inc.php');
 require_once('Common/Fun_Various.inc.php');
@@ -568,9 +562,10 @@ function DoLookupFlags($u) {
 			}
 			if($imgtmp) {
 				$tmpnam=tempnam('/tmp', 'img');
-				$img=imagecreatefromstring($imgtmp);
-				imagejpeg($img, $tmpnam, 95);
-				$imJPG=file_get_contents($tmpnam);
+				if($img=imagecreatefromstring($imgtmp)) {
+                    imagejpeg($img, $tmpnam, 95);
+				    $imJPG=file_get_contents($tmpnam);
+				}
 			}
 		}
 		$imSVG=file_get_contents($u->LupFlagsPath."?{$Opt}svg=".$r->CoCode);

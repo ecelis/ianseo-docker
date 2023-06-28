@@ -230,8 +230,8 @@ if($Bonus=getModuleParameter('FFTA', 'D1Bonus') and !empty($Bonus[$Event])) {
 	$Now=date('Y-m-d H:i:s');
 	while($r=safe_fetch($q)) {
 		if($AllInOne or isset($Bonus[$Event][$r->TeRank])) {
-			$Bonus=($AllInOne ? 0 : $Bonus[$Event][$r->TeRank]);
-			safe_w_SQL("insert into TeamDavis set TeDaEvent='$Event', TeDaTeam='$r->CoCode', TeDaSubTeam=0, TeDaBonusPoints=".intval($Bonus).", TeDaDateTime='$Now', TeDaTournament={$_SESSION['TourId']}");
+			$BonusPoints=($AllInOne ? 0 : $Bonus[$Event][$r->TeRank]);
+			safe_w_SQL("insert into TeamDavis set TeDaEvent='$Event', TeDaTeam='$r->CoCode', TeDaSubTeam=0, TeDaBonusPoints=".intval($BonusPoints).", TeDaDateTime='$Now', TeDaTournament={$_SESSION['TourId']}");
 		}
 	}
 }

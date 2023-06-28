@@ -258,7 +258,7 @@ function UpdateLastSeen() {
 		WHERE IskDvDevice='{$DeviceId}'");
 }
 
-function getQualificationTotals($EnId, $dist=1, $end=1, $arr4End, $end4Dist, $G, $X9, $StartTarget=null) {
+function getQualificationTotals($EnId, $dist, $end, $arr4End, $end4Dist, $G, $X9, $StartTarget=null) {
 	global $CompId;
 	$res=array('curendscore'=>0,'curscore'=>0,'curscoreatend'=>0,'curgold'=>0,'curxnine'=>0,'score'=>0,'scoreatend'=>0,'gold'=>0,'xnine'=>0);
 	$SQL = "SELECT QuTargetNo, QuScore, QuGold, QuXnine, QuD{$dist}Score as dScore, QuD{$dist}Gold as dGold, QuD{$dist}Xnine as dXnine, QuD{$dist}Arrowstring as dArrowstring, (";
@@ -334,10 +334,13 @@ function importQualifications($EnId, $dist=1, $end=1) {
 	global $CompId;
 	$amended=array();
 	$SQL="SELECT QuId, EnDivision, EnClass, EnSubClass, EnCountry, EnCountry2, EnCountry3, IF(EnCountry2=0,EnCountry,EnCountry2) as TeamCode, EnIndClEvent, EnTeamClEvent, EnIndFEvent, (EnTeamFEvent+EnTeamMixEvent) as EnTeamFEvent,
-			QuTargetNo, QuD{$dist}Arrowstring as Arrowstring, IskDtArrowstring, IskDtEndNo, DIDistance, DIEnds, DIArrows, ToGoldsChars, ToXNineChars 
+			QuTargetNo, QuD{$dist}Arrowstring as Arrowstring, IskDtArrowstring, IskDtEndNo, DIDistance, DIEnds, DIArrows, 
+            IF(TfGoldsChars{$dist}='',IF(TfGoldsChars='',ToGoldsChars,TfGoldsChars),TfGoldsChars{$dist}) as GoldsChars, 
+            IF(TfXNineChars{$dist}='',IF(TfXNineChars='',ToXNineChars,TfXNineChars),TfXNineChars{$dist}) as XNineChars  
 		from Qualifications
 		INNER JOIN Entries ON QuId=EnId
 		INNER JOIN Tournament ON ToId=EnTournament
+        INNER JOIN TargetFaces on TfId=EnTargetFace and TfTournament=EnTournament
 		INNER JOIN DistanceInformation ON DITournament=EnTournament AND DISession=QuSession AND DIDistance=".StrSafe_DB($dist)." AND DIType='Q'
 		INNER JOIN IskData ON iskDtTournament=EnTournament AND IskDtMatchNo=0 AND IskDtEvent='' AND IskDtTeamInd=0 AND IskDtType='Q' AND IskDtTargetNo=QuTargetNo AND IskDtDistance={$dist} AND IskDtEndNo={$end}
 		WHERE EnTournament=$CompId and QuId={$EnId}";
@@ -352,7 +355,7 @@ function importQualifications($EnId, $dist=1, $end=1) {
 		$Score=0;
 		$Gold=0;
 		$XNine=0;
-		list($Score,$Gold,$XNine)=ValutaArrowStringGX($arrowString,$r->ToGoldsChars,$r->ToXNineChars);
+		list($Score,$Gold,$XNine)=ValutaArrowStringGX($arrowString,$r->GoldsChars,$r->XNineChars);
 
 		// Remove spaces from arrowstring and calc the hits using the actual # of arrows
 		$trimmedArrowString = preg_replace("/[^a-zA-Z0-9]+/", "", $arrowString);
@@ -419,7 +422,7 @@ function importQualifications($EnId, $dist=1, $end=1) {
 	}
 }
 
-function getMatchTotals($Event, $MatchNo, $IndTeam, $end=1, $arr4End, $end4Match, $arr4So) {
+function getMatchTotals($Event, $MatchNo, $IndTeam, $end, $arr4End, $end4Match, $arr4So) {
 	global $CompId;
 	$isSO = ($end>$end4Match);
 	$res=array('curendscore'=>0,'curscore'=>0,'curscoreatend'=>0,'curgold'=>0,'curxnine'=>0,'score'=>0,'scoreatend'=>0,'gold'=>0,'xnine'=>0);

@@ -51,7 +51,6 @@ function AddEventRule(Event)
 				}
 			}
 		} catch (e) {
- 			//document.getElementById('idOutput').innerHTML='Error: ' + e.toString();
 		}
 	}
 }
@@ -64,10 +63,8 @@ function AddEventRule_StateChange() {
 			try {
 				AddEventRule_Response();
 			} catch(e) {
-				//document.getElementById('idOutput').innerHTML='Error: ' + e.toString();
 			}
 		} else {
- 			//document.getElementById('idOutput').innerHTML='Error: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -433,7 +430,6 @@ function SetMixedTeam(Event)
 		}
 		catch (e)
 		{
- 			//document.getElementById('idOutput').innerHTML='Error: ' + e.toString();
 		}
 	}
 }
@@ -508,7 +504,6 @@ function SetTeamCreationMode(Event)
 		}
 		catch (e)
 		{
- 			//document.getElementById('idOutput').innerHTML='Error: ' + e.toString();
 		}
 	}
 }

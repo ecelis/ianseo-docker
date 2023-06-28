@@ -174,7 +174,6 @@ $lang['Scorecard']='Score briefje';
 $lang['ScorecardsManagement']='Management van de scorekaarten';
 $lang['ScoredPoints']='Gescoorde punten';
 $lang['ScoreHelp']='Help';
-$lang['ScoreHelpDesc']='In dit scherm kunnen de scores van de verschillende pijlen worden opgegeven. Informatie over de huidige afstand, doeltype en schutter wordt ook getoond. Geef de scores van de pijlen met de nummerieke toetsen.';
 $lang['ScoringEntry']='Opvoeren score';
 $lang['SelDist']='Kies de afstand en probeer opnieuw';
 $lang['SelTgtNum']='Kies het doelnummer en probeer opnieuw.';

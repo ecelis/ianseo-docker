@@ -465,3 +465,11 @@ require_once(dirname(__FILE__).'/lib-Field.php');
 
 require_once(dirname(__FILE__).'/lib-3D.php');
 
+/*
+
+Run Archery DEFINITIONS (Target Tournaments)
+
+*/
+
+require_once(dirname(__FILE__).'/lib-Run.php');
+

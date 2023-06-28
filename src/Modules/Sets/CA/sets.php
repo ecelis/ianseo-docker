@@ -5,6 +5,7 @@ $version='2014-08-05 08:13:00';
 $AllowedTypes=array(1,2,3,4,5,6,7,8,9,10,11,12,13,18);
 
 $SetType['CA']['descr']=get_text('Setup-CA', 'Install');
+$SetType['CA']['noc'] = 'CAN';
 $SetType['CA']['types']=array();
 $SetType['CA']['rules']=array();
 

@@ -95,14 +95,15 @@
 	echo '<input name="ScoreDraw" type="radio" value="TargetNo" onClick="manageDistances(true);">&nbsp;' . get_text('ScoreTargetNo','Tournament') . '<br>';
 	echo '<input name="ScoreDraw" type="radio" value="Draw" onClick="manageDistances(true);">&nbsp;' . get_text('ScoreDrawing') . '<br>';
 	echo '<input name="ScoreDraw" type="radio" value="FourScoresNFAA" onClick="manageDistances(true);">&nbsp;' . get_text('FourScoresNFAA','Tournament') . '<br>';
-	if($RowTour->TtElabTeam==0) {
-		echo '<input name="ScoreCollector" id="ScoreCollector" type="checkbox" value="Collector">&nbsp;' . get_text('ScoreCollector', 'Tournament') ;
-		echo '<input name="ScoreCollectorArrows" id="ScoreCollector6" type="radio" value="6" checked="checked">6 - ';
-		echo '<input name="ScoreCollectorArrows" id="ScoreCollector3" type="radio" value="3">3<br>';
-	}
+	echo '<input name="TourField3D" type="checkbox" value="'.($RowTour->TtElabTeam==0 ? '': ($RowTour->TtElabTeam==1 ? 'FIELD'  : '3D')).'" onclick="$(\'#ScoreCollectorDiv\').toggleClass(\'d-none\', this.checked)" '.($RowTour->TtElabTeam==0?'':' checked="checked"').'>&nbsp;'.get_text('FieldScorecard', 'Tournament').'<br/>';
+	echo '<div id="ScoreCollectorDiv" class="'.($RowTour->TtElabTeam==0 ? '' : 'd-none').'">';
+	echo '<input name="ScoreCollector" id="ScoreCollector" type="checkbox" value="Collector">&nbsp;' . get_text('ScoreCollector', 'Tournament') ;
+	echo '<input name="ScoreCollectorArrows" id="ScoreCollector6" type="radio" value="6" checked="checked">6 - ';
+	echo '<input name="ScoreCollectorArrows" id="ScoreCollector3" type="radio" value="3">3<br>';
+	echo '</div>';
 	echo '</td>';
 //Header e Immagini
-	echo '<td width="50%"><br>';
+	echo '<td class="w-50"><br>';
 	echo '<input name="ScoreHeader" type="checkbox" value="1" checked>&nbsp;' . get_text('ScoreTournament','Tournament') . '<br>';
 	echo '<input name="ScoreLogos" type="checkbox" value="1" checked>&nbsp;' . get_text('ScoreLogos','Tournament') . '<br>';
 	echo '<input name="ScoreFlags" type="checkbox" value="1" checked>&nbsp;' . get_text('ScoreFlags','Tournament') . '<br>';
@@ -111,16 +112,16 @@
 		echo '<input name="ScoreBarcode" type="checkbox" checked value="1" >&nbsp;' . get_text('ScoreBarcode','Tournament') . '<br>';
 	}
 	foreach(AvailableApis() as $Api) {
-		if(!($tmp=getModuleParameter($Api, 'Mode')) || $tmp=='live') {
+		if(!($tmp=getModuleParameter($Api, 'Mode')) || strpos($tmp,'live') !== false) {
 			continue;
 		}
-		echo '<input name="QRCode[]" type="checkbox" '.($tmp=='pro' ? '' : 'checked="checked"').' value="'.$Api.'" >&nbsp;' . get_text($Api.'-QRCode','Api') . '<br>';
+		if(strpos($tmp,'ng-') === 0) {
+			$Api.= '-NG';
+		}
+		echo '<input name="QRCode[]" type="checkbox" '.(strpos($tmp,'pro')!== false ? '' : 'checked="checked"').' value="'.$Api.'" >&nbsp;' . get_text($Api.'-QRCode','Api') . '<br>';
 	}
-	if($RowTour->TtElabTeam==0) {
-		if($RowTour->TtElabTeam==0) echo '&nbsp;<br>';
-	}
-		echo '&nbsp;<br>';
-		echo '<input name="PersonalScore" type="checkbox" value="1" >&nbsp;' . get_text('Score1PageAllDist','Tournament') . '<br>';
+	echo '&nbsp;<br>';
+	echo '<input name="PersonalScore" type="checkbox" value="1" >&nbsp;' . get_text('Score1PageAllDist','Tournament') . '<br>';
 	echo '</td>';
 	echo '</tr>';
 
@@ -162,31 +163,19 @@
 		echo '</td>';
 		echo '</tr>';
 //Distanze
-		if(true or $RowTour->TtElabTeam==0)	{
-			echo '<tr><th class="SubTitle" colspan="2">' . get_text('Distance','Tournament')  . '</th></tr>';
-			echo '<tr>';
-			echo '<td colspan="2" align="Center"><br>';
-			echo '<input name="ScoreDist[]" type="checkbox" value="0" checked id="ChkDist0" onClick="javascript: DisableChkOther(true, ' . $RowTour->TtNumDist . ')">&nbsp;' . get_text('NoDistance','Tournament') . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
-			for($i=1; $i<=$RowTour->TtNumDist; $i++)
-				echo '<input name="ScoreDist[]" type="checkbox" value="' . $i . '" id="ChkDist' . $i . '"  onClick="javascript: DisableChkOther(false, ' . $RowTour->TtNumDist . ')">&nbsp;' . $i . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
-			echo '</td>';
-			echo '</tr>';
-			echo '<tr>';
-			echo '<td colspan="2" align="Center">';
-			echo '<input id="ScoreFilled" name="ScoreFilled" type="checkbox" value="1" disabled>' . get_text('ScoreFilled');
-			echo '</td>';
-			echo '</tr>';
-		} else {
-			echo '<tr>';
-			echo '<td colspan="2" align="Center">';
-			echo '<input id="ScoreFilled" name="ScoreFilled" type="checkbox" value="1">' . get_text('ScoreFilled') . '<br>';
-			for($i=1; $i<=$RowTour->TtNumDist; $i++) {
-				echo '<input name="ScoreDist" type="radio" value="' . $i . '" id="ChkDist' . $i . '"  onClick="javascript: DisableChkOther(false, ' . $RowTour->TtNumDist . ')">&nbsp;' . $i . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
-			}
-			echo '</td>';
-			echo '</tr>';
-
-		}
+		echo '<tr><th class="SubTitle" colspan="2">' . get_text('Distance','Tournament')  . '</th></tr>';
+		echo '<tr>';
+		echo '<td colspan="2" align="Center"><br>';
+		echo '<input name="ScoreDist[]" type="checkbox" value="0" checked id="ChkDist0" onClick="javascript: DisableChkOther(true, ' . $RowTour->TtNumDist . ')">&nbsp;' . get_text('NoDistance','Tournament') . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+		for($i=1; $i<=$RowTour->TtNumDist; $i++)
+			echo '<input name="ScoreDist[]" type="checkbox" value="' . $i . '" id="ChkDist' . $i . '"  onClick="javascript: DisableChkOther(false, ' . $RowTour->TtNumDist . ')">&nbsp;' . $i . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+		echo '</td>';
+		echo '</tr>';
+		echo '<tr>';
+		echo '<td colspan="2" align="Center">';
+		echo '<input id="ScoreFilled" name="ScoreFilled" type="checkbox" value="1" disabled>' . get_text('ScoreFilled');
+		echo '</td>';
+		echo '</tr>';
 	}
 	echo '<tr>';
 	echo '<td colspan="2" align="Center">';

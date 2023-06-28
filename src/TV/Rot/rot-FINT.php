@@ -32,9 +32,9 @@ function rotFint($TVsettings, $RULE) {
 		$Arr_Ev = explode('|', $TVsettings->TVPEventTeam);
 		$Group='';
 		if(preg_match('/^##([0-9]+)##$/', $Arr_Ev[0], $Group)) {
-			if ($IskGroup = getModuleParameter('ISK', 'Sequence', '', $RULE->TVRTournament)) {
+			if ($IskGroup = getModuleParameter('ISK', 'Sequence', '', $RULE->TVRTournament) OR $IskGroup=getModuleParameter('ISK-NG', 'Sequence', '', $RULE->TVRTournament)) {
 				$Group = $IskGroup[$Group[1]];
-				if($Group['type']=='T') {
+				if($Group['type']=='T' OR ($Group['type']=='M' AND $Group['subtype']=='T')) {
 					// get the events and phases of that session!!!
 					$options['schedule']=substr($Group['session'], 0, 10).' '.substr($Group['session'], -8);
 					$q=safe_r_sql("select distinct FSEvent, GrPhase from FinSchedule inner join Grids on GrMatchNo=FSMatchNo where FSTeamEvent=1 and FSScheduledDate='".substr($Group['session'], 0, 10)."' and FSScheduledTime='".substr($Group['session'], -8)."' and FSTournament=$RULE->TVRTournament");

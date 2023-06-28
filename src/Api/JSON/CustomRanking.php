@@ -30,364 +30,49 @@ switch($RankType) {
 		
 		if($EvType==0) { 
 			require_once('Modules/WorldCup/index-Common.php');
-			foreach($ScoreInd as $ev=>$ath) {
+            foreach($ScoreInd as $ev=>$ath) {
 				if($EvCode!=$ev) {
 					continue;
 				}
                 $json_array = array("RankingName"=>$TVMainTitle, "Event"=>$ev, "EventName"=>"", "Type"=>"1", "Results"=>array(), "RankType"=>$RankType);
-				$Select = "SELECT EvEventName as Name FROM Events WHERE EvCode=" . StrSafe_DB($EvCode) . " AND EvTeamEvent=0 AND EvTournament=" . StrSafe_DB(getIdFromCode($headerCompetition)) . " ";
+				$Select = "SELECT EvEventName as Name FROM Events WHERE EvCode=" . StrSafe_DB($EvCode) . " AND EvTeamEvent=0 AND EvTournament=" . StrSafe_DB(getIdFromCode($competitions[0]));
 				$Rs=safe_r_sql($Select);
 				if (safe_num_rows($Rs)==1) {
 					$r = safe_fetch($Rs);
 					$json_array["EventName"] = $r->Name;
 				}
-				$TotInd = array();
-				$MaxInd = array();
-				$ExistingNOC = array();
-				$EvQualifiedNo = $QualifiedNo[$ev];
-				foreach($ath as $keyAth=>$result) {
-					$validScore=array();
-					$maxScore=array();
-					$TotInd[$keyAth]=0;
-					$MaxInd[$keyAth]=0;
-					foreach($result as $kres=>$value) {
-						if($value != -999) {
-							$validScore[]= ($value == -1000 ? 0 : abs($value));
-							$maxScore[]=abs($BestScoreInd[$ev][$keyAth][$kres]);
-						}
-					}
-					rsort($validScore);
-					rsort($maxScore);
-					for($i=0; $i<(min($bestOf,count($validScore))); $i++)
-						$TotInd[$keyAth] += $validScore[$i];
-						for($i=0; $i<(min($bestOf,count($maxScore))); $i++)
-							$MaxInd[$keyAth] += $maxScore[$i];
-				}
-				arsort($TotInd,SORT_NUMERIC);
-				arsort($MaxInd,SORT_NUMERIC);
-				reset($TotInd);
-				reset($MaxInd);
-			
-				//Calculate CutScore
-                $tmpTot=array();
-                $tmpMax=array();
-                foreach ($TotInd as $k=>$v) {
-                    if(in_array(25,$ath[$k])) {
-                        $tmpTot =array($k=>$v) + $tmpTot;
-                        $qualifiedIds[] = $k;
-                        $tmp = array_count_values($ath[$k]);
-                        $QualifiedNo[$ev] += ($tmp[25]-1);
-                    } else {
-                        $tmpTot = $tmpTot + array($k=>$v);
+
+
+                foreach($PosInd[$ev] as $waid=>$rank) {
+                    if($ScoreInd[$ev][$waid] == 0 and $ListInd[$ev][$waid]['Running'] == 0 ) {
+                        continue;
                     }
-                }
-                foreach ($MaxInd as $k=>$v) {
-                    if(in_array(25,$ath[$k])) {
-                        $tmpMax =array($k=>$v) + $tmpMax;
-                    } else {
-                        $tmpMax = $tmpMax + array($k=>$v);
-                    }
-                }
-				$CheckQualifiedNumber = $QualifiedNo[$ev];
-				$nocList=array();
-				for($i=1; $i<$CheckQualifiedNumber;$i++) {
-					if(!array_key_exists($AthInd[key($tmpTot)][1], $nocList)) {
-						$nocList[$AthInd[key($tmpTot)][1]] = 1;
-					} else {
-						$nocList[$AthInd[key($tmpTot)][1]]++;
-					}
-                    if(in_array(25,$ath[key($tmpTot)])) {
-                        $CheckQualifiedNumber++;
-                    }
-                    if($AthInd[key($tmpTot)][1]==$HostCountry and $nocList[$AthInd[key($tmpTot)][1]] == $MaxByNoc) {
-                        $CheckQualifiedNumber++;
-                    }
-                    if(($nocList[$AthInd[key($tmpTot)][1]]>$MaxByNoc)) {
-                        $CheckQualifiedNumber++;
-                        $overMaxNoc[] = key($tmpTot);
-                    }
-					next($tmpTot);
-				}
-				$CutScore=current($tmpTot);
-				if($runningEvent != count($competitions)-1) {
-					$CutScore -= (count($competitions)-$runningEvent-1) * $Bonus[1];
-					if($CutScore < 0 ) {
-						$CutScore = 0;
-					}
-				}
-				reset($TotInd);
-			
-				//Calculate SureScore[HL]
-				$CheckQualifiedNumber = $QualifiedNo[$ev];
-				$nocList=array();
-				for($i=1; $i<$CheckQualifiedNumber;$i++) {
-					if(!array_key_exists($AthInd[key($tmpMax)][1], $nocList)) {
-						$nocList[$AthInd[key($tmpMax)][1]] = 1;
-					} else {
-						$nocList[$AthInd[key($tmpMax)][1]]++;
-					}
-                    if(in_array(25,$ath[key($tmpMax)])) {
-                        $CheckQualifiedNumber++;
-                    }
-                    if(($nocList[$AthInd[key($tmpMax)][1]]>$MaxByNoc) || ($AthInd[key($tmpMax)][1]==$HostCountry && $nocList[$AthInd[key($tmpMax)][1]]==$MaxByNoc)) {
-                        $CheckQualifiedNumber++;
-                    }
-					next($tmpMax);
-				}
-				$SureScoreH=current($tmpMax);
-				next($tmpMax);
-				while((array_key_exists($AthInd[key($tmpMax)][1], $nocList) && $nocList[$AthInd[key($tmpMax)][1]]>$MaxByNoc)) {
-					next($tmpMax);
-				}
-				$SureScoreL=current($tmpMax);
-				reset($tmpMax);
-				$SureScoreH += (count($competitions)-$runningEvent-1) * $Bonus[1];
-				
-				$actRank = 0;
-				$runRank=0;
-				$oldPoint = -1;
-				foreach($TotInd as $waid=>$point) {
-					if($point==0 && ($PosInd[$ev][$waid][$runningEvent]==-999 || $PosInd[$ev][$waid][$runningEvent]>16)) {
-						continue;
-					}
 					$tmpRow = array();
-					$runRank++;
-					if($oldPoint!=$point) {
-						$actRank = $runRank;
-					}
-					$oldPoint = $point;
 		
-					$tmpRow["Rank"] = strval($actRank);
+					$tmpRow["Rank"] = strval($rank);
 					$tmpRow["Id"] = strval($waid);
-					$tmpRow["FamilyName"] = $AthInd[$waid][3];
-					$tmpRow["GivenName"] = $AthInd[$waid][4];
-					$tmpRow["NameOrder"] = $AthInd[$waid][5];
-					$tmpRow["TeamCode"] = $AthInd[$waid][1];
-					$tmpRow["TeamName"] = $AthInd[$waid][2];
-					$tmpRow["Points"] = strval($point);
-					$tmpRow["Status"] = "2";
-					$tmpRow["StatusText"] = "Eligible";
+					$tmpRow["FamilyName"] = $ListInd[$ev][$waid]['FamilyName'];
+					$tmpRow["GivenName"] = $ListInd[$ev][$waid]['GivenName'];
+					$tmpRow["NameOrder"] = $ListInd[$ev][$waid]['NameOrder'];
+					$tmpRow["TeamCode"] = $ListInd[$ev][$waid]['NOC'];
+					$tmpRow["TeamName"] = $ListInd[$ev][$waid]['Country'];
+					$tmpRow["Points"] = strval($ScoreInd[$ev][$waid]);
+					$tmpRow["Status"] = strval($ListInd[$ev][$waid]['Status']);
+					$tmpRow["StatusText"] = WcupStatusTvText[$ListInd[$ev][$waid]['Status']];
 					$tmpRow["Stages"] = array();
-					
-		
-					$i=0;
-					$stillCompeting = false;
-                    $canRed=true;
-                    $isAnEventWinner = false;
-					foreach($ScoreInd[$ev][$waid] as $detailPoint){
-						$Stage=array("Stage"=>strval($i+1), "Points"=>"0", "PresentInStage"=>false, "StillCompeting"=>false);
-						if($PosInd[$ev][$waid][$i] == -999) {
-							$Stage["PresentInStage"]=false;
-						} else {
-							$Stage["PresentInStage"]=true;
-							if($detailPoint == -1000) {
-								$Stage["Points"]="0";
-								$Stage["StillCompeting"]=true;
-								$stillCompeting = true;
-							}elseif($detailPoint < 0) {
-								$Stage["Points"]=strval(abs($detailPoint));
-								$Stage["StillCompeting"]=true;
-								$stillCompeting = true;
-                                if($detailPoint==-21) {
-                                    $canRed = false;
-                                }
-							} else {
-                                $Stage["Points"] = strval($detailPoint);
-                                if($detailPoint == $Bonus[1]) {
-                                    $isAnEventWinner = true;
-                                }
-                            }
-						}
+
+
+                    for($i=0; $i<count($compPlaces); $i++) {
+						$Stage=array(
+                            "Stage"=>strval($i+1),
+                            "Points"=> ($ListInd[$ev][$waid]['QBonus'][$i]+abs($ListInd[$ev][$waid]['Points'][$i])),
+                            "PresentInStage"=>boolval($ListInd[$ev][$waid]['isPresent'][$i]),
+                            "StillCompeting"=>boolval($ListInd[$ev][$waid]['Rank'][$i]<0)
+                        );
                         $tmpRow["Stages"][] = $Stage;
-						$i++;
 					}
 
-					//Calculus of the in/out position
-					if(array_key_exists($AthInd[$waid][1], $ExistingNOC)){
-						$ExistingNOC[$AthInd[$waid][1]]++;
-					} else {
-						$ExistingNOC[$AthInd[$waid][1]] = 1;
-					}
-					$qualified=0;
-
-                    if($isAnEventWinner) {
-                        $tmpRow["Status"] = "6";
-                        $tmpRow["StatusText"] = "Stage winner";
-                        $EvQualifiedNo++;
-                    } elseif(($ExistingNOC[$AthInd[$waid][1]]>$MaxByNoc AND (!in_array($waid,$pendingIds))) OR in_array($waid,$overMaxNoc)) {
-						$tmpRow["Status"] = "3";
-						$tmpRow["StatusText"] = "Third+ athlete";
-						if($ExistingNOC[$AthInd[$waid][1]]==$MaxByNoc+1)
-							$EvQualifiedNo++;
-					} elseif($point>=$SureScoreH && $point>$SureScoreL) {
-						$tmpRow["Status"] = "0";
-						$tmpRow["StatusText"] = "Qualified";
-					} elseif($actRank>$EvQualifiedNo AND $CutScore>$MaxInd[$waid] AND $canRed AND !in_array($waid,$pendingIds)) {
-						$tmpRow["Status"] = "4";
-						$tmpRow["StatusText"] = "Not Qualified";
-					}
-                    if(!$canRed) {
-                        $EvQualifiedNo++;
-                    }
-					/*	ANTALYA - TO RE-ENABLE if something weird
-					 } elseif($actRank>$EvQualifiedNo && (!$stillCompeting || $CutScore>$MaxInd[$waid])) {
-					 $qualified=-1;
-					 }*/
-					
-					$CanDoBetter=0;
-					$UsedPoints = array_fill(0,count($Bonus),0);	//Array of the possible points already used
-					$UsedPoints[0]=1;		//Exclude the first (0), in the $Bonus Array just for padding
-					for($cntPeople=1; $cntPeople<=count($Bonus); $cntPeople++) {
-						$ScoreOther = current(array_slice($TotInd, array_search($waid, array_keys($TotInd)) + $cntPeople, 1));
-						for($cntBonus=(count($Bonus)-1); $cntBonus>0; $cntBonus--) {
-							if($UsedPoints[$cntBonus]==1) {
-								continue;
-							}
-							if($ScoreOther+$Bonus[$cntBonus]>=$point) {
-								$UsedPoints[$cntBonus]=1;
-								$CanDoBetter++;
-								break;
-							}
-						}
-					}
-					if(!$isAnEventWinner and ($CanDoBetter<$QualifiedNo[$ev]-$actRank OR in_array($waid,$qualifiedIds))) {
-						$tmpRow["Status"] = "0";
-						$tmpRow["StatusText"] = "Qualified";
-					}
-                    if(in_array($waid,$notQualifiedIds)) {
-                        $tmpRow["Status"] = "4";
-                        $tmpRow["StatusText"] = "Not Qualified";
-                    }
-					
-
-					if($CutRank === false || $CutRank>=$actRank) {
-						$json_array["Results"][] = $tmpRow;
-					}
-				}
-			}
-		} elseif($EvType == 1) {
-			require_once('Modules/WorldCup/indexTeam-Common.php');
-			foreach($ScoreTeam as $ev=>$team) {
-				if($EvCode!=$ev) {
-					continue;
-				}
-				$json_array = array("RankingName"=>$TVMainTitle, "Event"=>$ev, "EventName"=>"", "Type"=>"1", "Results"=>array());
-				$Select = "SELECT EvEventName as Name FROM Events WHERE EvCode=" . StrSafe_DB($EvCode) . " AND EvTeamEvent=1 AND EvTournament=" . StrSafe_DB(getIdFromCode($headerCompetition)) . " ";
-				$Rs=safe_r_sql($Select);
-				if (safe_num_rows($Rs)==1) {
-					$r = safe_fetch($Rs);
-					$json_array["EventName"] = $r->Name;
-				}
-				
-				
-				
-				$TotTeam = array();
-				foreach($team as $keyTeam=>$result) {
-					$validScore=array();
-					$TotTeam[$keyTeam]=0;
-					foreach($result as $value) {
-						if($value != -999) {
-							$validScore[]=abs($value);
-						}
-					}
-					rsort($validScore);
-					for($i=0; $i<count($validScore); $i++) {
-						$TotTeam[$keyTeam] += $validScore[$i];
-					}
-				}
-				arsort($TotTeam,SORT_NUMERIC);
-				
-				//Calculate CutScore
-				$CheckQualifiedNumber = $MixedTeamQualifiedNo;
-				for($i=1; $i<$MixedTeamQualifiedNo;$i++) {
-					next($TotTeam);
-				}
-				$CutScore=current($TotTeam);
-				if($runningEvent != count($competitions)-1) {
-					$CutScore -= (count($competitions)-$runningEvent-1) * $BonusTeam[1];
-					if($CutScore < 0 ) {
-						$CutScore = 0;
-					}
-				}
-				reset($TotTeam);
-			
-				$actRank = 0;
-				$runRank=0;
-				$oldPoint = -1;
-				foreach($TotTeam as $waid=>$point) {
-					if($point==0 && ($PosTeam[$ev][$waid][$runningEvent]==-999 || $PosTeam[$ev][$waid][$runningEvent]>16)) {
-						continue;
-					}
-					$tmpRow = array();
-					$runRank++;
-					if($oldPoint!=$point) {
-						$actRank = $runRank;
-					}
-					$oldPoint = $point;
-			
-					$tmpRow["Rank"] = strval($actRank);
-					$tmpRow["TeamCode"] = strval($waid);
-					$tmpRow["TeamName"] = $TeamList[$waid];
-					$tmpRow["Points"] = strval($point);
-					$tmpRow["Status"] = "0";
-					$tmpRow["StatusText"] = "";
-					$tmpRow["Stages"] = array();
-					
-					$i=0;
-					foreach($ScoreTeam[$ev][$waid] as $detailPoint){
-						$Stage=array("Stage"=>strval($i+1), "Points"=>"0", "PresentInStage"=>false, "StillCompeting"=>false);
-						if($PosTeam[$ev][$waid][$i] == -999) {
-							$Stage["PresentInStage"]=false;
-						} else {
-							$Stage["PresentInStage"]=true;
-							if($detailPoint < 0) {
-								$Stage["Points"]=strval(abs($detailPoint));
-								$Stage["StillCompeting"]=true;
-							} else {
-								$Stage["Points"]=strval($detailPoint);
-							}
-						}
-						$tmpRow["Stages"][] = $Stage;
-						$i++;
-					}
-					
-					//////////////////
-					$qualified=0;
-					if($actRank>$MixedTeamQualifiedNo && $CutScore>$point) {
-						$tmpRow["Status"] = "4";
-						$tmpRow["StatusText"] = "Not Qualified";
-					}
-					//////////////////
-					$CanDoBetter=0;
-					if($runningEvent != count($competitions)-1) {
-						$UsedPoints = array_fill(0,count($BonusTeam),0);	//Array of the possible points already used
-						$UsedPoints[0]=1;		//Exclude the first (0), in the $Bonus Array just for padding
-						for($cntPeople=1; $cntPeople<=count($BonusTeam); $cntPeople++) {
-							$ScoreOther = current(array_slice($TotTeam, array_search($waid, array_keys($TotTeam)) + $cntPeople, 1));
-							for($cntBonus=(count($BonusTeam)-1); $cntBonus>0; $cntBonus--) {
-								if($UsedPoints[$cntBonus]==1) {
-									continue;
-								}
-								if($ScoreOther+$BonusTeam[$cntBonus]>=$point) {
-									$UsedPoints[$cntBonus]=1;
-									$CanDoBetter++;
-									break;
-								}
-							}
-						}
-					}
-					if($CanDoBetter<=$MixedTeamQualifiedNo-$actRank) {
-						$tmpRow["Status"] = "0";
-						$tmpRow["StatusText"] = "Qualified";
-/*						if($waid=='TPE') {
-                            $tmpRow["Status"] = "-1";
-                            $tmpRow["StatusText"] = "Not Qualified";
-                        }
-*/
-					}
-					
-					
-					if($CutRank === false || $CutRank>=$actRank) {
+                    if($CutRank === false || $CutRank>=$rank) {
 						$json_array["Results"][] = $tmpRow;
 					}
 				}

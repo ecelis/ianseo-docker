@@ -39,6 +39,8 @@ if(empty($_SESSION['OnlineId']) or empty($_SESSION['OnlineAuth']) or empty($_SES
     JsonOut($JSON);
 }
 
+$IsRunArchery=($_SESSION['TourType']==48);
+
 $RET=new StdClass();
 
 // WE ONLY SEND ORIS STUFF
@@ -61,6 +63,7 @@ $RET->UUID=GetParameter('UUID2', false, uniqid('Ianseo-', true));
 $RET->ProgVersion = ProgramVersion;
 $RET->ProgRelease = ProgramRelease;
 $RET->ProgBuild = ProgramBuild;
+$RET->IsRunArchery = ($_SESSION['TourType']==48);
 
 $RET->PDF=array();
 $RET->FilRemove=array();
@@ -128,22 +131,49 @@ if(empty($_REQUEST['btnDelOnline'])) {
     $RET->BOOK=(!empty($_REQUEST['BOOK']));
 
     // List by targets
-    if(!empty($_REQUEST['ENS'])) $RET->ENS=getStartList($ORIS);
+    if(!empty($_REQUEST['ENS'])) {
+		if($IsRunArchery) {
+			$RET->ENS=getRunStartListSession($ORIS);
+		} else {
+			$RET->ENS=getStartList($ORIS);
+		}
+    }
 
-    // List by targets
-    if(!empty($_REQUEST['ENE'])) $RET->ENE=getStartListCategory($ORIS, 1);
+    // List by category
+    if(!empty($_REQUEST['ENE'])) {
+		if($IsRunArchery) {
+			$RET->ENE=getRunStartListSession($ORIS, '', 'Event');
+		} else {
+			$RET->ENE=getStartListCategory($ORIS, 1);
+		}
+    }
 
     // List by Countries
-    if(!empty($_REQUEST['ENC'])) $RET->ENC=getStartListByCountries($ORIS);
+    if(!empty($_REQUEST['ENC'])) {
+		if($IsRunArchery) {
+			$RET->ENC=getRunEntries($ORIS, '', 'Country');
+		} else {
+			$RET->ENC=getStartListByCountries($ORIS);
+		}
+    }
 
     // List by Entries
-    if(!empty($_REQUEST['ENA'])) $RET->ENA=getStartListAlphabetical($ORIS);
+    if(!empty($_REQUEST['ENA'])) {
+		if($IsRunArchery) {
+			$RET->ENA=getRunEntries($ORIS, '', 'Alpha');
+		} else {
+			$RET->ENA=getStartListAlphabetical($ORIS);
+		}
+    }
 
     // Stats by Countries
     if(!empty($_REQUEST['STC'])) $RET->STC=getStatEntriesByCountries($ORIS);
 
     // Stats by Entries
     if(!empty($_REQUEST['STE'])) $RET->STE=getStatEntriesByEvent($ORIS);
+
+    // Officials on Field
+    if(!empty($_REQUEST['STF'])) $RET->STF=getCompetitionOfficials(true);
 
     /** DIVCLASS RANKING */
     // Ranking by Category, Individual (local rules apply)
@@ -185,6 +215,22 @@ if(empty($_REQUEST['btnDelOnline'])) {
         }
     }
 
+    // Robin, Startlist
+    // if(!empty($_REQUEST['RobinStartlist'])) {
+    //     $RET->RL=new StdClass();
+    //     foreach($_REQUEST['RobinStartlist'] as $Event) {
+    //         $RET->RL->{$Event}=getStartList($ORIS, $IsPool>2 ? '' : substr($Event, -1), true, false, $IsPool>2 ? $IsPool : false,true);
+    //     }
+    // }
+
+    // Robin, Individual
+    if(!empty($_REQUEST['RobinInd'])) {
+        $RET->IR=new StdClass();
+        foreach($_REQUEST['RobinInd'] as $Event) {
+            $RET->IR->{$Event}=getRobin(['team'=>substr($Event,1,1), 'events'=>[substr($Event,2)]],$ORIS);
+        }
+    }
+
     // Qualification, Team
     if(!empty($_REQUEST['QualificationTeam'])) {
         $RET->TQ=new StdClass();
@@ -205,27 +251,53 @@ if(empty($_REQUEST['btnDelOnline'])) {
         $RET->TB=new StdClass();
         foreach($_REQUEST['BracketsTeam'] as $Event) {
             $EventCode = getChildrenEvents(substr($Event,2), 1);
-            $RET->TB->{$Event}=getBracketsTeams($EventCode, $ORIS, true, true, true, $ShowRecords);
+            $RET->TB->{$Event}=getBracketsTeams($EventCode, $ORIS, true, true, true, $ShowRecords, null, true);
         }
     }
 
     // Final Rank, Individual
     if(!empty($_REQUEST['FinalInd'])) {
         $RET->IF=new StdClass();
-        foreach($_REQUEST['FinalInd'] as $Event) $RET->IF->{$Event}=getRankingIndividual(substr($Event,2),$ORIS);
+        foreach($_REQUEST['FinalInd'] as $Event) {
+			if($IsRunArchery) {
+				$RET->IF->{$Event}=getRankingRunIndividual([substr($Event,2)], '', true);
+			} else {
+				$RET->IF->{$Event}=getRankingIndividual(substr($Event,2), $ORIS);
+			}
+        }
     }
 
     // Final Rank, Team
     if(!empty($_REQUEST['FinalTeam'])) {
         $RET->TF=new StdClass();
-        foreach($_REQUEST['FinalTeam'] as $Event) $RET->TF->{$Event}=getRankingTeams(substr($Event,2),$ORIS);
+        foreach($_REQUEST['FinalTeam'] as $Event) {
+	        if($IsRunArchery) {
+		        $RET->TF->{$Event}=getRankingRunTeams([substr($Event,2)], '');
+	        } else {
+				$RET->TF->{$Event}=getRankingTeams(substr($Event,2),$ORIS);
+	        }
+        }
     }
 
     // Medal standing
-    if(!empty($_REQUEST['MEDSTD'])) $RET->MEDSTD=getMedalStand($ORIS);
+    if(!empty($_REQUEST['MEDSTD'])) {
+		$RET->MEDSTD=getMedalStand($ORIS);
+    }
 
     // Medallists
-    if(!empty($_REQUEST['MEDLST'])) $RET->MEDLST=getMedalList($ORIS);
+    if(!empty($_REQUEST['MEDLST'])) {
+		$RET->MEDLST=getMedalList($ORIS);
+    }
+
+    // Standing Record
+    if(!empty($_REQUEST['RECSTD'])) {
+		$RET->RECSTD=getStandingRecords(true);
+    }
+
+    // Medallists
+    if(!empty($_REQUEST['RECBRK'])) {
+		$RET->RECBRK=getBrokenRecords(true);
+    }
 } else {
 	// request to delete the selected items
     $RET->delete=array();

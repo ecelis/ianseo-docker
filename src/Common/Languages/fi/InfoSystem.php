@@ -5,6 +5,7 @@ $lang['ByClub']='Maan/Seuran mukaan';
 $lang['ByName']='Nimen mukaan';
 $lang['ByTarget']='Taustan mukaan';
 $lang['ClassDiv']='Kategoria';
+$lang['CompleteSchedule']='Näytä täydellinen aikataulu';
 $lang['DivClas']='Luokat & sarjat';
 $lang['Eliminations']='Karsinta';
 $lang['Eliminations_1']='1. karsintakierros';

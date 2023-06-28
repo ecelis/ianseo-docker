@@ -52,6 +52,8 @@ $MSG='';
 $ORIS=$_SESSION['ISORIS'];
 $q=safe_r_SQL("SELECT * FROM `TourRecords` WHERE `TrTournament` = " . StrSafe_DB($_SESSION['TourId']));
 $RECORDS = (safe_num_rows($q) > 0);
+$IsRunArchery=($_SESSION['TourType']==48);
+
 
 require_once('Common/Fun_FormatText.inc.php');
 require_once('Common/Fun_Various.inc.php');
@@ -60,6 +62,7 @@ require_once('Common/Fun_Various.inc.php');
 $outputIndAbs='';
 $outputTeamAbs='';
 $outputElim='';
+$outputRobin='';
 $outputIndFin='';
 $outputTeamFin='';
 $outputIndBra='';
@@ -69,102 +72,119 @@ $Elim1=0;
 $Elim2=0;
 $Elim3=0;
 $Elim4=0;
+$Robin=0;
 $ShowMedals=false;
+$ShowFinalBook=false;
 
-// Scorecards of qualifications
-$Scores.='<div><input type="checkbox" name="ScoQual" class="removeAfterUpload"/>'.get_text('ScorecardsQual','Tournament').'</div>';
+if(!$IsRunArchery) {
+	// Regular Archery
+	// Scorecards of qualifications
+	$Scores.='<div><input type="checkbox" name="ScoQual" class="removeAfterUpload"/>'.get_text('ScorecardsQual','Tournament').'</div>';
 
-// select the ACTUAL Individual Events
-$Select = "SELECT distinct EvCode, EvEventName, EvTeamEvent, EvElim1, EvElim2, EvFinalFirstPhase, EvElimType, EvMedals, ifnull(i2.IndId,i3.IndId) as HasMedal,  (i2.IndId is NOT NULL) as HasGoldMedal, EvShootOff
+	// select the ACTUAL Individual Events
+	$Select = "SELECT max(i1.IndTimestamp) as LastUpdate, max(QuHits) as Arrows, min(QuHits) as MinArrows, EvCode, EvEventName, EvTeamEvent, EvElim1, EvElim2, EvFinalFirstPhase, EvElimType, EvMedals, ifnull(i2.IndId,i3.IndId) as HasMedal,  (i2.IndId is NOT NULL) as HasGoldMedal, EvShootOff, EvE1ShootOff
     FROM Events
     inner join Individuals i1 on i1.IndTournament=EvTournament and i1.IndEvent=EvCode
+    inner join Qualifications on QuId=IndId
     left join Individuals i2 on i2.IndTournament=EvTournament and i2.IndEvent=EvCode and i2.IndRankFinal=1
     left join Individuals i3 on i3.IndTournament=EvTournament and i3.IndEvent=EvCode and i3.IndRankFinal=3
     WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=0
+    group by EvCode
     ORDER BY EvProgr ";
 
-$Rs=safe_r_sql($Select);
+	$Rs=safe_r_sql($Select);
 
-// Results book is showable only if it is an ORIS event and there is at least one event.
-$ShowFinalBook=($_SESSION['ISORIS'] and safe_num_rows($Rs));
+	// Results book is showable only if it is an ORIS event and there is at least one event.
+	$ShowFinalBook=($_SESSION['ISORIS'] and safe_num_rows($Rs));
 
-while ($MyRow=safe_fetch($Rs)) {
-	if($MyRow->EvMedals and $MyRow->HasMedal) {
-	    $ShowMedals=true;
-    }
-	if($MyRow->EvFinalFirstPhase and !$MyRow->HasGoldMedal) {
-	    $ShowFinalBook=false;
+	while ($MyRow=safe_fetch($Rs)) {
+		if($MyRow->EvMedals and $MyRow->HasMedal) {
+			$ShowMedals=true;
+		}
+		if($MyRow->EvFinalFirstPhase and !$MyRow->HasGoldMedal) {
+			$ShowFinalBook=false;
+		}
+
+		$QualCode='IQ' . $MyRow->EvCode;
+		// qualifications is for all...
+		$outputIndAbs .='<div style="display:flex;margin-bottom:0.5em;align-items:center;"><div><input type="checkbox" name="QualificationInd[]" value="'.$QualCode.'"></div><div>' . $MyRow->EvCode . '&nbsp;-&nbsp;' . $MyRow->EvEventName . '<br/>'.($MyRow->MinArrows==$MyRow->Arrows ? $MyRow->MinArrows : $MyRow->MinArrows.'-'.$MyRow->Arrows).' / '.substr($MyRow->LastUpdate,0,-3).'</div></div>';
+
+		// Field/3D eliminations and Pools...
+		switch($MyRow->EvElimType) {
+			case 0:
+				// do nothing
+				break;
+			case 3:
+			case 4:
+				// Pools
+				if($MyRow->EvShootOff) {
+					${'Elim'.$MyRow->EvElimType}=1;
+					$ElimCode='IP' . $MyRow->EvCode.$MyRow->EvElimType;
+					$outputElim .='<input type="checkbox" name="EliminationInd[]" value="'.$ElimCode.'">' . $MyRow->EvCode . '&nbsp;-&nbsp;' . $MyRow->EvEventName . '<br/>';
+				}
+				break;
+			case 5:
+				// RoundRobin
+				if($MyRow->EvE1ShootOff) {
+					$Robin=1;
+					$ElimCode='R' .$MyRow->EvTeamEvent. $MyRow->EvCode;
+					$outputRobin .='<input type="checkbox" name="RobinInd[]" value="'.$ElimCode.'">' . $MyRow->EvCode . '&nbsp;-&nbsp;' . $MyRow->EvEventName . '<br/>';
+				}
+				break;
+			default:
+				if ($MyRow->EvElim1>0 || $MyRow->EvElim2>0) {
+					if(!$Elim1) {
+						$Elim1=1;
+					}
+					if($MyRow->EvElim2) {
+						$Elim2=1;
+					}
+					$ElimCode='IE' . $MyRow->EvCode;
+					$outputElim .='<input type="checkbox" name="EliminationInd[]" value="'.$ElimCode.'">' . $MyRow->EvCode . '&nbsp;-&nbsp;' . $MyRow->EvEventName . '<br/>';
+				}
+		}
+
+		// based on the SO status we build brackets and Final Ranks
+		if($MyRow->EvShootOff) {
+			$BraCode='IB' . $MyRow->EvCode;
+			$FinCode='IF' . $MyRow->EvCode;
+			$outputIndFin .='<input type="checkbox" name="FinalInd[]" value="'.$FinCode.'">' . $MyRow->EvCode . '&nbsp;-&nbsp;' . $MyRow->EvEventName . '<br/>';
+			$outputIndBra .='<input type="checkbox" name="BracketsInd[]" value="'.$BraCode.'">' . $MyRow->EvCode . '&nbsp;-&nbsp;' . $MyRow->EvEventName . '<br/>';
+		}
 	}
 
-    $QualCode='IQ' . $MyRow->EvCode;
-    // qualifications is for all...
-    $outputIndAbs .='<input type="checkbox" name="QualificationInd[]" value="'.$QualCode.'">' . $MyRow->EvCode . '&nbsp;-&nbsp;' . $MyRow->EvEventName . '<br/>';
-
-    // Field/3D eliminations and Pools...
-    switch($MyRow->EvElimType) {
-        case 0:
-            // do nothing
-            break;
-        case 3:
-        case 4:
-            // Pools
-			if($MyRow->EvShootOff) {
-	            ${'Elim'.$MyRow->EvElimType}=1;
-	            $ElimCode='IP' . $MyRow->EvCode.$MyRow->EvElimType;
-	            $outputElim .='<input type="checkbox" name="EliminationInd[]" value="'.$ElimCode.'">' . $MyRow->EvCode . '&nbsp;-&nbsp;' . $MyRow->EvEventName . '<br/>';
-			}
-            break;
-        default:
-            if ($MyRow->EvElim1>0 || $MyRow->EvElim2>0) {
-                if(!$Elim1) {
-                    $Elim1=1;
-                }
-                if($MyRow->EvElim2) {
-                    $Elim2=1;
-                }
-                $ElimCode='IE' . $MyRow->EvCode;
-                $outputElim .='<input type="checkbox" name="EliminationInd[]" value="'.$ElimCode.'">' . $MyRow->EvCode . '&nbsp;-&nbsp;' . $MyRow->EvEventName . '<br/>';
-            }
-    }
-
-	// based on the SO status we build brackets and Final Ranks
-    if($MyRow->EvShootOff) {
-        $BraCode='IB' . $MyRow->EvCode;
-        $FinCode='IF' . $MyRow->EvCode;
-        $outputIndFin .='<input type="checkbox" name="FinalInd[]" value="'.$FinCode.'">' . $MyRow->EvCode . '&nbsp;-&nbsp;' . $MyRow->EvEventName . '<br/>';
-        $outputIndBra .='<input type="checkbox" name="BracketsInd[]" value="'.$BraCode.'">' . $MyRow->EvCode . '&nbsp;-&nbsp;' . $MyRow->EvEventName . '<br/>';
-    }
-}
-
-// select the ACTUAL Team Events
-$Sql = "SELECT distinct EvCode, EvEventName, EvFinalFirstPhase, EvMedals, ifnull(t2.TeCoId,t3.TeCoId) as HasMedal, (t2.TeCoId is NOT NULL) as HasGoldMedal, EvShootOff
+	// select the ACTUAL Team Events
+	$Sql = "SELECT max(t1.TeTimeStamp) as LastUpdate, max(t1.TeHits) as Arrows, min(t1.TeHits) as MinArrows, EvCode, EvEventName, EvFinalFirstPhase, EvMedals, ifnull(t2.TeCoId,t3.TeCoId) as HasMedal, (t2.TeCoId is NOT NULL) as HasGoldMedal, EvShootOff
     FROM Events 
     inner join Teams t1 on t1.TeEvent=EvCode and t1.TeTournament=EvTournament
     left join Teams t2 on t2.TeEvent=EvCode and t2.TeTournament=EvTournament and t2.TeRankFinal=1
     left join Teams t3 on t3.TeEvent=EvCode and t3.TeTournament=EvTournament and t3.TeRankFinal=3
-    WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=1 ORDER BY EvProgr";
+    WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=1
+    group by EvCode 
+    ORDER BY EvProgr";
 
-$RsEv=safe_r_sql($Sql);
-while($MyRowEv=safe_fetch($RsEv)) {
-	if($MyRowEv->EvMedals and $MyRowEv->HasMedal) {
-		$ShowMedals=true;
+	$RsEv=safe_r_sql($Sql);
+	while($MyRowEv=safe_fetch($RsEv)) {
+		if($MyRowEv->EvMedals and $MyRowEv->HasMedal) {
+			$ShowMedals=true;
+		}
+		if($MyRowEv->EvFinalFirstPhase and !$MyRowEv->HasGoldMedal) {
+			$ShowFinalBook=false;
+		}
+
+		$QualCode='TQ' . $MyRowEv->EvCode;
+		$FinCode='TF' . $MyRowEv->EvCode;
+		$BraCode='TB' . $MyRowEv->EvCode;
+
+		$outputTeamAbs .='<div style="display:flex;margin-bottom:0.5em;align-items:center;"><div><input type="checkbox" name="QualificationTeam[]" value="' . $QualCode . '"></div><div>' . $MyRowEv->EvCode . '&nbsp;-&nbsp;' . $MyRowEv->EvEventName . '<br/>'.$MyRowEv->MinArrows.($MyRowEv->MinArrows== $MyRowEv->Arrows ? '' : '-'.$MyRowEv->Arrows).' / '.substr($MyRowEv->LastUpdate,0,-3).'</div></div>';
+
+		// solo chi ha la fase > 0 va avanti
+		if(!$MyRowEv->EvFinalFirstPhase or in_array($MyRowEv->EvCode, $_SESSION['MenuFinT'])) {
+			continue;
+		}
+		$outputTeamFin .='<input type="checkbox" name="FinalTeam[]" value="' . $FinCode . '">' . $MyRowEv->EvCode . '&nbsp;-&nbsp;' . $MyRowEv->EvEventName . '<br/>';
+		$outputTeamBra .='<input type="checkbox" name="BracketsTeam[]" value="' . $BraCode . '">' . $MyRowEv->EvCode . '&nbsp;-&nbsp;' . $MyRowEv->EvEventName . '<br/>';
 	}
-	if($MyRowEv->EvFinalFirstPhase and !$MyRowEv->HasGoldMedal) {
-		$ShowFinalBook=false;
-	}
-
-    $QualCode='TQ' . $MyRowEv->EvCode;
-    $FinCode='TF' . $MyRowEv->EvCode;
-    $BraCode='TB' . $MyRowEv->EvCode;
-
-    $outputTeamAbs .='<input type="checkbox" name="QualificationTeam[]" value="' . $QualCode . '">' . $MyRowEv->EvCode . '&nbsp;-&nbsp;' . $MyRowEv->EvEventName . '<br/>';
-
-    // solo chi ha la fase > 0 va avanti
-    if(!$MyRowEv->EvFinalFirstPhase or in_array($MyRowEv->EvCode, $_SESSION['MenuFinT'])) {
-        continue;
-    }
-    $outputTeamFin .='<input type="checkbox" name="FinalTeam[]" value="' . $FinCode . '">' . $MyRowEv->EvCode . '&nbsp;-&nbsp;' . $MyRowEv->EvEventName . '<br/>';
-    $outputTeamBra .='<input type="checkbox" name="BracketsTeam[]" value="' . $BraCode . '">' . $MyRowEv->EvCode . '&nbsp;-&nbsp;' . $MyRowEv->EvEventName . '<br/>';
 }
 
 $JS_SCRIPT=array(
@@ -237,183 +257,243 @@ echo '<tr class="OrisHide">
     <th colspan="2" width="50%">'.get_text('Team').'</th>
     </tr>';
 
-// Division and Class
-echo '<tr class="OrisHide">'.
-        '<td colspan="2" class="Bold Deletable"><input type="checkbox" name="IC" id="IC"/>'.get_text('ResultClass','Tournament').
-        (getModuleParameter('ISK','CalcClDivInd',0, 0, true) == 1 ? '<br><span class="text-danger">'.get_text('RkCalcOffWarning', 'ISK').'</span>' : '').
-        '</td>'.
-        '<td colspan="2" class="Bold Deletable"><input type="checkbox" name="TC" id="TC"/>'. get_text('ResultClass','Tournament').
-        (getModuleParameter('ISK','CalcClDivTeam',0, 0, true) == 1 ? '<br><span class="text-danger">'.get_text('RkCalcOffWarning', 'ISK').'</span>' : '').
-        '</td>'.
-    '</tr>';
-echo '<tr class="Divider"><td colspan="4" class="Title"></td></tr>';
+if($IsRunArchery) {
+	echo '<tbody id="Tbody-EVENTS">';
 
-//echo '<tr class="Divider"><th colspan="4"></th></tr>';
+	// Final Rankings
+	echo '<tr class="tit_Bra'.(($outputIndFin or $outputTeamFin) ? '' : ' hidden').'">';
+	// Individual rank
+	echo '<td class="Bold Left Deletable"><div id="tit_IndFin" '.($outputIndFin ? '' : 'class="hidden"').'>'
+		. '<input type="checkbox" id="allIndFin" onclick="setAllCheck(\'FinalInd[]\',this.id);">&nbsp;'
+		. get_text('Rankings') . ' - ' . get_text('Individual')
+		. '</div></td>'
+		. '<td class="Left Deletable InBook" id="sel_IndFin">'
+		. ($outputIndFin ? $outputIndFin : '&nbsp;')
+		. '</td>';
 
-// Qualifications (Events)
-if(isset($_REQUEST['QUAL'])) {
-    $cl='';
-    $st='on';
-    $ic='down';
+	// Team Rank
+	echo '<td class="Bold Left Deletable"><div id="tit_TeamFin" '.($outputTeamFin ? '' : 'class="hidden"').'>'
+		. '<input type="checkbox" id="allTeamFin" onclick="setAllCheck(\'FinalTeam[]\',this.id);">&nbsp;'
+		. get_text('Rankings') . ' - ' . get_text('Team')
+		. '</div></td>'
+		. '<td class="Left Deletable InBook" id="sel_TeamFin">'
+		. ($outputTeamFin ? $outputTeamFin : '&nbsp;')
+		. '</td>';
+
+	echo '</tr>';
+	echo '</tbody>';
 } else {
-    $cl='hidden';
-    $st='off';
-    $ic='right';
-}
-echo '<tr class="tit_Abs'.(($outputIndAbs or $outputTeamAbs) ? '' : ' hidden').'"><th colspan="4" class="AccordionToggle" ref="QUAL" status="'.$st.'" onclick="toggleAccordion(this)"><i class="fa fa-lg fa-caret-'.$ic.' mr-2"></i>'.get_text('Q-Session', 'Tournament').'</th></tr>';
-echo '<tbody id="Tbody-QUAL" class="'.$cl.'">';
-echo '<tr class="tit_Abs'.(($outputIndAbs or $outputTeamAbs) ? '' : ' hidden').'">';
+	// Regular archery
+	// Division and Class
+	echo '<tr class="OrisHide">'.
+		'<td colspan="2" class="Bold Deletable"><input type="checkbox" name="IC" id="IC"/>'.get_text('ResultClass','Tournament').
+		(getModuleParameter('ISK','CalcClDivInd',0, 0, true) == 1 ? '<br><span class="text-danger">'.get_text('RkCalcOffWarning', 'ISK').'</span>' : '').
+		'</td>'.
+		'<td colspan="2" class="Bold Deletable"><input type="checkbox" name="TC" id="TC"/>'. get_text('ResultClass','Tournament').
+		(getModuleParameter('ISK','CalcClDivTeam',0, 0, true) == 1 ? '<br><span class="text-danger">'.get_text('RkCalcOffWarning', 'ISK').'</span>' : '').
+		'</td>'.
+		'</tr>';
+	echo '<tr class="Divider"><td colspan="4" class="Title"></td></tr>';
 
-// Individual Qualifications
-echo '<td class="Bold Left Deletable"><div id="tit_IndAbs" '.($outputIndAbs ? '' : 'class="hidden"').'>';
-echo '<input type="checkbox" id="allResultIndAbs" onclick="setAllCheck(\'QualificationInd[]\',this.id);">&nbsp;'.get_text('ResultIndAbs','Tournament');
-echo (getModuleParameter('ISK','CalcFinInd',0, 0, true) == 1 ? '<br><span class="text-danger">'.get_text('RkCalcOffWarning', 'ISK').'</span>' : '');
-echo '</div></td>';
+	// Qualifications (Events)
+	if(isset($_REQUEST['QUAL'])) {
+		$cl='';
+		$st='on';
+		$ic='down';
+	} else {
+		$cl='hidden';
+		$st='off';
+		$ic='right';
+	}
+	echo '<tr class="tit_Abs'.(($outputIndAbs or $outputTeamAbs) ? '' : ' hidden').'"><th colspan="4" class="AccordionToggle" ref="QUAL" status="'.$st.'" onclick="toggleAccordion(this)"><i class="fa fa-lg fa-caret-'.$ic.' mr-2"></i>'.get_text('Q-Session', 'Tournament').'</th></tr>';
+	echo '<tbody id="Tbody-QUAL" class="'.$cl.'">';
+	echo '<tr class="tit_Abs'.(($outputIndAbs or $outputTeamAbs) ? '' : ' hidden').'">';
 
-echo '<td class="Left Deletable InBook" id="sel_IndAbs">';
-echo $outputIndAbs ? $outputIndAbs : '&nbsp;';
-echo '</td>';
+	// Individual Qualifications
+	echo '<td class="Bold Left Deletable"><div id="tit_IndAbs" '.($outputIndAbs ? '' : 'class="hidden"').'>';
+	echo '<input type="checkbox" id="allResultIndAbs" onclick="setAllCheck(\'QualificationInd[]\',this.id);">&nbsp;'.get_text('ResultIndAbs','Tournament');
+	echo (getModuleParameter('ISK','CalcFinInd',0, 0, true) == 1 ? '<br><span class="text-danger">'.get_text('RkCalcOffWarning', 'ISK').'</span>' : '');
+	echo '</div></td>';
 
-// Team Qualifications
-echo '<td class="Bold Left Deletable"><div id="tit_TeamAbs" '.($outputTeamAbs ? '' : 'class="hidden"').'>';
-echo '<input type="checkbox" id="allResultTeamAbs" onclick="setAllCheck(\'QualificationTeam[]\',this.id);">&nbsp;' . get_text('ResultSqAbs', 'Tournament');
-echo (getModuleParameter('ISK','CalcFinTeam',0, 0, true) == 1 ? '<br><span class="text-danger">'.get_text('RkCalcOffWarning', 'ISK').'</span>' : '');
-echo '</div></td>';
+	echo '<td class="Left Deletable InBook" id="sel_IndAbs">';
+	echo $outputIndAbs ? $outputIndAbs : '&nbsp;';
+	echo '</td>';
 
-echo '<td class="Left Deletable InBook" id="sel_TeamAbs">';
-echo $outputTeamAbs ? $outputTeamAbs : '&nbsp;';
-echo '</td>';
+	// Team Qualifications
+	echo '<td class="Bold Left Deletable"><div id="tit_TeamAbs" '.($outputTeamAbs ? '' : 'class="hidden"').'>';
+	echo '<input type="checkbox" id="allResultTeamAbs" onclick="setAllCheck(\'QualificationTeam[]\',this.id);">&nbsp;' . get_text('ResultSqAbs', 'Tournament');
+	echo (getModuleParameter('ISK','CalcFinTeam',0, 0, true) == 1 ? '<br><span class="text-danger">'.get_text('RkCalcOffWarning', 'ISK').'</span>' : '');
+	echo '</div></td>';
 
-echo '</tr>';
+	echo '<td class="Left Deletable InBook" id="sel_TeamAbs">';
+	echo $outputTeamAbs ? $outputTeamAbs : '&nbsp;';
+	echo '</td>';
 
-// divider
-//echo '<tr class="Divider"><th colspan="4"></th></tr>';
-echo '</tbody>';
+	echo '</tr>';
 
-if($outputIndAbs) {
-    $Scores.='<div><input type="checkbox" name="ScoBra" class="removeAfterUpload"/>'.get_text('ScorecardsInd','Tournament').'</div>';
-}
-if($outputTeamAbs) {
-    $Scores.='<div><input type="checkbox" name="ScoBraTeam" class="removeAfterUpload"/>'.get_text('ScorecardsTeams','Tournament').'</div>';
-}
+	// divider
+	//echo '<tr class="Divider"><th colspan="4"></th></tr>';
+	echo '</tbody>';
 
-
-// Eliminations (HF & 3D)
-if(isset($_REQUEST['ELIM'])) {
-    $cl='';
-    $st='on';
-    $ic='down';
-} else {
-    $cl='hidden';
-    $st='off';
-    $ic='right';
-}
-echo '<tr class="tit_Elim'.($outputElim ? '' : ' hidden').'"><th colspan="4" class="AccordionToggle" ref="ELIM" status="'.$st.'" onclick="toggleAccordion(this)"><i class="fa fa-lg fa-caret-'.$ic.' mr-2"></i>'.get_text('E-Session', 'Tournament').'</th></tr>';
-echo '<tbody id="Tbody-ELIM" class="'.$cl.'">';
-if($Elim4) {
-    $ElimCode='EL4';
-    $outputElim='<input type="checkbox" name="EliminationStartlist[]" value="'.$ElimCode.'"  class="removeAfterUpload">' . get_text('StartList', 'Tournament') . ' '.get_text('WA_Pool4').'<br/>' . $outputElim;
-}
-if($Elim3) {
-    $ElimCode='EL3';
-    $outputElim='<input type="checkbox" name="EliminationStartlist[]" value="'.$ElimCode.'"  class="removeAfterUpload">' . get_text('StartList', 'Tournament') . ' '.get_text('WG_Pool2').'<br/>' . $outputElim;
-}
-if($Elim2) {
-    $ElimCode='EL2';
-    $outputElim='<input type="checkbox" name="EliminationStartlist[]" value="'.$ElimCode.'"  class="removeAfterUpload">' . get_text('StartlistSession', 'Tournament') . ' '.get_text('Eliminations').' 2<br/>' . $outputElim;
-}
-if($Elim1) {
-    $ElimCode='EL1';
-    $outputElim='<input type="checkbox" name="EliminationStartlist[]" value="'.$ElimCode.'"  class="removeAfterUpload">' . get_text('StartlistSession', 'Tournament') . ' '.get_text('Eliminations'). ' 1<br/>' . $outputElim;
-}
-echo '<tr class="tit_Elim'.($outputElim ? '' : ' hidden').'">';
-echo '<td class="Bold Left Deletable">';
-echo '<input type="checkbox" id="allResultElim" onclick="setAllCheck(\'EliminationInd[]\',this.id);">&nbsp;';
-echo get_text('Elimination');
-echo '</td>';
-echo '<td class="Left Deletable InBook">';
-echo $outputElim ? $outputElim : '&nbsp;';
-echo '</td>';
-echo '<td colspan="2" class="Left">&nbsp;</td>';
-echo '</tr>';
-
-echo '</tbody>';
-
-$Scores.='<div><input type="checkbox" name="ScoElim" class="removeAfterUpload"/>'.get_text('ScorecardsElim','Tournament').'</div>';
+	if($outputIndAbs) {
+		$Scores.='<div><input type="checkbox" name="ScoBra" class="removeAfterUpload"/>'.get_text('ScorecardsInd','Tournament').'</div>';
+	}
+	if($outputTeamAbs) {
+		$Scores.='<div><input type="checkbox" name="ScoBraTeam" class="removeAfterUpload"/>'.get_text('ScorecardsTeams','Tournament').'</div>';
+	}
 
 
-// Brackets
-if(isset($_REQUEST['EVENTS'])) {
-    $cl='';
-    $st='on';
-    $ic='down';
-} else {
-    $cl='hidden';
-    $st='off';
-    $ic='right';
-}
-echo '<tr class="tit_Bra'.(($outputIndBra or $outputTeamBra) ? '' : ' hidden').'"><th colspan="4" class="AccordionToggle" ref="EVENTS" status="'.$st.'" onclick="toggleAccordion(this)"><i class="fa fa-lg fa-caret-'.$ic.' mr-2"></i>'.get_text('Events', 'Tournament').'</th></tr>';
-echo '<tbody id="Tbody-EVENTS" class="'.$cl.'">';
-echo '<tr class="tit_Bra'.(($outputIndBra or $outputTeamBra) ? '' : ' hidden').'">';
+	// Eliminations (HF & 3D)
+	if(isset($_REQUEST['ELIM'])) {
+		$cl='';
+		$st='on';
+		$ic='down';
+	} else {
+		$cl='hidden';
+		$st='off';
+		$ic='right';
+	}
+	echo '<tr class="tit_Elim'.($outputElim ? '' : ' hidden').'"><th colspan="4" class="AccordionToggle" ref="ELIM" status="'.$st.'" onclick="toggleAccordion(this)"><i class="fa fa-lg fa-caret-'.$ic.' mr-2"></i>'.get_text('E-Session', 'Tournament').'</th></tr>';
+	echo '<tbody id="Tbody-ELIM" class="'.$cl.'">';
+	if($Elim4) {
+		$ElimCode='EL4';
+		$outputElim='<input type="checkbox" name="EliminationStartlist[]" value="'.$ElimCode.'"  class="removeAfterUpload">' . get_text('StartList', 'Tournament') . ' '.get_text('WA_Pool4').'<br/>' . $outputElim;
+	}
+	if($Elim3) {
+		$ElimCode='EL3';
+		$outputElim='<input type="checkbox" name="EliminationStartlist[]" value="'.$ElimCode.'"  class="removeAfterUpload">' . get_text('StartList', 'Tournament') . ' '.get_text('WG_Pool2').'<br/>' . $outputElim;
+	}
+	if($Elim2) {
+		$ElimCode='EL2';
+		$outputElim='<input type="checkbox" name="EliminationStartlist[]" value="'.$ElimCode.'"  class="removeAfterUpload">' . get_text('StartlistSession', 'Tournament') . ' '.get_text('Eliminations').' 2<br/>' . $outputElim;
+	}
+	if($Elim1) {
+		$ElimCode='EL1';
+		$outputElim='<input type="checkbox" name="EliminationStartlist[]" value="'.$ElimCode.'"  class="removeAfterUpload">' . get_text('StartlistSession', 'Tournament') . ' '.get_text('Eliminations'). ' 1<br/>' . $outputElim;
+	}
+	echo '<tr class="tit_Elim'.($outputElim ? '' : ' hidden').'">';
+	echo '<td class="Bold Left Deletable">';
+	echo '<input type="checkbox" id="allResultElim" onclick="setAllCheck(\'EliminationInd[]\',this.id);">&nbsp;';
+	echo get_text('Elimination');
+	echo '</td>';
+	echo '<td class="Left Deletable InBook">';
+	echo $outputElim ? $outputElim : '&nbsp;';
+	echo '</td>';
+	echo '<td colspan="2" class="Left">&nbsp;</td>';
+	echo '</tr>';
 
-// Individual brackets
-echo '<td class="Bold Left Deletabl"><div id="tit_IndBra" '.($outputIndBra ? '' : 'class="hidden"').'>'
-    . '<input type="checkbox" id="allIndBra" onclick="setAllCheck(\'BracketsInd[]\',this.id);">&nbsp;'
-    . get_text('Brackets') . ' - ' . get_text('Individual')
-    . '</div></td>'
-    . '<td class="Left Deletable InBook" id="sel_IndBra">'
-    . ($outputIndBra ? $outputIndBra : '&nbsp;')
-    . '</td>';
+	echo '</tbody>';
+
+	$Scores.='<div><input type="checkbox" name="ScoElim" class="removeAfterUpload"/>'.get_text('ScorecardsElim','Tournament').'</div>';
+
+	// Round Robin
+	if(isset($_REQUEST['ROBIN'])) {
+		$cl='';
+		$st='on';
+		$ic='down';
+	} else {
+		$cl='hidden';
+		$st='off';
+		$ic='right';
+	}
+	echo '<tr class="tit_Robin'.($outputRobin ? '' : ' hidden').'"><th colspan="4" class="AccordionToggle" ref="ROBIN" status="'.$st.'" onclick="toggleAccordion(this)"><i class="fa fa-lg fa-caret-'.$ic.' mr-2"></i>'.get_text('R-Session', 'Tournament').'</th></tr>';
+	echo '<tbody id="Tbody-ROBIN" class="'.$cl.'">';
+	// if($Robin) {
+	//     $ElimCode='RL';
+	// 	$outputRobin='<input type="checkbox" name="RobinStartlist[]" value="'.$ElimCode.'"  class="removeAfterUpload">' . get_text('StartlistSession', 'Tournament') . ' '.get_text('R-Session','Tournament'). '<br/>' . $outputRobin;
+	// }
+	echo '<tr class="tit_Elim'.($outputRobin ? '' : ' hidden').'">';
+	echo '<td class="Bold Left Deletable">';
+	echo '<input type="checkbox" id="allResultRobin" onclick="setAllCheck(\'RobinInd[]\',this.id);">&nbsp;';
+	echo get_text('R-Session','Tournament');
+	echo '</td>';
+	echo '<td class="Left Deletable InBook">';
+	echo $outputRobin ? $outputRobin : '&nbsp;';
+	echo '</td>';
+	echo '<td colspan="2" class="Left">&nbsp;</td>';
+	echo '</tr>';
+
+	echo '</tbody>';
+
+	$Scores.='<div><input type="checkbox" name="ScoRobin" class="removeAfterUpload"/>'.get_text('ScorecardsRobin','RoundRobin').'</div>';
 
 
-// Team brackets
-echo '<td class="Bold Left Deletable><div id="tit_TeamBra" '.($outputTeamBra ? '' : 'class="hidden"').'>'
-    . '<input type="checkbox" id="allTeamBra" onclick="setAllCheck(\'BracketsTeam[]\',this.id);">&nbsp;'
-    . get_text('Brackets') . ' - ' . get_text('Team')
-    . '</div></td>'
-    . '<td class="Left Deletable InBook" id="sel_TeamBra">'
-    . ($outputTeamBra ? $outputTeamBra : '&nbsp;')
-    . '</td>';
+	// Brackets
+	if(isset($_REQUEST['EVENTS'])) {
+		$cl='';
+		$st='on';
+		$ic='down';
+	} else {
+		$cl='hidden';
+		$st='off';
+		$ic='right';
+	}
+	echo '<tr class="tit_Bra'.(($outputIndBra or $outputTeamBra) ? '' : ' hidden').'"><th colspan="4" class="AccordionToggle" ref="EVENTS" status="'.$st.'" onclick="toggleAccordion(this)"><i class="fa fa-lg fa-caret-'.$ic.' mr-2"></i>'.get_text('Events', 'Tournament').'</th></tr>';
+	echo '<tbody id="Tbody-EVENTS" class="'.$cl.'">';
+	echo '<tr class="tit_Bra'.(($outputIndBra or $outputTeamBra) ? '' : ' hidden').'">';
 
-echo '</tr>';
+	// Individual brackets
+	echo '<td class="Bold Left Deletabl"><div id="tit_IndBra" '.($outputIndBra ? '' : 'class="hidden"').'>'
+		. '<input type="checkbox" id="allIndBra" onclick="setAllCheck(\'BracketsInd[]\',this.id);">&nbsp;'
+		. get_text('Brackets') . ' - ' . get_text('Individual')
+		. '</div></td>'
+		. '<td class="Left Deletable InBook" id="sel_IndBra">'
+		. ($outputIndBra ? $outputIndBra : '&nbsp;')
+		. '</td>';
 
-// divider
-echo '<tr class="Divider"><th colspan="4"></th></tr>';
 
-// Final Rankings
-echo '<tr class="tit_Bra'.(($outputIndFin or $outputTeamFin) ? '' : ' hidden').'">';
-// Individual rank
-echo '<td class="Bold Left Deletable"><div id="tit_IndFin" '.($outputIndFin ? '' : 'class="hidden"').'>'
-    . '<input type="checkbox" id="allIndFin" onclick="setAllCheck(\'FinalInd[]\',this.id);">&nbsp;'
-    . get_text('Rankings') . ' - ' . get_text('Individual')
-    . '</div></td>'
-    . '<td class="Left Deletable InBook" id="sel_IndFin">'
-    . ($outputIndFin ? $outputIndFin : '&nbsp;')
-    . '</td>';
+	// Team brackets
+	echo '<td class="Bold Left Deletable><div id="tit_TeamBra" '.($outputTeamBra ? '' : 'class="hidden"').'>'
+		. '<input type="checkbox" id="allTeamBra" onclick="setAllCheck(\'BracketsTeam[]\',this.id);">&nbsp;'
+		. get_text('Brackets') . ' - ' . get_text('Team')
+		. '</div></td>'
+		. '<td class="Left Deletable InBook" id="sel_TeamBra">'
+		. ($outputTeamBra ? $outputTeamBra : '&nbsp;')
+		. '</td>';
+
+	echo '</tr>';
+
+	// divider
+	echo '<tr class="Divider"><th colspan="4"></th></tr>';
+
+	// Final Rankings
+	echo '<tr class="tit_Bra'.(($outputIndFin or $outputTeamFin) ? '' : ' hidden').'">';
+	// Individual rank
+	echo '<td class="Bold Left Deletable"><div id="tit_IndFin" '.($outputIndFin ? '' : 'class="hidden"').'>'
+		. '<input type="checkbox" id="allIndFin" onclick="setAllCheck(\'FinalInd[]\',this.id);">&nbsp;'
+		. get_text('Rankings') . ' - ' . get_text('Individual')
+		. '</div></td>'
+		. '<td class="Left Deletable InBook" id="sel_IndFin">'
+		. ($outputIndFin ? $outputIndFin : '&nbsp;')
+		. '</td>';
 
 
 	// Team Rank
-echo '<td class="Bold Left Deletable"><div id="tit_TeamFin" '.($outputTeamFin ? '' : 'class="hidden"').'>'
-    . '<input type="checkbox" id="allTeamFin" onclick="setAllCheck(\'FinalTeam[]\',this.id);">&nbsp;'
-    . get_text('Rankings') . ' - ' . get_text('Team')
-    . '</div></td>'
-    . '<td class="Left Deletable InBook" id="sel_TeamFin">'
-    . ($outputTeamFin ? $outputTeamFin : '&nbsp;')
-    . '</td>';
+	echo '<td class="Bold Left Deletable"><div id="tit_TeamFin" '.($outputTeamFin ? '' : 'class="hidden"').'>'
+		. '<input type="checkbox" id="allTeamFin" onclick="setAllCheck(\'FinalTeam[]\',this.id);">&nbsp;'
+		. get_text('Rankings') . ' - ' . get_text('Team')
+		. '</div></td>'
+		. '<td class="Left Deletable InBook" id="sel_TeamFin">'
+		. ($outputTeamFin ? $outputTeamFin : '&nbsp;')
+		. '</td>';
 
 
-echo '</tr>';
-echo '</tbody>';
+	echo '</tr>';
+	echo '</tbody>';
 
-
-// ORIS SPECIFIC FILES
-echo '<tr class="Divider OrisShow tit_MedBook'.(($ShowMedals or $ShowFinalBook) ? '' : ' hidden').'"><th colspan="4"></th></tr>';
-echo '<tr class="OrisShow tit_MedBook'.(($ShowMedals or $ShowFinalBook) ? '' : ' hidden').'">
+	// ORIS SPECIFIC FILES
+	echo '<tr class="Divider OrisShow tit_MedBook'.(($ShowMedals or $ShowFinalBook) ? '' : ' hidden').'"><th colspan="4"></th></tr>';
+	echo '<tr class="OrisShow tit_MedBook'.(($ShowMedals or $ShowFinalBook) ? '' : ' hidden').'">
     <td class="Bold Center Deletable InBook"><div class="tit_Med'.($ShowMedals ? '' : ' hidden').'"><input type="checkbox" name="MEDSTD">'.get_text('MedalStanding').'</div></td>
     <td colspan="2" class="Bold Center Deletable"><div class="tit_Book'.($ShowFinalBook ? '' : ' hidden').'"><input type="checkbox" name="BOOK" class="removeAfterUpload" onclick="SelectBook(this)">'.get_text('CompleteResultBook').'</div></td>
     <td class="Bold Center Deletable InBook"><div class="tit_Med'.($ShowMedals ? '' : ' hidden').'"><input type="checkbox" name="MEDLST">'.get_text('MedalList').'</div></td>
     </tr>';
-
+	echo '<tr class="OrisShow tit_MedBook">
+    <td class="Bold Center Deletable InBook"><div class="tit_Med"><input type="checkbox" name="RECSTD" class="removeAfterUpload">'.get_text('StatRecordsStanding','Tournament').'</div></td>
+    <td colspan="2" class="Bold Center Deletable InBook"><div class="tit_Book"><input type="checkbox" name="STF" class="removeAfterUpload">'.get_text('StaffOnField','Tournament').'</div></td>
+    <td class="Bold Center Deletable InBook"><div class="tit_Med"><input type="checkbox" name="RECBRK" class="removeAfterUpload">'.get_text('StatRecordsBroken','Tournament').'</div></td>
+    </tr>';
+}
 
 // Scorecards and Generic PDFs
 if(isset($_REQUEST['PDFS'])) {
@@ -485,7 +565,7 @@ echo '</tbody>';
 // final button
 if (!IsBlocked(BIT_BLOCK_PUBBLICATION)) {
 	echo '<tr class="Divider"><th colspan="4" class="Title"></th></tr>';
-	echo '<tr><td colspan="4" class="Center"><input type="button" value="' . get_text('CmdOk') . '" onclick="doUpload()"></td></tr>';
+	echo '<tr><td colspan="4" class="Center"><input type="button" value="' . get_text('CmdOk') . '" onclick="doUpload()"><input class="ml-2" type="button" value="' . get_text('OvrRefresh', 'Tournament') . '" onclick="doRefresh()"></td></tr>';
 }
 
 //Autorefresh Timer

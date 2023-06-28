@@ -34,6 +34,7 @@ $lang['CssMatchCommon']='Maç - Ortak';
 $lang['CssMatchTop']='Maç - Üst Satır';
 $lang['CssName']='İsim ve Bayrak Bloğu - Yarışmacı';
 $lang['CssSetsCommon']='Set Puanı';
+$lang['CssVegasSOTarget']='Hedef';
 $lang['Download']='İndir';
 $lang['HowToUse']='Ianseo ile Boinx\'i Entegre Etme';
 $lang['Ianseo30.qtz']='Mükemmel seriyi kutlamak için küçük bir animasyon.<br/>Tam 20, 30, 40, 60 puanlar için aynı animasyon (farklı oklarda).<br/>29, 39, 59 puan için farklı animasyon.';

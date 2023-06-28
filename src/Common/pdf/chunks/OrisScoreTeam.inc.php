@@ -4,8 +4,8 @@ $rankData=$PdfData->rankData;
 
 $First=true;
 foreach($rankData['sections'] as $Event => $section) {
-	$pdf->endPage();
 	$pdf->setOrisCode($PdfData->ScoreCode, '', true);
+	$pdf->endPage();
 	$pdf->setEvent($section['meta']['eventName']);
 	$pdf->Records=array(); // $section['records'];
 	$pdf->setPhase($PdfData->ScorePhase);
@@ -34,14 +34,11 @@ foreach($rankData['sections'] as $Event => $section) {
 			if(!($item['countryCode'] and $item['oppCountryCode'])) {
 				continue;
 			}
-
-			if($AddPage and !$CurPlace) {
+			if($AddPage) {
 				$pdf->AddPage('P');
 			}
 			$First=false;
-			$pdf->OrisScorecard($item, $CurPlace, $Phase['meta'], $section['meta'], $rankData['meta'], 1);
-
-			$CurPlace=1-$CurPlace;
+			$pdf->OrisScorecard($item, $CurPlace, $Phase['meta'], $section['meta'], $rankData['meta'], 1, $section['athletes']);
 			$AddPage=true;
 		}
 	}

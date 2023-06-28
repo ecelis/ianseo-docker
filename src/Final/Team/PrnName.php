@@ -79,7 +79,8 @@ if (safe_num_rows($Rs)>0) {
 		if(!empty($_REQUEST['TestCountries'])) {
 			$pdf->setPrintHeader(false);
 		}
-		$pdf->setPrintFooter(false);
+		// if()
+		$pdf->setPrintFooter(!empty($pdf->imgB));
 		$pdf->init($Rs);
 
 		$pdf->TargetAssignment = !empty($_REQUEST['TargetAssign']);

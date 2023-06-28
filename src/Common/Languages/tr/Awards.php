@@ -14,10 +14,10 @@ $lang['EvNameTranslated']='Tercüme Edilmiş Organizasyon';
 $lang['LonginePresentation']='Makaralı Yay Erkekler XXX Ayağı İsabet Ödülü Kazananı';
 $lang['LonginesEvent']='Longines İsabet Ödülü';
 $lang['RM0']='Olimpik Yay Erkek';
-$lang['RM1']='Olimpik Yay Erkek Takım';
+$lang['RM1']='Klasik Yay Erkek Takım';
 $lang['RW0']='Olimpik Yay Kadın';
-$lang['RW1']='Olimpik Yay Kadın Takım';
-$lang['RX']='Olimpik Yay Karışık Takım';
-$lang['RX1']='Olimpik Yay Karışık Takım';
+$lang['RW1']='Klasik Yay Kadın Takım';
+$lang['RX']='Klasik Yay Karışık Takım';
+$lang['RX1']='Klasik Yay Karışık Takım';
 $lang['WaitAthletes']='Sporcuları bekle';
 ?>

@@ -138,316 +138,282 @@ if (isset($_REQUEST['Command'])) {
 }
 
 
-	$Awarders=array();
-	$n=1;
-	while($awarder=getModuleParameter('Awards', 'Aw-Awarder-1-'.$n)) {
-		$Awarders['Aw-Awarder-1-'.$n]=preg_replace("/[\r\n]+/sim", ', ', $awarder);
-		$n++;
-	}
+$Awarders=array();
+if($aws=getModuleParameterLike('Awards', 'Aw-Awarder-1-%')) {
+    // sort them
+    uksort($aws, function($a, $b) {
+        $an=intval(substr($a,13));
+        $bn=intval(substr($b,13));
+        if($an==$bn) {
+            return 0;
+        }
+        return ($an<$bn ? -1 : 1);
+    });
+}
+foreach($aws as $awkey=>$awval) {
+    $Awarders[]=['id'=>$awkey, 'val'=>preg_replace("/[\r\n]+/sim", ', ', $awval)];
+}
 
-	$JS_SCRIPT = array(
-		phpVars2js(array('AwKeys' => array_keys($Awarders), 'AwValues' => array_values($Awarders))),
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Tournament/Fun_AJAX_ManAwards.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
-		);
+$JS_SCRIPT = array(
+    phpVars2js(array(
+        'Awarders' => $Awarders,
+        'btnDelete'=> get_text('CmdDelete','Tournament'),
+        )),
+    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Tournament/Fun_AJAX_ManAwards.js"></script>',
+    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
+    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
+    );
 
-	$PAGE_TITLE=get_text('MenuLM_ManAwards');
+$PAGE_TITLE=get_text('MenuLM_ManAwards');
 
-	$SecondLanguage = getModuleParameter('Awards','SecondLanguage',0);
+$SecondLanguage = getModuleParameter('Awards','SecondLanguage',0);
+$SecondClass=($SecondLanguage ? '' : 'd-none');
 
-	include('Common/Templates/head.php');
+include('Common/Templates/head.php');
 ?>
 <table class="Tabella">
-<tr><th class="Title" colspan="11"><?php print get_text('MenuLM_ManAwards'); ?></th></tr>
-<tr class="Divider"><td colspan="11"></td></tr>
-<tr>
-<th width="1%"><?php print get_text('Print', 'Tournament'); ?></th>
-<th width="1%"><?php print get_text('Order', 'Tournament'); ?></th>
-<th width="1%"><?php print get_text('EvCode'); ?></th>
-<th width="1%"><?php print get_text('RankFinals', 'Tournament'); ?></th>
-<th width="1%"><?php print get_text('Event'); ?></th>
-<th width="1%"><?php print get_text('EvNameTranslated', 'Tournament'); ?></th>
-<th width="5%"><?php print get_text('AwardName', 'Tournament'); ?></th>
-<th width="30%"><?php print get_text('Awarders', 'Tournament'); ?></th>
-<th width="30%"><?php print get_text('Awarders', 'Tournament') . ' (Medal)'; ?></th>
-<th width="30%"><?php print get_text('Awarders', 'Tournament') . ' (Plaque)'; ?></th>
-<th>&nbsp;</th>
-</tr>
+    <tr><th class="Title" colspan="9"><?php print get_text('MenuLM_ManAwards'); ?></th></tr>
+    <tr class="Divider"><td colspan="9"></td></tr>
+    <tr>
+    <th style="width:25px"><?php print get_text('Print', 'Tournament'); ?></th>
+    <th style="width:2em"><?php print get_text('Order', 'Tournament'); ?></th>
+    <th style="width:2em"><?php print get_text('EvCode'); ?></th>
+    <th style="width:4em"><?php print get_text('RankFinals', 'Tournament'); ?></th>
+    <th style="width:3em"><?php print get_text('Event'); ?></th>
+    <th style="width:8em"><div class="SecondLanguage <?= $SecondClass ?>"><?= get_text('EvNameTranslated', 'Tournament') ?></div></th>
+    <th colspan="2"><?php print get_text('Awarders', 'Tournament'); ?></th>
+    <th></th>
+    </tr>
 <?php
 
 $CustomAwards=0;
 
-	$Select = "SELECT *
-			FROM Awards
-			WHERE AwTournament=" . StrSafe_DB($_SESSION['TourId']) . "
-			ORDER BY AwGroup DESC, AwOrder, AwFinEvent DESC, AwTeam ASC, AwEvent";
+$Select = "SELECT *
+        FROM Awards
+        WHERE AwTournament=" . StrSafe_DB($_SESSION['TourId']) . "
+        ORDER BY AwGroup DESC, AwOrder, AwFinEvent DESC, AwTeam ASC, AwEvent";
 
-		//print $Select;  exit;
+$Rs=safe_r_sql($Select);
 
-	$Rs=safe_r_sql($Select);
+if (safe_num_rows($Rs)>0) {
+    while ($MyRow=safe_fetch($Rs)) {
+        if(strstr($MyRow->AwEvent,'Custom')) $CustomAwards++;
+        $keyEvent = $MyRow->AwEvent.'|'.$MyRow->AwFinEvent.'|'.$MyRow->AwTeam;
+        print '<tr id="'.$keyEvent.'">';
 
-	if (safe_num_rows($Rs)>0) {
-		while ($MyRow=safe_fetch($Rs)) {
-			if(strstr($MyRow->AwEvent,'Custom')) $CustomAwards++;
-			print '<tr id="'.$MyRow->AwEvent.'|'.$MyRow->AwFinEvent.'|'.$MyRow->AwTeam.'">';
+        print '<td class="Center">';
+        print '<img  onclick="switchEnabled(\'' . $MyRow->AwEvent . "'," . $MyRow->AwFinEvent . "," . $MyRow->AwTeam . ')" src="' . $CFG->ROOT_DIR . 'Common/Images/Enabled' . $MyRow->AwGroup . '.png" width="20" alt="' .  get_text($MyRow->AwGroup ? 'Yes' : 'No'). '">';
+        print '</td>';
 
-			print '<td class="Center"  onclick="switchEnabled(\'' . $MyRow->AwEvent . "'," . $MyRow->AwFinEvent . "," . $MyRow->AwTeam . ')">';
-			print '<img src="' . $CFG->ROOT_DIR . 'Common/Images/Enabled' . $MyRow->AwGroup . '.png" width="20" alt="' .  get_text($MyRow->AwGroup ? 'Yes' : 'No'). '">';
-			print '</td>';
+        print '<td onclick="insertInput(\'AwOrder|'.$keyEvent.'\')"><div class="Center" ref="AwOrder|'.$keyEvent.'">'.$MyRow->AwOrder.'</div></td>';
 
-			print '<td class="Center" onclick="insertInput(this,\'AwOrder\')">';
-			print $MyRow->AwOrder;
-			print '</td>';
+        print '<td class="Center">';
+        print $MyRow->AwEvent;
+        print '</td>';
 
-			print '<td class="Center">';
-			print $MyRow->AwEvent;
-			print '</td>';
+        print '<td onclick="insertInput(\'AwPositions|'.$keyEvent.'\')"><div ref="AwPositions|'.$keyEvent.'">'.($MyRow->AwPositions=='1,2,4,3' ? '1,2,3-3' : $MyRow->AwPositions).'</div></td>';
 
-			print '<td onclick="insertInput(this,\'AwPositions\')">';
-			print ($MyRow->AwPositions=='1,2,4,3' ? '1,2,3-3' : $MyRow->AwPositions);
-			print '</td>';
+        print '<td>';
+        print $evArray[$MyRow->AwFinEvent. $MyRow->AwTeam];
+        print '</td>';
 
-			print '<td>';
-			print $evArray[$MyRow->AwFinEvent. $MyRow->AwTeam];
-			print '</td>';
+        print '<td onclick="insertInput(\'AwEventTrans|'.$keyEvent.'\')"><div class="Center SecondLanguage '.$SecondClass.'" ref="AwEventTrans|'.$keyEvent.'">'.$MyRow->AwEventTrans.'</div></td>';
 
-			print '<td class="Center" onclick="insertInput(this,\'AwEventTrans\')">';
-			print $MyRow->AwEventTrans;
-			print '</td>';
+        $Awards=array();
+        if($MyRow->AwAwarderGrouping) {
+            $Awards=@unserialize($MyRow->AwAwarderGrouping);
+        }
 
-			// check version of this awarding script...
-			if(($MyRow->AwAwarders or $MyRow->AwDescription) and !$MyRow->AwAwarderGrouping) {
-				// this is the old script... transform it into the new one...
-				// Medal, Plaque and Trophy are now Awards 1, 2 and 3 (if any)
-				$Langs=array('', getModuleParameter('Awards', 'FirstLanguageCode'), getModuleParameter('Awards', 'SecondLanguageCode'));
-				$Awards=array();
-				$Trophy=2;
-				foreach(range(1,2) as $n) {
-					if($tmp=getModuleParameter('Awards', 'Aw-Medal-'.$n)) {
-						if(!strstr($tmp, '$a')) $tmp.= ' {$a}';
-						setModuleParameter('Awards', 'Aw-Award-'.$n.'-1', $tmp);
-						delModuleParameter('Awards', 'Aw-Medal-'.$n);
-					} else {
-						if($Langs[$n]) setModuleParameter('Awards', 'Aw-Award-'.$n.'-1', get_text('Award-MedalGiver', 'IOC_Codes', '{$a}', '', '', $Langs[$n]));
-					}
-					if($tmp=getModuleParameter('Awards', 'Aw-Plaque-'.$n)) {
-						if(!strstr($tmp, '$a')) $tmp.= ' {$a}';
-						setModuleParameter('Awards', 'Aw-Award-'.$n.'-2', $tmp);
-						delModuleParameter('Awards', 'Aw-Plaque-'.$n);
-					} else {
-						if($Langs[$n]) setModuleParameter('Awards', 'Aw-Award-'.$n.'-2', get_text('Award-PlaqueGiver', 'IOC_Codes', '{$a}', '', '', $Langs[$n]));
-					}
+        echo '<td onclick="Manage(this,\'Award\')">';
+        foreach($Awards as $k=>$v) {
+            if(is_numeric($k)) {
+                echo '<div><li>'.ManageHTML(get_text_eval(getModuleParameter('Awards', 'Aw-Award-1-'.$k), getModuleParameter('Awards', 'Aw-Awarder-1-'.$v))).'</li></div>';
+            } else {
+                echo '<div><li>'.ManageHTML(get_text_eval(getModuleParameter('Awards', 'Aw-Special-1'), getModuleParameter('Awards', 'Aw-Awarder-1-'.$v))).'</li></div>';
+            }
+        }
+        echo '</td>';
+        echo '<td id="SecondLangAward['.$MyRow->AwEvent.'|'.$MyRow->AwFinEvent.'|'.$MyRow->AwTeam.']">';
+        foreach($Awards as $k=>$v) {
+            echo '<div class="SecondLanguage '.$SecondClass.'"><li>'.ManageHTML(get_text_eval(getModuleParameter('Awards', 'Aw-Award-2-'.$k), getModuleParameter('Awards', 'Aw-Awarder-2-'.$v))).'</li></div>';
+        }
+        echo '</td>';
 
-					if($tmp=getModuleParameter('Awards', 'Aw-Giver-'.$n)) {
-						$AwDescription=explode('@@@', $MyRow->AwDescription);
-						if(!empty($AwDescription[0])) {
-							if(empty($AwDescription[1])) $AwDescription[1]='';
-							if($n==1) {
-								$Trophy++;
-							}
-							$Awards[$Trophy]=substr($AwDescription[1],13);
-							setModuleParameter('Awards', 'Aw-Award-'.$n.'-'.$Trophy, get_text_eval($tmp, array($AwDescription[0], '{a}')));
-						}
-						delModuleParameter('Awards', 'Aw-Giver-'.$n);
-					}
-					delModuleParameter('Awards', 'Aw-Giving-'.$n);
-				}
-				$AwAwarders=explode('@@@', $MyRow->AwAwarders);
-				if(!empty($AwAwarders[0])) $Awards[1]=substr($AwAwarders[0], 13);
-				if(!empty($AwAwarders[1])) $Awards[2]=substr($AwAwarders[1], 13);
-				ksort($Awards);
-				$MyRow->AwAwarderGrouping=serialize($Awards);
-				safe_w_sql("update Awards
-					set AwAwarderGrouping=".StrSafe_DB($MyRow->AwAwarderGrouping).",
-						AwDescription='',
-						AwAwarders=''
-					WHERE AwTournament={$_SESSION['TourId']}
-						AND AwEvent='$MyRow->AwEvent'
-						and AwFinEvent=$MyRow->AwFinEvent
-						and AwTeam=$MyRow->AwTeam");
-			}
+        print '<td class="Center">';
+        print '<input type="button" value="' . get_text('CmdDelete','Tournament') . '" onClick="javascript:DeleteAwards(\'' . $MyRow->AwEvent . "'," . $MyRow->AwFinEvent . "," . $MyRow->AwTeam . ',\'' . get_text('MsgAreYouSure') . '\');">';
+        print '</td>';
 
-			$Awards=array();
-			if($MyRow->AwAwarderGrouping) $Awards=@unserialize($MyRow->AwAwarderGrouping);
+        print '</tr>' . "\n";
+    }
+}
 
-			echo '<td colspan="2" onclick="Manage(this,\'Award\')">';
-			foreach($Awards as $k=>$v) {
-				if(is_numeric($k)) {
-					echo '<div><li>'.ManageHTML(get_text_eval(getModuleParameter('Awards', 'Aw-Award-1-'.$k), getModuleParameter('Awards', 'Aw-Awarder-1-'.$v))).'</li></div>';
-				} else {
-					echo '<div><li>'.ManageHTML(get_text_eval(getModuleParameter('Awards', 'Aw-Special-1'), getModuleParameter('Awards', 'Aw-Awarder-1-'.$v))).'</li></div>';
-				}
-			}
-			echo '</td>';
-			echo '<td colspan="2" id="SecondLangAward['.$MyRow->AwEvent.'|'.$MyRow->AwFinEvent.'|'.$MyRow->AwTeam.']">';
-			foreach($Awards as $k=>$v) {
-				if($SecondLanguage) echo '<div><li>'.ManageHTML(get_text_eval(getModuleParameter('Awards', 'Aw-Award-2-'.$k), getModuleParameter('Awards', 'Aw-Awarder-2-'.$v))).'</li></div>';
-			}
-			echo '</td>';
+echo '<tr class="Divider"><td colspan="9"></td></tr>';
+echo '<tr><th class="Title" colspan="9">' . get_text('Options','Tournament') . '</th></tr>';
 
-			print '<td class="Center">';
-			print '<input type="button" value="' . get_text('CmdDelete','Tournament') . '" onClick="javascript:DeleteAwards(\'' . $MyRow->AwEvent . "'," . $MyRow->AwFinEvent . "," . $MyRow->AwTeam . ',\'' . get_text('MsgAreYouSure') . '\');">';
-			print '</td>';
+$tmp = getModuleParameter('Awards','ReverseNameFunction',0);
+echo '<tr>
+    <td colspan="6" class="Right"><img id="ReverseNameFunction" onclick="switchOption(this)" src="' . $CFG->ROOT_DIR . 'Common/Images/Enabled' . $tmp. '.png" width="20" alt="' .  get_text($tmp ? 'Yes' : 'No'). '"></td>
+    <td colspan="3">'. get_text('ReverseNameFunction','Tournament') . '</td>
+    </tr>';
 
-			print '</tr>' . "\n";
-		}
-	}
-	echo '<tr class="Divider"><td colspan="11"></td></tr>';
-	echo '<tr><th class="Title" colspan="11">' . get_text('Options','Tournament') . '</th></tr>';
+$tmp = getModuleParameter('Awards','PlayAnthem',1);
+echo '<tr><td colspan="6" class="Right"><img id="PlayAnthem" onclick="switchOption(this)" src="' . $CFG->ROOT_DIR . 'Common/Images/Enabled' . $tmp. '.png" width="20" alt="' .  get_text($tmp ? 'Yes' : 'No'). '"></td>';
+echo '<td colspan="3">'. get_text('AwardPlayAnthem','Tournament') . '</td></tr>';
 
-	$tmp = getModuleParameter('Awards','PlayAnthem',1);
-	echo '<tr><td class="Center" onclick="switchOption(\'PlayAnthem\')"><img src="' . $CFG->ROOT_DIR . 'Common/Images/Enabled' . $tmp. '.png" width="20" alt="' .  get_text($tmp ? 'Yes' : 'No'). '"></td>';
-	echo '<td colspan="10">'. get_text('AwardPlayAnthem','Tournament') . '</td></tr>';
+$tmp = getModuleParameter('Awards','RepresentCountry',1);
+echo '<tr><td colspan="6" class="Right"><img id="RepresentCountry" onclick="switchOption(this)" src="' . $CFG->ROOT_DIR . 'Common/Images/Enabled' . $tmp. '.png" width="20" alt="' .  get_text($tmp ? 'Yes' : 'No'). '"></td>';
+echo '<td colspan="3">'. get_text('AwardRepresentCountry','Tournament') . '</td></tr>';
 
-	$tmp = getModuleParameter('Awards','RepresentCountry',1);
-	echo '<tr><td class="Center" onclick="switchOption(\'RepresentCountry\')"><img src="' . $CFG->ROOT_DIR . 'Common/Images/Enabled' . $tmp. '.png" width="20" alt="' .  get_text($tmp ? 'Yes' : 'No'). '"></td>';
-	echo '<td colspan="10">'. get_text('AwardRepresentCountry','Tournament') . '</td></tr>';
+$tmp = getModuleParameter('Awards','ShowPdfFlags',0);
+echo '<tr><td colspan="6" class="Right"><img id="ShowPdfFlags" onclick="switchOption(this)" src="' . $CFG->ROOT_DIR . 'Common/Images/Enabled' . $tmp. '.png" width="20" alt="' .  get_text($tmp ? 'Yes' : 'No'). '"></td>';
+echo '<td colspan="3">'. get_text('ShowPdfFlags','Tournament') . '</td></tr>';
 
-	$tmp = getModuleParameter('Awards','ShowPdfFlags',0);
-	echo '<tr><td class="Center" onclick="switchOption(\'ShowPdfFlags\')"><img src="' . $CFG->ROOT_DIR . 'Common/Images/Enabled' . $tmp. '.png" width="20" alt="' .  get_text($tmp ? 'Yes' : 'No'). '"></td>';
-	echo '<td colspan="10">'. get_text('ShowPdfFlags','Tournament') . '</td></tr>';
+$tmp = getModuleParameter('Awards','ShowPoints', 0);
+echo '<tr><td colspan="6" class="Right"><img id="ShowPoints" onclick="switchOption(this)" src="' . $CFG->ROOT_DIR . 'Common/Images/Enabled' . $tmp. '.png" width="20" alt="' .  get_text($tmp ? 'Yes' : 'No'). '"></td>';
+echo '<td colspan="3">'. get_text('AwardShowPoints','Tournament') . '</td></tr>';
 
-	$tmp = getModuleParameter('Awards','ShowPoints', 0);
-	echo '<tr><td class="Center" onclick="switchOption(\'ShowPoints\')"><img src="' . $CFG->ROOT_DIR . 'Common/Images/Enabled' . $tmp. '.png" width="20" alt="' .  get_text($tmp ? 'Yes' : 'No'). '"></td>';
-	echo '<td colspan="10">'. get_text('AwardShowPoints','Tournament') . '</td></tr>';
+$tmp = getModuleParameter('Awards','PrintPositions', array('Usher','2A','2B','2C','1A','1B','1C','3A','3B','3C', 'Tray Bearer 1', 'Tray Bearer 2', 'Tray Bearer 3', 'VIP Usher', 'V1', 'V2', 'VIP Usher'));
+echo '<tr><td colspan="6" class="Right Bold" nowrap="nowrap">Print Positions</td>';
+echo '<td colspan="3" onclick="insertInput(\'PrintPositions\')"><div ref="PrintPositions">'.(is_array($tmp) ? implode(', ', $tmp) : $tmp).'</div></td></tr>';
 
-	echo '<tr><td class="Center" onclick="switchOption(\'SecondLanguage\')"><img src="' . $CFG->ROOT_DIR . 'Common/Images/Enabled' . $SecondLanguage. '.png" width="20" alt="' .  get_text($SecondLanguage ? 'Yes' : 'No'). '"></td>';
-	$tmp=getModuleParameter('Awards', 'SecondLanguageCode');
-	$tmp2=getModuleParameter('Awards', 'FirstLanguageCode');
-	$UseLang=($_SESSION['TourPrintLang'] ? $_SESSION['TourPrintLang'] : SelectLanguage());
-	if(empty($tmp2) or $tmp2!=$UseLang) {
-		$tmp2=$UseLang;
-		setModuleParameter('Awards', 'FirstLanguageCode', $UseLang);
-		setModuleParameter('Awards', 'Aw-Intro-1', get_text('Award-Intro', 'IOC_Codes', '$a', '', '', $UseLang));
+// Languages!
+echo '<tr class="Divider"><td colspan="9"></td></tr>';
+echo '<tr><th class="Title" colspan="9">' . get_text('Languages','Tournament') . '</th></tr>';
+
+$tmp=getModuleParameter('Awards', 'SecondLanguageCode');
+$tmp2=getModuleParameter('Awards', 'FirstLanguageCode');
+$UseLang=($_SESSION['TourPrintLang'] ? $_SESSION['TourPrintLang'] : SelectLanguage());
+if(empty($tmp2) or $tmp2!=$UseLang) {
+    $tmp2=$UseLang;
+    setModuleParameter('Awards', 'FirstLanguageCode', $UseLang);
+    setModuleParameter('Awards', 'Aw-Intro-1', get_text('Award-Intro', 'IOC_Codes', '$a', '', '', $UseLang));
 // 		setModuleParameter('Awards', 'Aw-Medal-1', get_text('Award-MedalGiver', 'IOC_Codes', '$a', '', '', $UseLang));
 // 		setModuleParameter('Awards', 'Aw-Plaque-1', get_text('Award-PlaqueGiver', 'IOC_Codes', '$a', '', '', $UseLang));
-		setModuleParameter('Awards', 'Aw-Award-1-1', get_text('Award-MedalGiver', 'IOC_Codes', '$a', '', '', $UseLang));
-		setModuleParameter('Awards', 'Aw-Award-1-2', get_text('Award-PlaqueGiver', 'IOC_Codes', '$a', '', '', $UseLang));
-		setModuleParameter('Awards', 'Aw-Special-1', get_text('Award-Special', 'IOC_Codes', '$a', '', '', $UseLang));
-		setModuleParameter('Awards', 'Aw-Giver-1', get_text('Award-PremiumGiver', 'IOC_Codes', array('$a[0]','$a[1]'), '', '', $UseLang));
-		setModuleParameter('Awards', 'Aw-Giving-1', get_text('Award-PremiumGiving', 'IOC_Codes', array('$a[0]','$a[1]'), '', '', $UseLang));
-		for($n=1; $n<5; $n++) {
-			setModuleParameter('Awards', 'Aw-Med'.$n.'-1', get_text('Medal-'.$n, 'IOC_Codes', '', '', '', $UseLang));
-		}
-		setModuleParameter('Awards', 'Aw-representing-1', get_text('Award-representing', 'IOC_Codes', '$a', '', '', $UseLang));
-		setModuleParameter('Awards', 'Aw-Anthem-1', get_text('Award-Anthem', 'IOC_Codes', '', '', '', $UseLang));
-		setModuleParameter('Awards', 'Aw-Applause-1', get_text('Award-Applause', 'IOC_Codes', '', '', '', $UseLang));
-	}
-	echo '<td colspan="10">'
-		. get_text('AwardFirstLanguage','Tournament') . ': <span onclick="insertInput(this, \'FirstLanguageCode\')">'.($UseLang ? $UseLang : '---').'</span>
-		&nbsp;&nbsp;&nbsp;'
-		. get_text('AwardSecondLanguage','Tournament') . ': <span onclick="insertInput(this, \'SecondLanguageCode\')">'.($tmp ? $tmp : '---').'</span>
-		</td></tr>';
+    setModuleParameter('Awards', 'Aw-Award-1-1', get_text('Award-MedalGiver', 'IOC_Codes', '$a', '', '', $UseLang));
+    setModuleParameter('Awards', 'Aw-Award-1-2', get_text('Award-PlaqueGiver', 'IOC_Codes', '$a', '', '', $UseLang));
+    setModuleParameter('Awards', 'Aw-Special-1', get_text('Award-Special', 'IOC_Codes', '$a', '', '', $UseLang));
+    setModuleParameter('Awards', 'Aw-Giver-1', get_text('Award-PremiumGiver', 'IOC_Codes', array('$a[0]','$a[1]'), '', '', $UseLang));
+    setModuleParameter('Awards', 'Aw-Giving-1', get_text('Award-PremiumGiving', 'IOC_Codes', array('$a[0]','$a[1]'), '', '', $UseLang));
+    for($n=1; $n<5; $n++) {
+        setModuleParameter('Awards', 'Aw-Med'.$n.'-1', get_text('Medal-'.$n, 'IOC_Codes', '', '', '', $UseLang));
+    }
+    setModuleParameter('Awards', 'Aw-representing-1', get_text('Award-representing', 'IOC_Codes', '$a', '', '', $UseLang));
+    setModuleParameter('Awards', 'Aw-Anthem-1', get_text('Award-Anthem', 'IOC_Codes', '', '', '', $UseLang));
+    setModuleParameter('Awards', 'Aw-Applause-1', get_text('Award-Applause', 'IOC_Codes', '', '', '', $UseLang));
+}
 
-	$Lines=array(
-		'Aw-Intro',
+echo '<tr>
+    <th colspan="6" class="Right"><img id="SecondLanguage" onclick="switchOption(this)" src="' . $CFG->ROOT_DIR . 'Common/Images/Enabled' . $SecondLanguage. '.png" width="20" alt="' .  get_text($SecondLanguage ? 'Yes' : 'No'). '"></th>
+    <th onclick="insertInput(\'FirstLanguageCode\')">' . get_text('AwardFirstLanguage','Tournament') . ': <span ref="FirstLanguageCode">'.($UseLang ? $UseLang : '---').'</span></th>
+    <th onclick="insertInput(\'SecondLanguageCode\')">' . get_text('AwardSecondLanguage','Tournament') . ': <span ref="SecondLanguageCode">'.($tmp ? $tmp : '---').'</span></th>
+    <th></th>
+    </tr>';
+
+$Lines=array(
+    'Aw-Intro',
 // 		'Aw-Medal',
 // 		'Aw-Plaque',
 // 		'Aw-Giver',
 // 		'Aw-Giving',
-		'Aw-Med1',
-		'Aw-Med2',
-		'Aw-Med3',
-		'Aw-Med4',
-		'Aw-representing',
-		'Aw-Anthem',
-		'Aw-Anthem-TPE',
-		'Aw-Applause',
-	);
-	$tmp = getModuleParameter('Awards','PrintPositions', array('Usher','2A','2B','2C','1A','1B','1C','3A','3B','3C', 'Tray Bearer 1', 'Tray Bearer 2', 'Tray Bearer 3', 'VIP Usher', 'V1', 'V2', 'VIP Usher'));
-	echo '<tr><th colspan="3" nowrap="nowrap">Print Positions</th>';
-	echo '<td colspan="7" onclick="insertInput(this, \'PrintPositions\')">'.(is_array($tmp) ? implode(', ', $tmp) : $tmp).'</td></tr>';
+    'Aw-Med1',
+    'Aw-Med2',
+    'Aw-Med3',
+    'Aw-Med4',
+    'Aw-representing',
+    'Aw-Anthem',
+    'Aw-Anthem-TPE',
+    'Aw-Applause',
+);
 
-	foreach($Lines as $k) {
-		echo '<tr>
-			<th colspan="3" nowrap="nowrap">'.substr($k,3).'</th>
-			<td colspan="5" onclick="insertInput(this, \''.$k.'-1\')">'.getModuleParameter('Awards', $k.'-1').'</td>
-			<td colspan="2" onclick="insertInput(this, \''.$k.'-2\')">'.($SecondLanguage ? getModuleParameter('Awards', $k.'-2') : '').'</td>
-			<td class="Center">&nbsp;</td>
-			</tr>';
-	}
+foreach($Lines as $k) {
+    echo '<tr>
+        <th colspan="6" class="Right" nowrap="nowrap">'.substr($k,3).'</th>
+        <td onclick="insertInput(\''.$k.'-1\')"><div ref="'.$k.'-1">'.getModuleParameter('Awards', $k.'-1').'</div></td>
+        <td onclick="insertInput(\''.$k.'-2\')"><div ref="'.$k.'-2" class="SecondLanguage">'.($SecondLanguage ? getModuleParameter('Awards', $k.'-2') : '').'</div></td>
+        <td></td>
+        </tr>';
+}
 
-	echo '<tr><th colspan="11" class="Title"></th></tr>';
+echo '<tr><th colspan="9" class="Title"></th></tr>';
 
-	$n=1;
-	$def='ssss';
-	while(($awarder=getModuleParameter('Awards', 'Aw-Award-1-'.$n, $def))!=$def) {
-		echo '<tr>
-			<th colspan="3" nowrap="nowrap">'.get_text('Awards', 'Tournament').' '.$n.'</th>
-			<td colspan="5" onclick="insertInput(this, \'Aw-Award-1-'.$n.'\')">'.getModuleParameter('Awards','Aw-Award-1-'. $n).'</td>
-			<td colspan="2" onclick="insertInput(this, \'Aw-Award-2-'.$n.'\')">'.($SecondLanguage ? getModuleParameter('Awards','Aw-Award-2-'. $n) : '').'</td>
-			<td class="Center">
-				<input type="button" value="' . get_text('CmdDelete','Tournament') . '" onClick="window.location.href=\'?delAward='.$n.'\'">
-			</td></tr>';
+echo '<tbody id="AwardsBody">';
+foreach(getModuleParameterLike('Awards', 'Aw-Award-1-%') as $key1 => $val) {
+    $key2=str_replace('Aw-Award-1-','Aw-Award-2-',$key1);
+    $n=substr($key1,11);
+    echo '<tr>
+        <th colspan="6" class="Right" nowrap="nowrap">'.get_text('AwardNum', 'Tournament', $n).'</th>
+        <td onclick="insertInput(\''.$key1.'\')"><div ref="'.$key1.'">'.$val.'</div></td>
+        <td onclick="insertInput(\''.$key2.'\')"><div ref="'.$key2.'" class="SecondLanguage">'.($SecondLanguage ? getModuleParameter('Awards',$key2) : '').'</div></td>
+        <td class="Center">
+            <input type="button" value="' . get_text('CmdDelete','Tournament') . '" onClick="window.location.href=\'?delAward='.$n.'\'">
+        </td></tr>';
+}
+echo '</tbody>';
 
-		$n++;
-	}
+echo '<tr>
+    <th colspan="6" class="Right" nowrap="nowrap">'.get_text('AwardNew', 'Tournament').'</th>
+    <td colspan="3" onclick="insertInput(\'Aw-Award-new\')"><div ref="Aw-Award-new" style="height:1em"></div></td>
+    </tr>';
+
+echo '<tr><th colspan="9" class="Title"></th></tr>';
+
+echo '<tr>
+    <th colspan="6" class="Right" nowrap="nowrap">'.get_text('Special', 'Tournament').'</th>
+    <td onclick="insertInput(\'Aw-Special-1\')"><div ref="Aw-Special-1">'.getModuleParameter('Awards','Aw-Special-1').'</div></td>
+    <td onclick="insertInput(\'Aw-Special-2\')"><div ref="Aw-Special-2" class="SecondLanguage">'.($SecondLanguage ? getModuleParameter('Awards','Aw-Special-2') : '').'</div></td>
+    <td></td></tr>';
+
+if($CustomAwards) {
+    echo '<tr><th colspan="9" class="Title"></th></tr>';
+    for($n=1; $n<=$CustomAwards; $n++) {
+        echo '<tr>
+            <th colspan="5" rowspan="4" nowrap="nowrap">'.get_text('CustomAward', 'Awards').' '.$n.'</th>
+            <th class="Right" nowrap="nowrap">'.get_text('CustomEvent', 'Awards').'</th>
+            <td onclick="insertInput(\'Aw-CustomEvent-1-'.$n.'\')"><div ref="Aw-CustomEvent-1-'.$n.'">'.getModuleParameter('Awards','Aw-CustomEvent-1-'. $n).'</div></td>
+            <td onclick="insertInput(\'Aw-CustomEvent-2-'.$n.'\')"><div ref="Aw-CustomEvent-2-'.$n.'" class="SecondLanguage">'.($SecondLanguage ? getModuleParameter('Awards','Aw-CustomEvent-2-'. $n) : '').'</div></td>
+            <td rowspan="4"></td></tr>';
+        echo '<tr>
+            <th class="Right" nowrap="nowrap">'.get_text('CustomPrize', 'Awards').'</th>
+            <td onclick="insertInput(\'Aw-CustomPrize-1-'.$n.'\')"><div ref="Aw-CustomPrize-1-'.$n.'">'.getModuleParameter('Awards','Aw-CustomPrize-1-'. $n).'</div></td>
+            <td onclick="insertInput(\'Aw-CustomPrize-2-'.$n.'\')"><div ref="Aw-CustomPrize-2-'.$n.'" class="SecondLanguage">'.($SecondLanguage ? getModuleParameter('Awards','Aw-CustomPrize-2-'. $n) : '').'</div></td>
+            </tr>';
+        echo '<tr>
+            <th class="Right" nowrap="nowrap">'.get_text('CustomNation', 'Awards').'</th>
+            <td onclick="insertInput(\'Aw-CustomNation-1-'.$n.'\')"><div ref="Aw-CustomNation-1-'.$n.'">'.getModuleParameter('Awards','Aw-CustomNation-1-'. $n).'</div></td>
+            <td onclick="insertInput(\'Aw-CustomNation-2-'.$n.'\')"><div ref="Aw-CustomNation-2-'.$n.'" class="SecondLanguage">'.($SecondLanguage ? getModuleParameter('Awards','Aw-CustomNation-2-'. $n) : '').'</div></td>
+            </tr>';
+        echo '<tr>
+            <th class="Right" nowrap="nowrap">'.get_text('CustomWinner', 'Awards').'</th>
+            <td onclick="insertInput(\'Aw-CustomWinner-1-'.$n.'\')"><div ref="Aw-CustomWinner-1-'.$n.'">'.getModuleParameter('Awards','Aw-CustomWinner-1-'. $n).'</div></td>
+            <td onclick="insertInput(\'Aw-CustomWinner-2-'.$n.'\')"><div ref="Aw-CustomWinner-2-'.$n.'">'.($SecondLanguage ? getModuleParameter('Awards','Aw-CustomWinner-2-'. $n) : '').'</div></td>
+            </tr>';
+    }
+}
+
+echo '<tr><th colspan="9" class="Title"></th></tr>';
+
+echo '<tbody id="AwardersBody">';
+foreach($Awarders as $Aw) {
+	$key2=str_replace('Aw-Awarder-1-','Aw-Awarder-2-',$Aw['id']);
+	$n=substr($Aw['id'],13);
 	echo '<tr>
-		<th colspan="3" nowrap="nowrap">'.get_text('Awards', 'Tournament').' '.$n.'</th>
-		<td colspan="5" onclick="insertInput(this, \'Aw-Award-1-'.$n.'\')">'.getModuleParameter('Awards','Aw-Award-1-'. $n).'</td>
-		<td colspan="2" onclick="insertInput(this, \'Aw-Award-2-'.$n.'\')">'.($SecondLanguage ? getModuleParameter('Awards','Aw-Award-2-'. $n) : '').'</td>
-		<td class="Center">&nbsp;</td></tr>';
+        <th colspan="6" Class="Right" nowrap="nowrap">'.get_text('AwarderNum', 'Tournament', $n).'</th>
+        <td onclick="insertInput(\''.$Aw['id'].'\')"><div ref="'.$Aw['id'].'" class="w-100">'.$Aw['val'].'</div></td>
+        <td onclick="insertInput(\''.$key2.'\')"><div ref="'.$key2.'" class="SecondLanguage">'.($SecondLanguage ? getModuleParameter('Awards',$key2, '') : '').'</div></td>
+        <td class="Center">
+            <input type="button" value="' . get_text('CmdDelete','Tournament') . '" onClick="window.location.href=\'?delAwarder='.$n.'\'">
+        </td></tr>';
+}
+echo '</tbody>';
 
-	echo '<tr><th colspan="11" class="Title"></th></tr>';
+echo '<tr>
+    <th colspan="6" class="Right" nowrap="nowrap">'.get_text('AwarderNew', 'Tournament').'</th>
+    <td colspan="3" onclick="insertInput(\'Aw-Awarder-new\')"><div ref="Aw-Awarder-new" style="height:1em;"></td>
+    </tr>';
 
-	echo '<tr>
-		<th colspan="3" nowrap="nowrap">'.get_text('Special', 'Tournament').'</th>
-		<td colspan="5" onclick="insertInput(this, \'Aw-Special-1\')">'.getModuleParameter('Awards','Aw-Special-1').'</td>
-		<td colspan="2" onclick="insertInput(this, \'Aw-Special-2\')">'.($SecondLanguage ? getModuleParameter('Awards','Aw-Special-2') : '').'</td>
-		<td class="Center">&nbsp;</td></tr>';
-
-	if($CustomAwards) {
-		echo '<tr><th colspan="11" class="Title"></th></tr>';
-		for($n=1; $n<=$CustomAwards; $n++) {
-			echo '<tr>
-				<th colspan="3" rowspan="4" nowrap="nowrap">'.get_text('CustomAward', 'Awards').' '.$n.'</th>
-				<th colspan="5" nowrap="nowrap" style="text-align:left">'.get_text('CustomEvent', 'Awards').'</th>
-				<td colspan="1" onclick="insertInput(this, \'Aw-CustomEvent-1-'.$n.'\')">'.getModuleParameter('Awards','Aw-CustomEvent-1-'. $n).'</td>
-				<td colspan="1" onclick="insertInput(this, \'Aw-CustomEvent-2-'.$n.'\')">'.($SecondLanguage ? getModuleParameter('Awards','Aw-CustomEvent-2-'. $n) : '').'</td>
-				<td class="Center">&nbsp;</td></tr>';
-			echo '<tr>
-				<th colspan="5" nowrap="nowrap" style="text-align:left">'.get_text('CustomPrize', 'Awards').'</th>
-				<td colspan="1" onclick="insertInput(this, \'Aw-CustomPrize-1-'.$n.'\')">'.getModuleParameter('Awards','Aw-CustomPrize-1-'. $n).'</td>
-				<td colspan="1" onclick="insertInput(this, \'Aw-CustomPrize-2-'.$n.'\')">'.($SecondLanguage ? getModuleParameter('Awards','Aw-CustomPrize-2-'. $n) : '').'</td>
-				<td class="Center">&nbsp;</td></tr>';
-			echo '<tr>
-				<th colspan="5" nowrap="nowrap" style="text-align:left">'.get_text('CustomNation', 'Awards').'</th>
-				<td colspan="1" onclick="insertInput(this, \'Aw-CustomNation-1-'.$n.'\')">'.getModuleParameter('Awards','Aw-CustomNation-1-'. $n).'</td>
-				<td colspan="1" onclick="insertInput(this, \'Aw-CustomNation-2-'.$n.'\')">'.($SecondLanguage ? getModuleParameter('Awards','Aw-CustomNation-2-'. $n) : '').'</td>
-				<td class="Center">&nbsp;</td></tr>';
-			echo '<tr>
-				<th colspan="5" nowrap="nowrap" style="text-align:left">'.get_text('CustomWinner', 'Awards').'</th>
-				<td colspan="1" onclick="insertInput(this, \'Aw-CustomWinner-1-'.$n.'\')">'.getModuleParameter('Awards','Aw-CustomWinner-1-'. $n).'</td>
-				<td colspan="1" onclick="insertInput(this, \'Aw-CustomWinner-2-'.$n.'\')">'.($SecondLanguage ? getModuleParameter('Awards','Aw-CustomWinner-2-'. $n) : '').'</td>
-				<td class="Center">&nbsp;</td></tr>';
-		}
-	}
-
-	echo '<tr><th colspan="11" class="Title"></th></tr>';
-
-	$n=1;
-	$def='ssss';
-	while(($awarder=getModuleParameter('Awards', 'Aw-Awarder-1-'.$n, $def))!=$def) {
-		echo '<tr>
-			<th colspan="3" nowrap="nowrap">'.get_text('Awarders', 'Tournament').' '.$n.'</th>
-			<td colspan="5" onclick="insertInput(this, \'Aw-Awarder-1-'.$n.'\')">'.getModuleParameter('Awards','Aw-Awarder-1-'. $n).'</td>
-			<td colspan="2" onclick="insertInput(this, \'Aw-Awarder-2-'.$n.'\')">'.($SecondLanguage ? getModuleParameter('Awards','Aw-Awarder-2-'. $n) : '').'</td>
-			<td class="Center">
-				<input type="button" value="' . get_text('CmdDelete','Tournament') . '" onClick="window.location.href=\'?delAwarder='.$n.'\'">
-			</td></tr>';
-
-		$n++;
-	}
-	echo '<tr>
-		<th colspan="3" nowrap="nowrap">'.get_text('Awarders', 'Tournament').' '.$n.'</th>
-		<td colspan="5" onclick="insertInput(this, \'Aw-Awarder-1-'.$n.'\')">'.getModuleParameter('Awards','Aw-Awarder-1-'.$n).'</td>
-		<td colspan="2" onclick="insertInput(this, \'Aw-Awarder-2-'.$n.'\')">'.($SecondLanguage ? getModuleParameter('Awards','Aw-Awarder-2-'.$n) : '').'</td>
-		<td class="Center">&nbsp;</td>
-		</tr>';
-
-	echo '<tr class="Divider"><td colspan="11"></td></tr>';
-	echo '<tr><th class="Title" colspan="11">' . get_text('AwardAvailableEvents','Tournament') . '</th></tr>';
-	echo '<tr><td colspan="11"><form name="frmAdd" action="" method="get"><table class="Tabella">';
+echo '<tr class="Divider"><td colspan="9"></td></tr>';
+echo '<tr><th class="Title" colspan="9">' . get_text('AwardAvailableEvents','Tournament') . '</th></tr>';
+echo '<tr><td colspan="9"><form name="frmAdd" action="" method="get"><table class="Tabella">';
 	$needSubmit = false;
 	//Individual Events
 	$Sql = "SELECT EvCode as Event
@@ -457,7 +423,7 @@ $CustomAwards=0;
 	$Rs=safe_r_SQL($Sql);
 	if(safe_num_rows($Rs)) {
 		$needSubmit = true;
-		echo '<tr><th style="width: 15%">' . get_text('IndEventList') . '</th><td>';
+		echo '<tr><th style="width: 20%">' . get_text('IndEventList') . '</th><td>';
 		while($row=safe_fetch($Rs))
 			echo '<input type="checkbox" name="addField[]" value="' . $row->Event . '|1|0">'. $row->Event . "&nbsp;&nbsp;&nbsp;";
 		echo '</td></tr>';
@@ -470,7 +436,7 @@ $CustomAwards=0;
 	$Rs=safe_r_SQL($Sql);
 	if(safe_num_rows($Rs)) {
 		$needSubmit = true;
-		echo '<tr><th style="width: 15%">' . get_text('TeamEventList') . '</th><td>';
+		echo '<tr><th style="width: 20%">' . get_text('TeamEventList') . '</th><td>';
 		while($row=safe_fetch($Rs))
 			echo '<input type="checkbox" name="addField[]" value="' . $row->Event . '|1|1">'. $row->Event . "&nbsp;&nbsp;&nbsp;";
 		echo '</td></tr>';
@@ -483,7 +449,7 @@ $CustomAwards=0;
 	$Rs=safe_r_SQL($Sql);
 	if(safe_num_rows($Rs)) {
 		$needSubmit = true;
-		echo '<tr><th style="width: 15%">' . get_text('ResultIndClass', 'Tournament') . '</th><td>';
+		echo '<tr><th style="width: 20%">' . get_text('ResultIndClass', 'Tournament') . '</th><td>';
 		while($row=safe_fetch($Rs))
 			echo '<input type="checkbox" name="addField[]" value="' . $row->Event . '|0|0">'. $row->Event . "&nbsp;&nbsp;&nbsp;";
 		echo '</td></tr>';
@@ -496,13 +462,13 @@ $CustomAwards=0;
 	$Rs=safe_r_SQL($Sql);
 	if(safe_num_rows($Rs)) {
 		$needSubmit = true;
-		echo '<tr><th style="width: 15%">' . get_text('ResultSqClass', 'Tournament') . '</th><td>';
+		echo '<tr><th style="width: 20%">' . get_text('ResultSqClass', 'Tournament') . '</th><td>';
 		while($row=safe_fetch($Rs))
 			echo '<input type="checkbox" name="addField[]" value="' . $row->Event. '|0|1">'. $row->Event . "&nbsp;&nbsp;&nbsp;";
 		echo '</td></tr>';
 	}
 
-	echo '<tr><th style="width: 15%">' . get_text('CustomAward', 'Awards') . '</th><td>';
+	echo '<tr><th style="width: 20%">' . get_text('CustomAward', 'Awards') . '</th><td>';
 	echo '<input type="checkbox" name="addField[]" value="Custom|1|0">'. get_text('CustomAward', 'Awards') . "&nbsp;&nbsp;&nbsp;";
 	echo '</td></tr>';
 

@@ -477,13 +477,11 @@ function GetResults() {
 						showTimeout();
 						t = setTimeout("GetResults()",UpdateTimeout);
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
 				};
 				XMLHttp.send(null);
 			}
 		} catch (e) {
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -721,13 +719,11 @@ function GetElimResults() {
 						showTimeout();
 						t = setTimeout("GetElimResults()",UpdateTimeout);
 					} catch(e) {
-						//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 					}
 				};
 				XMLHttp.send(null);
 			}
 		} catch (e) {
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }

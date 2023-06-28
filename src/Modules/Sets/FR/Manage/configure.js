@@ -6,6 +6,14 @@ function confUpdate(obj) {
 			return;
 		}
 		$(obj).closest('td').css('backgroundColor', data.error==0 ? 'green' : 'red');
+		if(data.msg) {
+			$.alert({
+				content:data.msg,
+				boxWidth: '50%',
+				useBootstrap: false,
+				title: '',
+			});
+		}
 	});
 }
 

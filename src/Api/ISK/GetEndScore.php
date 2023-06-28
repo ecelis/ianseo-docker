@@ -72,15 +72,19 @@ if($TargetNo) {
 	} else {
 		// Qualification
 		$LockKey='Q|'.$TargetNo[0].'|'.$DistanceNum;
-		$SQL="SELECT QuId, QuTargetNo, QuTarget, DIDistance, QuD{$DistanceNum}Arrowstring as Arrowstring, DIEnds, DIArrows, ToGoldsChars, ToXNineChars, ToElabTeam, ToNumEnds from Qualifications
+		$SQL="SELECT QuId, QuTargetNo, QuTarget, DIDistance, QuD{$DistanceNum}Arrowstring as Arrowstring, DIEnds, DIArrows, 
+                IF(TfGoldsChars{$DistanceNum}='',IF(TfGoldsChars='',ToGoldsChars,TfGoldsChars),TfGoldsChars{$DistanceNum}) as GoldsChars, 
+                IF(TfXNineChars{$DistanceNum}='',IF(TfXNineChars='',ToXNineChars,TfXNineChars),TfXNineChars{$DistanceNum}) as XNineChars,          
+                ToElabTeam, ToNumEnds from Qualifications
 			INNER JOIN Entries ON QuId=EnId
 			INNER JOIN Tournament ON ToId=EnTournament
+            INNER JOIN TargetFaces on TfId=EnTargetFace and TfTournament=EnTournament
 			INNER JOIN DistanceInformation ON DITournament=EnTournament AND DISession=QuSession AND DIDistance=".StrSafe_DB($DistanceNum)." AND DIType='Q'
 			WHERE EnTournament=$CompId and QuTargetNo=".StrSafe_DB($TargetNo);
 		$q=safe_r_SQL($SQL);
 		$ArrowSearch=safe_fetch($q);
 		if($ArrowSearch) {
-			$tmp = getQualificationTotals($ArrowSearch->QuId, $ArrowSearch->DIDistance, $EndNum, $ArrowSearch->DIArrows, $ArrowSearch->DIEnds, $ArrowSearch->ToGoldsChars, $ArrowSearch->ToXNineChars, $ArrowSearch->ToElabTeam ? $ArrowSearch->QuTarget : null);
+			$tmp = getQualificationTotals($ArrowSearch->QuId, $ArrowSearch->DIDistance, $EndNum, $ArrowSearch->DIArrows, $ArrowSearch->DIEnds, $ArrowSearch->GoldsChars, $ArrowSearch->XNineChars, $ArrowSearch->ToElabTeam ? $ArrowSearch->QuTarget : null);
 			$json_array['curendscore']   = $tmp['curendscore'];
 			$json_array['curscoreatend'] = $tmp['curscoreatend'];
 			$json_array['scoreatend']    = $tmp['scoreatend'];

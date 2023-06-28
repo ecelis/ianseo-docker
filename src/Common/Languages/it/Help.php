@@ -1,10 +1,15 @@
 <?php
+$lang['AutoCheckinAlreadyDone']='Hai già effettuato il check-in<br>Se hai bisogno di modificare qualsiasi informazione, procedi al banco dell\'accreditamento';
+$lang['AutoCheckinConfirm']='Se tutti i dati sono corretti premi CONFERMA CHECK-IN<br> Altrimenti premi ANNULLA e procedi al DESK di accreditamento';
+$lang['AutoCheckinSearch']='Scansiona il codice QR che hai ricevuto o digita il tuo nome';
 $lang['AutoImportSettings']='<b>Solo per Utenti Esperti</b><br>Cambiare i parametri di default può portare ad avere risultati non precisi.<br> E\' importante ricalcolare tutte le rank degli eventi che sono stati impostati manualmente PRIMA di inviare i risultati a ianseo.net o stampare i risultati e, in generale, sempre prima di fare qualsiasi tipo di distribuzione.';
 $lang['ChangeComponents']='<p>Per procedere con un cambio di componente, prima togliere l\'atleta che non è più nel team in modo da poter attivare le opzioni di sostituzione.</p> &#9654&nbsp;Punteggi inclusi nel totale del team nella fase di qualifica<br> &#9655&nbsp;Punteggi non inclusi nel totale del team nella fase di qualifica';
 $lang['GetBarcodeSeparator']='Dopo aver stampato la pagina con i riferimenti dei Codici a Barre, leggi con la pistola il codice a barre "SEPARATORE" in modo da attivare il corretto lettore';
 $lang['HomePage']='Questa è la pagina dove puoi selezionare o creare un Torneo';
 $lang['ISK-LockedSessionHelp']='L\'icona {$a} indica se la app può inserire o meno dei punteggi nella sessione';
-$lang['ISK-ServerUrlPin']='<b>NON RIVELARE QUESTO NUMERO</b><br>Scegli un PIN (4 Cifre Numeriche) da usare per accedere alla tua competizione.<br>I Dispositivi potranno inviare punteggi alla tua gara solo leggendo il codice QR che viene stampata da IANSEO.<br> In caso di inserimento manuale dei dati di gana nella app Ianseo Scorekeeper LITE, Il codice competizione da usare è <b>{$a}</b>';
+$lang['ISK-ServerUrlPin']='<b>NON RIVELARE QUESTO NUMERO</b><br>Scegli un PIN (4 Cifre Numeriche) da usare per accedere alla tua competizione.<br>I Dispositivi potranno inviare punteggi alla tua gara solo leggendo il codice QR che viene stampata da IANSEO.<br> In caso di inserimento manuale dei dati di gara nella app Ianseo Scorekeeper LITE, Il codice competizione da usare è <b>{$a}</b>';
+$lang['QrCodeLandscape']='Un singolo o doppio "<" disegnerà una freccia che punta a sinistra. Un singolo o doppio ">" disegnerà una freccia che punta a destra. Un singolo o doppio "^" disegnerà una freccia che punta in alto. Una singola o doppia "v" disegnerà una freccia che punta verso il basso.';
+$lang['QrCodePortrait']='Il campo è compatibile con HTML. Se inserisci qualcosa circondato da &lt;qrcode&gt;...&lt;/qrcode&gt; il contenuto verrà modificato in un QrCode';
 $lang['ScoreBarCodeShortcuts']='Leggi il Codice a Barre stampato sullo Score.
 Inserendo # seguito dal nome di un atleta si cerca nel database questo atleta.
 Inserendo @ seguita dal numero di piazzola si cerca nel database questa piazzola. La distanza DEVE essere specificata. La sessione può essere specificata (primo numero) e il numero della piazzola deve essere composto da 3 cifre';

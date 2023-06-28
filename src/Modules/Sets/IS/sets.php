@@ -5,6 +5,7 @@ $AllowedTypes=array(3,6);
 
 //$SetType['IS']['descr']=get_text('Setup-IS', 'Install');
 $SetType['IS']['descr']='Icelandic Tournament Rules/ Íslenskar Reglur';
+$SetType['IS']['noc'] = 'ISL';
 $SetType['IS']['types']=array();
 $SetType['IS']['rules']=array();
 

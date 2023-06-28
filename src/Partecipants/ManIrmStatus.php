@@ -37,7 +37,7 @@ $JS_SCRIPT=array(
 	    'ReqEvent' => isset($_REQUEST['event']) ? $_REQUEST['event'] : '',
 	    'ReqPhase' => isset($_REQUEST['phase']) ? $_REQUEST['phase'] : '',
     )),
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
+    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.6.0.min.js"></script>',
     '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>',
 	'<link href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css" media="screen" rel="stylesheet" type="text/css">',
     '<script type="text/javascript" src="./ManIrmStatus.js"></script>',
@@ -79,7 +79,7 @@ print '<td class="Title" active="" type="ASC" ord="Code" onclick="setOrder(this)
 	. '<td class="Title" active="" type="ASC" ord="CountryCode" onclick="setOrder(this)">' . get_text('CountryCode') . '</td>'
 	. '<td class="Title" active="" type="ASC" ord="Country" onclick="setOrder(this)">' . get_text('Country') . '</td>'
 	. '<td class="Title" active="1" type="DESC" ord="Score" onclick="setOrder(this)">' . get_text('Score', 'Tournament') . '</td>'
-	. '<td class="Title" active="" type="ASC" ord="Records">' . get_text('Notes', 'Tournament') . '&nbsp;<i class="fa fa-question-circle text-info fa-lg" onclick="showHelp(\'NotesHelp\')"></i></td>'
+	. '<td class="Title" active="" type="ASC" ord="Records">' . get_text('Notes', 'Tournament') . '</td>'
 	. '<td class="Title" active="" type="ASC" ord="IrmStatus" onclick="setOrder(this)" ref="IrmSelector">' . get_text('IrmStatus', 'Tournament') . '&nbsp;<i class="fa fa-question-circle text-warning fa-lg" onclick="showHelp(\'IrmHelp\')"></i></td>'
 	. '<td class="Title" active="" type="ASC" ord="Bye" onclick="setOrder(this)" ref="Bye">' . get_text('Bye') . '</td>'
 	. '<td class="Title" active="" type="ASC" ord="QualRank" onclick="setOrder(this)" ref="QualRank">' . get_text('RankScoreShort') . '</td>'
@@ -91,11 +91,6 @@ print '</tr>';
 // Search boxes
 echo '<tbody id="ResultsTable"></tbody>';
 
-$tmp=array();
-foreach(array('OR','WR','CR','GR','NR','PB','SB') as $rec) {
-	$tmp[]='<b>'.$rec.'</b> ('.get_text($rec.'-Record','Tournament').')';
-}
-echo '<tr><th colspan="11" class="Left p-2" id="NotesHelp"><i class="fa fa-question-circle text-info fa-lg"></i>&nbsp;'.get_text('NotesHelp','ODF', implode(', ', $tmp)).'</th></tr>';
 echo '<tr><th colspan="11" class="Left p-2" id="IrmHelp"><i class="fa fa-question-circle text-warning fa-lg"></i>&nbsp;'.get_text('IrmHelp','ODF').'</th></tr>';
 
 echo '</table>';

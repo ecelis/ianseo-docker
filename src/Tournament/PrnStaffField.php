@@ -16,53 +16,48 @@ if(!isset($isCompleteResultBook))
 
 $Ses=StrSafe_DB($_SESSION['TourId']);
 
-$Filter=array();
-
-if ($CatJudge)
-	$Filter[]=" ItJudge<>0 ";
-
-if ($CatDos)
-	$Filter[]=" ItDoS<>0 ";
-
-if ($CatJury)
-	$Filter[]=" ItJury<>0 ";
-
-if ($CatOC)
-	$Filter[]=" ItOC<>0 ";
-
-if (count($Filter)>0)
-	$Filter="AND (" . implode(" OR ",$Filter) . ") ";
-else
+// $Filter=array();
+//
+// if ($CatJudge)
+// 	$Filter[]=" ItJudge<>0 ";
+//
+// if ($CatDos)
+// 	$Filter[]=" ItDoS<>0 ";
+//
+// if ($CatJury)
+// 	$Filter[]=" ItJury<>0 ";
+//
+// if ($CatOC)
+// 	$Filter[]=" ItOC<>0 ";
+//
+// if (count($Filter)>0)
+// 	$Filter="AND (" . implode(" OR ",$Filter) . ") ";
+// else
 	$Filter="";
 
 $Select="
-	SELECT ti.*, it.*,IF(ItJudge!=0,'CatJudge',IF(ItDoS!=0,'CatDos',IF(ItJury!=0,'CatJury','CatOC'))) AS `Category` , CoCode, ucase(TiName) as TiUpperName
+	SELECT ti.*, it.*, CoCode, ucase(TiName) as TiUpperName
 	FROM TournamentInvolved AS ti 
     LEFT JOIN Countries on TiCountry=CoId and TiTournament=CoTournament
     LEFT JOIN InvolvedType AS it ON ti.TiType=it.ItId
 	WHERE ti.TiTournament={$Ses} AND it.ItId IS NOT NULL {$Filter}
-	ORDER BY IF(ItJudge!=0,1,IF(ItDoS!=0,2,IF(ItJury!=0,3,4))) ASC, IF(ItJudge!=0,ItJudge,IF(ItDoS!=0,ItDoS,IF(ItJury!=0,ItJury,ItOC))) ASC,ti.TiName ASC
+	ORDER BY ItJudge=0, ItJudge, ItDoS=0, ItDos, ItJury=0, ItJury, ItOC=0, ItOC, ti.TiName ASC
 ";
 //print $Select;Exit;
 $Rs=safe_r_sql($Select);
 
-$CurCategory='';
-
-if ($Rs && safe_num_rows($Rs)>0) {
-	while ($MyRow=safe_fetch($Rs)) {
-		if ($CurCategory!=$MyRow->Category) {
-			$pdf->Ln(10);
-			$pdf->SetFont($pdf->FontStd,'B',14);
-			$pdf->Cell(190, 8,  (get_text($MyRow->Category,'Tournament')), 0, 1, 'L');
-		}
-
-		$pdf->SetFont($pdf->FontStd,'',10);
-
-		$pdf->Cell(10, 8,  '', 0, 0);
-		$pdf->Cell(180, 6,  $MyRow->TiUpperName . ' ' . $MyRow->TiGivenName . ' (' .  $MyRow->CoCode . ') - ' . get_text($MyRow->ItDescription,'Tournament'), 0, 1);
-		$CurCategory=$MyRow->Category;
-
+$OldCategory='';
+while ($MyRow=safe_fetch($Rs)) {
+	if ($OldCategory!=$MyRow->ItDescription) {
+		$pdf->Ln(10);
+		$Function=get_text($MyRow->ItDescription,'Tournament').':';
 	}
+	$pdf->SetFont($pdf->FontStd,'B',10);
+	$pdf->Cell(45, 6, $Function);
+	$pdf->SetFont($pdf->FontStd,'',10);
+	$pdf->Cell(0, 6,  $MyRow->TiUpperName . ' ' . $MyRow->TiGivenName . ' (' .  $MyRow->CoCode . ')', 0, 1);
+	$OldCategory=$MyRow->ItDescription;
+	$Function='';
 }
 
 if(!isset($isCompleteResultBook))

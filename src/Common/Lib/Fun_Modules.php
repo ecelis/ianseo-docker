@@ -1,9 +1,8 @@
 <?php
 
-function module_exists($name)
-{
+function module_exists($name) {
 	global $CFG;
-	return file_exists($CFG->DOCUMENT_PATH.'/Modules/'.$name);
+	return file_exists($CFG->INCLUDE_PATH.'/Modules/'.$name);
 }
 
 function getModuleParameter($module, $param, $defaultValue='', $TourId=0, $clear=false) {
@@ -137,23 +136,34 @@ function removeJack($JackEvent, $notifiedModule, $TourId=0) {
 }
 
 function runJack($JackEvent, $TourId=0, $param=array()) {
-	//IMPORTANT: Don't change name of $Targets Variable!!!! Used in API-JSON call
-	$Targets = getModuleParameter('Jack', $JackEvent, array(), $TourId, true);
-	//if($Targets) {
+    $udpData = getModuleParameter('UDPBroadcast', 'setup', array('enable'=>false, 'port'=>1701, 'jackDisable'=>false), $TourId);
+    if($udpData['enable']) {
+        $msg = json_encode(array('comp'=>getCodeFromId($TourId), 'evt'=>$JackEvent, 'data'=>$param));
+        $sock = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+        socket_set_option($sock, SOL_SOCKET, SO_BROADCAST, 1);
+        socket_sendto($sock, $msg, strlen($msg), 0, "255.255.255.255", $udpData['port']);
+        socket_close($sock);
+    }
+
+    if(!($udpData['jackDisable'])) {
+        //IMPORTANT: Don't change name of $Targets Variable!!!! Used in API-JSON call
+        $Targets = getModuleParameter('Jack', $JackEvent, array(), $TourId, true);
+        //if($Targets) {
 //		error_log("Event $JackEvent triggered ".json_encode($param));
-	//}
-	foreach($Targets as $Target => $Command) {
-		if(is_file($Command['include'])) {
-			require_once($Command['include']);
-			foreach($param as $k=>$v) {
-				$Command['callback'] = str_replace("@".$k, $v, $Command['callback']);
-			}
-			try {
-				//SISTEMAREDOPO NIMES - PROC RSI chiude su errore
-				eval($Command['callback']);
-			} catch (Exception $e) {
-				debug_svela($e);
-			}
-		}
-	}
+        //}
+        foreach ($Targets as $Target => $Command) {
+            if (is_file($Command['include'])) {
+                require_once($Command['include']);
+                foreach ($param as $k => $v) {
+                    $Command['callback'] = str_replace("@" . $k, $v, $Command['callback']);
+                }
+                try {
+                    //SISTEMAREDOPO NIMES - PROC RSI chiude su errore
+                    eval($Command['callback']);
+                } catch (Exception $e) {
+                    debug_svela($e);
+                }
+            }
+        }
+    }
 }

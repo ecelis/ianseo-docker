@@ -34,7 +34,7 @@ $MyQuery.= "LEFT JOIN Countries AS c ON e.EnCountry=c.CoId AND e.EnTournament=c.
 $MyQuery.= "LEFT JOIN Qualifications AS q ON e.EnId=q.QuId ";
 $MyQuery.= "LEFT JOIN Divisions ON TRIM(EnDivision)=TRIM(DivId) AND EnTournament=DivTournament ";
 $MyQuery.= "INNER JOIN Classes ON TRIM(EnClass)=TRIM(ClId) AND EnTournament=ClTournament ";
-$MyQuery.= "WHERE EnAthlete=1 AND EnTournament = " . StrSafe_DB($_SESSION["TourId"]) . " ";
+$MyQuery.= "WHERE EnTournament = " . StrSafe_DB($_SESSION["TourId"]) . " ";
 if(isset($_REQUEST["Session"]) && is_numeric($_REQUEST["Session"]))
 	$MyQuery .= "AND QuSession = " . StrSafe_DB($_REQUEST["Session"]) . " ";
 if($TmpWhere != "")
@@ -54,7 +54,7 @@ if (safe_num_rows($Rs)>0)
 //	$pdf->SetAutoPageBreak(false);
 	while($MyRow=safe_fetch($Rs))
 	{
-		if($OldDiv != $MyRow->DivCode && !$pdf->SamePage($MaxHeight+20))
+		if($OldDiv != $MyRow->DivCode && !$pdf->SamePage($MaxHeight+25))
 			$OldTeam='#@#@#';
 
 //Cambio di Squadra
@@ -91,12 +91,13 @@ if (safe_num_rows($Rs)>0)
 		$height=0;
 		if(!is_null($MyRow->PhPhoto))
 		{
-			$im = imagecreatefromstring(base64_decode($MyRow->PhPhoto));
-			$height += ((imagesy($im) * 20 / imagesx($im)));
-			imagedestroy($im);
+			if($im = imagecreatefromstring(base64_decode($MyRow->PhPhoto))) {
+				$height += ((imagesy($im) * 20 / imagesx($im)));
+				imagedestroy($im);
 
-			$pdf->Image('@'.base64_decode($MyRow->PhPhoto), $RowX+6, $RowY, 20, 0);
-			$pdf->Rect($RowX+6, $RowY, 20, $height,'D');
+				$pdf->Image('@'.base64_decode($MyRow->PhPhoto), $RowX+6, $RowY, 20, 0);
+				$pdf->Rect($RowX+6, $RowY, 20, $height,'D');
+			}
 		}
 		$MaxHeight = ($MaxHeight > $height ? $MaxHeight : $height);
 
@@ -111,7 +112,7 @@ if (safe_num_rows($Rs)>0)
 		{
 			$RowX = 15;
 			$RowY += ($MaxHeight+6+5);
-			if(!$pdf->SamePage($MaxHeight+6+5))
+			if(!$pdf->SamePage($MaxHeight+15))
 				$OldTeam='#@#@#';
 		}
 	}

@@ -125,7 +125,7 @@ if (isset($PdfData->Data['Items']) && count($PdfData->Data['Items'])>0)
 
 			if ($TargetFace)
 			{
-				$pdf->Cell(19,4* $secondaryTeam,get_text($MyRow->TfName,'Tournament','',true),1,0,'C',0);
+				$pdf->Cell(19,4* $secondaryTeam,$MyRow->TfName,1,0,'C',0);
 			}
 			//Disegna i Pallini per la partecipazione
 			if(!$PdfData->HideCols)

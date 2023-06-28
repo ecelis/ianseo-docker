@@ -98,7 +98,7 @@ if (safe_num_rows($Rs)>0) {
 <table class="Tabella">
 <tr><th class="Title" colspan="11"><?php print get_text('Classes','Tournament');?></th></tr>
 <tr>
-<th width="5%"><?php print get_text('Class');?></th>
+<th width="5%"><?php print get_text('AgeClass', 'Tournament');?></th>
 <th width="5%"><?php print get_text('Sex','Tournament');?></th>
 <th width="30%"><?php print get_text('Descr','Tournament');?></th>
 <th width="10%"><?php print get_text('Para', 'Records');?></th>
@@ -146,7 +146,7 @@ if (safe_num_rows($Rs)>0) {
 <td class="Center"><input <?php print (!defined('dontEditClassDiv') ? '' :' disabled="disabled"');?> type="text" name="d_ClViewOrder_<?php print $id_post;?>" id="d_ClViewOrder_<?php print $id_post;?>" size="3" maxlength="3" value="<?php print ManageHTML($MyRow->ClViewOrder);?>" onBlur="UpdateField('C','d_ClViewOrder_<?php print $id_post;?>')"></td>
 <td class="Center"><input <?php print (!defined('dontEditClassDiv') ? '' :' disabled="disabled"');?> type="text" name="d_ClAgeFrom_<?php print $id_post;?>" id="d_ClAgeFrom_<?php print $id_post;?>" size="3" maxlength="3" value="<?php print $MyRow->ClAgeFrom;?>" onBlur="UpdateClassAge('<?php print $id_post;?>','From')"></td>
 <td class="Center"><input <?php print (!defined('dontEditClassDiv') ? '' :' disabled="disabled"');?> type="text" name="d_ClAgeTo_<?php print $id_post;?>" id="d_ClAgeTo_<?php print $id_post;?>" size="3" maxlength="3" value="<?php print $MyRow->ClAgeTo;?>" onBlur="UpdateClassAge('<?php print $id_post;?>','To')"></td>
-<td class="Center"><input <?php print (!defined('dontEditClassDiv') ? '' :' disabled="disabled"');?> type="text" name="d_ClValidClass_<?php print $id_post;?>" id="d_ClValidClass_<?php print $id_post;?>" size="8" maxlength="24" value="<?php print $MyRow->ClValidClass;?>" onBlur="UpdateValidClass('<?php print $id_post;?>')"></td>
+<td class="Center"><input <?php print (!defined('dontEditClassDiv') ? '' :' disabled="disabled"');?> type="text" name="d_ClValidClass_<?php print $id_post;?>" id="d_ClValidClass_<?php print $id_post;?>" size="8" maxlength="255" value="<?php print $MyRow->ClValidClass;?>" onBlur="UpdateValidClass('<?php print $id_post;?>')"></td>
 <td class="Center"><input <?php print (!defined('dontEditClassDiv') ? '' :' disabled="disabled"');?> type="text" name="d_ClValidDivision_<?php print $id_post;?>" id="d_ClValidDivision_<?php print $id_post;?>" size="8" maxlength="255" value="<?php print $MyRow->ClDivisionsAllowed;?>" onBlur="UpdateValidDivision('<?php print $id_post;?>')"></td>
 <td class="Center"><?= (defined('dontEditClassDiv') ? '&nbsp;' : '<img src="'.$CFG->ROOT_DIR.'Common/Images/drop.png" border="0" alt="#" title="#" onclick="DeleteRow(\'C\',\''.$id_post.'\')">') ?></td>
 </tr>

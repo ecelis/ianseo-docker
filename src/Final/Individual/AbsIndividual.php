@@ -52,12 +52,11 @@ $JS_SCRIPT = array( phpVars2js(array(
         'Advanced' => get_text('Advanced'),
         'MsgForExpert' => get_text('MsgForExpert', 'Tournament')
     )),
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>',
     '<script type="text/javascript" src="./AbsIndividual.js"></script>',
     '<link href="./AbsIndividual.css" rel="stylesheet" type="text/css">',
-    '<link href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css" media="screen" rel="stylesheet" type="text/css">',
+    '<script type="text/javascript" src="../autoCoinToss.js"></script>',
     );
+$IncludeJquery = true;
 include('Common/Templates/head.php');
 
 if(count($EventCodes) != 0) {
@@ -228,17 +227,18 @@ if(count($EventCodes) != 0) {
                     '<tr class="Divider"><td colspan="9"></td></tr>' .
                     '<tr><th class="Title" colspan="9">' . $section['meta']['descr'] . ' (' . $section['meta']['event'] . ')</th></tr>'.
                     '<tr>' .
-                        '<th width="10%" colspan="2">' . get_text('Rank') . '</th>' .
-                        '<th width="25%">' . get_text('Archer') . '</th>' .
-                        '<th width="20%" colspan="2">' . get_text('Country') . '</th>' .
-                        '<th width="10%">' . get_text('Total') . '</th>' .
-                        '<th width="5%">G</th>' .
-                        '<th width="5%">X</th>' .
-                        '<th width="25%">' . get_text('TieArrows') . '</th>' .
+                        '<th class="w-10" colspan="2">' . get_text('Rank') . '</th>' .
+                        '<th class="w-25">' . get_text('Archer') . '</th>' .
+                        '<th class="w-20" colspan="2">' . get_text('Country') . '</th>' .
+                        '<th class="w-10">' . get_text('Total') . '</th>' .
+                        '<th class="w-5">G</th>' .
+                        '<th class="w-5">X</th>' .
+                        '<th class="w-25">' . get_text('TieArrows') . '</th>' .
                     '</tr>';
 
                 $rnkBeforeSO = 1;
                 $wasCTSO = false;
+                $autoCTallowed = false;
                 $endRank = 1;
 	            $obj=getEventArrowsParams($Event,64, 0);
                 foreach ($section['items'] as $item) {
@@ -256,27 +256,28 @@ if(count($EventCodes) != 0) {
                         $nn = '[' . $section['meta']['event'] . '][' . $item['id'] . ']';
                         $endRank = $item['rankBeforeSO'] + $item['ct'] - 1;
                         echo '<tr class="' . ($item['so'] != 0 ? 'error' : ($item['ct'] != 1 ? 'warning' : '')) . '">';
-                        echo '<th class="Title" width="5%">' . $item['rank'] . ($item['irm'] != 0 ? $item['irmText'] : '') . '<input type="hidden" name="P' . $nn . '" value="' . intval($item['rank']) . '"></th>';
+                        echo '<th class="Title w-5">' . $item['rank'] . ($item['irm'] != 0 ? $item['irmText'] : '') . '<input type="hidden" name="P' . $nn . '" value="' . intval($item['rank']) . '"></th>';
                         if($advMode) {
-                            echo '<td width="5%"><input type="number" name="R' . $nn . '" value="' . (isset($_REQUEST["R"][$section['meta']['event']][$item['id']]) ? $_REQUEST["R"][$section['meta']['event']][$item['id']] : $item['rank']) . '"></td>';
+                            echo '<td class="w-5"><input type="number" name="R' . $nn . '" value="' . (isset($_REQUEST["R"][$section['meta']['event']][$item['id']]) ? $_REQUEST["R"][$section['meta']['event']][$item['id']] : $item['rank']) . '"></td>';
                         } else if ($item['irm'] < 10) {
                             //This part for DNF
                             if ($item['rankBeforeSO'] != $endRank) {
                                 $wasCTSO = true;
-                                echo '<td width="5%" class="Center"><select name="R' . $nn . '">';
+                                $autoCTallowed = true;
+                                echo '<td class="Center w-5"><select name="R' . $nn . '"'. ($item['ct'] != 1 ? ' ctFlag="'.$item['rankBeforeSO'].','.$item['ct'].'"' : '') .'>';
                                 for ($i = $item['rankBeforeSO']; $i <= $endRank; ++$i) {
                                     echo '<option value="' . $i . '"' . (($i == $item['rank'] OR (isset($_REQUEST["R"][$section['meta']['event']][$item['id']]) and $i == $_REQUEST["R"][$section['meta']['event']][$item['id']])) ? ' selected' : '') . '>' . $i . '</option>';
                                 }
                                 echo '</select></td>';
                             } else {
-                                echo '<td width="5%"><input type="hidden" name="R' . $nn . '" value="' . $item['rankBeforeSO'] . '"></td>';
+                                echo '<td class="w-5"><input type="hidden" name="R' . $nn . '" value="' . $item['rankBeforeSO'] . '"></td>';
                             }
                         } else {
-                            echo '<td width="5%"><input type="hidden" name="bSO' . $nn . '" value="' . $item['rankBeforeSO'] . '"></td>';
+                            echo '<td class="w-5"><input type="hidden" name="bSO' . $nn . '" value="' . $item['rankBeforeSO'] . '"></td>';
                         }
                         echo '<td>' . $item['athlete'] . '</td>' .
-                            '<td width="5%" class="Center">' . $item['countryCode'] . '</td>' .
-                            '<td width="15%">' . ($item['countryName'] != '' ? $item['countryName'] : '&nbsp') . '</td>' .
+                            '<td class="Center w-5">' . $item['countryCode'] . '</td>' .
+                            '<td class="w-15">' . ($item['countryName'] != '' ? $item['countryName'] : '&nbsp') . '</td>' .
                             '<td class="Center">' . $item['score'] . '</td>' .
                             '<td class="Center">' . $item['gold'] . '</td>' .
                             '<td class="Center">' . $item['xnine'] . '</td>' .
@@ -306,7 +307,9 @@ if(count($EventCodes) != 0) {
                         $rnkBeforeSO = $item['rankBeforeSO'];
                     }
                 }
-                echo '<tr><td class="Center" colspan="9"><input type="submit" value="' . get_text('CmdOk') . '"></td></tr>';
+                echo '<tr><td class="Center" colspan="9">'.
+                    ($autoCTallowed ? '<div style="display: inline-block; float: right;"><input type="button" onclick="assignAutoCT()" value="' . get_text('AutoCoinToss', 'Tournament') . '"></div>' : '') .
+                    '<input type="submit" value="' . get_text('CmdOk') . '"></td></tr>';
                 echo '<tr><td colspan="9"><input type="button" value="' . get_text(($advMode ? 'DefaultMode' : 'AdvancedMode')) . '" onclick="goToAdvancedMode()" ></td></tr>';
                 if($advMode) {
                     echo '<tr><td colspan="9" class="Right"><input type="button" value="' . get_text('ResetBeforeSO','Tournament') . '" onclick="ResetDataToQR()" ></td></tr>';
@@ -318,34 +321,34 @@ if(count($EventCodes) != 0) {
         }
     }
 } else {
-    $Sql = "SELECT EvCode, EvEventName, EvFinalFirstPhase, EvNumQualified, EvShootOff, EvE1ShootOff, EvE2ShootOff, EvElimType, EvElim1, EvElim2, GROUP_CONCAT(DISTINCT itemNo) as SoCt, GROUP_CONCAT(DISTINCT itemNo1) as SoCt1, GROUP_CONCAT(DISTINCT itemNo2) as SoCt2 " .
-        "FROM Events " .
-        "LEFT JOIN (
+    $Sql = "SELECT EvCode, EvEventName, EvFinalFirstPhase, EvNumQualified, EvShootOff, EvE1ShootOff, EvE2ShootOff, EvElimType, EvElim1, EvElim2, GROUP_CONCAT(DISTINCT itemNo) as SoCt, GROUP_CONCAT(DISTINCT itemNo1) as SoCt1, GROUP_CONCAT(DISTINCT itemNo2) as SoCt2
+    	FROM Events
+    	LEFT JOIN (
             SELECT IndEvent, CONCAT_WS('|', COUNT(*), IndSO) as itemNo 
             FROM `Individuals` 
             WHERE `IndTournament` = " . StrSafe_DB($_SESSION['TourId']) . " and IndSO!=0
             GROUP BY IndEvent, IndSO
             HAVING  COUNT(*)>1
             ORDER BY IndEvent, IndSO DESC
-        ) as sqy ON EvCode=IndEvent ".
-        "LEFT JOIN (
+        ) as sqy ON EvCode=IndEvent
+        LEFT JOIN (
             SELECT ElEventCode EvEvent1, CONCAT_WS('|', COUNT(*), ElSO) as itemNo1 
             FROM `Eliminations` 
             WHERE `ElTournament` = " . StrSafe_DB($_SESSION['TourId']) . " and ElSO!=0 AND ElElimPhase=0
             GROUP BY ElEventCode, ElSO
             HAVING  COUNT(*)>1
             ORDER BY ElEventCode, ElSO DESC
-        ) as sqyE1 ON EvCode=EvEvent1 ".
-        "LEFT JOIN (
+        ) as sqyE1 ON EvCode=EvEvent1 
+        LEFT JOIN (
             SELECT ElEventCode EvEvent2, CONCAT_WS('|', COUNT(*), ElSO) as itemNo2
             FROM `Eliminations` 
             WHERE `ElTournament` = " . StrSafe_DB($_SESSION['TourId']) . " and ElSO!=0 AND ElElimPhase=1
             GROUP BY ElEventCode, ElSO
             HAVING  COUNT(*)>1
             ORDER BY ElEventCode, ElSO DESC
-        ) as sqyE2 ON EvCode=EvEvent2 ".
-        "WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=0 AND (EvFinalFirstPhase!=0 OR EvElimType!=0) AND EvCodeParent='' " .
-        "GROUP BY EvCode ORDER BY EvProgr ASC ";
+        ) as sqyE2 ON EvCode=EvEvent2
+        WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=0 AND (EvFinalFirstPhase!=0 OR EvElimType!=0) AND EvCodeParent=''
+        GROUP BY EvCode ORDER BY EvProgr ASC ";
     $q=safe_r_SQL($Sql);
     echo '<table class="Tabella">';
     echo '<thead><tr><th colspan="8" class="Title">'.(get_text('ShootOff4Final') . ' - ' . get_text('Individual')).'</th></tr>';
@@ -355,19 +358,25 @@ if(count($EventCodes) != 0) {
     }
     echo '<tr><th colspan="3">'.get_text('Event').'</th><th colspan="2"></th><th>'.get_text('ShotOff', 'Tournament').'</th><th>'.get_text('CoinToss', 'Tournament').'</th><th></th></tr></thead><tbody>';
     while ($r=safe_fetch($q)) {
-        $toBesolved = false;
+        $toBesolved = true;
         $status = '';
-        if($r->EvShootOff==0 OR ($r->EvElimType==2 AND $r->EvE1ShootOff==0) OR ($r->EvElimType!=0 AND $r->EvE2ShootOff==0)) {
-            $toBesolved = true;
+        if($r->EvShootOff==1) {
+            $toBesolved = false;
         }
+
+
         $rowspan = ($r->EvElimType==2 ? 3:($r->EvElimType==1 ? 2:1)) - ($r->EvFinalFirstPhase==0 ? 1:0);
         echo '<tr class="EventLine" grEvent="'.$r->EvCode.'"  id="ev_'.$r->EvCode.'" toBeSolved="'.intval($toBesolved).'" So0="'.intval($r->EvShootOff).'" So1="'.intval($r->EvE1ShootOff).'" So2="'.intval($r->EvE2ShootOff).'">'.
             '<th rowspan="'.$rowspan.'" class="smallContainer" '. ($r->EvElimType==0 ? 'onclick="gotoShootOff(\''.$r->EvCode.'\',true)"':'').'><div class="so-status'.($toBesolved ? ' notsolved':'').'">&nbsp;</div></th>'.
             '<td rowspan="'.$rowspan.'" class="evCodeContainer" '. ($r->EvElimType==0 ? 'onclick="gotoShootOff(\''.$r->EvCode.'\',true)"':'').'>'.$r->EvCode.'</td>'.
             '<td rowspan="'.$rowspan.'" class="evContainer" '. ($r->EvElimType==0 ? 'onclick="gotoShootOff(\''.$r->EvCode.'\',true)"':'').'>'.$r->EvEventName.'</td>';
+	    if($r->EvElimType==5) {
+		    echo '<td class="w-70" colspan="5"><a href="../../Modules/RoundRobin/AbsRobin.php?team=0" class="Button">'.get_text('DifferentEventSoManagement', 'RoundRobin').'</a></td>';
+			continue;
+	    }
         $so=array();
         $ct=array();
-        if(!is_null($r->SoCt)) {
+        if(!is_null($r->SoCt) and $r->EvElimType!=5) {
             foreach (explode(',',$r->SoCt) as $ctsoItem) {
                 list($tmpNo,$tmpPos) = explode('|',$ctsoItem);
                 if($tmpPos<0) {

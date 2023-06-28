@@ -5,6 +5,7 @@ $version = '2020-01-01 00:00:00';
 $AllowedTypes=array(1,3,5,37,6,7);
 
 $SetType['DK']['descr']=get_text('Setup-DK', 'Install');
+$SetType['DK']['noc'] = 'DEN';
 $SetType['DK']['types']=array();
 $SetType['DK']['rules']=array();
 

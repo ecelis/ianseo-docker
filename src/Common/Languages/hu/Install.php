@@ -8,7 +8,6 @@ $lang['Credits-BeiterCredits']='A vonalkód modul ingyenes az egész I@nseo köz
 $lang['Credits-Coordination']='IT projekt koordináció';
 $lang['Credits-CoreGroup']='IANSEO Alap Csapat';
 $lang['Credits-Credits']='Közerműködők';
-$lang['Credits-Documentation']='Dokumentáció és Támogatás';
 $lang['Credits-FitarcoCredits']='Mi az Ianseo? Az Ianseo egy, az íjászversenyek eredményeinek kezelésére írt, nyílt forráskódú szoftver, amelyet az Olasz Íjászszövetség anyagi támogatásának köszönhetően hoztunk létre. Az Olasz Íjászszövetség döntése értelmében ez a szoftver szabadon terjeszthető egész Európában. A programot számos nyelvre lefordították, s jelenleg a világ legfejlettebb, és leg naprakészebb programja, mely integrálja a FITA szabályokat, s mára a legteljesebb eszköze az íjászversenyek rendezésének: tartalmazza a versenyzők és rendezők regisztrációját, számos nyomtatott kimutatást tud létrehozni, hálózatban és on-line integrációban az FOP dizájnnak megfelelően.';
 $lang['Credits-HHT']='HHT integráció';
 $lang['Credits-IanseoTeam']='Ianseo és az Ianseo Csapat';

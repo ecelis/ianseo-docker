@@ -12,7 +12,8 @@ $JS_SCRIPT = array(phpVars2js(array(
         'cmdEdit' => get_text('Edit', 'Tournament'),
         'cmdBack' => get_text('Back'),
         'cmdSave' => get_text('CmdSave'),
-        'Number' => get_text('Number')
+        'Number' => get_text('Number'),
+        'TeamComponentsTimestamp' => get_text('TeamComponentsTimestamp', 'Tournament')
     )),
     '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
     '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>',
@@ -26,10 +27,14 @@ echo '<table class="Tabella">';
 echo '<thead>' .
     '<tr><th colspan="8" class="Title">'.get_text('ChangeComponents').'</th></tr>'.
     '<tr class="srcControls"><th>' . get_text('Event') . '</th>'.
-        '<td colspan="6"><select id="cmbEvent" onchange="populateData()"><option value="0">---</option></select>'.
+        '<td colspan="5"><select id="cmbEvent" onchange="populateData()"><option value="0">---</option></select>'.
         '&nbsp;&nbsp;&nbsp;<input type="button" value="'.get_text('CmdCancel').'" onclick="clearCombo(\'cmbEvent\')">'.
         '</td>'.
-        '<td rowspan="2" class="evCodeContainer"><a href="" onclick="printTeamComponentForm()"><img src="' . $CFG->ROOT_DIR . 'Common/Images/pdf.gif" alt="' . get_text('TeamComponentForm', 'Tournament') . '" border="0"></a></td>'.
+        '<td rowspan="2" class="evCodeContainer">'.
+            '<a onclick="printTeamComponentForm()"><img src="' . $CFG->ROOT_DIR . 'Common/Images/pdf.gif" alt="' . get_text('TeamComponentForm', 'Tournament') . '" ><br>'.get_text('TeamComponentForm', 'Tournament').'</a>'.
+        '</td><td rowspan="2" class="evCodeContainer">'.
+            '<a onclick="printTeamComponentLog()"><img src="' . $CFG->ROOT_DIR . 'Common/Images/pdfOris.gif" alt="' . get_text('TeamComponentsLog', 'Tournament') . '"><br>'.get_text('TeamComponentsLog', 'Tournament').'</a>'.
+    '</td>'.
     '</tr>'.
     '<tr class="srcControls"><th>' . get_text('Team') . '</th>'.
         '<td colspan="6"><select id="cmbTeam" onchange="populateData()"><option value="0">---</option></select>'.

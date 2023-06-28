@@ -242,3 +242,4 @@ ModelManifest.xml
 .fake/
 .env
 data
+*.zip

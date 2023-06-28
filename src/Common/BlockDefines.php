@@ -28,6 +28,7 @@ define ("BIT_BLOCK_MEDIA",0x80); // Blocco delle modalità Media (rot, etc)
 define ("BIT_BLOCK_ACCREDITATION",0x100); // Blocco accreditamento
 define ("BIT_BLOCK_PUBBLICATION",0x200); // Blocco pubblicazioni online
 define ("BIT_BLOCK_FLIGHTS",0x400); // Blocco gestione Flights
+define ("BIT_BLOCK_ROBIN",0x800); // Blocco gestione Flights
 define ('BIT_BLOCK_ALL', 0xFFFF);
 
 define ("AclNoAccess",0);
@@ -50,6 +51,8 @@ define ('AclISKServer', 12);
 define ('AclSpeaker', 13);
 define ('AclOutput', 14);
 define ('AclOdf', 15);
+define ('AclRobin', 16);
+define ('AclRunArchery', 16);
 
 
 $limitedACL = array(
@@ -78,6 +81,7 @@ $listACL = array(
     AclSpeaker => 'AclSpeaker',
     AclOutput => 'AclOutput',
     AclOdf => 'AclOdf',
+    AclRobin => 'AclRobin',
 );
 
 /*
@@ -94,6 +98,7 @@ function getBlocksToUnset() {
 	$ToUnset['2'] = ($ToUnset['1'] | BIT_BLOCK_QUAL | BIT_BLOCK_TEAM);
 	$ToUnset['3'] = ($ToUnset['2'] | BIT_BLOCK_ELIM);
 	$ToUnset['4'] = ($ToUnset['1'] | BIT_BLOCK_QUAL | BIT_BLOCK_ELIM | BIT_BLOCK_IND);
+	$ToUnset['11'] = (BIT_BLOCK_ALL & ~ BIT_BLOCK_ROBIN);
 	$ToUnset['7'] = (BIT_BLOCK_ALL & ~ (BIT_BLOCK_MEDIA | BIT_BLOCK_REPORT) );
 	$ToUnset['9'] = (BIT_BLOCK_ALL & ~ BIT_BLOCK_PUBBLICATION );
 	$ToUnset['5'] = (BIT_BLOCK_ALL & ~ BIT_BLOCK_REPORT);
@@ -112,7 +117,8 @@ function getBlocksToSet() {
 	$ToSet['2'] = ($ToSet['1'] | BIT_BLOCK_ELIM);
 	$ToSet['3'] = ($ToSet['2'] | BIT_BLOCK_IND);
 	$ToSet['4'] = ($ToSet['2'] | BIT_BLOCK_TEAM);
-	$ToSet['7'] = ($ToSet['2'] | BIT_BLOCK_IND | BIT_BLOCK_TEAM | BIT_BLOCK_MEDIA);
+	$ToSet['11'] = BIT_BLOCK_ROBIN;
+	$ToSet['7'] = ($ToSet['2'] | BIT_BLOCK_IND | BIT_BLOCK_TEAM | BIT_BLOCK_ROBIN | BIT_BLOCK_MEDIA);
 	$ToSet['9'] = ($ToSet['7'] | BIT_BLOCK_PUBBLICATION);
 	$ToSet['5'] = (BIT_BLOCK_ALL & ~ BIT_BLOCK_PUBBLICATION);
 	return $ToSet;

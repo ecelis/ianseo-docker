@@ -8,8 +8,10 @@ $FirstPage=true;
 foreach($PdfData->rankData['sections'] as $section) {
 
 	$ElimCols=0;
-	if($section['meta']['elim1']) $ElimCols++;
-	if($section['meta']['elim2']) $ElimCols++;
+	if($section['meta']['elimType']!=5) {
+		if($section['meta']['elim1']) $ElimCols++;
+		if($section['meta']['elim2']) $ElimCols++;
+	}
 
 	$NumPhases=$section['meta']['firstPhase'] ? ceil(log($section['meta']['firstPhase'], 2))+1 : 1;
 
@@ -58,11 +60,13 @@ foreach($PdfData->rankData['sections'] as $section) {
 			$pdf->Cell(36, 4, $item['countryName'], 'RTB', 0, 'L', 0);
 			$pdf->SetFont($pdf->FontFix,'',7);
 			$pdf->Cell(12, 4,  number_format($item['qualScore'],0,$PdfData->NumberDecimalSeparator,$PdfData->NumberThousandsSeparator) . '-' . substr('00' . $item['qualRank'],-2,2), 1, 0, 'R', 0);
-//Risultati delle eliminatorie
-			if(array_key_exists('e1',$item['elims']))
-				$pdf->Cell(12, 4,  number_format($item['elims']['e1']['score'],0,$PdfData->NumberDecimalSeparator,$PdfData->NumberThousandsSeparator) . '-' . substr('00' . $item['elims']['e1']['rank'],-2,2), 1, 0, 'R', 0);
-			if(array_key_exists('e2',$item['elims']))
-				$pdf->Cell(12, 4,  number_format($item['elims']['e2']['score'],0,$PdfData->NumberDecimalSeparator,$PdfData->NumberThousandsSeparator) . '-' . substr('00' . $item['elims']['e2']['rank'],-2,2), 1, 0, 'R', 0);
+			if($section['meta']['elimType']!=5) {
+				//Risultati delle eliminatorie
+				if(array_key_exists('e1',$item['elims']))
+					$pdf->Cell(12, 4,  number_format($item['elims']['e1']['score'],0,$PdfData->NumberDecimalSeparator,$PdfData->NumberThousandsSeparator) . '-' . substr('00' . $item['elims']['e1']['rank'],-2,2), 1, 0, 'R', 0);
+				if(array_key_exists('e2',$item['elims']))
+					$pdf->Cell(12, 4,  number_format($item['elims']['e2']['score'],0,$PdfData->NumberDecimalSeparator,$PdfData->NumberThousandsSeparator) . '-' . substr('00' . $item['elims']['e2']['rank'],-2,2), 1, 0, 'R', 0);
+			}
 //Risultati  delle varie fasi
 			foreach($item['finals'] as $k=>$v)
 			{

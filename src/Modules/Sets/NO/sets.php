@@ -4,6 +4,7 @@ $version='2016-05-29 08:13:00';
 $AllowedTypes=array(1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 17, 22);
 
 $SetType['NO']['descr']=get_text('Setup-NO', 'Install');
+$SetType['NO']['noc'] = 'NOR';
 $SetType['NO']['types']=array();
 $SetType['NO']['rules']=array();
 

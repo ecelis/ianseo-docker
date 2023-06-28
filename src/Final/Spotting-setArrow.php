@@ -142,6 +142,7 @@ foreach($Arrow as $MatchId => $SOs) {
 				$JSON['arrowID']='Arrow['.$MatchId.']['.intval($isSO).']['.$End.']['.$ArrowIndex.']';
 				$JSON['arrowValue']=$ArrowValue;
 				$JSON['winner']=$Match['winner'] ? 'L' : ($Match['oppWinner'] ? 'R' : '');
+				$JSON['finished']=($Match['winner'] or $Match['oppWinner'] or ($Match['irm'] and $Match['oppIrm']));
                 $JSON['newSOPossible'] = (
                     !($Match['winner'] OR $Match['oppWinner']) AND
                     (strlen(trim($Match['tiebreak'])) > 0 AND (strlen(trim($Match['tiebreak']))%$obj->so == 0)) AND
@@ -164,7 +165,11 @@ foreach($Arrow as $MatchId => $SOs) {
                 $TotR=0;
 				if($MatchId%2) {
     				if($isSO) {
-						for($i=0;$i<$soEnds;$i++) {
+					    $JSON['t'][]=array(
+						    'id' => 'EndTotalR_SO_0',
+						    'val' => $Match['oppTiebreakDecoded'][0]??'',
+					    );
+						for($i=1;$i<$soEnds;$i++) {
 							$JSON['t'][]=array(
 								'id' => 'EndTotalR_SO_'.$i,
 								'val' => $Match['oppTiebreakDecoded'][$i],
@@ -186,8 +191,12 @@ foreach($Arrow as $MatchId => $SOs) {
 					}
 				} else {
 
+					$JSON['t'][]=array(
+						'id' => 'EndTotalL_SO_0',
+						'val' => $Match['tiebreakDecoded'][0]??'',
+					);
 					if($isSO) {
-						for($i=0;$i<$soEnds;$i++) {
+						for($i=1;$i<$soEnds;$i++) {
 							$JSON['t'][]=array(
 								'id' => 'EndTotalL_SO_'.$i,
 								'val' => $Match['tiebreakDecoded'][$i],

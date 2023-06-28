@@ -132,7 +132,11 @@
 		 *  prima passata per costruire la struttura del vettore.
 		 *  Tiro fuori le qualifiche, le posizioni finali e le eliminatorie (se ci sono)
 		 */
-			$q="SELECT f1.*, f2.*, coalesce(JudgeLine,'') as LineJudge, coalesce(JudgeTarget,'') as TargetJudge,
+			$q="SELECT f1.*, f2.*, 
+       				coalesce(JudgeLine,'') as LineJudge, coalesce(JudgeLineCode,'') as LineCode, coalesce(JudgeLineFamName,'') as LineFamName, coalesce(JudgeLineGivName,'') as LineGivName, coalesce(JudgeLineCountry,'') as LineCountry, coalesce(JudgeLineGender,'') as LineGender,
+       				coalesce(JudgeTarget,'') as TargetJudge, coalesce(JudgeTargetCode,'') as TargetCode, coalesce(JudgeTargetFamName,'') as TargetFamName, coalesce(JudgeTargetGivName,'') as TargetGivName, coalesce(JudgeTargetCountry,'') as TargetCountry, coalesce(JudgeTargetGender,'') as TargetGender,
+       				coalesce(Coach1,'') as Coach, coalesce(Coach1Code,'') as CoachCode, coalesce(Coach1FamName,'') as CoachFamName, coalesce(Coach1GivName,'') as CoachGivName, coalesce(Coach1Country,'') as CoachCountry, coalesce(Coach1Gender,'') as CoachGender,
+       				coalesce(Coach2,'') as OppCoach, coalesce(Coach2Code,'') as OppCoachCode, coalesce(Coach2FamName,'') as OppCoachFamName, coalesce(Coach2GivName,'') as OppCoachGivName, coalesce(Coach2Country,'') as OppCoachCountry, coalesce(Coach2Gender,'') as OppCoachGender,
 					ifnull(concat(DV2.DvMajVersion, '.', DV2.DvMinVersion) ,concat(DV1.DvMajVersion, '.', DV1.DvMinVersion)) as DocVersion,
 					date_format(ifnull(DV2.DvPrintDateTime, DV1.DvPrintDateTime), '%e %b %Y %H:%i UTC') as DocVersionDate,
 					ifnull(DV2.DvNotes, DV1.DvNotes) as DocNotes FROM "
@@ -140,7 +144,7 @@
 					. " fs1.FsOdfMatchName OdfMatchName,"
 					. " ifnull(fs2.FsOdfMatchName, concat('RR #',if(EvFinalFirstPhase in (12,24,48), GrPosition2, GrPosition))) as OdfPreviousMatch,"
 					.(empty($this->opts['extended']) ? '' : " RevLanguage1 AS Review1, RevLanguage2 AS Review2, UNIX_TIMESTAMP(IFNULL(RevDateTime,0)) As ReviewUpdate, ")
-				    . " FinArrowPosition ArrowPosition, FinTiePosition TiePosition,"
+				    . " FinArrowPosition as ArrowPosition, FinTiePosition TiePosition,"
                     . " FinEvent Event,"
 					. " GrPhase,"
 					. " EvProgr,"
@@ -166,7 +170,7 @@
 					. " FinTournament Tournament,"
 					. " FinDateTime LastUpdated,"
 					. " FinMatchNo MatchNo,"
-                    . " IFNULL(concat(ucase(c.EnFirstName), ' ', c.EnName),'') as Coach,"
+					. " FinCoach CoachId,"
 					. " a.EnCode Bib,"
 					. " ifnull(EdExtra,a.EnCode) LocalBib,"
 					. " a.EnId EnId, a.EnNameOrder NameOrder, a.EnSex Gender, a.EnDob BirthDate, "
@@ -211,8 +215,7 @@
 					. " FinRecordBitmap  as RecBitLevel, EvIsPara, "
                     . " fs1.FsLJudge as jLine, fs1.FsTJudge as jTarget, "
 					. " FinLive LiveFlag, FinNotes Notes, FinShootFirst as ShootFirst, if(EvFinalFirstPhase%12=0, GrPosition2, GrPosition) as GridPosition "
-					. "FROM "
-					. " Finals "
+					. "FROM Finals "
 					. "INNER JOIN Grids ON FinMatchNo=GrMatchNo "
 					. "INNER JOIN Events ON FinEvent=EvCode AND FinTournament=EvTournament AND EvTeamEvent=0 "
 					. "inner join Phases on PhId=EvFinalFirstPhase and (PhIndTeam & 1)=1 "
@@ -225,7 +228,6 @@
 					. "LEFT JOIN ExtraData ON EdId=a.EnId AND EdType='Z' "
 					. "LEFT JOIN Qualifications ON QuId=a.EnId "
 					. "LEFT JOIN Countries ON a.EnCountry=CoId AND a.EnTournament=CoTournament "
-                    . "LEFT JOIN Entries c ON FinCoach=c.EnId and FinTournament=c.EnTournament "
 					. "LEFT JOIN FinSchedule fs1 ON fs1.FSEvent=FinEvent AND fs1.FSMatchNo=FinMatchNo AND fs1.FSTournament=FinTournament AND fs1.FSTeamEvent='0' "
 					. "LEFT JOIN FinSchedule fs2 ON fs2.FSEvent=FinEvent AND fs2.FSMatchNo=case FinMatchNo when 0 then 4 when 1 then 6 when 2 then 4 when 3 then 6 else FinMatchNo*2 end AND fs2.FSTournament=FinTournament AND fs2.FSTeamEvent='0' "
 					. (empty($this->opts['extended']) ? '' : "LEFT JOIN Reviews ON FinEvent=RevEvent AND FinMatchNo=RevMatchNo AND FinTournament=RevTournament AND RevTeamEvent=0 ")
@@ -234,14 +236,14 @@
 					. ") f1 "
 				. "INNER JOIN (select "
 					.(empty($this->opts['extended']) ? '' : " RevLanguage1 AS OppReview1, RevLanguage2 AS OppReview2, UNIX_TIMESTAMP(IFNULL(RevDateTime,0)) As OppReviewUpdate, ")
-					. " fs1.FsOdfMatchName OppOdfMatchName,"
+					. " fs1.FsOdfMatchName as OppOdfMatchName,"
 					. " ifnull(fs2.FsOdfMatchName, concat('RR #',if(EvFinalFirstPhase in (12,24,48), GrPosition2, GrPosition))) as OppOdfPreviousMatch,"
                     . " FinArrowPosition OppArrowPosition, FinTiePosition OppTiePosition,"
                     . " FinEvent OppEvent,"
 					. " FinTournament OppTournament,"
 					. " FinDateTime OppLastUpdated,"
 					. " FinMatchNo OppMatchNo,"
-                    . " IFNULL(concat(ucase(c.EnFirstName), ' ', c.EnName),'') as OppCoach,"
+					. " FinCoach OppCoachId,"
 					. " a.EnCode OppBib,"
 					. " ifnull(EdExtra,a.EnCode) OppLocalBib,"
 					. " a.EnId OppEnId, a.EnNameOrder OppNameOrder, a.EnSex as OppGender, a.EnDob OppBirthDate,"
@@ -297,7 +299,6 @@
 					. "LEFT JOIN ExtraData ON EdId=a.EnId AND EdType='Z' "
 					. "LEFT JOIN Qualifications ON QuId=a.EnId "
 					. "LEFT JOIN Countries ON a.EnCountry=CoId AND a.EnTournament=CoTournament "
-                    . "LEFT JOIN Entries c ON FinCoach=c.EnId and FinTournament=c.EnTournament "
 					. "LEFT JOIN FinSchedule fs1 ON fs1.FSEvent=FinEvent AND fs1.FSMatchNo=FinMatchNo AND fs1.FSTournament=FinTournament AND fs1.FSTeamEvent='0' "
 					. "LEFT JOIN FinSchedule fs2 ON fs2.FSEvent=FinEvent AND fs2.FSMatchNo=case FinMatchNo when 0 then 4 when 1 then 6 when 2 then 4 when 3 then 6 else FinMatchNo*2 end AND fs2.FSTournament=FinTournament AND fs2.FSTeamEvent='0' "
 					. (empty($this->opts['extended']) ? '' : "LEFT JOIN Reviews ON FinEvent=RevEvent AND FinMatchNo=RevMatchNo AND FinTournament=RevTournament AND RevTeamEvent=0 ")
@@ -306,10 +307,31 @@
 					. ") f2 on Tournament=OppTournament and Event=OppEvent and MatchNo=OppMatchNo-1
 					LEFT JOIN DocumentVersions DV1 on Tournament=DV1.DvTournament AND DV1.DvFile = 'B-IND' and DV1.DvEvent=''
 					LEFT JOIN DocumentVersions DV2 on Tournament=DV2.DvTournament AND DV2.DvFile = 'B-IND' and DV2.DvEvent=Event 
-                LEFT JOIN (select TiId as JudgeLineId, concat(ucase(TiName), ' ', TiGivenName) as JudgeLine from TournamentInvolved where TiTournament={$this->tournament}) jLine on f1.jLine=JudgeLineId  
-                LEFT JOIN (select TiId as JudgeTargetId, concat(ucase(TiName), ' ', TiGivenName) as JudgeTarget from TournamentInvolved where TiTournament={$this->tournament}) jTarget on f1.jTarget=JudgeTargetId  "
-                . " $ExtraFilter "
-				. "ORDER BY ".($OrderByTarget ? 'Target, ' : '')."EvProgr ASC, Event, Phase DESC, MatchNo ASC ";
+                LEFT JOIN (
+                    select TiId as JudgeLineId, TiCode as JudgeLineCode, CoCode as JudgeLineCountry, if(TiGender=0, 'M', 'F') as JudgeLineGender, TiName as JudgeLineFamName, TiGivenName as JudgeLineGivName, concat(ucase(TiName), ' ', TiGivenName) as JudgeLine 
+                    from TournamentInvolved
+                    inner join Countries on CoId=TiCountry
+                    where TiTournament={$this->tournament}) jLine on f1.jLine=JudgeLineId  
+                LEFT JOIN (
+                    select TiId as JudgeTargetId, TiCode as JudgeTargetCode, CoCode as JudgeTargetCountry, if(TiGender=0, 'M', 'F') as JudgeTargetGender, TiName as JudgeTargetFamName, TiGivenName as JudgeTargetGivName, concat(ucase(TiName), ' ', TiGivenName) as JudgeTarget 
+                    from TournamentInvolved 
+                    inner join Countries on CoId=TiCountry
+                    where TiTournament={$this->tournament}) jTarget on f1.jTarget=JudgeTargetId 
+                LEFT JOIN (
+                    select EnId as Coach1Id, ifnull(EdExtra,EnCode) Coach1Code, CoCode as Coach1Country, if(EnSex=0, 'M', 'F') as Coach1Gender, EnFirstName as Coach1FamName, EnName as Coach1GivName, concat(ucase(EnFirstName), ' ', EnName) as Coach1
+                    from Entries 
+                    inner join Countries on CoId=EnCountry and CoTournament=EnTournament
+                    LEFT JOIN ExtraData ON EdId=EnId AND EdType='Z' 
+                    where EnTournament={$this->tournament}) Coach1 on Coach1Id=CoachId
+                LEFT JOIN (
+                    select EnId as Coach2Id, ifnull(EdExtra,EnCode) Coach2Code, CoCode as Coach2Country, if(EnSex=0, 'M', 'F') as Coach2Gender, EnFirstName as Coach2FamName, EnName as Coach2GivName, concat(ucase(EnFirstName), ' ', EnName) as Coach2
+                    from Entries 
+                    inner join Countries on CoId=EnCountry and CoTournament=EnTournament
+                    LEFT JOIN ExtraData ON EdId=EnId AND EdType='Z' 
+                    where EnTournament={$this->tournament}) Coach2 on Coach2Id=OppCoachId
+                
+                $ExtraFilter
+                ORDER BY ".($OrderByTarget ? 'Target, ' : '')."EvProgr ASC, Event, Phase DESC, MatchNo ASC ";
 
 			return $q;
 		}
@@ -432,7 +454,7 @@
 						'noRealPhase' => $myRow->Phase>=$myRow->EvFinalFirstPhase ? $myRow->NoRealPhase : 0,
 						'numSaved' => ($num=SavedInPhase($myRow->EvFinalFirstPhase)) ? $num : 2*$myRow->EvFinalFirstPhase - $myRow->EvNumQualified,
 						);
-
+                    $this->data['sections'][$myRow->Event]['meta']['endName'] = ($myRow->EvMatchMode==0 ? get_text('ScorecardLabelEnd','Tournament') : get_text('ScorecardLabelSet','Tournament'));
 					$this->data['sections'][$myRow->Event]['meta']['phaseNames']=array(
 						$myRow->EvFinalFirstPhase => get_text($myRow->EvFinalFirstPhase . "_Phase")
 					);
@@ -459,7 +481,7 @@
 					$this->data['sections'][$myRow->Event]['meta']['phaseNames'][$myRow->Phase]=$this->data['sections'][$myRow->Event]['phases'][$myRow->Phase]['meta']['phaseName'];
 				}
 
-				$athlete=$myRow->Athlete;
+				$athlete=($myRow->Athlete ?? '');
 				if(!trim($athlete)) {
 					if($myRow->EvElimType==3 and isset($PoolMatches[$myRow->MatchNo])) {
 						$athlete=$PoolMatches[$myRow->MatchNo];
@@ -467,7 +489,7 @@
 						$athlete=$PoolMatchesWA[$myRow->MatchNo];
 					}
 				}
-				$oppAthlete=$myRow->OppAthlete;
+				$oppAthlete=($myRow->OppAthlete ?? '');
 				if(!trim($oppAthlete)) {
 					if($myRow->EvElimType==3 and isset($PoolMatches[$myRow->OppMatchNo])) {
 						$oppAthlete=$PoolMatches[$myRow->OppMatchNo];
@@ -487,7 +509,17 @@
 				$item=array(
 					// qui ci sono le descrizioni dei campi
 					'lineJudge' => $myRow->LineJudge,
+					'lineGivName' => $myRow->LineGivName,
+					'lineFamName' => $myRow->LineFamName,
+					'lineCode' => $myRow->LineCode,
+					'lineCountry' => $myRow->LineCountry,
+					'lineGender' => $myRow->LineGender,
 					'targetJudge' => $myRow->TargetJudge,
+					'targetGivName' => $myRow->TargetGivName,
+					'targetFamName' => $myRow->TargetFamName,
+					'targetCode' => $myRow->TargetCode,
+					'targetCountry' => $myRow->TargetCountry,
+					'targetGender' => $myRow->TargetGender,
 					'liveFlag' => $myRow->LiveFlag,
 					'scheduledDate' => $myRow->ScheduledDate,
 					'scheduledTime' => $myRow->ScheduledTime,
@@ -496,13 +528,18 @@
 					'matchNo' => $myRow->MatchNo,
 				 	'isValidMatch'=> ($myRow->GridPosition + $myRow->OppGridPosition),
 					'coach' => $myRow->Coach,
+					'coachGivName' => $myRow->CoachGivName,
+					'coachFamName' => $myRow->CoachFamName,
+					'coachCode' => $myRow->CoachCode,
+					'coachCountry' => $myRow->CoachCountry,
+					'coachGender' => $myRow->CoachGender,
 					'bib' => $myRow->Bib,
 					'localBib' => $myRow->LocalBib,
 					'odfMatchName' => $myRow->OdfMatchName ? $myRow->OdfMatchName : '',
 					'odfPath' => $myRow->OdfPreviousMatch && intval($myRow->OdfPreviousMatch)==0 ? $myRow->OdfPreviousMatch : get_text(($myRow->MatchNo==2 or $myRow->MatchNo==3) ? 'LoserMatchName' : 'WinnerMatchName', 'ODF', $myRow->OdfPreviousMatch ? $myRow->OdfPreviousMatch : $myRow->PreviousMatchTime),
 					'birthDate' => $myRow->BirthDate,
 					'id' => $myRow->EnId,
-					'target' => ltrim($myRow->Target, '0'),
+					'target' => ltrim($myRow->Target ?? '', '0'),
 					'athlete' => $athlete,
                     'fullName' => ($myRow->NameOrder ? $athlete : $myRow->GivenName . ' ' . $myRow->FamilyNameUpper),
 					'familyName' => $myRow->FamilyName,
@@ -549,13 +586,18 @@
 					'oppLastUpdated' => $myRow->OppLastUpdated,
 					'oppMatchNo' => $myRow->OppMatchNo,
 					'oppCoach' => $myRow->OppCoach,
+					'oppCoachGivName' => $myRow->OppCoachGivName,
+					'oppCoachFamName' => $myRow->OppCoachFamName,
+					'oppCoachCode' => $myRow->OppCoachCode,
+					'oppCoachCountry' => $myRow->OppCoachCountry,
+					'oppCoachGender' => $myRow->OppCoachGender,
 					'oppBib' => $myRow->OppBib,
 					'oppLocalBib' => $myRow->OppLocalBib,
 					'oppOdfMatchName' => $myRow->OppOdfMatchName,
 					'oppOdfPath' => $myRow->OppOdfPreviousMatch && intval($myRow->OppOdfPreviousMatch)==0 ? $myRow->OppOdfPreviousMatch : get_text(($myRow->OppMatchNo==2 or $myRow->OppMatchNo==3) ? 'LoserMatchName' : 'WinnerMatchName', 'ODF', $myRow->OppOdfPreviousMatch ? $myRow->OppOdfPreviousMatch : $myRow->OppPreviousMatchTime),
 					'oppBirthDate' => $myRow->OppBirthDate,
 					'oppId' => $myRow->OppEnId,
-					'oppTarget' => ltrim($myRow->OppTarget,'0'),
+					'oppTarget' => ltrim($myRow->OppTarget ?? '','0'),
 					'oppAthlete' => $oppAthlete,
                     'oppFullName' => ($myRow->OppNameOrder ? $oppAthlete : $myRow->OppGivenName . ' ' . $myRow->OppFamilyNameUpper),
 					'oppFamilyName' => $myRow->OppFamilyName,

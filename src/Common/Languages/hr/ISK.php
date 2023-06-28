@@ -116,7 +116,6 @@ $lang['ScanQRCode']='Skeniranje QR koda';
 $lang['Score']='rezultat';
 $lang['Scorecard']='Rezultatska lista';
 $lang['ScoredPoints']='bodovi';
-$lang['ScoreHelpDesc']='Ovaj ekran omogućuje vam da upišete strijele koje su ispucane. Također se prikazuju informacije o trenutnoj udaljenost, vrsta mete i informacije o streličaru. Unesite vrijednosti strijela koristeći tipke označene brojevima.';
 $lang['ScoringEntry']='Unos rezultata';
 $lang['SelDist']='Odaberite udaljenost i pokušajte ponovno';
 $lang['SelTgtNum']='Molimo izaberite broj mete i pokušajte ponovno';

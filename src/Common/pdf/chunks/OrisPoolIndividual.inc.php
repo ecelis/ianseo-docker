@@ -17,6 +17,7 @@ foreach($PdfData->Data['Items'] as $EvCode => $MyRows) {
 	if(!$MyRows) {
 		continue;
 	}
+    ksort($MyRows);
 
 	$start=current($MyRows);
 	$pdf->SetDataHeader($PdfData->HeaderPool, $PdfData->HeaderWidthPool);
@@ -74,11 +75,11 @@ foreach($PdfData->Data['Items'] as $EvCode => $MyRows) {
 			switch($MyRow->FinMatchNo) {
 				case 12:
 				case 13:
-					$tit=$PdfData->MatchTitleAB;
+					$tit=$PdfData->MatchTitleAD;
 					break;
 				case 10:
 				case 11:
-					$tit=$PdfData->MatchTitleCD;
+					$tit=$PdfData->MatchTitleCB;
 					break;
 				default:
 					$tit=$PdfData->MatchTitleGroups[$Group];
@@ -149,13 +150,17 @@ foreach($PdfData->Data['Items'] as $EvCode => $MyRows) {
 		foreach($Structure['data'] as $Title => $Groups) {
 			$OldFont=$pdf->getFontSizePt();
 			$pdf->SetFont('', 'b', $OldFont+3);
-			$pdf->SetY($pdf->lastY+3.5);
+            if($pdf->samePage(6)) {
+                $pdf->SetY($pdf->lastY + 3.5);
+            }
 			$pdf->Cell(0, 5, $Title, '',1);
 			$pdf->lastY+=7;
 			$pdf->SetFont('', '', $OldFont);
 
 			foreach($Groups as $MatchTitle => $Matches) {
-				$pdf->lastY+=3.5;
+                if($pdf->samePage(4)) {
+                    $pdf->lastY += 3.5;
+                }
 				$pdf->SetY($pdf->lastY);
 				$pdf->cell(0, 0, $MatchTitle);
 
@@ -195,9 +200,9 @@ foreach($PdfData->Data['Items'] as $EvCode => $MyRows) {
 				}
 
 			}
-			if($Structure['rows']>30 and $Title==$PdfData->MatchTitleAB) {
+			/*if($Structure['rows']>30 and $Title==$PdfData->MatchTitleAD) {
 				$pdf->AddPage();
-			}
+			}*/
 		}
 	} else {
 		$OldTitle='';
@@ -270,8 +275,8 @@ foreach($PdfData->Data['Items'] as $EvCode => $MyRows) {
 				$arc=array(
 					trim($TargetToPrint,'0') . "  #",
 					$athlete,
-					$MyRow->NationCode,
-					$MyRow->Nation);
+                    ($MyRow->NationCode ?? ''),
+                    ($MyRow->Nation == ''));
 				if($MyRow->EvElimType==3) {
 					$arc[]=$MyRow->Score.(isset($MyRow->TiebreakDecoded) ? ' T.'.$MyRow->TiebreakDecoded.($MyRow->Closest ? '+' : '') : '');
 				}
@@ -283,8 +288,8 @@ foreach($PdfData->Data['Items'] as $EvCode => $MyRows) {
 				$arc=array(
 					substr($MyRow->TargetNo,-1,1) . "  #",
 					$athlete,
-					$MyRow->NationCode,
-					$MyRow->Nation);
+                    ($MyRow->NationCode ?? ''),
+                    ($MyRow->Nation ?? ''));
 				if($MyRow->EvElimType==3) {
 					$arc[]=$MyRow->Score.(isset($MyRow->TiebreakDecoded) ? ' T.'.$MyRow->TiebreakDecoded.($MyRow->Closest ? '+' : '') : '');
 				}

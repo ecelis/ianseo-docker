@@ -3,8 +3,8 @@
 $pdf->SetDataHeader($PdfData->Header, $PdfData->HeaderWidth);
 $pdf->setPhase('');
 
-$pdf->AddPage();
 $pdf->setOrisCode($PdfData->Code, $PdfData->Description);
+$pdf->AddPage();
 $pdf->Bookmark($PdfData->IndexName, 0);
 
 foreach($PdfData->Data['Items'] as $Rows) {

@@ -16,7 +16,6 @@ $lang['Credits-BeiterCredits']='El módulo del Código de Barras se publica grat
 $lang['Credits-Coordination']='Coordinación del Proyecto IT';
 $lang['Credits-CoreGroup']='Núcleo del Grupo IANSEO';
 $lang['Credits-Credits']='Créditos';
-$lang['Credits-Documentation']='Documentación & Ayuda';
 $lang['Credits-FitarcoCredits']='¿Qué es Ianseo? Ianseo es un software para la gestión de los resultados de una competición de Tiro con Arco; es un Proyecto de Código Abierto desarrollado gracias al soporte financiero de la Federación Italiana de Tiro con Arco, que decidió posteriormente distribuir el programa gratuitamente por toda Europa. Traducido a varios idiomas, Ianseo es el programa más avanzado y actualizado en el Mundo, que integra además todas las reglas de WA. Ha evolucionado para incluir en el mismo una gestión integral de un Torneo de Tiro con Arco: desde las acreditaciones de los arqueros y oficiales hasta la impresión de cualquier tipo de utilidades, desde la integración en redes y online hasta el diseño del campo de tiro.';
 $lang['Credits-HHT']='Integración del Sistema de Terminales';
 $lang['Credits-IanseoTeam']='Ianseo & Equipo Ianseo';

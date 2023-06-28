@@ -6,6 +6,7 @@ $version='2017-11-23 18:13:00';
 $AllowedTypes=array(3, 6, 7, 8);
 
 $SetType['FR']['descr']=get_text('Setup-FR', 'Install');
+$SetType['FR']['noc'] = 'FRA';
 $SetType['FR']['types']=array();
 $SetType['FR']['rules']=array();
 

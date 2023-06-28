@@ -121,11 +121,12 @@
 					IndId AS `athId`,IndEvent AS `EventCode`,
 					Qu{$dd}Score AS Score,Qu{$dd}Gold AS Gold,Qu{$dd}Xnine AS XNine, Qu{$dd}Hits AS Hits, IndRank as actualRank,
 					EvFinalFirstPhase, EvElim1, EvElim2, EvElimType,
-					IF(EvFinalFirstPhase=0,999999,IF(EvElimType=0, EvNumQualified ,IF(EvElim1=0,EvElim2,EvElim1))) as QualifiedNo, EvFirstQualified
+					IF(EvFinalFirstPhase=0,999999,coalesce(RrQualified, IF(EvElimType=0, EvNumQualified ,IF(EvElim1=0,EvElim2,EvElim1)))) as QualifiedNo, EvFirstQualified
 				FROM Events
 				INNER JOIN Individuals ON EvCode=IndEvent AND EvTournament=IndTournament AND EvTeamEvent=0
 			    inner join IrmTypes on IrmId=IndIrmType and IrmShowRank=1
 				INNER JOIN Qualifications ON IndId=QuId
+				left join (select max(RrPartSourceRank) as RrQualified, RrPartEvent from RoundRobinParticipants where RrPartTournament={$this->tournament} and RrPartTeam=0 and RrPartSourceLevel=0 group by RrPartEvent) RoundRobin on RrPartEvent=EvCode
 				WHERE
 					IndTournament={$this->tournament}
 			        AND (QuScore != 0 OR QuHits !=0) 

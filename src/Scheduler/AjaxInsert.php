@@ -77,7 +77,8 @@ if($HasDay) {
 		}
 	}
 	$q[] = "SchOrder=$Order";
-	safe_w_SQL("insert into Scheduler set ".implode(',', $q)." on duplicate key update SchOrder=SchOrder+1, ".implode(',', $q));
+	$SchUid=md5(uniqid(mt_rand(), true));
+	safe_w_SQL("insert into Scheduler set SchUID='$SchUid', ".implode(',', $q)." on duplicate key update SchOrder=SchOrder+1, ".implode(',', $q));
 }
 
 $Schedule=new Scheduler();

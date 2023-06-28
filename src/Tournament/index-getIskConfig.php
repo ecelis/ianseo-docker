@@ -15,6 +15,11 @@ switch($_REQUEST['api']) {
 	case 'live':
 		$JSON['html'].=getConfigString($CFG->DOCUMENT_PATH.'Api/ISK-Live/ApiConfig.php');
 		break;
+    case 'ng-lite':
+    case 'ng-pro':
+    case 'ng-live':
+        $JSON['html'].=getConfigString($CFG->DOCUMENT_PATH.'Api/ISK-NG/ApiConfig.php');
+        break;
 }
 
 if($JSON['html']) {

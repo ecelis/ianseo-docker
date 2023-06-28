@@ -16,8 +16,11 @@
         $QrCodeScorecards .= "&Barcode=1";
     }
     foreach(AvailableApis() as $Api) {
-        if(!($tmp=getModuleParameter($Api, 'Mode')) || $tmp=='live' ) {
+        if(!($tmp=getModuleParameter($Api, 'Mode')) || strpos($tmp,'live') !== false ) {
             continue;
+        }
+        if(strpos($tmp,'ng-') === 0) {
+            $Api.= '-NG';
         }
         $QrCodeScorecards .= "&QRCode[]=$Api";
     }
@@ -43,7 +46,7 @@
 				// get the match maximum values
 				$MaxScores=GetMaxScores($ee, $mm);
 
-				if(empty($AllowedEvents[$ee])) {
+				if(!isset($AllowedEvents[$ee])) {
 					// dal matchno recupero la fase
 					$t=safe_r_sql("select GrPhase from Grids where GrMatchNo=".intval($mm));
 					if($u=safe_fetch($t)) $AllowedEvents[$ee]=$u->GrPhase;
@@ -197,7 +200,7 @@ if(!empty($_REQUEST['x_Session']) and $_REQUEST['x_Session']!=-1) {
 	echo '<input type="hidden" name="x_Session" id="x_Session" value="'.$_REQUEST['x_Session'].'">';
 
 	$ComboArr=array();
-	ComboSession('Individuals',$ComboArr);
+	ComboSession('Individuals','x_Session', $ComboArr);
 
 // schedule attuale
 	$actual=array_search($_REQUEST['x_Session'],$ComboArr);
@@ -350,8 +353,8 @@ if(!empty($_REQUEST['x_Session']) and $_REQUEST['x_Session']!=-1) {
 			print '<tr class="' . $StileRiga . ($Disabled ? ' disabled' : '').'">';
 			print '<td class="Center">' . $MyRow->FsTarget . '</td>';
 			print '<td class="Center">' . $MyRow->GrPosition . '</td>';
-			print '<td>' . (strlen($MyRow->Athlete)>0 ? $MyRow->Athlete : '&nbsp;') . /*' ' . $MyRow->FinAthlete .*/ '</td>';
-			print '<td>' . (!is_null($MyRow->CoCode) ? $MyRow->CoCode : '&nbsp;') . '</td>';
+			print '<td>' . (!empty($MyRow->Athlete) ? $MyRow->Athlete : '&nbsp;') . /*' ' . $MyRow->FinAthlete .*/ '</td>';
+			print '<td>' . (!empty($MyRow->CoCode) ? $MyRow->CoCode : '&nbsp;') . '</td>';
 			$TextStyle = '';
 			if (array_search($MyRow->FinEvent . '_' . $MyRow->GrMatchNo,array_keys($Score_Error))!==false)
 					$TextStyle='error';

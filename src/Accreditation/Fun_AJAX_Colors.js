@@ -2,10 +2,10 @@
 														- Fun_AJAX_Colors.js -
 	Contiene le funzioni ajax che riguardano la pagina Colors.php
 	NOTA BENE: deve essere invlusa la stringa
-	<?php 
+	<?php
 	print 'var StrConfirm="' . get_text('MsgAreYouSure') . '";';
-	?> 				
-*/ 		
+	?>
+*/
 function resetArea0(obj) {
 	if((obj.id=='d_Area0' && obj.checked) || (obj.id=='d_Area0Star' && obj.checked)) {
 		document.getElementById('d_Area1').checked=false;
@@ -15,7 +15,7 @@ function resetArea0(obj) {
 		document.getElementById('d_Area4').checked=false;
 		document.getElementById('d_Area5').checked=false;
 		document.getElementById('d_Area6').checked=false;
-		document.getElementById('d_Area7').checked=false;	
+		document.getElementById('d_Area7').checked=false;
 	}  else if(obj.id.substr(6,1)>0 && obj.checked) {
 		document.getElementById('d_Area0').checked=false;
 		document.getElementById('d_Area0Star').checked=false;
@@ -53,7 +53,7 @@ function resetInput() {
 	SetStyle('d_Transport','');
 	SetStyle('d_Accomodation','');
 	SetStyle('d_Meals','');
-	
+
 	document.getElementById('d_rowId').value=-1;
 	document.getElementById('d_Classes').value='';
 	document.getElementById('d_Color').value='';
@@ -84,7 +84,7 @@ function save()
 			if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
 			{
 				var queryString
-					= 'rowid=' + encodeURIComponent(document.getElementById('d_rowId').value)	
+					= 'rowid=' + encodeURIComponent(document.getElementById('d_rowId').value)
 					+ '&cl=' + encodeURIComponent(document.getElementById('d_Classes').value)
 					+ '&ath=' + encodeURIComponent(document.getElementById('d_Ath').value)
 					+ '&col=' + encodeURIComponent(document.getElementById('d_Color').value)
@@ -101,17 +101,15 @@ function save()
 					+ '&transport=' + encodeURIComponent(document.getElementById('d_Transport').value)
 					+ '&accomodation=' + encodeURIComponent(document.getElementById('d_Accomodation').value)
 					+ '&meal=' + encodeURIComponent(document.getElementById('d_Meals').value);
-					
+
 				XMLHttp.open("POST","SaveColor.php",true);
 				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-				//document.getElementById('idOutput').innerHTML="SaveDists.php?" + queryString;
 				XMLHttp.onreadystatechange=save_StateChange;
 				XMLHttp.send(queryString);
 			}
 		}
 		catch(e)
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
 }
@@ -128,12 +126,10 @@ function save_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -145,20 +141,20 @@ function save_Response()
 // intercetto gli errori di IE e Opera
 	if (!XMLResp || !XMLResp.documentElement)
 		throw(XMLResp.responseText);
-	
+
 // Intercetto gli errori di Firefox
 	var XMLRoot;
 	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
 		throw("");
 
 	XMLRoot = XMLResp.documentElement;
-	
+
 	var Error = XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
-	
+
 	if (Error==0)
 	{
 		var tbody=document.getElementById('tbody');
-		
+
 		var rowid=XMLRoot.getElementsByTagName('rowid').item(0).firstChild.data;
 		var cl=XMLRoot.getElementsByTagName('cl').item(0).firstChild.data;
 		var col=XMLRoot.getElementsByTagName('col').item(0).firstChild.data;
@@ -168,11 +164,11 @@ function save_Response()
 		var transport=XMLRoot.getElementsByTagName('transport').item(0).firstChild.data;
 		var accomodation=XMLRoot.getElementsByTagName('accomodation').item(0).firstChild.data;
 		var meal=XMLRoot.getElementsByTagName('meal').item(0).firstChild.data;
-		
-		
+
+
 		var numRows=tbody.rows.length;
 		var rows=tbody.rows;
-		
+
 		var row=rows[numRows-1].id.substr(4);
 		++row;
 
@@ -192,7 +188,7 @@ function save_Response()
 			TR.innerHTML='';
 			TR.id='row_' + rowid;
 		}
-		
+
 		var TD=document.createElement('td');
 		TD.className='Center';
 		var tmp ='<a href="javascript:editRule(\'' +  rowid + '\',\'' + cl + '\',\'#' + col+ '\',\''+ titlereverse + '\',';
@@ -202,7 +198,7 @@ function save_Response()
 		tmp += cl + '</a>';
 		TD.innerHTML =tmp;
 		TR.appendChild(TD);
-		
+
 		TD=document.createElement('td');
 		TD.className='Center';
 		TD.innerHTML= '<input type="text" readonly="readonly" size="1" style="background-color:#' + col + '" />&nbsp;#'+ col;
@@ -212,42 +208,42 @@ function save_Response()
 		TD.className='Center';
 		TD.innerHTML= titlereverse;
 		TR.appendChild(TD);
-		
+
 		TD=document.createElement('td');
 		TD.className='Center';
 		TD.innerHTML= ath;
 		TR.appendChild(TD);
-		
+
 		TD=document.createElement('td');
 		TD.className='Center';
 		TD.innerHTML= area;
 		TR.appendChild(TD);
-		
+
 		TD=document.createElement('td');
 		TD.className='Center';
 		TD.innerHTML= transport;
 		TR.appendChild(TD);
-		
+
 		TD=document.createElement('td');
 		TD.className='Center';
 		TD.innerHTML= accomodation;
 		TR.appendChild(TD);
-		
+
 		TD=document.createElement('td');
 		TD.className='Center';
 		TD.innerHTML= meal;
 		TR.appendChild(TD);
-		
+
 		TD=document.createElement('td');
 		TD.className='Center';
 		TD.innerHTML= TD.innerHTML= '<img src="../Common/Images/drop.png" border="0" alt="#" title="#" onclick="deleteRow(' + row + ',\'' + cl + '\');">';
 		TR.appendChild(TD);
-		
+
 		if(rowid==-1)
 		{
 			tbody.appendChild(TR);
 		}
-		
+
 		resetInput();
 	}
 	else
@@ -270,7 +266,7 @@ function save_Response()
 		SetStyle('d_Transport','yellow');
 		SetStyle('d_Accomodation','yellow');
 		SetStyle('d_Meals','yellow');
-		
+
 	}
 }
 
@@ -287,17 +283,15 @@ function deleteRow(row,cl)
 					var queryString
 						= 'cl=' + cl
 						+ '&row=' + row;
-					
+
 					XMLHttp.open("POST","DeleteColor.php",true);
 					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-					//document.getElementById('idOutput').innerHTML="DeleteDists.php?" + queryString;
 					XMLHttp.onreadystatechange=deleteRow_StateChange;
 					XMLHttp.send(queryString);
 				}
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 	}
@@ -315,12 +309,10 @@ function deleteRow_StateChange()
 			}
 			catch(e)
 			{
-				//document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 			}
 		}
 		else
 		{
-			//document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
 		}
 	}
 }
@@ -332,23 +324,23 @@ function deleteRow_Response()
 // intercetto gli errori di IE e Opera
 	if (!XMLResp || !XMLResp.documentElement)
 		throw(XMLResp.responseText);
-	
+
 // Intercetto gli errori di Firefox
 	var XMLRoot;
 	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
 		throw("");
 
 	XMLRoot = XMLResp.documentElement;
-	
+
 	var Error = XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
 	var row = XMLRoot.getElementsByTagName('row').item(0).firstChild.data;
-	
+
 	if (Error==0)
 	{
 		var tbody=document.getElementById('tbody');
 
 		var row2del=document.getElementById('row_' + row);
-		
+
 		if (row2del)
 			tbody.removeChild(row2del);
 	}

@@ -48,7 +48,6 @@ $lang['CR-Record']='Kontinentaalne rekord';
 $lang['Credited']='Akrediteeritud';
 $lang['Currency']='€';
 $lang['DefaultLocRule']='FITA';
-$lang['Delayed']='Edasi lükatud';
 $lang['DeleteTournament']='Kustuta võitlus';
 $lang['Distance']='Distants';
 $lang['Distances']='Distantsid';

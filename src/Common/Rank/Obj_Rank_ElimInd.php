@@ -173,12 +173,12 @@
 			$f=$this->safeFilterR();
 			$filter=($f!==false ? $f : "");
 
-			$q="
-				SELECT
+			$q="SELECT
 					EnId,EnCode, EnSex, EnNameOrder, EnName AS Name, EnFirstName AS FirstName, upper(EnFirstName) AS FirstNameUpper, el.ElTargetNo AS TargetNo,
 					CoId, CoCode, CoName, EnClass, EnDivision,EnAgeClass,  EnSubClass, ElIrmType, IrmType, IrmShowRank,
 					if(el.ElElimPhase=0, 'Eliminations_1', if(el.ElElimPhase=1 and EvElim1!=0 and EvElim2!=0, 'Eliminations_2', 'Eliminations')) as roundText,
-					ElScore, ElRank, ElGold, ElXnine, ElHits, ElTiebreak, ElTbClosest, ElTbDecoded, ToGolds AS GoldLabel, ToXNine AS XNineLabel,
+					ElScore, ElRank, ElGold, ElXnine, ElHits, ElTiebreak, ElTbClosest, ElTbDecoded, 
+					IF(EvGolds!='',EvGolds,ToGolds) AS GoldLabel, IF(EvXNine!='',EvXNine,ToXNine) AS XNineLabel,
 					IF(el.ElElimPhase=0,EvElim2,EvNumQualified) AS QualifiedNo,
 					EvProgr,EvCode,EvEventName,el.ElElimPhase, EvRunning, IF(EvRunning=(el.ElElimPhase+2),(IFNULL(ROUND(ElScore/ElHits,3),0)),0) as RunningScore,
 					sqY.Quanti AS NumCT,
@@ -189,21 +189,21 @@
 					date_format(ifnull(DV2.DvPrintDateTime, DV1.DvPrintDateTime), '%e %b %Y %H:%i UTC') as DocVersionDate,
 					ifnull(DV2.DvNotes, DV1.DvNotes) as DocNotes
 				FROM
-					Eliminations as el
-					INNER JOIN IrmTypes ON IrmId=ElIrmType
-					INNER JOIN Entries ON el.ElId=EnId AND el.ElTournament=EnTournament
-					INNER JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament
-					INNER JOIN Tournament ON el.ElTournament=ToId
-					INNER JOIN Events ON EvCode=el.ElEventCode AND EvTournament=el.ElTournament AND EvTeamEvent=0 and EvElimType<3
-					LEFT JOIN DocumentVersions DV1 on EvTournament=DV1.DvTournament AND DV1.DvFile = 'ELIM' and DV1.DvEvent=''
-					LEFT JOIN DocumentVersions DV2 on EvTournament=DV2.DvTournament AND DV2.DvFile = 'ELIM' and DV2.DvEvent=EvCode
+					`Eliminations` as el
+					INNER JOIN `IrmTypes` ON IrmId=ElIrmType
+					INNER JOIN `Entries` ON el.ElId=EnId AND el.ElTournament=EnTournament
+					INNER JOIN `Countries` ON EnCountry=CoId AND EnTournament=CoTournament
+					INNER JOIN `Tournament` ON el.ElTournament=ToId
+					INNER JOIN `Events` ON EvCode=el.ElEventCode AND EvTournament=el.ElTournament AND EvTeamEvent=0 and EvElimType<3
+					LEFT JOIN `DocumentVersions` DV1 on EvTournament=DV1.DvTournament AND DV1.DvFile = 'ELIM' and DV1.DvEvent=''
+					LEFT JOIN `DocumentVersions` DV2 on EvTournament=DV2.DvTournament AND DV2.DvFile = 'ELIM' and DV2.DvEvent=EvCode
 					/* contatore ct */
 					LEFT JOIN
 						(
 							SELECT
 								Count(*) as Quanti, ElEventCode, ElElimPhase, ElSO as sqyRank, ElTournament
 							FROM
-								Eliminations AS el
+								`Eliminations` AS el
 							WHERE
 								ElTournament={$this->tournament} AND ElSO!=0 {$filter}
 							GROUP BY

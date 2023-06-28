@@ -137,19 +137,16 @@
 		}
 	}
 
-/*	print '<pre>';
-	print_r($sessions);
-	print '</pre>';exit;
-*/
-	$JS_SCRIPT = array(
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Tournament/Fun_JS.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Tournament/Fun_AJAX_ManDistances.js"></script>',
-	);
-	$PAGE_TITLE=get_text('ManSession', 'Tournament');
+$IncludeFA=true;
+$IncludeJquery=true;
+$PAGE_TITLE=get_text('ManSession', 'Tournament');
 
-	include('Common/Templates/head.php');
+$JS_SCRIPT = array(
+    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Tournament/Fun_JS.js"></script>',
+    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Tournament/ManDistancesSessions.js"></script>',
+);
+
+include('Common/Templates/head.php');
 ?>
 	<form name="Frm" method="post" action="">
 		<input type="hidden" name="Command" value="SAVE">

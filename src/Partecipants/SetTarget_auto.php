@@ -79,7 +79,7 @@ echo '<tr>';
 		echo '<select name="Session" id="Session">';
 		echo '<option value="-1">---</option>';
 		foreach ($sessions as $s)
-			echo '<option value="' . $s->SesOrder . '"' . (isset($_REQUEST['Session']) AND $_REQUEST['Session']==$s->SesOrder ? ' selected' : '') . '>' . $s->Descr . '</option>';
+			echo '<option value="' . $s->SesOrder . '"' . ((isset($_REQUEST['Session']) AND $_REQUEST['Session']==$s->SesOrder) ? ' selected="selected"' : '') . '>' . $s->Descr . '</option>';
 		print '</select>';
 	echo '</td>';
 	echo '<td class="Center"><input type="text" maxlength="10" size="12" name="Event" id="Event" value="' . (isset($_REQUEST['Event']) ? $_REQUEST['Event'] : '') . '"></td>';

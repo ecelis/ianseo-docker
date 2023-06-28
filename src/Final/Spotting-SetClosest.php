@@ -26,7 +26,7 @@ if(strlen($_REQUEST['closest'])) {
 
 $JSON['error']=0;
 
-MatchTotal($MatchL, $Event, $Team, $_SESSION['TourId']);
+EvaluateMatch($Event, $Team, $MatchL, $_SESSION['TourId'], false);
 
 // we need to send back the arrow value, the set total, the winner, etc
 $options=array();

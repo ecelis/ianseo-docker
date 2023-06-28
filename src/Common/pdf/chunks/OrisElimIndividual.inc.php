@@ -48,8 +48,8 @@ if(!empty($PdfData->HeaderPool)) {
 	//			if (!is_null($MyRow->EvQualPrintHead) && $MyRow->EvQualPrintHead!='')
 	//				$pdf->setComment($MyRow->EvQualPrintHead);
 
-			$pdf->AddPage();
 			$pdf->setOrisCode('C73A', ($section['meta']['running']  ? 'Running ' : '') . 'Results');
+			$pdf->AddPage();
 			if($First and (empty($pdf->CompleteBookTitle) or $pdf->CompleteBookTitle!=$PdfData->IndexName)) {
 				$pdf->Bookmark($PdfData->IndexName, 0);
 				$pdf->CompleteBookTitle=$PdfData->IndexName;

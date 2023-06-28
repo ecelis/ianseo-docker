@@ -125,10 +125,10 @@ foreach($PdfData->Data['Items'] as $EvCode => $MyRows) {
 				$tgt,
 				$PoolDesc,
 				$athlete,
-				$MyRow->NationCode,
-				$MyRow->Nation,
-				$MyRow->Ranking."#",
-				$MyRow->DOB,
+                ($MyRow->NationCode ?? ''),
+                ($MyRow->Nation ?? ''),
+                ($MyRow->Ranking ?? '')."#",
+                ($MyRow->DOB ?? ''),
 			);
 
 			$pdf->printDataRow($row);

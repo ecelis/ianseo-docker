@@ -66,8 +66,7 @@
 	$ComboDist='';
 	$ChkG='';
 	$ChkX='';
-	if (safe_num_rows($RsTour)==1)
-	{
+	if (safe_num_rows($RsTour)==1) {
 		$RowTour=safe_fetch($RsTour);
 
 		$ComboSes = '<select name="x_Session" id="x_Session" onChange="SelectSession();">' . "\n";
@@ -94,48 +93,24 @@
 		if(empty($_REQUEST['x_To']) && !empty($_REQUEST['x_From']))
 			$_REQUEST['x_To']=$_REQUEST['x_From'];
 
-		if (isset($_REQUEST['x_Arrows']) &&
-			$_REQUEST['x_Arrows']==2 &&
-			isset($_REQUEST['Command']) &&
-			$_REQUEST['Command']=='OK' &&
-			$_REQUEST['x_Session']>0 &&
-			$_REQUEST['x_Dist']>0 && !IsBlocked(BIT_BLOCK_QUAL))
-		{
+		if (isset($_REQUEST['x_Arrows']) AND $_REQUEST['x_Arrows']==2 AND isset($_REQUEST['Command']) AND $_REQUEST['Command']=='OK' AND $_REQUEST['x_Session']>0 AND $_REQUEST['x_Dist']>0 AND !IsBlocked(BIT_BLOCK_QUAL)) {
 			$v=0;
-			if (isset($_REQUEST['x_AllArrows']) && preg_match('/^[0-9]{1,4}$/i',$_REQUEST['x_AllArrows']))
-			{
+			if (isset($_REQUEST['x_AllArrows']) && preg_match('/^[0-9]{1,4}$/i',$_REQUEST['x_AllArrows'])) {
 				$v=	$_REQUEST['x_AllArrows'];
 
 				$TargetFilter = "AND QuTargetNo >='" . $_REQUEST['x_Session'] . str_pad($_REQUEST['x_From'],TargetNoPadding,'0',STR_PAD_LEFT) . "A' AND QuTargetNo<='" . $_REQUEST['x_Session'] . str_pad($_REQUEST['x_To'],TargetNoPadding,'0',STR_PAD_LEFT) . "Z' ";
-
-				$Where
-					= "WHERE "
-						. "EnTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND QuSession=" . StrSafe_DB($_REQUEST['x_Session']) . " AND EnStatus<=1 "
-						. $TargetFilter . " ";
-
-				$query
-					= "UPDATE "
-						. "Qualifications INNER JOIN Entries ON EnId=QuId "
-					. "SET "
-						. "QuD" . $_REQUEST['x_Dist'] ."Hits=" . StrSafe_DB($v) . " "
-					. $Where;
+				$Where = "WHERE EnTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND QuSession=" . StrSafe_DB($_REQUEST['x_Session']) . " AND EnStatus<=1 " . $TargetFilter . " ";
+				$query = "UPDATE Qualifications INNER JOIN Entries ON EnId=QuId SET QuD" . $_REQUEST['x_Dist'] ."Hits=" . StrSafe_DB($v) . " " . $Where;
 				$rs=safe_w_sql($query);
 
 			// somma
-				$query
-					= "UPDATE "
-						. "Qualifications INNER JOIN Entries ON EnId=QuId "
-					. "SET "
-						. "QuHits=QuD1Hits+QuD2Hits+QuD3Hits+QuD4Hits+QuD5Hits+QuD6Hits+QuD7Hits+QuD8Hits "
-					. $Where;
+				$query = "UPDATE Qualifications INNER JOIN Entries ON EnId=QuId  SET QuHits=QuD1Hits+QuD2Hits+QuD3Hits+QuD4Hits+QuD5Hits+QuD6Hits+QuD7Hits+QuD8Hits " . $Where;
 				//	print $query;
 				$rs=safe_w_sql($query);
 
 			// per evitare puttanate riporto a zero la combo delle frecce
 				unset($_REQUEST['x_Arrows']);
 			}
-
-
 		}
 
 		$ComboA
@@ -242,20 +217,20 @@
 <form name="Frm" method="POST" action="">
 <table class="Tabella">
 <tr>
-<td class="Title" width="5%" nowrap="nowrap"><?php echo get_text('IrmStatus', 'Tournament') ?></td>
-<td class="Title" width="5%"><?php print get_text('Target');?></td>
-<td class="Title" width="5%"><?php print get_text('Code','Tournament');?></td>
-<td class="Title" width="20%"><?php print get_text('Archer');?></td>
-<td class="Title" width="5%"><?php print get_text('Div');?></td>
-<td class="Title" width="5%"><?php print get_text('Cl');?></td>
-<td class="Title" width="5%"><?php print get_text('Country');?></td>
-<td class="Title" width="5%">Score (<?php print $_REQUEST['x_Dist']; ?>)</td>
-<td class="Title" width="5%"><a class="LinkRevert" href="javascript:ChangeGoldXNine('OK');"><?php print $RowTour->TtGolds . ' (' . $_REQUEST['x_Dist'] . ')'; ?></a></td>
-<td class="Title" width="5%"><a class="LinkRevert" href="javascript:ChangeGoldXNine('OK');"><?php print $RowTour->TtXNine . ' (' . $_REQUEST['x_Dist'] . ')'; ?></a></td>
-<td class="Title" width="5%"><a class="LinkRevert" href="javascript:ChangeArrows('OK');"><?php print get_text('Arrows','Tournament') . ' (' . $_REQUEST['x_Dist'] . ')'; ?></a></td>
-<td class="Title" width="5%">Score</td>
-<td class="Title" width="5%"><?php print $RowTour->TtGolds; ?></td>
-<td class="Title" width="5%"><?php print $RowTour->TtXNine; ?></td>
+<td class="Title w-5" nowrap="nowrap"><?php echo get_text('IrmStatus', 'Tournament') ?></td>
+<td class="Title w-5"><?php print get_text('Target');?></td>
+<td class="Title w-5"><?php print get_text('Code','Tournament');?></td>
+<td class="Title w-20"><?php print get_text('Archer');?></td>
+<td class="Title w-5"><?php print get_text('Div');?></td>
+<td class="Title w-5"><?php print get_text('Cl');?></td>
+<td class="Title w-5"><?php print get_text('Country');?></td>
+<td class="Title w-5">Score (<?php print $_REQUEST['x_Dist']; ?>)</td>
+<td class="Title w-5"><a class="LinkRevert" href="javascript:ChangeGoldXNine('OK');"><?php print $RowTour->TtGolds . ' (' . $_REQUEST['x_Dist'] . ')'; ?></a></td>
+<td class="Title w-5"><a class="LinkRevert" href="javascript:ChangeGoldXNine('OK');"><?php print $RowTour->TtXNine . ' (' . $_REQUEST['x_Dist'] . ')'; ?></a></td>
+<td class="Title w-5"><a class="LinkRevert" href="javascript:ChangeArrows('OK');"><?php print get_text('Arrows','Tournament') . ' (' . $_REQUEST['x_Dist'] . ')'; ?></a></td>
+<td class="Title w-5">Score</td>
+<td class="Title w-5"><?php print $RowTour->TtGolds; ?></td>
+<td class="Title w-5"><?php print $RowTour->TtXNine; ?></td>
 </tr>
 <?php
 $CurTarget = 'xx';

@@ -37,15 +37,12 @@ if(count($rankData['sections'])) {
 
 		$Header = array();
 		$HeaderWidth = array();
-		if($section['meta']['running'])
-		{
+		if($section['meta']['running']) {
 			$Header = array("Rank","NOC", "Name","Individual\nTotal#","Team\nTotal#","No. of\nArrows#" , "Arrow\nAverage#"," ", " ");
 			$HeaderWidth = array(15,45,45,20,15,15,20,10,5);
-		}
-		else
-		{
+		} else {
 			$Header = array("Rank","NOC", "Name","Individual\nTotal#","Team\nTotal#"," ", " ");
-			$HeaderWidth = array(15,50,50,20,25,20,10);
+			$HeaderWidth = array(15,50,50,20,15,15,15);
 		}
 		$pdf->SetDataHeader($Header, $HeaderWidth);
 		$pdf->setEvent($section['meta']['descr']);
@@ -53,8 +50,8 @@ if(count($rankData['sections'])) {
 		$pdf->Records=$section['records'];
 
 		//Aggiungo Pagina
-		$pdf->AddPage();
 		$pdf->setOrisCode($PdfData->Code, $PdfData->Description);
+		$pdf->AddPage();
 		if($First and (empty($pdf->CompleteBookTitle) or $pdf->CompleteBookTitle!=$PdfData->IndexName)) {
 			$pdf->Bookmark($PdfData->IndexName, 0);
 			$pdf->CompleteBookTitle=$PdfData->IndexName;

@@ -23,9 +23,10 @@
 <tr class="Divider"><td colspan="10"></td></tr>
 <tr>
 <th class="w-5"><?php print get_text('EvCode');?></th>
-<th class="w-30"><?php print get_text('EvName');?></th>
+<th class="w-25"><?php print get_text('EvName');?></th>
 <th class="w-5"><?php print get_text('Para', 'Records');?></th>
 <th class="w-5"><?php print get_text('Progr');?></th>
+<th class="w-20"><?= get_text('Elimination') ?></th>
 <th class="w-10"><?php print get_text('MatchModeScoring');?></th>
 <th class="w-10"><?php print get_text('FirstPhase');?></th>
 <th class="w-10"><?php print get_text('TargetType');?></th>
@@ -60,7 +61,7 @@
 
 	$Select	= "SELECT * FROM Events "
 		. "LEFT JOIN Targets ON EvFinalTargetType=TarId "
-        . "LEFT JOIN (SELECT EcCode, COUNT(*) as ruleCnt FROM EventClass WHERE EcTeamEvent=1 AND EcTournament=" . StrSafe_DB($_SESSION['TourId']) . " GROUP BY EcCode) as sqy on EvCode=EcCode "
+        . "LEFT JOIN (SELECT EcCode, COUNT(*) as ruleCnt FROM EventClass WHERE EcTeamEvent!=0 AND EcTournament=" . StrSafe_DB($_SESSION['TourId']) . " GROUP BY EcCode) as sqy on EvCode=EcCode "
 		. "WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent='1' "
 		. "ORDER BY EvProgr ASC,EvCode ASC, EvTeamEvent ASC ";
 
@@ -80,6 +81,72 @@
 
 			print '<td class="Center">';
 			print '<input type="text" size="3" maxlength="3" name="d_EvProgr_' . $MyRow->EvCode . '" id="d_EvProgr_' . $MyRow->EvCode . '" value="' . $MyRow->EvProgr . '" onBlur="javascript:UpdateField(\'d_EvProgr_' . $MyRow->EvCode . '\');">';
+			print '</td>';
+
+			print '<td class="Center">';
+			echo '<div>';
+			echo '<span>';
+			$display='';
+			$setup='';
+			$extraline='';
+			switch($MyRow->EvElimType) {
+				// case '1':
+				// case '2':
+				// 	echo get_text('OldStyleElimination', 'Tournament');
+				// 	if ($MyRow->EvElim1) {
+				// 		$extraline.= '<div class="Flex-line">';
+				// 		$extraline.= '<div><b>' . get_text('StageE1', 'ISK') . '</b></div>';
+				// 		$extraline.= '<div>' . get_text('Ends', 'Tournament') . ': ' . $MyRow->EvE1Ends . '</div>';
+				// 		$extraline.= '<div>' . get_text('Arrows', 'Tournament') . ': ' . $MyRow->EvE1Arrows . '</div>';
+				// 		$extraline.= '<div>' . get_text('ShotOff', 'Tournament') . ': ' . $MyRow->EvE1SO . '</div>';
+				// 		$extraline.= '<div>' . get_text('Archers') . ': ' . $MyRow->EvElim1 . '</div>';
+				// 		$extraline.= '</div>';
+				// 	}
+				// 	if ($MyRow->EvElim2) {
+				// 		$extraline.= '<div class="Flex-line">';
+				// 		$extraline.= '<div><b>' . get_text('StageE2', 'ISK') . '</b></div>';
+				// 		$extraline.= '<div>' . get_text('Ends', 'Tournament') . ': ' . $MyRow->EvE2Ends . '</div>';
+				// 		$extraline.= '<div>' . get_text('Arrows', 'Tournament') . ': ' . $MyRow->EvE2Arrows . '</div>';
+				// 		$extraline.= '<div>' . get_text('ShotOff', 'Tournament') . ': ' . $MyRow->EvE2SO . '</div>';
+				// 		$extraline.= '<div>' . get_text('Archers') . ': ' . $MyRow->EvElim2 . '</div>';
+				// 		$extraline.= '</div>';
+				// 	}
+				// 	break;
+				// case '3':
+				// 	echo get_text('StagePool2', 'ISK');
+				// 	$extraline.= '<div class="Flex-line">';
+				// 	$extraline.= '<div><b>' . get_text('StagePool2', 'ISK') . '</b></div>';
+				// 	$extraline.= '<div>' . get_text('Ends', 'Tournament') . ': ' . $MyRow->EvElimEnds . '</div>';
+				// 	$extraline.= '<div>' . get_text('Arrows', 'Tournament') . ': ' . $MyRow->EvElimArrows . '</div>';
+				// 	$extraline.= '<div>' . get_text('ShotOff', 'Tournament') . ': ' . $MyRow->EvElimSO . '</div>';
+				// 	$extraline.= '<div>' . get_text('Archers') . ': ' . $MyRow->EvElim2 . '</div>';
+				// 	$extraline.= '</div>';
+				// 	break;
+				// case '4':
+				// 	echo get_text('StagePool4', 'ISK');
+				// 	$extraline.= '<div class="Flex-line">';
+				// 	$extraline.= '<div><b>' . get_text('StagePool4', 'ISK') . '</b></div>';
+				// 	$extraline.= '<div>' . get_text('Ends', 'Tournament') . ': ' . $MyRow->EvElimEnds . '</div>';
+				// 	$extraline.= '<div>' . get_text('Arrows', 'Tournament') . ': ' . $MyRow->EvElimArrows . '</div>';
+				// 	$extraline.= '<div>' . get_text('ShotOff', 'Tournament') . ': ' . $MyRow->EvElimSO . '</div>';
+				// 	$extraline.= '<div>' . get_text('Archers') . ': ' . $MyRow->EvElim2 . '</div>';
+				// 	$extraline.= '</div>';
+				// 	break;
+				case '5':
+					echo get_text('R-Session', 'Tournament');
+					$display='<div style="margin:0.5em; text-wrap: none">'.get_text('LevelsHelp', 'RoundRobin') . ': ' . $MyRow->EvElim1 . '</div>';
+					$setup='<div style="margin:0.5em;" class="Button" onclick="location=\''.$CFG->ROOT_DIR.'Modules/RoundRobin/Setup.php?Team=1&Event='.$MyRow->EvCode.'\'">' . get_text('Setup', 'RoundRobin') . '</div>';
+					break;
+				default:
+					echo get_text('RegularBrackets', 'RoundRobin');
+					$setup='';
+			}
+			echo '</span>';
+			echo '<input style="margin:0.5em;" type="button" value="'.htmlspecialchars(get_text('CmdChange', 'Tournament'), ENT_QUOTES).'" onclick="location=\'ListEvents-Eliminations.php?Event='.$MyRow->EvCode.'\'" />';
+
+			echo $display.$setup;
+			echo '</div>';
+			echo '<div>'.$extraline.'</div>';
 			print '</td>';
 
 			print '<td class="Center">';
@@ -127,6 +194,8 @@
 <td class="Center"><input type="text" size="64" maxlength="64" name="New_EvEventName" id="New_EvEventName"></td>
 <td class="Center"><input type="checkbox" name="New_EvIsPara" id="New_EvIsPara"></td>
 <td class="Center"><input type="text" size="3" maxlength="3" name="New_EvProgr" id="New_EvProgr"></td>
+<td class="Center" id="listEventEliminations">
+</td>
 <td class="Center">
 <select name="New_EvMatchMode" id="New_EvMatchMode">
 <?php

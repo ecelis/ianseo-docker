@@ -18,6 +18,12 @@ function printTeamComponentForm() {
     window.open('PDFTeamDeclarationForm.php?EvCode='+cmbEvent+'&CoId='+cmbTeam, 'prnTeamDeclaration');
 }
 
+function printTeamComponentLog() {
+    var cmbEvent = $('#cmbEvent').val();
+    var cmbTeam = $('#cmbTeam').val();
+    window.open('OrisTeamLineupChanges.php?EvCode='+cmbEvent+'&CoId='+cmbTeam, 'prnTeamLog');
+}
+
 function editComponents(EvCode, TeamId, TeamSubId) {
     if(EvCode === tEvCode && TeamId === tTeamId && TeamSubId === tTeamSubId) {
         $('tbody tr.TeamLine').show().removeClass('selectedTeam');
@@ -45,10 +51,10 @@ function editComponents(EvCode, TeamId, TeamSubId) {
             if(data.error===0) {
                 componentList = data.data;
                 $.each(data.data, function (igroup, group) {
-                    firstRow += (group.Athletes.length+1);
+                    firstRow += (group.Athletes.length+3);
                 });
                 $.each(componentList, function (igroup, group) {
-                    var Html = '<tr class="editTeam"><th colspan="6">&nbsp;</th>';
+                    let Html = '<tr class="editTeam"><th colspan="6">&nbsp;</th>';
                     if(firstRow!=0) {
                         Html += '<td class="Center" colspan="2" rowspan="'+firstRow+'"><input type="button" id="cmdSave" value="'+cmdSave+'" onclick="saveComponents()"></td>';
                         firstRow=0;
@@ -61,8 +67,10 @@ function editComponents(EvCode, TeamId, TeamSubId) {
                             '</tr>';
                     })
                     $('#lstBody').append(Html);
-
                 });
+                let Html = '<tr class="editTeam"><th colspan="6">&nbsp;</th></tr>'+
+                    '<tr class="editTeam"><td colspan="4" class="Right">'+TeamComponentsTimestamp+'</td><td colspan="2"><input id="TeamComponentsTimestamp" type="datetime-local" value="'+ (new Date(Date.now() - (new Date()).getTimezoneOffset() * 60000)).toISOString().slice(0,16)+'"></td></tr>';
+                $('#lstBody').append(Html);
                 $('tfoot').show();
                 VerifyCheckbox();
             }
@@ -71,14 +79,13 @@ function editComponents(EvCode, TeamId, TeamSubId) {
 }
 
 function saveComponents() {
-    var payLoad = [];
+    let payLoad = [];
     $('input:checkbox').each(function () {
         if($(this).is(":checked")) {
             payLoad.push({Id: $(this).attr('value'), Grp: $(this).attr('grp')});
         }
     });
-    console.log(payLoad);
-    $.post( 'ChangeComponents-data.php', {EvCode: tEvCode, TeamId: tTeamId, TeamSubId: tTeamSubId, data: payLoad }, function(data) {
+    $.post( 'ChangeComponents-data.php', {EvCode: tEvCode, TeamId: tTeamId, TeamSubId: tTeamSubId, changeTs: $('#TeamComponentsTimestamp').val(), data: payLoad }, function(data) {
         editComponents(tEvCode, tTeamId, tTeamSubId);
         populateData();
     }, "json");

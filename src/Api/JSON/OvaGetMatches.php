@@ -193,7 +193,7 @@ foreach($rankData['sections'] as $IdEvent => $section) {
             }
             $data['Details']=array("MatchMode"=>intval($objParam->EvMatchMode), "EndsL"=>$end, "EndsR"=>$oppEnd);
 
-            $list[$item['target']]=$data;
+            $list[$data['TargetNoL']]=$data;
         }
     }
 

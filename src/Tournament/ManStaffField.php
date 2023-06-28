@@ -109,15 +109,6 @@ echo '<table class="Tabella">
                     <div style="margin-bottom: 2vh;">
                         <a href="PrnStaffField.php" class="Link" target="PrintOut"><img src="../Common/Images/pdf.gif" alt="<?php print get_text('StaffOnField','Tournament');?>"><br><?php print get_text('StaffOnField','Tournament');?></a>
                     </div>
-                <form name="Frm2" method="get" target="PrnStaffField" action="PrnStaffField.php">
-                    <div style="display: inline-flex;">
-                        <div style="margin:0 0.5em"><?php print get_text('CatJudge','Tournament');?><br><input type="checkbox" name="judge" value="1" checked="checked"></div>
-                        <div style="margin:0 0.5em"><?php print get_text('CatDos','Tournament');?><br><input type="checkbox" name="dos" value="1" checked="checked"></div>
-                        <div style="margin:0 0.5em"><?php print get_text('CatJury','Tournament');?><br><input type="checkbox" name="jury" value="1" checked="checked"></div>
-                        <div style="margin:0 0.5em"><?php print get_text('CatOC','Tournament');?><br><input type="checkbox" name="oc" value="1" checked="checked"></div>
-                    </div>
-                    <div><input type="submit" name="Command" value="<?php print get_text('CmdOk');?>"/></div>
-                </form>
             </td>
 			<td style="width:50%;"  class="Center">
                 <div style="margin-bottom: 2vh;">

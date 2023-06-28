@@ -14,6 +14,7 @@ $lang['CreateRecords']='Buat Rekor Baru';
 $lang['DeleteSingleRecord']='Harap konfirmasi bahwa Anda ingin menghapus rekor ini!';
 $lang['DialogDeleteText']='Harap konfirmasikan bahwa Anda ingin berhenti memantau Rekor ini';
 $lang['DialogDeleteTitle']='Hentikan Monitor Rekor';
+$lang['DialogUpdateAreasText']='Anda akan memperbarui Area Rekor dan/atau Kesetaraan Kelas dengan nilai saat ini mulai hari ini, yang pada akhirnya membatalkan pengaturan saat ini. Tindakan ini tidak bisa dibatalkan!';
 $lang['DialogUpdateText']='Ini akan meng-update semua rekor untuk area ini, yang pada akhirnya akan menimpa/menghapus suntingan khusus';
 $lang['DialogUpdateTitle']='Update/Setel Ulang Rekor Area';
 $lang['DownloadDate']='Tanggal Unduh';
@@ -44,7 +45,7 @@ $lang['RecordAreaClaimer']='Pengklaim Rekor';
 $lang['RecordAreaClaimerHelp']='Pilih siapa yang memenuhi syarat untuk mengklaim rekor. Jika satu negara menentukan kode anggota Assosiasi World Archery (NOC)';
 $lang['RecordAreaCode']='Kode Rekor';
 $lang['RecordAreaCodeHelp']='Kode 2-6 huruf yang mengidentifikasi tipe rekor khusus ini.
-Contoh untuk Casque d\\'Or: CsqOr
+Contoh untuk Casque d\'Or: CsqOr
 Contoh untuk Youth Cup: YC';
 $lang['RecordAreaLevel']='Level Rekor';
 $lang['RecordAreaName']='Nama Rekor';
@@ -68,7 +69,10 @@ $lang['SelectRecordCategory']='Pilih Kategori Rekor';
 $lang['StandingRecord']='Rekor Terkini';
 $lang['TourRecords']='Rekor yang dapat diklaim untuk Kompetisi ini';
 $lang['TourRecordSetupHelp']='Koneksi Internet harus tersedia untuk meng-update/menyisipkan Rekor yang dikelola World Archery';
+$lang['UpdateAllFromWA']='Perbarui Area Rekor yang Dikelola Panahan Dunia dan Kesetaraan Kelas';
+$lang['UpdateEverything']='Area dan Kesetaraan Kelas';
 $lang['UpdateFromWA']='Meng-Update Rekor yang Dikelola WA';
+$lang['UpdateOnlyAreas']='Hanya Area';
 $lang['UpdateSingleRecord']='Harap konfirmasi bahwa Anda ingin meng-update rekor ini!';
 $lang['WA-Distance']='Jarak menurut World Archery';
 $lang['WA-Rec-Class']='Kelas menurut World Archery';

@@ -282,7 +282,6 @@ function buildScorecard() {
 }
 
 function updateArrow(obj, position) {
-	console.log('funzione updateArrow ...');
     var spType = ($('#spotType').val()=='Team' ? '1' : '0');
     var spEvent = $('#spotCode').val();
     var spMatch = $('#spotMatch').val();
@@ -320,6 +319,8 @@ function updateArrow(obj, position) {
         $('#ScorecardL').toggleClass('Winner', data.winner=='L');
         $('#ScorecardR').toggleClass('Winner', data.winner=='R');
         $('.Confirmed').toggleClass('Confirmed', false);
+
+        $('#moveWinner').prop('disabled', data.finished?false:true);
 
         $('[id="'+data.arrowID+'"]').val(data.arrowValue);
         $.each(data.t, function() {
@@ -571,6 +572,8 @@ function moveToNextPhase(obj) {
     $.getJSON(WebDir + 'Final/Spotting-nextPhase.php?event='+spEvent+'&team='+spType+'&matchno='+spMatch+(obj ? '&pool='+obj : ''), function(data) {
         if(data.error==0) {
             updateComboMatches(spMatch);
+            alert(data.msg);
+        } else {
             alert(data.msg);
         }
     });

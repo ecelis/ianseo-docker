@@ -4,8 +4,8 @@ require_once(dirname(dirname(__FILE__)) . '/config.php');
 
 require_once('Common/pdf/ResultPDF.inc.php');
 
-$Sess=intval($_GET['T']);
-$Dist=intval($_GET['D']);
+$Sess=intval($_GET['T'] ?? 0);
+$Dist=intval($_GET['D'] ?? 0);
 
 $PDF_TITLE='';
 

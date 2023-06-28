@@ -69,7 +69,7 @@ class OrisPDF extends IanseoPdf {
 	}
 
 	function SetTextRed() {
-		$this->SetTextColor(0xFF, 0x00, 0x00);
+		$this->SetTextColor(0x8B, 0x00, 0x00);
 	}
 
 	function SetTextOrange() {
@@ -141,7 +141,7 @@ class OrisPDF extends IanseoPdf {
 		if($this->EvPhase != '') {
 			$this->SetXY(145,30);
 			$this->SetFont($this->FontStd,'B',8);
-			$this->Cell(60,7,$this->EvComment,0,1,'R');
+			$this->Cell(60,7,($this->EvComment ?? ''),0,1,'R');
 		}
 
 		$this->SetFont($this->FontStd,'',8);
@@ -357,6 +357,18 @@ class OrisPDF extends IanseoPdf {
 		$this->lastY += 5;
 	}
 
+    function printSectionTitleWContinue($text, $y=null) {
+        $this->SetFont($this->FontStd,'B',10);
+        $this->SetXY(OrisPDF::leftMargin, is_null($y) ? $this->lastY : max(OrisPDF::topStart, $y));
+        $this->Cell(0.1,5,'',0,0,'L');
+        $this->SetXY(OrisPDF::leftMargin, is_null($y) ? $this->lastY : max(OrisPDF::topStart, $y));
+        $this->Cell(array_sum($this->DataSize),5,str_replace(array("#",'§'),"",$text),0,0,(strpos($text,"#")===false ? (strpos($text,"§")===false ? 'L':'C'):'R'));
+        $this->SetXY(OrisPDF::leftMargin, is_null($y) ? $this->lastY : max(OrisPDF::topStart, $y));
+        $this->SetFont($this->FontStd,'',8);
+        $this->Cell(array_sum($this->DataSize),5,'continue...',0,0,'R');
+        $this->lastY += 5;
+    }
+
 	function setEvent($name) {
 		$this->Event = $name;
 	}
@@ -386,140 +398,199 @@ class OrisPDF extends IanseoPdf {
 	    $this->printPageNo = $doPrint;
     }
 
-    function OrisScorecard($Data, $Bottom=0, $Phase, $Section, $Meta, $Team=0) {
-	    if($Phase['FinElimChooser']) {
-	    	$Ends=$Section['elimEnds'];
-	    	$Arrows=$Section['elimArrows'];
-	    	$SO=$Section['elimSO'];
+    function OrisScorecard($Data, $Bottom=0, $Phase=null, $Section=null, $Meta=null, $Team=0, $TeamComponents = array()) {
+	    $nLines = 1;
+        $symbols = array('l','n','s','t','u','v','w','z','H');
+        if($Phase['FinElimChooser']) {
+	    	$Ends = intval($Section['elimEnds']);
+	    	$Arrows = intval($Section['elimArrows']);
+	    	$SO = intval($Section['elimSO']);
 	    } else {
-	    	$Ends=$Section['finEnds'];
-	    	$Arrows=$Section['finArrows'];
-	    	$SO=$Section['finSO'];
+	    	$Ends = intval($Section['finEnds']);
+	    	$Arrows = intval($Section['finArrows']);
+	    	$SO = intval($Section['finSO']);
 	    }
+        if($Team) {
+            $nLines = ceil($Arrows / $Section["maxTeamPerson"]);
+        }
 
 		$CellHeight=5;
-		$ScoreWidth=($this->getPageWidth()-30)/2;
-		$CellWidthShort=8+($Arrows==3 ? 4 : 0);
-		$CellWidthLong=($ScoreWidth-3-$CellWidthShort*(1 + $Arrows))/2;
-		$SoWidth=min($CellWidthShort, ($CellWidthShort*$Arrows)/$SO);
-		$SoGap=$CellWidthShort*$Arrows - $SoWidth*$SO;
-	    $HeadWidthTitle=20;
-	    $HeadWidthData=$ScoreWidth-$HeadWidthTitle;
+        $ShooterSpacingWidth = 10;
+		$ScoreWidth=(($this->getPageWidth()-30)/2);
+		$CellWidthShort=10+(($Arrows/$nLines)<=3 ? (10/($Arrows/$nLines)) : 0);
+		$CellWidthLong=($ScoreWidth-$ShooterSpacingWidth-$CellWidthShort*(1 + ($Arrows/$nLines)))/2;
+        $TableScoreWidth = $ScoreWidth-$CellWidthLong-$ShooterSpacingWidth;
+        $InterspaceWidth = 2*($CellWidthLong+$ShooterSpacingWidth)+10;
+        $JudgesLabel = $CellWidthShort * 2;
 
-		$Offset=35+($Bottom ? $this::topMargin+($this->getPageHeight()-35-$this->extraBottomMargin-$this::bottomMargin-$this::topMargin)/2 : 0);
+
+		$SoWidth=min($CellWidthShort, ($CellWidthShort*$Arrows)/$SO);
+		$SoGap=$CellWidthShort*($Arrows/$nLines) - $SoWidth*$SO;
+	    $HeadWidthTitle=20;
+	    $HeadWidthData=$TableScoreWidth-$HeadWidthTitle;
+
+		$Offset=35+($Bottom ? $this::topMargin+($this->getPageHeight()-45-$this->extraBottomMargin-$this::bottomMargin-$this::topMargin)/2 : 0);
 		$this->SetY($Offset, true);
-		$this->SetFont('','b',12);
+		$this->SetFont('','B',14);
 		$this->Cell(0,0, $Phase['matchName'], '', '1','C');
-		$this->SetFont('','',10);
-		$this->Cell(0,0, date('D j M Y', strtotime($Data['scheduledKey'])).' '.$Meta['fields']['scheduledTime'].': '.$Data['scheduledTime'], '', '1','C');
+		$this->SetFont('','',12);
+		$this->Cell(0,0, (is_null($Data['scheduledKey']) ? '' : date('D j M Y', strtotime($Data['scheduledKey'])).' ').$Meta['fields']['scheduledTime'].': '.$Data['scheduledTime'], '', '1','C');
         if($Data['odfMatchName']!=0) {
-            $this->Cell(0,0, 'Match Number ' . $Data['odfMatchName'], '', '1','C');
+            $this->Cell(0,0, 'Match Number: ' . $Data['odfMatchName'], '', '1','C');
         }
 		$this->ln();
+        $this->SetFont('','',10);
 
-		// line 1: targets
-	    $this->Cell($HeadWidthTitle, 0, $Meta['fields']['target'].':');
-	    $this->Cell($HeadWidthData, 0, ltrim($Data['target'],'0'));
-	    $this->Cell(10,0, '');
-	    $this->Cell($HeadWidthTitle, 0, $Meta['fields']['target'].':');
-	    $this->Cell($HeadWidthData, 0, ltrim($Data['oppTarget'],'0'));
-	    $this->ln();
+        //line 0: target
+        $this->Cell($HeadWidthTitle, $CellHeight, $Meta['fields']['target'].':');
+        $this->Cell($HeadWidthData,$CellHeight, $Data['target']);
+        $this->Cell($InterspaceWidth,$CellHeight, '');
+        $this->Cell($HeadWidthTitle, $CellHeight, $Meta['fields']['oppTarget'].':');
+        $this->Cell($HeadWidthData,$CellHeight, $Data['oppTarget']);
+        $this->ln();
 
-	    //line 2: NOC / athlete
+	    //line 1: NOC / athlete
 	    if($Team) {
-		    $this->Cell($HeadWidthTitle, 0, $Meta['fields']['countryCode'] .':');
+		    $this->Cell($HeadWidthTitle, $CellHeight, $Meta['fields']['countryCode'] .':');
 		    $this->SetFont('','b');
-		    $this->Cell($HeadWidthData,0, $Data['countryCode']);
-		    $this->SetFont('','');
-		    $this->Cell(10,0, '');
-		    $this->Cell($HeadWidthTitle, 0, $Meta['fields']['countryCode'].':');
+		    $this->Cell($HeadWidthData,$CellHeight, $Data['countryCode']);
+            $this->SetFont('','');
+		    $this->Cell($InterspaceWidth,$CellHeight, '');
+		    $this->Cell($HeadWidthTitle, $CellHeight, $Meta['fields']['countryCode'].':');
 		    $this->SetFont('','b');
-		    $this->Cell($HeadWidthData,0, $Data['oppCountryCode']);
+		    $this->Cell($HeadWidthData,$CellHeight, $Data['oppCountryCode']);
 		    $this->SetFont('','');
 	    } else {
-		    $this->Cell($HeadWidthTitle, 0, $Meta['fields']['fullName'].':');
+		    $this->Cell($HeadWidthTitle, $CellHeight, $Meta['fields']['fullName'].':');
 		    $this->SetFont('','b');
-		    $this->Cell($HeadWidthData,0, $Data['athlete'].' ('.$Data['countryCode'].' - '.$Data['countryName'].')');
-		    $this->SetFont('','');
-		    $this->Cell(10,0, '');
-		    $this->Cell($HeadWidthTitle, 0, $Meta['fields']['fullName'].':');
+		    $this->Cell($HeadWidthData,$CellHeight, $Data['athlete'] .' ('.$Data['bib'].')');
+            $this->SetFont('','');
+            $this->Cell($InterspaceWidth,$CellHeight, '');
+		    $this->Cell($HeadWidthTitle, $CellHeight, $Meta['fields']['fullName'].':');
 		    $this->SetFont('','b');
-		    $this->Cell($HeadWidthData,0, $Data['oppAthlete'].' ('.$Data['oppCountryCode'].' - '.$Data['oppCountryName'].')');
+		    $this->Cell($HeadWidthData,$CellHeight, $Data['oppAthlete'] .' ('.$Data['oppBib'].')');
 		    $this->SetFont('','');
 	    }
 	    $this->ln();
 
-	    //line 3: Bib / Country
-	    if($Team) {
-		    $this->Cell($HeadWidthTitle, 0, $Meta['fields']['countryName'] . ':');
-		    $this->SetFont('', 'b');
-		    $this->Cell($HeadWidthData, 0, $Data['countryName']);
-		    $this->SetFont('', '');
-		    $this->Cell(10, 0, '');
-		    $this->Cell($HeadWidthTitle, 0, $Meta['fields']['countryName'] . ':');
-		    $this->SetFont('', 'b');
-		    $this->Cell($HeadWidthData, 0, $Data['oppCountryName']);
-		    $this->SetFont('', '');
-	    } else {
-		    $this->Cell($HeadWidthTitle, 0, $Meta['fields']['bib'].':');
-		    $this->Cell($HeadWidthData,0, $Data['bib']);
-		    $this->Cell(10,0, '');
-		    $this->Cell($HeadWidthTitle, 0, $Meta['fields']['bib'].':');
-		    $this->Cell($HeadWidthData,0, $Data['oppBib']);
-	    }
-	    $this->ln();
+        //line 2: Country
+        $this->Cell($HeadWidthTitle, $CellHeight, $Meta['fields']['countryName'] . ':');
+        $this->SetFont('', 'b');
+        $this->Cell($HeadWidthData, $CellHeight, $Data['countryName']);
+        $this->SetFont('', '');
+        $this->Cell($InterspaceWidth, $CellHeight, '');
+        $this->Cell($HeadWidthTitle, $CellHeight, $Meta['fields']['countryName'] . ':');
+        $this->SetFont('', 'b');
+        $this->Cell($HeadWidthData, $CellHeight, $Data['oppCountryName']);
+        $this->SetFont('', '');
+        $this->ln();
 
-	    //line 4: Coach?
+        //line 3: Seed
+        $this->Cell($HeadWidthTitle, $CellHeight, $Meta['fields']['qualRank'] . ':');
+        $this->SetFont('', 'b');
+        $this->Cell($HeadWidthData, $CellHeight, $Data['qualRank']??'');
+        $this->SetFont('', '');
+        $this->Cell($InterspaceWidth, $CellHeight, '');
+        $this->Cell($HeadWidthTitle, $CellHeight, $Meta['fields']['oppQualRank'] . ':');
+        $this->SetFont('', 'b');
+        $this->Cell($HeadWidthData, $CellHeight, $Data['oppQualRank']??'');
+        $this->SetFont('', '');
+        $this->ln();
+
+        //Line 4: athletes in Team?
+        $Athlist=array(array(), array());
+        $AthAvg=array(array(), array());
+        if($Team) {
+            $posXY = array($this->GetX(), $this->GetY());
+            foreach($TeamComponents[$Data['teamId']][$Data['subTeam']] as $k => $ath) {
+                if($k==0) {
+                    $this->Cell($HeadWidthTitle-($Data['shootingarchersAvailable'] ? 5:0), $CellHeight, $Meta['fields']['athlete'] . ':');
+                } else {
+                    $this->ln();
+                    $this->Cell($HeadWidthTitle-($Data['shootingarchersAvailable'] ? 5:0), $CellHeight, '');
+                }
+                if($Data['shootingarchersAvailable']) {
+                    $Athlist[0][$ath['id']] = array($k, 0, 0);
+                    $AthAvg[0][$k] = 0;
+                    $this->SetFont($this->FontSymbol);
+                    $this->Cell(5, $CellHeight, $symbols[$k % 9]);
+                    $this->SetFont($this->FontStd);
+                }
+                $this->Cell($HeadWidthData, $CellHeight, $ath['familyUpperName'] . ' '. $ath['givenName']);
+            }
+            $this->Cell($InterspaceWidth, $CellHeight, '');
+            $posXY[0] = $this->GetX();
+            $this->setXY($posXY[0],$posXY[1]);
+            foreach($TeamComponents[$Data['oppTeamId']][$Data['oppSubTeam']] as $k => $ath) {
+                if($k==0) {
+                    $this->Cell($HeadWidthTitle-($Data['oppShootingarchersAvailable'] ? 5:0), $CellHeight, $Meta['fields']['athlete'] . ':');
+                } else {
+                    $this->ln();
+                    $this->setX($posXY[0]);
+                    $this->Cell($HeadWidthTitle-($Data['oppShootingarchersAvailable'] ? 5:0), $CellHeight, '');
+                }
+                if($Data['oppShootingarchersAvailable']) {
+                    $Athlist[1][$ath['id']] = array($k, 0, 0);
+                    $AthAvg[1][$k] = 0;
+                    $this->SetFont($this->FontSymbol);
+                    $this->Cell(5, $CellHeight, $symbols[$k % 9]);
+                    $this->SetFont($this->FontStd);
+                }
+                $this->Cell($HeadWidthData, $CellHeight, $ath['familyUpperName'] . ' '. $ath['givenName']);
+            }
+            $this->ln();
+        }
+
+	    //After: Coach?
         if(!empty($Data['coach']) OR !empty($Data['oppCoach'])) {
-            $this->Cell($HeadWidthTitle, 0, $Meta['fields']['coach'] . ':');
-            $this->Cell($HeadWidthData, 0, $Data['coach']);
-            $this->Cell(10, 0, '');
-            $this->Cell($HeadWidthTitle, 0, $Meta['fields']['coach'] . ':');
-            $this->Cell($HeadWidthData, 0, $Data['oppCoach']);
+            $this->Cell($HeadWidthTitle, $CellHeight, $Meta['fields']['coach'] . ':');
+            $this->Cell($HeadWidthData, $CellHeight, $Data['coach']);
+            $this->Cell($InterspaceWidth, $CellHeight, '');
+            $this->Cell($HeadWidthTitle, $CellHeight, $Meta['fields']['coach'] . ':');
+            $this->Cell($HeadWidthData, $CellHeight, $Data['oppCoach']);
             $this->ln();
         }
 	    // empty line
 	    $this->ln(2);
 
 	    // Winner / IRM status, BOXED
-	    $this->SetFontSize(13);
+        $this->SetFont('', 'b', 14);
 	    $Txt='';
 	    if($Data['irm']) {
 	    	$Txt=$Data['irmText'];
 	    } elseif($Data['winner']) {
 	    	$Txt=$Meta['fields']['winner'];
 	    }
-	    $this->Cell($ScoreWidth,0, $Txt, $Txt ? 1 : 0, 0, 'C');
-	    $this->Cell(10,0, '');
+	    $this->Cell($TableScoreWidth,$CellHeight, $Txt, $Txt ? 1 : 0, 0, 'C');
+	    $this->Cell($InterspaceWidth,$CellHeight, '');
 	    $Txt='';
 	    if($Data['oppIrm']) {
 	    	$Txt=$Data['oppIrmText'];
 	    } elseif($Data['oppWinner']) {
 	    	$Txt=$Meta['fields']['winner'];
 	    }
-	    $this->Cell($ScoreWidth,6, $Txt, $Txt ? 1 : 0, 0, 'C');
+	    $this->Cell($TableScoreWidth,$CellHeight, $Txt, $Txt ? 1 : 0, 0, 'C');
 	    $this->ln();
-	    $this->SetFontSize(10);
 
 	    // empty line
 	    $this->ln(2);
 
 	    // score drawing
 	    // head
-	    $this->Cell($CellWidthShort, $CellHeight,'',1);
-        $this->Cell($CellWidthShort*$Arrows, $CellHeight, $Meta['fields']['arrowstring'],1, '0', 'C');
-        $this->Cell($CellWidthLong, $CellHeight, $Meta['fields']['score'],1, 0, 'C');
-	    $this->Cell(3, $CellHeight, '');
-        $this->Cell($CellWidthLong, $CellHeight, $Section['matchMode'] ? $Meta['fields']['setPoints'] : $Meta['fields']['scoreLong'],1, 0, 'C');
+        $this->SetFont('', 'b', 10);
+	    $this->Cell($CellWidthShort, $CellHeight, $Section['endName'],1, '0', 'C');
+        $this->Cell($CellWidthShort*($Arrows/$nLines), $CellHeight, $Meta['fields']['arrowstring'],1, '0', 'C');
+        $this->Cell($CellWidthLong, $CellHeight, $Meta['fields']['scoreLong'],1, 0, 'C');
 
-	    $this->Cell(10, $CellHeight, '');
+	    $this->Cell($ShooterSpacingWidth, $CellHeight, '');
+        $this->Cell($InterspaceWidth-2*$ShooterSpacingWidth, $CellHeight, $Section['matchMode'] ? $Meta['fields']['setPoints'] : $Meta['fields']['scoreLong'],1, 0, 'C');
+        $this->Cell($ShooterSpacingWidth, $CellHeight, '');
 
-        $this->Cell($CellWidthLong, $CellHeight, $Section['matchMode'] ? $Meta['fields']['setPoints'] : $Meta['fields']['scoreLong'],1, 0, 'C');
-	    $this->Cell(3, $CellHeight, '');
-	    $this->Cell($CellWidthShort, $CellHeight,'',1);
-        $this->Cell($CellWidthShort*$Arrows, $CellHeight, $Meta['fields']['arrowstring'],1, 0, 'C');
-        $this->Cell($CellWidthLong, $CellHeight, $Meta['fields']['score'],1, 0, 'C');
+	    $this->Cell($CellWidthShort, $CellHeight, $Section['endName'],1, '0', 'C');
+        $this->Cell($CellWidthShort*($Arrows/$nLines), $CellHeight, $Meta['fields']['arrowstring'],1, 0, 'C');
+        $this->Cell($CellWidthLong, $CellHeight, $Meta['fields']['scoreLong'],1, 0, 'C');
 	    $this->ln();
+        $this->SetFont('', '');
 
         $endTot=explode('|', $Data['setPoints']);
         $endPts=explode('|', $Data['setPointsByEnd']);
@@ -528,47 +599,80 @@ class OrisPDF extends IanseoPdf {
         $Tot=0;
         $OppTot=0;
         for($i=0;$i<$Ends;$i++) {
-	        $this->Cell($CellWidthShort, $CellHeight,$i+1,1, 0, 'C');
+	        $this->Cell($CellWidthShort, $CellHeight * $nLines,$i+1,1, 0, 'C');
 	        $pts='';
-        	for($j=0;$j<$Arrows;$j++) {
-        		$pts=substr($Data['arrowstring'], $i*$Arrows + $j,1);
-	            $this->Cell($CellWidthShort, $CellHeight, DecodeFromLetter($pts),1, 0, 'C');
-	        }
+            $posXY = array($this->GetX(),$this->GetY());
+            for($n=0; $n<$nLines; $n++) {
+                $loopArrows = ($Arrows/$nLines);
+                for ($j = 0; $j < $loopArrows; $j++) {
+                    $this->setXY($posXY[0]+($j*$CellWidthShort), $posXY[1]+($n*$CellHeight));
+                    $pts = substr($Data['arrowstring'], ($i * $Arrows) + ($n * $loopArrows) + $j, 1);
+                    if($Team and $Data['shootingarchersAvailable'] AND isset($Data['shootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]) AND isset($Athlist[0][$Data['shootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]])) {
+                        $Athlist[0][$Data['shootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][1] += ValutaArrowString($pts);
+                        $Athlist[0][$Data['shootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][2]++;
+                        $AthAvg[0][$Athlist[0][$Data['shootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][0]] = $Athlist[0][$Data['shootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][1] / $Athlist[0][$Data['shootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][2];
+                        $this->SetFont($this->FontSymbol);
+                        $this->Cell(5, $CellHeight, $symbols[$Athlist[0][$Data['shootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][0]], 'LTB', 0, 'C');
+                        $this->SetFont($this->FontStd);
+                        $this->Cell($CellWidthShort-5, $CellHeight, DecodeFromLetter($pts), 'RTB', 0, 'C');
+                    } else {
+                        $this->Cell($CellWidthShort, $CellHeight, DecodeFromLetter($pts), 1, 0, 'C');
+                    }
+
+                }
+            }
+            $this->setXY($posXY[0]+($Arrows/$nLines)*$CellWidthShort, $posXY[1]);
 			if(trim($pts)) {
 				$Tot+=$endTot[$i];
-		        $this->Cell($CellWidthLong, $CellHeight, $endTot[$i],1, 0, 'C');
-	            $this->Cell(3, $CellHeight, '');
-		        $this->Cell($CellWidthLong, $CellHeight, $Section['matchMode'] ? $endPts[$i] : $Tot,1, 0, 'C');
+		        $this->Cell($CellWidthLong, $CellHeight*$nLines, $endTot[$i],1, 0, 'C');
+	            $this->Cell($ShooterSpacingWidth, $CellHeight*$nLines, ((intval($Data['shootFirst']) & (2**$i)) != 0 ? '<' : ''),0,0,'C');
+		        $this->Cell($CellWidthLong, $CellHeight*$nLines, $Section['matchMode'] ? $endPts[$i] : $Tot,1, 0, 'C');
 			} else {
-		        $this->Cell($CellWidthLong, $CellHeight, '',1, 0, 'C');
-	            $this->Cell(3, $CellHeight, '');
-		        $this->Cell($CellWidthLong, $CellHeight, '',1, 0, 'C');
+		        $this->Cell($CellWidthLong, $CellHeight*$nLines, '',1, 0, 'C');
+	            $this->Cell($ShooterSpacingWidth, $CellHeight*$nLines, '');
+		        $this->Cell($CellWidthLong, $CellHeight*$nLines, '',1, 0, 'C');
 			}
 
-			$this->Cell(10, $CellHeight, '');
+			$this->Cell(10, $CellHeight*$nLines, '');
 
             $pts=substr($Data['oppArrowstring'], $i*$Arrows,1);
 			if(trim($pts)) {
 				$OppTot+=$oppEndTot[$i];
-		        $this->Cell($CellWidthLong, $CellHeight, $Section['matchMode'] ? $oppEndPts[$i] : $OppTot,1, 0, 'C');
+		        $this->Cell($CellWidthLong, $CellHeight*$nLines, $Section['matchMode'] ? $oppEndPts[$i] : $OppTot,1, 0, 'C');
+                $this->Cell($ShooterSpacingWidth, $CellHeight*$nLines, ((intval($Data['oppShootFirst']) & (2**$i)) != 0 ? '>' : ''),0,0,'C');
 			} else {
-		        $this->Cell($CellWidthLong, $CellHeight, '',1, 0, 'C');
+		        $this->Cell($CellWidthLong, $CellHeight*$nLines, '',1, 0, 'C');
+                $this->Cell($ShooterSpacingWidth, $CellHeight*$nLines, '');
 			}
-            $this->Cell(3, $CellHeight, '');
-	        $this->Cell($CellWidthShort, $CellHeight,$i+1,1, 0, 'C');
-        	for($j=0;$j<$Arrows;$j++) {
-        		$pts=substr($Data['oppArrowstring'], $i*$Arrows + $j,1);
-	            $this->Cell($CellWidthShort, $CellHeight, DecodeFromLetter($pts),1, 0, 'C');
-	        }
+	        $this->Cell($CellWidthShort, $CellHeight*$nLines,$i+1,1, 0, 'C');
+
+            $posXY = array($this->GetX(),$this->GetY());
+            for($n=0; $n<$nLines; $n++) {
+                $loopArrows = ($Arrows/$nLines);
+                for ($j = 0; $j < $loopArrows; $j++) {
+                    $this->setXY($posXY[0]+($j*$CellWidthShort), $posXY[1]+($n*$CellHeight));
+                    $pts = substr($Data['oppArrowstring'], ($i * $Arrows) + ($n * $loopArrows) + $j, 1);
+                    if($Team and $Data['oppShootingarchersAvailable'] AND isset($Data['oppShootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]) AND isset($Athlist[1][$Data['oppShootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]])) {
+                        $Athlist[1][$Data['oppShootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][1] += ValutaArrowString($pts);
+                        $Athlist[1][$Data['oppShootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][2]++;
+                        $AthAvg[1][$Athlist[1][$Data['oppShootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][0]] = $Athlist[1][$Data['oppShootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][1] / $Athlist[1][$Data['oppShootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][2];
+                        $this->SetFont($this->FontSymbol);
+                        $this->Cell(5, $CellHeight, $symbols[$Athlist[1][$Data['oppShootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][0]], 'LTB', 0, 'C');
+                        $this->SetFont($this->FontStd);
+                        $this->Cell($CellWidthShort-5, $CellHeight, DecodeFromLetter($pts), 'RTB', 0, 'C');
+                    } else {
+                        $this->Cell($CellWidthShort, $CellHeight, DecodeFromLetter($pts), 1, 0, 'C');
+                    }
+                }
+            }
+            $this->setXY($posXY[0]+($Arrows/$nLines)*$CellWidthShort, $posXY[1]);
 			if(trim($pts)) {
-		        $this->Cell($CellWidthLong, $CellHeight, $oppEndTot[$i],1, 0, 'C');
+		        $this->Cell($CellWidthLong, $CellHeight*$nLines, $oppEndTot[$i],1, 0, 'C');
 			} else {
-		        $this->Cell($CellWidthLong, $CellHeight, '',1, 0, 'C');
+		        $this->Cell($CellWidthLong, $CellHeight*$nLines, '',1, 0, 'C');
 			}
 	        $this->ln();
         }
-
-        $this->ln(2);
 
 		// SO
 	    if($Data['tie'] or $Data['oppTie']) {
@@ -577,17 +681,26 @@ class OrisPDF extends IanseoPdf {
 	    	$OppTies=explode(',', $Data['oppTiebreakDecoded']);
 	        for($i=0; $i<$Rows; $i++) {
 		        $this->Cell($CellWidthShort, $CellHeight,$Meta['fields']['tie'].' '.($i+1),1,0,'C');
-		        $pts='';
 		        for($j=0;$j<$SO;$j++) {
 		            $pts=substr($Data['tiebreak'], $i*$SO + $j,1);
-		            $this->Cell($SoWidth, $CellHeight, DecodeFromLetter($pts),1,0,'C');
+                    if($Team and $Data['shootingarchersAvailable'] AND isset($Data['shootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]) AND isset($Athlist[0][$Data['shootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]])) {
+                        $Athlist[0][$Data['shootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][1] += ValutaArrowString($pts);
+                        $Athlist[0][$Data['shootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][2]++;
+                        $AthAvg[0][$Athlist[0][$Data['shootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][0]] = $Athlist[0][$Data['shootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][1] / $Athlist[0][$Data['shootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][2];
+                        $this->SetFont($this->FontSymbol);
+                        $this->Cell(5, $CellHeight, $symbols[$Athlist[0][$Data['shootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][0]], 'LTB', 0, 'C');
+                        $this->SetFont($this->FontStd);
+                        $this->Cell($SoWidth-5, $CellHeight, DecodeFromLetter($pts), 'RTB', 0, 'C');
+                    } else {
+                        $this->Cell($SoWidth, $CellHeight, DecodeFromLetter($pts), 1, 0, 'C');
+                    }
 		        }
 
 		        if($SoGap) {
 			        $this->Cell($SoGap, $CellHeight, '');
 		        }
 
-		        if($SO>1) {
+		        if($SO>1) { //Total Cell LEFT
 			        $this->Cell($CellWidthLong, $CellHeight, $Ties[$i],1,0,'C');
 		        } else {
 			        $this->Cell($CellWidthLong, $CellHeight, '');
@@ -595,21 +708,18 @@ class OrisPDF extends IanseoPdf {
 
 		        // closest to center goes only on last row
 		        if($i==$Rows-1) {
-			        //$this->Cell(1,$CellHeight,'');
-			        //$this->Cell($CellHeight, $CellHeight,$Data['closest'] ? '+' : '', 1);
-			        //$this->Cell(1,$CellHeight,'');
-			        //$this->Cell($ClosestWidth, $CellHeight, $Meta['fields']['closestShort']);
-			        $this->Cell(3,$CellHeight,'');
+                    $this->Cell($ShooterSpacingWidth,$CellHeight,((intval($Data['shootFirst']) & (2**$Ends)) != 0 ? '<' : ''),0, 0, 'C');
 			        if($Section['matchMode']) {
 				        $this->Cell($CellWidthLong, $CellHeight, $Data['tie'], 1,0,'C');
 			        } else {
 				        $this->Cell($CellWidthLong, $CellHeight, '', 0,0,'C');
 			        }
 		        } else {
-			        $this->Cell(3+$CellWidthLong,$CellHeight,'');
+                    $this->Cell($ShooterSpacingWidth,$CellHeight,((intval($Data['shootFirst']) & (2**$Ends)) != 0 ? '<' : ''),0, 0, 'C');
+			        $this->Cell($CellWidthLong,$CellHeight,'');
 		        }
 
-				$this->Cell(10, $CellHeight, '');
+				$this->Cell(10, $CellHeight, $Meta['fields']['tie'],1,0, 'C');
 
 		        if($i==$Rows-1) {
 			        if($Section['matchMode']) {
@@ -617,22 +727,32 @@ class OrisPDF extends IanseoPdf {
 			        } else {
 				        $this->Cell($CellWidthLong, $CellHeight, '', 0,0,'C');
 			        }
-			        $this->Cell(3,$CellHeight,'');
+			        $this->Cell($ShooterSpacingWidth,$CellHeight,((intval($Data['oppShootFirst']) & (2**$Ends)) != 0 ? '>' : ''),0, 0, 'C');
 		        } else {
-			        $this->Cell(3+$CellWidthLong, $CellHeight,'');
+                    $this->Cell($ShooterSpacingWidth,$CellHeight,((intval($Data['oppShootFirst']) & (2**$Ends)) != 0 ? '>' : ''),0, 0, 'C');
+			        $this->Cell($CellWidthLong, $CellHeight,'');
 		        }
 		        $this->Cell($CellWidthShort, $CellHeight,$Meta['fields']['tie'].' '.($i+1),1,0,'C');
-		        $pts='';
 		        for($j=0;$j<$SO;$j++) {
 		            $pts=substr($Data['oppTiebreak'], $i*$SO + $j,1);
-		            $this->Cell($SoWidth, $CellHeight, DecodeFromLetter($pts),1,0,'C');
+                    if($Team and $Data['oppShootingarchersAvailable'] AND isset($Data['oppShootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]) AND isset($Athlist[1][$Data['oppShootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]])) {
+                        $Athlist[1][$Data['oppShootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][1] += ValutaArrowString($pts);
+                        $Athlist[1][$Data['oppShootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][2]++;
+                        $AthAvg[1][$Athlist[1][$Data['oppShootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][0]] = $Athlist[1][$Data['oppShootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][1] / $Athlist[1][$Data['oppShootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][2];
+                        $this->SetFont($this->FontSymbol);
+                        $this->Cell(5, $CellHeight, $symbols[$Athlist[1][$Data['oppShootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][0]], 'LTB', 0, 'C');
+                        $this->SetFont($this->FontStd);
+                        $this->Cell($SoWidth-5, $CellHeight, DecodeFromLetter($pts), 'RTB', 0, 'C');
+                    } else {
+                        $this->Cell($SoWidth, $CellHeight, DecodeFromLetter($pts), 1, 0, 'C');
+                    }
 		        }
 
 		        if($SoGap) {
 			        $this->Cell($SoGap, $CellHeight, '');
 		        }
 
-		        if($SO>1) {
+		        if($SO>1) { //Total Cell RIGHT
 			        $this->Cell($CellWidthLong, $CellHeight, $OppTies[$i],1,0,'C');
 		        } else {
 			        $this->Cell($CellWidthLong, $CellHeight, '',0,0,'C');
@@ -640,28 +760,48 @@ class OrisPDF extends IanseoPdf {
 
 		        $this->ln();
 	        }
-	        $this->ln(2);
 	    }
 
 	    // Closest+TOTALS
-        $this->Cell($CellWidthShort*(1+$Arrows)+$CellWidthLong+3, $CellHeight, $Data['closest'] ? $Meta['fields']['closest'] : '');
-	    $this->SetFont('', 'b');
+        $this->ln(1);
+        $this->SetFont('', 'b');
+        $this->Cell($CellWidthShort*(1+($Arrows/$nLines))+$CellWidthLong+$ShooterSpacingWidth, $CellHeight, $Data['closest'] ? $Meta['fields']['closest'] : '');
         $this->Cell($CellWidthLong, $CellHeight, $Section['matchMode'] ? $Data['setScore'] : $Data['score'], 1, 0, 'C');
-		$this->Cell(10, $CellHeight, '');
+        $this->SetFont('', '');
+		$this->Cell(10, $CellHeight, $Meta['fields']['scoreLong'],1,0, 'C');
+        $this->SetFont('', 'b');
         $this->Cell($CellWidthLong, $CellHeight, $Section['matchMode'] ? $Data['oppSetScore'] : $Data['oppScore'], 1, 0, 'C');
-	    $this->SetFont('', '');
-        $this->Cell(3,$CellHeight, '');
-        $this->Cell($CellWidthShort*(1+$Arrows), $CellHeight, $Data['oppClosest'] ? $Meta['fields']['closest'] : '');
+        $this->Cell($ShooterSpacingWidth,$CellHeight, '');
+        $this->Cell($CellWidthShort*(1+($Arrows/$nLines)), $CellHeight, $Data['oppClosest'] ? $Meta['fields']['closest'] : '');
+        $this->SetFont('', '');
+
+        //ifTeams and components, put average
+        if($Team and (count($Athlist[0]) OR count($Athlist[1]))) {
+            $this->ln(10);
+            $this->SetFont('', 'b');
+            $this->Cell($CellWidthShort*(1+($Arrows/$nLines))+$CellWidthLong+$ShooterSpacingWidth, $CellHeight, '');
+            $this->Cell($InterspaceWidth-2*$ShooterSpacingWidth, $CellHeight, $Meta['AverageArrowScore'],1,0,'C');
+            $this->SetFont('', '');
+            for ($i=0; $i<max(count($AthAvg[0]),count($AthAvg[1])); $i++) {
+                $this->ln();
+                $this->Cell($CellWidthShort*(1+($Arrows/$nLines))+$CellWidthLong+$ShooterSpacingWidth, $CellHeight, '');
+                $this->Cell($CellWidthLong, $CellHeight, number_format($AthAvg[0][$i],2,'.',''),1, 0, 'C');
+                $this->SetFont($this->FontSymbol);
+                $this->Cell(10, $CellHeight, $symbols[$i][0], 'LTB', 0, 'C');
+                $this->SetFont($this->FontStd);
+                $this->Cell($CellWidthLong, $CellHeight, number_format($AthAvg[1][$i],2,'.',''),1, 0, 'C');
+            }
+        }
 
 	    //last line: Judges?
         if(!empty($Data['lineJudge']) OR !empty($Data['targetJudge'])) {
-            $this->ln(8);
-            $this->Cell($CellWidthShort*(1+$Arrows)+$CellWidthLong+3,0,'');
-            $this->Cell($CellWidthLong, 0, $Meta['fields']['lineJudge'] . ':');
-            $this->Cell(0, 0, $Data['lineJudge'],0,1);
-            $this->Cell($CellWidthShort*(1+$Arrows)+$CellWidthLong+3,0,'');
-            $this->Cell($CellWidthLong, 0, $Meta['fields']['targetJudge'] . ':');
-            $this->Cell(0, 0, $Data['targetJudge'],0,1);
+            $this->ln(10);
+            $this->setX(($this->getPageWidth()-$ScoreWidth)/2);
+            $this->Cell($JudgesLabel, $CellHeight, $Meta['fields']['lineJudge'] . ':', 'TL');
+            $this->Cell($ScoreWidth-$JudgesLabel, $CellHeight, $Data['lineJudge'],'TR',1);
+            $this->setX(($this->getPageWidth()-$ScoreWidth)/2);
+            $this->Cell($JudgesLabel, $CellHeight, $Meta['fields']['targetJudge'] . ':','BL');
+            $this->Cell($ScoreWidth-$JudgesLabel, $CellHeight, $Data['targetJudge'],'BR',1);
         }
 	    return;
     }
