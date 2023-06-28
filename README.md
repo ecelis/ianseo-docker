@@ -96,6 +96,11 @@ by the `MARIADB_ROOT_PASSWORD` / `MYSQL_ROOT_PASSWORD` variable.
 Refer to the MariaDB official repository for deeper information about
 variable environments https://hub.docker.com/_/mariadb
 
+## Fetch newer Ianseo releases
+
+```
+./bin/fetch <YYYYMMDD>
+```
 
 ## Build the docker image
 
