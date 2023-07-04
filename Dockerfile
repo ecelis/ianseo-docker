@@ -19,15 +19,14 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install mysqli \
     && docker-php-ext-install curl \
     && docker-php-ext-install mbstring \
-    && docker-php-ext-install zip \
-    && yes '' | pecl install mcrypt-1.0.2 \
-    && yes '' | pecl install imagick \
-    && docker-php-ext-enable mcrypt imagick \
-    && apt-get clean all \
-    && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
-    rm -rf /var/lib/apt/lists/* ; \
-    pecl update-channels ; \
-    rm -rf /tmp/pear ~/.pearrc
+    && docker-php-ext-install zip 
+RUN /usr/bin/yes '' | /usr/local/bin/pecl install mcrypt-1.0.6
+RUN /usr/bin/yes '' | /usr/local/bin/pecl install imagick
+RUN apt-get clean all \
+  && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
+  rm -rf /var/lib/apt/lists/* ; \
+  pecl update-channels ; \
+  rm -rf /tmp/pear ~/.pearrc
 # ianseo setup
 COPY src/ /opt/ianseo
 RUN chmod -R a+wX /opt/ianseo
@@ -39,5 +38,6 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
   /etc/apache2/apache2.conf /etc/apache2/conf-enabled/*.conf
 COPY apache/ianseo.conf /etc/apache2/conf-enabled/
 COPY apache/ianseo.ini /etc/apache2/conf-enabled/
-COPY php/php.ini /usr/local/etc/php/
+COPY php/php.ini /usr/local/etc/php
+COPY php/docker-php-ext-ianseo.ini /usr/local/etc/php/conf.d
 # COPY php/ianseo.config.inc.php /opt/ianseo/Common/config.inc.php
