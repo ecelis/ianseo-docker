@@ -27,6 +27,15 @@ This fork target is running I@nseo in Docker.
 
 Docker setup is out of scope.
 
+### Docker compose
+
+```
+docker compose up -d
+```
+
+
+### Docker step by step
+
 First launch a MariaDB container.
 
 ```
