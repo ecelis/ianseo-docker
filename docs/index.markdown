@@ -5,31 +5,12 @@
 layout: default
 ---
 
-Get I@nseo running in Ubuntu with Docker in one-liner!
+Get I@nseo running easily across platforms, Windows, MacOS, and Linux.
 
-[![asciicast](https://asciinema.org/a/477827.svg)](https://asciinema.org/a/477827)
+![Arqueria Desktop Extension](assets/images/arqueria-de_light_1.png)
 
+You still can choose to use the docker image which is the base for the
+Arqueria Desktop Extension.
 
-Install docker 
+I@nseo in docker is [here](docker)
 
-```
-sudo apt install docker.io -y
-```
-
-Launch database
-
-```
-docker run -d --name ianseodb -e MARIADB_USER=ianseo \
-  -e MARIADB_DATABASE=ianseo -e MARIADB_PASSWORD=ianseo \
-  -e MARIADB_ROOT_PASSWORD=ianseo mariadb:10
-```
-
-Launch ianseo
-
-```
-docker run -d --name ianseo --link ianseodb:mysql \
-  -p 8080:80 arqueria/ianseo
-
-```
-
-Browse to [http://localhost:8080](http://localhost:8080)
