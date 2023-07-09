@@ -1,8 +1,9 @@
 docs
 modules
 utilities
-
+node_modules
 .~lock
 .~lock*
 .env
 data
+.git
