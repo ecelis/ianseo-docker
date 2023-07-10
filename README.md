@@ -5,23 +5,13 @@ i@nseo is a software for managing archery tournaments results
 This is an un-official repository, the official site for this software
 is http://www.ianseo.net/
 
-##### Brian Nelson's NOTE - Licenses for each project are in their
-folders.
-
-* IANSEO (`src`) - Licensed under Lesser GPLv3.
-* LiveResultsPublisher (`utilities/LiveResultsPublisher`) - Licensed
-  under MIT
-
-At the time of the creation of this repository 10/17/2015 we were unable
-to locate an repository from which to fork so this repo was created.
-
 ##### Ernesto Celis notes
 
 Mine is a fork from Brian Nelson's `brian-nelson/ianseo` repository but
 mixed with the official release, since Brian's repository seems
 unmaintained.
 
-This fork target is running I@nseo in Docker.
+This fork goal is running I@nseo in Docker.
 
 ## How to use this image
 
@@ -32,7 +22,6 @@ Docker setup is out of scope.
 ```
 docker compose up -d
 ```
-
 
 ### Docker step by step
 
@@ -50,14 +39,14 @@ Now launch the ianseo container linked to the database container.
 docker run -d --name ianseo --link ianseodb:mysql -p 8080:80 arqueria/ianseo
 ```
 
-Browse to http://127.0.0.1:8080/ianseo/ and follow the instructions to
+Browse to http://127.0.0.1:8080 and follow the instructions to
 finish the installation.
 
-In the **Step 2: Database connection data** of I@nseo has a default of
+⚠️  In the **Step 2: Database connection data** of I@nseo has a default of
 `localhost` for Database host, change it for the name of the MariaDB
 container, `ianseodb` in the example above.
 
-Fill the field for the **ADMIN Password to create users and databases**
+⚠️  Fill the field for the **ADMIN Password to create users and databases**
 with the value of the variable `MARIADB_ROOT_PASSWORD` of the MAriaDB
 container, `ianseo` in the example above.
 
