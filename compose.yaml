@@ -7,7 +7,8 @@ services:
       - MARIADB_DATABASE=${MARIADB_DATABASE}
       - MARIADB_PASSWORD=${MARIADB_PASSWORD}
   ianseo:
-    image: ghcr.io/ecelis/ianseo-docker:v2023.04.01.562a
+    # image: ghcr.io/ecelis/ianseo-docker:v2023.04.01.562a
+    image: arqueria/ianseo
     ports:
       - "8080:80"
     depends_on:

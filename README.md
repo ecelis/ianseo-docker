@@ -100,7 +100,7 @@ variable environments https://hub.docker.com/_/mariadb
 ## Fetch newer i@nseo releases
 
 ```
-./bin/fetch <YYYYMMDD>
+npm run ianseo:fetch <YYYYMMDD>
 ```
 
 ## Build the docker image
@@ -108,17 +108,22 @@ variable environments https://hub.docker.com/_/mariadb
 To only build the i@anseo image for the current CPU architechture run:
 
 ```
-docker build -t arqueria/ianseo .
+npm run ianseo:build
 ```
+
 To build images for both x86_64, aarch64 and arm7, run:
 
 ```
-docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 --tag arqueria/ianseo .
+npm run ianseo:build:multi
 ```
 
 ## Relase and Publish images to Docker registries
 
-There are github actions wired to this repository, after mergin a bracnch into `master` you must tag the commit to publish with semantic versioning. Ex: v2022.01.01.1 vYEAR.MONTH.DAY.REVISION. Official I@anseo versioning has integers as REVISION, however docker releases may add an alphabetic charater to the REVISIOn integer to support my own releases linked to official ones.
+There are github actions wired to this repository, after mergin a branch into
+`main` you must tag the commit to publish with semantic versioning.
+Ex: v2022.01.01.1 vYEAR.MONTH.DAY.REVISION. Official I@anseo versioning has
+integers as REVISION, however docker releases may add an alphabetic charater to
+the REVISION integer to support my own releases linked to official ones.
 
 ```
 git checkout master
