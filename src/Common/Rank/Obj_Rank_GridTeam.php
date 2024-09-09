@@ -111,9 +111,9 @@ require_once('Common/Lib/Fun_PrintOuts.php');
 				$ExtraFilter = '';
 			}
 
-			$SQL = "SELECT f1.*, f2.*,
-       				coalesce(JudgeLine,'') as LineJudge, coalesce(JudgeLineCode,'') as LineCode, coalesce(JudgeLineFamName,'') as LineFamName, coalesce(JudgeLineGivName,'') as LineGivName, coalesce(JudgeLineCountry,'') as LineCountry, coalesce(JudgeLineGender,'') as LineGender,
-       				coalesce(JudgeTarget,'') as TargetJudge, coalesce(JudgeTargetCode,'') as TargetCode, coalesce(JudgeTargetFamName,'') as TargetFamName, coalesce(JudgeTargetGivName,'') as TargetGivName, coalesce(JudgeTargetCountry,'') as TargetCountry, coalesce(JudgeTargetGender,'') as TargetGender,
+			$SQL = "SELECT f1.*, f2.*, coalesce(OdfTrOdfCode,'') as OdfUnitCode,
+       				coalesce(JudgeLine,'') as LineJudge, coalesce(JudgeLineCode,'') as LineCode, coalesce(JudgeLineCodeLocal,'') as LineCodeLocal, coalesce(JudgeLineFamName,'') as LineFamName, coalesce(JudgeLineGivName,'') as LineGivName, coalesce(JudgeLineCountry,'') as LineCountry, coalesce(JudgeLineGender,'') as LineGender, coalesce(OdfLineCode,'') as LineOdfCode,
+       				coalesce(JudgeTarget,'') as TargetJudge, coalesce(JudgeTargetCode,'') as TargetCode, coalesce(JudgeTargetCodeLocal,'') as TargetCodeLocal, coalesce(JudgeTargetFamName,'') as TargetFamName, coalesce(JudgeTargetGivName,'') as TargetGivName, coalesce(JudgeTargetCountry,'') as TargetCountry, coalesce(JudgeTargetGender,'') as TargetGender, coalesce(OdfTargetCode,'') as TargetOdfCode,
        				coalesce(Coach1,'') as Coach, coalesce(Coach1Code,'') as CoachCode, coalesce(Coach1FamName,'') as CoachFamName, coalesce(Coach1GivName,'') as CoachGivName, coalesce(Coach1Country,'') as CoachCountry, coalesce(Coach1Gender,'') as CoachGender,
        				coalesce(Coach2,'') as OppCoach, coalesce(Coach2Code,'') as OppCoachCode, coalesce(Coach2FamName,'') as OppCoachFamName, coalesce(Coach2GivName,'') as OppCoachGivName, coalesce(Coach2Country,'') as OppCoachCountry, coalesce(Coach2Gender,'') as OppCoachGender,
 					ifnull(concat(DV2.DvMajVersion, '.', DV2.DvMinVersion) ,concat(DV1.DvMajVersion, '.', DV1.DvMinVersion)) as DocVersion,
@@ -126,9 +126,15 @@ require_once('Common/Lib/Fun_PrintOuts.php');
 				. " EvCode Event,"
 				. " EvOdfCode OdfCode,"
 				. " EvEventName EventDescr,"
-				. " EvFinalFirstPhase, EvNumQualified, "
+				. " EvFinalFirstPhase, EvNumQualified, EvOdfCode, "
 				. " EvMaxTeamPerson,"
 				. " EvFinalPrintHead,"
+                . " EvCheckGolds, "
+                . " EvCheckXNines, "
+                . " EvGolds, "
+                . " EvXNine, "
+                . " EvGoldsChars, "
+                . " EvXNineChars, "
 				. " EvMatchMode,"
 				. " EvWinnerFinalRank,"
 				. " EvFinalFirstPhase=EvNumQualified as NoRealPhase,"
@@ -164,6 +170,8 @@ require_once('Common/Lib/Fun_PrintOuts.php');
 				. " CoMaCode as MaCode,"
 				. " CoCaCode as CaCode,"
 				. " TfScore AS Score,"
+                . " TfGolds Golds,"
+                . " TfXNines XNines,"
 				. " TfSetScore as SetScore,"
 				. " TfTie Tie,"
 				. " TfTieBreak TieBreak,"
@@ -227,6 +235,8 @@ require_once('Common/Lib/Fun_PrintOuts.php');
 				. " CoMaCode as OppMaCode,"
 				. " CoCaCode as OppCaCode,"
 				. " TfScore AS OppScore,"
+                . " TfGolds OppGolds,"
+                . " TfXNines OppXNines,"
 				. " TfSetScore as OppSetScore,"
 				. " TfTie OppTie,"
 				. " TfTieBreak OppTieBreak,"
@@ -256,15 +266,20 @@ require_once('Common/Lib/Fun_PrintOuts.php');
 				. ") f2 on Tournament=OppTournament and Event=OppEvent and MatchNo=OppMatchNo-1
 				LEFT JOIN DocumentVersions DV1 on Tournament=DV1.DvTournament AND DV1.DvFile = 'B-TEAM' and DV1.DvEvent=''
 				LEFT JOIN DocumentVersions DV2 on Tournament=DV2.DvTournament AND DV2.DvFile = 'B-TEAM' and DV2.DvEvent=Event 
+                LEFT JOIN  (SELECT OdfTrOdfCode, OdfTrIanseo 
+                    FROM OdfTranslations 
+                    WHERE OdfTrTournament={$this->tournament} and OdfTrInternal='MATCH' and OdfTrType='CODE') OdfUnit ON OdfTrIanseo=concat(if((EvFinalFirstPhase, Phase) in ((48, 64), (48,32), (24, 32), (12, 16)), 1, 0),'_', f1.MatchNo)
                 LEFT JOIN (
-                    select TiId as JudgeLineId, TiCode as JudgeLineCode, CoCode as JudgeLineCountry, if(TiGender=0, 'M', 'F') as JudgeLineGender, TiName as JudgeLineFamName, TiGivenName as JudgeLineGivName, concat(ucase(TiName), ' ', TiGivenName) as JudgeLine 
+                    select TiId as JudgeLineId, TiCode as JudgeLineCode, IF(TiCodeLocal='',TiCode,TiCodeLocal) JudgeLineCodeLocal, CoCode as JudgeLineCountry, if(TiGender=0, 'M', 'F') as JudgeLineGender, TiName as JudgeLineFamName, TiGivenName as JudgeLineGivName, concat(ucase(TiName), ' ', TiGivenName) as JudgeLine, coalesce(OdfTrOdfCode, 'LNE_JU') as OdfLineCode 
                     from TournamentInvolved
                     inner join Countries on CoId=TiCountry
+					left join OdfTranslations on OdfTrTournament=TiTournament and OdfTrInternal='FUNC' and OdfTrType='NAME' and OdfTrIanseo='LJU'
                     where TiTournament={$this->tournament}) jLine on f1.jLine=JudgeLineId  
                 LEFT JOIN (
-                    select TiId as JudgeTargetId, TiCode as JudgeTargetCode, CoCode as JudgeTargetCountry, if(TiGender=0, 'M', 'F') as JudgeTargetGender, TiName as JudgeTargetFamName, TiGivenName as JudgeTargetGivName, concat(ucase(TiName), ' ', TiGivenName) as JudgeTarget 
+                    select TiId as JudgeTargetId, TiCode as JudgeTargetCode, IF(TiCodeLocal='',TiCode,TiCodeLocal) JudgeTargetCodeLocal, CoCode as JudgeTargetCountry, if(TiGender=0, 'M', 'F') as JudgeTargetGender, TiName as JudgeTargetFamName, TiGivenName as JudgeTargetGivName, concat(ucase(TiName), ' ', TiGivenName) as JudgeTarget, coalesce(OdfTrOdfCode, 'TGT_JU') as OdfTargetCode
                     from TournamentInvolved 
                     inner join Countries on CoId=TiCountry
+					left join OdfTranslations on OdfTrTournament=TiTournament and OdfTrInternal='FUNC' and OdfTrType='NAME' and OdfTrIanseo='TJU'
                     where TiTournament={$this->tournament}) jTarget on f1.jTarget=JudgeTargetId 
                 LEFT JOIN (
                     select EnId as Coach1Id, ifnull(EdExtra,EnCode) Coach1Code, CoCode as Coach1Country, if(EnSex=0, 'M', 'F') as Coach1Gender, EnFirstName as Coach1FamName, EnName as Coach1GivName, concat(ucase(EnFirstName), ' ', EnName) as Coach1
@@ -410,6 +425,12 @@ require_once('Common/Lib/Fun_PrintOuts.php');
 						'firstPhase' => $myRow->EvFinalFirstPhase,
 						'winnerFinalRank' => $myRow->EvWinnerFinalRank,
 						'printHead' => get_text($myRow->EvFinalPrintHead,'','',true),
+                        'checkGolds'=>$myRow->EvCheckGolds,
+                        'checkXnines'=>$myRow->EvCheckXNines,
+                        'golds'=>$myRow->EvGolds,
+                        'xnines'=>$myRow->EvXNine,
+                        'goldChars'=>$myRow->EvGoldsChars,
+                        'xninesChars'=>$myRow->EvXNineChars,
 						'maxTeamPerson'=>$myRow->EvMaxTeamPerson,
                         'parent'=>$myRow->EvCodeParent,
 						'matchMode'=>$myRow->EvMatchMode,
@@ -474,12 +495,16 @@ require_once('Common/Lib/Fun_PrintOuts.php');
 					'lineGivName' => $myRow->LineGivName,
 					'lineFamName' => $myRow->LineFamName,
 					'lineCode' => $myRow->LineCode,
+                    'lineCodeLocal' => $myRow->LineCodeLocal,
+					'lineOdfCode' => $myRow->LineOdfCode,
 					'lineCountry' => $myRow->LineCountry,
 					'lineGender' => $myRow->LineGender,
 					'targetJudge' => $myRow->TargetJudge,
 					'targetGivName' => $myRow->TargetGivName,
 					'targetFamName' => $myRow->TargetFamName,
 					'targetCode' => $myRow->TargetCode,
+                    'targetCodeLocal' => $myRow->TargetCodeLocal,
+					'targetOdfCode' => $myRow->TargetOdfCode,
 					'targetCountry' => $myRow->TargetCountry,
 					'targetGender' => $myRow->TargetGender,
 					'liveFlag' => $myRow->LiveFlag,
@@ -489,8 +514,9 @@ require_once('Common/Lib/Fun_PrintOuts.php');
 					'lastUpdated' => $myRow->LastUpdated,
 					'matchNo' => $myRow->MatchNo,
 					'isValidMatch'=> ($myRow->GridPosition + $myRow->OppGridPosition),
-					'localBib' => rtrim($myRow->OdfCode,'-').$myRow->CountryCode.str_pad($myRow->SubTeam, 2, '0', STR_PAD_LEFT),
+                    'localBib' => str_pad(rtrim($myRow->OdfCode, '-'),15-strlen($myRow->CountryCode??''),'-',STR_PAD_RIGHT).($myRow->CountryCode??'').str_pad(($myRow->SubTeam??0)+1,2,'0',STR_PAD_LEFT),
 					'odfMatchName' => $myRow->OdfMatchName ? $myRow->OdfMatchName : '',
+                    'odfUnitcode' => $myRow->OdfUnitCode ? $myRow->EvOdfCode.$myRow->OdfUnitCode : '',
 					'odfPath' => $myRow->OdfPreviousMatch && intval($myRow->OdfPreviousMatch)==0 ? $myRow->OdfPreviousMatch : get_text(($myRow->MatchNo==2 or $myRow->MatchNo==3) ? 'LoserMatchName' : 'WinnerMatchName', 'ODF', $myRow->OdfPreviousMatch ? $myRow->OdfPreviousMatch : $myRow->PreviousMatchTime),
 					'target' => ltrim($myRow->Target ?? '','0'),
 					'coach' => $myRow->Coach,
@@ -502,6 +528,8 @@ require_once('Common/Lib/Fun_PrintOuts.php');
 					'countryCode' => $myRow->CountryCode,
 					'countryName' => $myRow->CountryName,
 					'contAssoc' => $myRow->CaCode,
+					'tvFamilyName' => $myRow->CountryName,
+					'tvInitials' => '',
 					'memberAssoc' => $myRow->MaCode,
 					'qualRank' => $myRow->ShowRankQual ? $myRow->QualRank : $myRow->IrmTextQual,
 					'qualScore'=> $myRow->QualScore,
@@ -513,6 +541,8 @@ require_once('Common/Lib/Fun_PrintOuts.php');
 					'irmText' => $myRow->IrmText,
 					'winner' => $myRow->Winner,
 					'score'=> $myRow->Score,
+                    'golds'=> $myRow->Golds,
+                    'xnines'=> $myRow->XNines,
 					'setScore'=> $myRow->SetScore,
 				 	'setPoints'=> $myRow->SetPoints,
 				 	'setPointsByEnd'=> $myRow->SetPointsByEnd,
@@ -535,7 +565,7 @@ require_once('Common/Lib/Fun_PrintOuts.php');
 //
 					'oppLastUpdated' => $myRow->OppLastUpdated,
 					'oppMatchNo' => $myRow->OppMatchNo,
-					'oppLocalBib' => rtrim($myRow->OdfCode,'-').$myRow->OppCountryCode.str_pad($myRow->OppSubTeam, 2, '0', STR_PAD_LEFT),
+					'oppLocalBib' => str_pad(rtrim($myRow->OdfCode, '-'),15-strlen($myRow->OppCountryCode??''),'-',STR_PAD_RIGHT).($myRow->OppCountryCode??'').str_pad(($myRow->OppSubTeam??0)+1,2,'0',STR_PAD_LEFT),
 					'oppOdfMatchName' => $myRow->OppOdfMatchName,
 					'oppOdfPath' => $myRow->OppOdfPreviousMatch && intval($myRow->OppOdfPreviousMatch)==0 ? $myRow->OppOdfPreviousMatch : get_text(($myRow->MatchNo==2 or $myRow->MatchNo==3) ? 'LoserMatchName' : 'WinnerMatchName', 'ODF', $myRow->OppOdfPreviousMatch ? $myRow->OppOdfPreviousMatch : $myRow->OppPreviousMatchTime),
 					'oppTarget' => ltrim($myRow->OppTarget ?? '', '0'),
@@ -548,6 +578,8 @@ require_once('Common/Lib/Fun_PrintOuts.php');
 					'oppCountryCode' => $myRow->OppCountryCode,
 					'oppCountryName' => $myRow->OppCountryName,
 					'oppContAssoc' => $myRow->OppCaCode,
+                    'oppTvFamilyName' => $myRow->OppCountryName,
+                    'oppTvInitials' => '',
 					'oppMemberAssoc' => $myRow->OppMaCode,
 					'oppQualRank' => $myRow->OppShowRankQual ? $myRow->OppQualRank : $myRow->OppIrmTextQual,
 					'oppQualScore'=> $myRow->OppQualScore,
@@ -559,6 +591,8 @@ require_once('Common/Lib/Fun_PrintOuts.php');
 					'oppIrmText' => $myRow->OppIrmText,
 					'oppWinner' => $myRow->OppWinner,
 					'oppScore'=> $myRow->OppScore,
+                    'oppGolds'=> $myRow->OppGolds,
+                    'oppXnines'=> $myRow->OppXNines,
 					'oppSetScore'=> $myRow->OppSetScore,
 				 	'oppSetPoints'=> $myRow->OppSetPoints,
 				 	'oppSetPointsByEnd'=> $myRow->OppSetPointsByEnd,

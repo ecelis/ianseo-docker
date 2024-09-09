@@ -15,6 +15,7 @@ function tour_delete($TourId) {
 		"BackNumber" => "BnTournament",
 		"BoinxSchedule" => "BsTournament",
 		"ClubTeamScore"=>"CTSTournament",
+		"ClubTeam"=>"CTTournament",
 		"CasScore"=>"CaSTournament",
 		"CasTeam"=>"CaTournament",
 		"CasTeamFinal"=>"CTFTournament",
@@ -87,6 +88,8 @@ function tour_delete($TourId) {
 		"VegasAwards" => "VaTournament",
 	);
 
+	RemoveOdf($TourId, $TourCode);
+
 	foreach($TableArray as $Key=>$Value)
 	{
 		$Sql = "DELETE FROM " . $Key . " WHERE " . $Value . " = " . StrSafe_DB($TourId);
@@ -114,6 +117,7 @@ function tour_delete($TourId) {
     safe_w_sql($Sql);
 	// removea all media
 	RemoveMedia($TourCode);
+
 }
 
 function tour_getCode($filename, $isString=false) {
@@ -605,5 +609,41 @@ function tour_import($filename, $isString=false) {
 		}
 	}
 
+	// adjust the ODF status
+	checkOdfSystem($TourId, $Gara['Tournament']['ToCode']);
+
 	return ($TourId);
+}
+
+function RemoveOdf($TourId, $TourCode) {
+	if($OdfCode=getModuleParameter('ODF', 'CompCode', '', $TourId)) {
+		if($tmpOdf=GetParameter('Odf-'.$OdfCode.'-T', false, '', true)) {
+			unset($tmpOdf[$TourCode]);
+			if(count($tmpOdf)==0) {
+				DelParameter('Odf-'.$OdfCode.'-T');
+			} else {
+				SetParameter('Odf-'.$OdfCode.'-T', $tmpOdf, true);
+			}
+		}
+		if($tmpOdf=GetParameter('Odf-'.$OdfCode.'-P', false, '', true)) {
+			unset($tmpOdf[$TourCode]);
+			if(count($tmpOdf)==0) {
+				DelParameter('Odf-'.$OdfCode.'-P');
+			} else {
+				SetParameter('Odf-'.$OdfCode.'-P', $tmpOdf, true);
+			}
+		}
+	}
+}
+
+function checkOdfSystem($TourId, $TourCode) {
+	if($OdfCode=getModuleParameter('ODF', 'CompCode', '', $TourId) and $StationType=getModuleParameter('ODF', 'StationType', '', $TourId)) {
+		if($StationType=='R') {
+			$ProdType=getModuleParameter('ODF', 'TestMode', 'T', $TourId);
+			// add this into the competition parameter
+			$tmpOdf=GetParameter('Odf-'.$OdfCode.'-'.$ProdType, false, array(), true);
+			$tmpOdf[$TourCode]=1;
+			SetParameter('Odf-'.$OdfCode.'-'.$ProdType, $tmpOdf, true);
+		}
+	}
 }

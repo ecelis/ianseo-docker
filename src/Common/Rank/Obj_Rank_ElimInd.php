@@ -190,11 +190,18 @@
 					ifnull(DV2.DvNotes, DV1.DvNotes) as DocNotes
 				FROM
 					`Eliminations` as el
+					INNER JOIN `Events` ON EvCode=el.ElEventCode AND EvTournament=el.ElTournament AND EvTeamEvent=0 and EvElimType<3
 					INNER JOIN `IrmTypes` ON IrmId=ElIrmType
 					INNER JOIN `Entries` ON el.ElId=EnId AND el.ElTournament=EnTournament
-					INNER JOIN `Countries` ON EnCountry=CoId AND EnTournament=CoTournament
+					left JOIN `Countries` ON CoId=
+                        case EvTeamCreationMode 
+                            when 0 then EnCountry
+                            when 1 then EnCountry2
+                            when 2 then EnCountry3
+                            else EnCountry
+                        end
+                        AND EnTournament=CoTournament
 					INNER JOIN `Tournament` ON el.ElTournament=ToId
-					INNER JOIN `Events` ON EvCode=el.ElEventCode AND EvTournament=el.ElTournament AND EvTeamEvent=0 and EvElimType<3
 					LEFT JOIN `DocumentVersions` DV1 on EvTournament=DV1.DvTournament AND DV1.DvFile = 'ELIM' and DV1.DvEvent=''
 					LEFT JOIN `DocumentVersions` DV2 on EvTournament=DV2.DvTournament AND DV2.DvFile = 'ELIM' and DV2.DvEvent=EvCode
 					/* contatore ct */

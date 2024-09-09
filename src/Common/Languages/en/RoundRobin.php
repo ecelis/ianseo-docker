@@ -28,6 +28,7 @@ $lang['LevelNumShort']='Lvl {$a}';
 $lang['Levels']='Levels';
 $lang['LevelsHelp']='Number of Levels';
 $lang['LevelShort']='Lvl';
+$lang['PreSeedNum']='Seeded as $a';
 $lang['QualifiedArchers']='Qualified Archers';
 $lang['RegularBrackets']='Regular Brackets';
 $lang['Round']='Round';
@@ -42,6 +43,8 @@ $lang['ShowEndDetails']='End Details';
 $lang['Source']='Source Level+Group';
 $lang['SourceRank']='Source Rank';
 $lang['TargetAssignment']='Target Assignment';
+$lang['TargetAssignmentDescription']='Target Number followed by "++" works as "+" but repeats the same targets at all levels starting from the current one;<br/>
+Target Number followed by "**" works as "*" but for all rounds';
 $lang['Tie']='Tie';
 $lang['TieAllowed']='Ties Allowed';
 $lang['TieBreak-1']='Tie Break 1';

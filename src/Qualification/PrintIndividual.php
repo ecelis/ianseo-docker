@@ -6,4 +6,3 @@ if(empty($_REQUEST['ShowOrisInd'])) {
 }
 
 require_once('OrisIndividual.php');
-?>

@@ -12,3 +12,10 @@ function printLoop() {
     };
     window.open('PDFScore.php?'+$.param(form), 'SCORES');
 }
+
+function printDelays() {
+    let form={
+        act:'printDelays'
+    };
+    window.open('PDFScore.php?'+$.param(form), 'SCORES');
+}

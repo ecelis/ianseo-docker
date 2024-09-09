@@ -44,12 +44,17 @@ $lang['SourceRank']='Kedudukan Sumber';
 $lang['TargetAssignment']='Tugasan Sasaran';
 $lang['Tie']='Seri';
 $lang['TieAllowed']='Seri Dibenarkan';
+$lang['TieBreak-1']='Pemutus 1';
+$lang['TieBreak-1-Short']='TB1';
+$lang['TieBreak-2']='Pemutus 2';
+$lang['TieBreak-2-Short']='TB2';
 $lang['TiebreakSystem']='Sistem Seri';
 $lang['TiebreakSystem-1']='Jumlah set menang';
 $lang['TiebreakSystem-2']='Jumlah markah set';
 $lang['TiebreakSystem-3']='Jumlah markah';
 $lang['TiebreakSystem-4']='Panahan Penentu';
 $lang['TiebreakSystem-5']='Jumlah (set) markah - Jumlah (set) markah lawan';
+$lang['tieBreakSystem2']='Sistem pemutus tahap 2';
 $lang['TiePoints']='Markah jika Seri';
 $lang['WinPoints']='Markah jika Menang';
 ?>

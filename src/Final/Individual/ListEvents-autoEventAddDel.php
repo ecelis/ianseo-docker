@@ -21,9 +21,9 @@ if(isset($_REQUEST["checkEvents"])) {
     $JSON["Add"]=safe_num_rows($q);
     $JSON["Del"]=0;
     $JSON["DelList"]='';
-    $Sql = "SELECT Count(*) as DelNo, GROUP_CONCAT(EcCode SEPARATOR ', ') as DelList
+    $Sql = "SELECT Count(distinct EcCode) as DelNo, GROUP_CONCAT(EcCode SEPARATOR ', ') as DelList
         FROM EventClass
-        LEFT JOIN Entries ON EnClass=EcClass AND EnDivision=EcDivision AND EcTournament=EnTournament
+        LEFT JOIN Entries ON EnClass=EcClass AND EnDivision=EcDivision AND EcTournament=EnTournament and EnIndFEvent=1
         WHERE EcTournament=".StrSafe_DB($_SESSION['TourId'])." AND EcTeamEvent=0 AND EnId IS NULL";
     $q = safe_r_SQL($Sql);
     if($r=safe_fetch($q)) {

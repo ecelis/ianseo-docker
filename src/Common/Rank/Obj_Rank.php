@@ -145,7 +145,7 @@
 					inner join Events on RtTournament=EvTournament and RtRecCategory=if(ReArWaMaintenance=1, EvRecCategory, EvCode) and EvTournament={$this->tournament}  and RtRecTeam=EvTeamEvent
 					".($Event ? "and EvCode='{$Event}'" : '')."
 					and EvTeamEvent=".($Team ? '1' : '0')."
-					where RtRecTotal>0 and RtRecPhase=".($Match ? 3 : 1)."
+					where RtRecPhase=".($Match ? 3 : 1)."
 					order by ReArBitLevel desc, ReArCode, RtRecTotal desc "; // for now we only do on totals
 			} else {
 				$sql="select distinct TrHeader, TrHeaderCode, RtRecCode, RtRecDistance, RtRecMaxScore, ReArBitLevel, ReArMaCode, TrFontFile, RtRecTotal, RtRecXNine, RtRecDate, RtRecExtra, TrColor,

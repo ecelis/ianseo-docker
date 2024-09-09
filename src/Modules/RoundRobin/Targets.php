@@ -41,7 +41,7 @@ $q=safe_r_sql("select EvCode, EvEventName from Events where EvTeamEvent=$Team an
 while($r=safe_fetch($q)) {
 	$Events.='<option value="'.$r->EvCode.'"'.($Event==$r->EvCode ? ' selected="selected"' : '').'>'.$r->EvCode.'-'.$r->EvEventName.'</option>';
 }
-
+$IncludeJquery = true;
 $JS_SCRIPT=array(
 	phpVars2js(array(
 		'cmdConfirm' => get_text('Confirm', 'Tournament'),
@@ -49,18 +49,15 @@ $JS_SCRIPT=array(
 		'cmdSet2All' => get_text('CmdSet2AllGroups', 'RoundRobin'),
 		'cmdSet2Group' => get_text('CmdSet2Group', 'RoundRobin'),
 	)),
-	//'<script type="text/javascript" src="../../Common/ajax/ObjXMLHttpRequest.js"></script>',
-	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
-	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>',
 	'<script type="text/javascript" src="./Common.js"></script>',
 	'<script type="text/javascript" src="./Targets.js"></script>',
 	'<link rel="stylesheet" href="./RoundRobin.css">',
-	'<link rel="stylesheet" href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css">',
 );
 
 include('Common/Templates/head.php');
 
 echo '<table class="Tabella" id="MyTable">';
+echo '<tbody id="Settings">';
 echo '<tr><th class="Main" colspan="5">'.get_text('R-Session','Tournament').'</th></tr>';
 
 echo '<tr>
@@ -80,9 +77,13 @@ echo '<select id="EvGroup" onchange="getEventDetail()"></select>';
 echo '<select id="EvRound" onchange="getEventDetail()"></select>';
 echo '</th>';
 echo '</tr>';
+echo '</tbody>';
 
-echo '<tbody id="LevDetails"></tbody>';
-
+echo '<tfoot id="Footer"><tr><td colspan="5">
+    <div>'.get_text('ScheduleAssignmentKeys', 'Tournament').'</div>
+    <div>'.get_text('TargetAssignmentDescription', 'Tournament').'</div>
+    <div>'.get_text('TargetAssignmentDescription', 'RoundRobin').'</div>
+    </td></tr></tfoot>';
 echo '</table>';
 
 include('Common/Templates/tail.php');

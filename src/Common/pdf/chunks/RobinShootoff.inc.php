@@ -73,6 +73,7 @@ if(count($rankData['sections']))
 						$pdf->cell($colW3,0, $section['meta']['fields']['countryName'],'1',0, 'L', '1');
 						$pdf->cell($colW1,0, $section['meta']['fields']['score'],'1',0, 'C', '1');
 						$pdf->cell($colW2,0, $level['tiebreaker'],'1',0, 'C', '1');
+						$pdf->cell($colW2,0, $level['tiebreaker2'],'1',0, 'C', '1');
 						$pdf->cell($colW1,0, '','1',1, 'C', '1');
 						$pdf->SetFont('','',8);
 						$Header=true;
@@ -83,6 +84,7 @@ if(count($rankData['sections']))
 					$pdf->cell($colW3,0, $item['countryName'],'1',0, 'L');
 					$pdf->cell($colW1,0, $item['score'],'1',0, 'C');
 					$pdf->cell($colW2,0, $item['tieBreaker'],'1',0, 'C');
+					$pdf->cell($colW2,0, $item['tieBreaker2'],'1',0, 'C');
 					$pdf->SetFont('','i',8);
 					if($item['so']) {
 						$pdf->cell($colW1,0, $section['meta']['fields']['so'],'1',1, 'C', '1');

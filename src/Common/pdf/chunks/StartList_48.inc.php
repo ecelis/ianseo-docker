@@ -26,6 +26,7 @@ $pdf->ln(5);
 $OldDate='';
 $TimeWidth=18;
 $EvWidth=$pdf->getPageWidth()-2*$pdf->getSideMargin()-140-$TimeWidth;
+$OldPhase=0;
 foreach($PdfData->Data['Items'] as $ItemHead => $Phases) {
 	foreach($Phases as $Phase => $MyRows) {
 		if(!$pdf->SamePage(16+4*count($MyRows))) {
@@ -34,7 +35,7 @@ foreach($PdfData->Data['Items'] as $ItemHead => $Phases) {
 		$OldGroup=0;
 		$OldPool=0;
 		foreach($MyRows as $MyRow) {
-			if ($OldHeader!=$ItemHead or !$pdf->SamePage(4)) {
+			if ($OldHeader!=$ItemHead or !$pdf->SamePage(4) or $OldPhase!=$MyRow->RarPhase) {
 				// print new event header
 				if(!$pdf->SamePage(20)) {
 					$pdf->AddPage();
@@ -42,10 +43,14 @@ foreach($PdfData->Data['Items'] as $ItemHead => $Phases) {
 					$pdf->dy(6);
 				}
 				$TmpSegue = !$pdf->SamePage(4);
-				if($TmpSegue) {
+				if($TmpSegue or $OldPhase!=$MyRow->RarPhase) {
 					$pdf->AddPage();
 				}
 
+                $OldPhase=$MyRow->RarPhase;
+                if($OldPhase and $OldPhase==$MyRow->RarPhase) {
+                    $OldDate=0;
+                }
 				list($Date, $Time) = explode(' ', $MyRow->RarStartlist);
 
 				if($MyRow->IsSingle and $Phase==0) {

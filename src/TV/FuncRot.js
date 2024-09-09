@@ -224,3 +224,25 @@ function GetComboSchedule_Response()
 	}
 }
 
+function SetDefaults(obj) {
+	$.confirm({
+		title:'',
+		content:msgAreYouSure,
+		boxWidth: '25%',
+		useBootstrap: false,
+		type:'red',
+		buttons:{
+			ok:{
+				text:cmdConfirm,
+				action:function() {
+					let row=$(obj).closest('tr');
+					row.find('input').val(row.attr('ref'));
+					row.find('.CssResetButton').addClass('CssResetDisabled');
+				}
+			},
+			cancel:{
+				text:cmdCancel,
+			}
+		}
+	});
+}

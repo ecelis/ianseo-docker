@@ -7,7 +7,7 @@ checkACL(AclIndividuals, AclReadOnly);
 
 $isCompleteResultBook = true;
 
-if(($_REQUEST['OrisABD']??'')=='D') {
+if(isset($_REQUEST["IncBrackets"]) AND $_REQUEST["IncBrackets"]==1 AND ($_REQUEST['OrisABD']??'')=='D') {
 	// scorecard!
 	require_once('Common/OrisFunctions.php');
 	require_once('Common/pdf/PdfChunkLoader.php');

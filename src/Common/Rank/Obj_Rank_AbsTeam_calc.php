@@ -111,7 +111,7 @@
 				 FROM Teams
 			    INNER JOIN Events ON TeEvent=EvCode AND TeTournament=EvTournament AND EvTeamEvent=1
 			    inner join IrmTypes on IrmId=TeIrmType and IrmShowRank=1
-				left join (select max(RrPartSourceRank) as RrQualified, RrPartEvent from RoundRobinParticipants where RrPartTournament={$this->tournament} and RrPartTeam=1 and RrPartSourceLevel=0 group by RrPartEvent) RoundRobin on RrPartEvent=EvCode
+				left join (select max(RrPartSourceRank) as RrQualified, RrPartEvent from RoundRobinParticipants where RrPartTournament={$this->tournament} and RrPartTeam=1 and RrPartSourceLevel=0 group by RrPartEvent) RoundRobin on RrPartEvent=EvCode and EvElimTYpe=5
 				 WHERE
 				 	TeTournament={$this->tournament} AND TeFinEvent=1 AND TeScore<>'0'
 				 	{$filter}

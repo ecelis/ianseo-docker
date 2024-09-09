@@ -142,6 +142,7 @@ switch($Type) {
 				, '' as SubClass
 				, SesName
 			FROM (select 
+		        RrMatchSwapped as Swapped,
 				RrMatchTournament as M1Tournament,
 				RrMatchEvent as M1Event,
 				RrMatchTeam as M1Team,

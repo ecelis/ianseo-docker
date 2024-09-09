@@ -37,7 +37,7 @@ CreateStandard3DEvents($TourId, $SubRule);
 InsertStandard3DEvents($TourId, $SubRule);
 
 // Elimination rounds
-InsertStandard3DEliminations($TourId, $SubRule);
+//InsertStandard3DEliminations($TourId, $SubRule);
 
 // Finals & TeamFinals
 CreateFinals($TourId);
@@ -75,5 +75,3 @@ $tourDetails=array(
 //	'ToIocCode'	=> $tourDetIocCode,
 	);
 UpdateTourDetails($TourId, $tourDetails);
-
-?>

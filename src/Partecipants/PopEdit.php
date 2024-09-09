@@ -725,13 +725,7 @@
 // per i reset js delle combo
 	list($allDivs,$allAgeCls,$allCls)=getAllDivCl();
 
-//	print'<pre>';
-//	print_r($allDivs);
-//	print_r($allAgeCls);
-//	print_r($allCls);
-//	print'</pre>';
-//	exit;
-
+	$IncludeJquery = true;
 	$JS_SCRIPT=array(
 		getTargetsScript(),
 		($record!==null ? phpVars2js(array('record'=>$record)) : ''),
@@ -742,7 +736,6 @@
 		)),
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 		'<script type="text/javascript" src="Fun_AJAX_PopEdit.js"></script>',
 		'<script type="text/javascript">
 			function save(c)

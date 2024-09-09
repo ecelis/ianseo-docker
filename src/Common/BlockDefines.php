@@ -125,10 +125,10 @@ function getBlocksToSet() {
 }
 
 function actualACL() {
-    global $listACL;
+    global $listACL, $CFG;
     $lockEnabled = getModuleParameter("ACL", "AclEnable", "00");
     $ip = $_SERVER["REMOTE_ADDR"];
-    if($ip == '127.0.0.1' OR $ip == '::1' OR $lockEnabled[0] == "0") {
+    if($ip == '127.0.0.1' OR $ip == '::1' OR in_array($ip,$CFG->ACLExcluded) OR $lockEnabled[0] == "0") {
         $acl = array_fill(0, count($listACL), AclReadWrite);
     } else {
         $acl = array_fill(0, count($listACL), AclNoAccess);
@@ -172,7 +172,7 @@ function hasACL($feature, $level, $TourId=0) {
         $INFO->ACLEnabled = true;
     }
     $ip = $_SERVER["REMOTE_ADDR"];
-    if($ip == '127.0.0.1' OR $ip == '::1') {
+    if($ip == '127.0.0.1' OR $ip == '::1' OR in_array($ip,$CFG->ACLExcluded)) {
         return true;
     } else {
         if ($lockEnabled[0] == "1") {
@@ -210,27 +210,42 @@ function checkACL($feature, $level, $redirect=true, $TourId=0) {
     }
 
     $ip = $_SERVER["REMOTE_ADDR"];
-    if($ip == '127.0.0.1' OR $ip == '::1') {
+    if($ip == '127.0.0.1' OR $ip == '::1' OR in_array($ip,$CFG->ACLExcluded)) {
         return AclReadWrite;
     } else {
-        if ($lockEnabled[0] == "1") {
-            if($lockEnabled[1] == "1") {
-                $Sql="SELECT AclIP FROM ACL WHERE AclTournament={$TourId} AND AclIP='{$ip}'";
+        //record New Ips
+        if($lockEnabled[1] == "1") {
+            $Sql="SELECT AclIP FROM ACL WHERE AclTournament={$TourId} AND AclIP='{$ip}'";
+            $q = safe_r_SQL($Sql);
+            if(safe_num_rows($q)==0) {
+                $Sql = "SELECT AclIP FROM ACL WHERE AclTournament={$TourId} AND '{$ip}' LIKE REPLACE(AclIp,'*','%')";
                 $q = safe_r_SQL($Sql);
-                if(safe_num_rows($q)==0) {
-                    $Sql = "SELECT AclIP FROM ACL WHERE AclTournament={$TourId} AND '{$ip}' LIKE REPLACE(AclIp,'*','%')";
+                if(safe_num_rows($q)!=0) {
+                    $ruleRs=safe_fetch($q);
+                    $Sql = "SELECT * FROM `AclDetails` WHERE `AclDtTournament` = {$TourId} and AclDtIP='{$ruleRs->AclIP}'";
                     $q = safe_r_SQL($Sql);
-                    if(safe_num_rows($q)!=0) {
-                        $ruleRs=safe_fetch($q);
-                        $Sql = "SELECT * FROM `AclDetails` WHERE `AclDtTournament` = {$TourId} and AclDtIP='{$ruleRs->AclIP}'";
-                        $q = safe_r_SQL($Sql);
-                        while($r = safe_fetch($q)) {
-                            safe_w_SQL("INSERT INTO `AclDetails` (`AclDtTournament`, `AclDtIP`, `AclDtFeature`, `AclDtLevel`) VALUES ({$TourId}, '{$ip}', {$r->AclDtFeature}, {$r->AclDtLevel});");
+                    while($r = safe_fetch($q)) {
+                        safe_w_SQL("INSERT INTO `AclDetails` (`AclDtTournament`, `AclDtIP`, `AclDtFeature`, `AclDtLevel`) VALUES ({$TourId}, '{$ip}', {$r->AclDtFeature}, {$r->AclDtLevel});");
+                    }
+                } else {
+                    $Sql = "SELECT `AclIP`, `AclNick` FROM `ACL` WHERE `AclTournament`=$TourId AND `AclIP` LIKE '0.0.0.%' ORDER BY `AclIP`";
+                    $q = safe_r_SQL($Sql);
+                    while($ruleRs=safe_fetch($q)) {
+                        if(preg_match('/'.$ruleRs->AclNick.'/',$ip)) {
+                            $Sql = "SELECT * FROM `AclDetails` WHERE `AclDtTournament` = {$TourId} and AclDtIP='{$ruleRs->AclIP}'";
+                            $q = safe_r_SQL($Sql);
+                            while($r = safe_fetch($q)) {
+                                safe_w_SQL("INSERT INTO `AclDetails` (`AclDtTournament`, `AclDtIP`, `AclDtFeature`, `AclDtLevel`) VALUES ({$TourId}, '{$ip}', {$r->AclDtFeature}, {$r->AclDtLevel});");
+                            }
+                            break;
                         }
                     }
-                    safe_w_SQL("INSERT INTO ACL (AclTournament, AclIP, AclNick, AclEnabled) VALUES ({$TourId},'{$ip}',NOW(),1)");
                 }
+                safe_w_SQL("INSERT INTO ACL (AclTournament, AclIP, AclNick, AclEnabled) VALUES ({$TourId},'{$ip}',NOW(),1)");
             }
+        }
+        //Check Valid
+        if ($lockEnabled[0] == "1") {
             $Sql = "SELECT AclDtLevel FROM AclDetails WHERE AclDtTournament={$TourId} AND AclDtIP='{$ip}' && AclDtFeature IN (" . implode(',', $feature) . ") ORDER BY AclDtLevel ASC";
             $q = safe_r_SQL($Sql);
             if ($r = safe_fetch($q) and $level <= $r->AclDtLevel) {

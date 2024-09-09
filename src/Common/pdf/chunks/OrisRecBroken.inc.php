@@ -3,6 +3,7 @@
 $OldStop=$pdf->StopHeader;
 $pdf->StopHeader=true;
 $pdf->setPhase('As of '.$PdfData->RecordAs);
+$pdf->setEvent($PdfData->Description);
 
 $Version='';
 if($PdfData->DocVersion) {
@@ -55,7 +56,7 @@ if(empty($PdfData->Data['Items'])) {
 				}
 				$tmp=array(
 					$MyRow->RtRecDistance,
-					'§'. $OldRecord . ' / ' . $MyRow->NewRecord.(($MyRow->CheckXNine and $MyRow->RtRecXNine) ? "/$MyRow->NewXNine" : ''),
+					'§'. $OldRecord . ' / ' . $MyRow->NewRecord.(($MyRow->CheckXNine) ? "/$MyRow->NewXNine" : ''),
 					$MyRow->Athlete,
 					'§'.$MyRow->CoCode,
 					substr($MyRow->RecordDate,0,10).'#'

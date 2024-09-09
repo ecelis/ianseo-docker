@@ -5,12 +5,28 @@
     checkACL(AclCompetition, AclReadWrite);
 	require_once('Common/Fun_FormatText.inc.php');
 	require_once('Common/Lib/ArrTargets.inc.php');
+	require_once('Common/Lib/CommonLib.php');
 
-
+	$IncludeJquery = true;
 	$JS_SCRIPT=array(
-        '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
-		'<script type="text/javascript" src="Fun_AJAX_ListEvents.js"></script>',
-		'<script type="text/javascript" src="Fun_JS.js"></script>',
+        phpVars2js(
+            array(
+                'StrResetElimError' => get_text('ResetElimError', 'Tournament'),
+                'CmdCancel' => get_text('CmdCancel'),
+                'CmdConfirm' => get_text('Confirm', 'Tournament'),
+                'CmdAdd' => get_text('CmdAdd', 'Tournament'),
+                'CmdDelete' => get_text('CmdDelete', 'Tournament'),
+                'Advanced' => get_text('Advanced'),
+                'MsgForExpert' => get_text('MsgForExpert', 'Tournament'),
+                'EvAddDelTitle' =>get_text('EventCreationCancellation','Tournament'),
+                'ConfirmMsg' => get_text('MsgAreYouSure'),
+                'ErrorRowComplete' => str_replace('<br>','\n',get_text('MsgRowMustBeComplete')),
+                'InvalidCode' => get_text('ErrInvalidCode', 'Errors'),
+            )
+        ),
+        '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
+		'<script type="text/javascript" src="./Fun_AJAX_ListEvents.js"></script>',
+		'<script type="text/javascript" src="./Fun_JS.js"></script>',
 		);
 
 	$PAGE_TITLE=get_text('TeamEventList');
@@ -19,8 +35,8 @@
 ?>
 <table class="Tabella" id="MyTable">
 <tbody id="tbody">
-<tr><th class="Title" colspan="10"><?php print get_text('TeamEventList');?></th></tr>
-<tr class="Divider"><td colspan="10"></td></tr>
+<tr><th class="Title" colspan="11"><?php print get_text('TeamEventList');?></th></tr>
+<tr class="Divider"><td colspan="11"></td></tr>
 <tr>
 <th class="w-5"><?php print get_text('EvCode');?></th>
 <th class="w-25"><?php print get_text('EvName');?></th>
@@ -90,48 +106,6 @@
 			$setup='';
 			$extraline='';
 			switch($MyRow->EvElimType) {
-				// case '1':
-				// case '2':
-				// 	echo get_text('OldStyleElimination', 'Tournament');
-				// 	if ($MyRow->EvElim1) {
-				// 		$extraline.= '<div class="Flex-line">';
-				// 		$extraline.= '<div><b>' . get_text('StageE1', 'ISK') . '</b></div>';
-				// 		$extraline.= '<div>' . get_text('Ends', 'Tournament') . ': ' . $MyRow->EvE1Ends . '</div>';
-				// 		$extraline.= '<div>' . get_text('Arrows', 'Tournament') . ': ' . $MyRow->EvE1Arrows . '</div>';
-				// 		$extraline.= '<div>' . get_text('ShotOff', 'Tournament') . ': ' . $MyRow->EvE1SO . '</div>';
-				// 		$extraline.= '<div>' . get_text('Archers') . ': ' . $MyRow->EvElim1 . '</div>';
-				// 		$extraline.= '</div>';
-				// 	}
-				// 	if ($MyRow->EvElim2) {
-				// 		$extraline.= '<div class="Flex-line">';
-				// 		$extraline.= '<div><b>' . get_text('StageE2', 'ISK') . '</b></div>';
-				// 		$extraline.= '<div>' . get_text('Ends', 'Tournament') . ': ' . $MyRow->EvE2Ends . '</div>';
-				// 		$extraline.= '<div>' . get_text('Arrows', 'Tournament') . ': ' . $MyRow->EvE2Arrows . '</div>';
-				// 		$extraline.= '<div>' . get_text('ShotOff', 'Tournament') . ': ' . $MyRow->EvE2SO . '</div>';
-				// 		$extraline.= '<div>' . get_text('Archers') . ': ' . $MyRow->EvElim2 . '</div>';
-				// 		$extraline.= '</div>';
-				// 	}
-				// 	break;
-				// case '3':
-				// 	echo get_text('StagePool2', 'ISK');
-				// 	$extraline.= '<div class="Flex-line">';
-				// 	$extraline.= '<div><b>' . get_text('StagePool2', 'ISK') . '</b></div>';
-				// 	$extraline.= '<div>' . get_text('Ends', 'Tournament') . ': ' . $MyRow->EvElimEnds . '</div>';
-				// 	$extraline.= '<div>' . get_text('Arrows', 'Tournament') . ': ' . $MyRow->EvElimArrows . '</div>';
-				// 	$extraline.= '<div>' . get_text('ShotOff', 'Tournament') . ': ' . $MyRow->EvElimSO . '</div>';
-				// 	$extraline.= '<div>' . get_text('Archers') . ': ' . $MyRow->EvElim2 . '</div>';
-				// 	$extraline.= '</div>';
-				// 	break;
-				// case '4':
-				// 	echo get_text('StagePool4', 'ISK');
-				// 	$extraline.= '<div class="Flex-line">';
-				// 	$extraline.= '<div><b>' . get_text('StagePool4', 'ISK') . '</b></div>';
-				// 	$extraline.= '<div>' . get_text('Ends', 'Tournament') . ': ' . $MyRow->EvElimEnds . '</div>';
-				// 	$extraline.= '<div>' . get_text('Arrows', 'Tournament') . ': ' . $MyRow->EvElimArrows . '</div>';
-				// 	$extraline.= '<div>' . get_text('ShotOff', 'Tournament') . ': ' . $MyRow->EvElimSO . '</div>';
-				// 	$extraline.= '<div>' . get_text('Archers') . ': ' . $MyRow->EvElim2 . '</div>';
-				// 	$extraline.= '</div>';
-				// 	break;
 				case '5':
 					echo get_text('R-Session', 'Tournament');
 					$display='<div style="margin:0.5em; text-wrap: none">'.get_text('LevelsHelp', 'RoundRobin') . ': ' . $MyRow->EvElim1 . '</div>';
@@ -188,7 +162,7 @@
 		}
 	}
 ?>
-<tr id="RowDiv" class="Divider"><td colspan="10"></td></tr>
+<tr id="RowDiv" class="Divider"><td colspan="11"></td></tr>
 <tr id="NewRow">
 <td class="Center"><input type="text" name="New_EvCode" id="New_EvCode"  size="12" maxlength="10"></td>
 <td class="Center"><input type="text" size="64" maxlength="64" name="New_EvEventName" id="New_EvEventName"></td>
@@ -223,7 +197,7 @@
 <td class="Center"><input type="text" name="New_EvTargetSize" id="New_EvTargetSize" size="3" maxlength="3"></td>
 <td class="Center"><input type="text" name="New_EvDistance" id="New_EvDistance" size="12" maxlength="10"></td>
 <td class="Center">
-<input type="button" name="Command" id="Command" value="<?php print get_text('CmdSave');?>" onClick="javascript:AddEvent(<?php print "'" . str_replace('<br>','\n',get_text('MsgRowMustBeComplete')) . "'";?>);">
+<input type="button" name="Command" id="Command" value="<?php print get_text('CmdSave');?>" onClick="AddEvent();">
 </td>
 </tr>
 </tbody>

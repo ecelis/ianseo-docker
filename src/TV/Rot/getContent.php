@@ -137,6 +137,7 @@ function create_Comp_rot($TVsettings, $RULE) {
 
 	switch($TVsettings->TVPPage) {
 		case 'ALFA':
+		case 'CAT':
 		case 'LIST':
 		case 'LSPH':
 		case 'QUAL':

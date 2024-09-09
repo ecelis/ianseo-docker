@@ -114,7 +114,6 @@ $lang['SpecialUpdate']='Imate "testnu" Instalaciju <br/> samo odabrani korisnici
 $lang['Start Ianseo']='idi na IANSEO!';
 $lang['Status']='Status';
 $lang['stdValue']='Vrijednost';
-$lang['Suboptimal']='Iako php.ini datoteka nije postavljena s optimalnim vrijednostima, <br/> IANSEO treba raditi ispravno za većinu njegovih funkcija. <br/> Preporučujemo vam da postavite parametre za optimalnu vrijednost.';
 $lang['System value']='sustav vrijednosti';
 $lang['UpdatePrepared']='Vaša instalacija će se automatski ažurirati. Imajte na umu da bi backup svih turnira prije početka.Postupak ažuriranja može potrajati dugo, ovisno o vezi i elementima koje je potrebno nadograditi. <br/> Imajte na umu da bilo koji izvorne datoteke će se ukloniti, osim sadržaja «modules / Custom» mape.';
 $lang['Updating']='Ažuriranje lokalne instalacije Ianseo';

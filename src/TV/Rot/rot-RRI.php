@@ -71,7 +71,10 @@ function rotRri($TVsettings, $RULE) {
 			foreach($Arr_Ph as $p) {
 				$t=explode('+',$p);
 				$l=array_shift($t);
-				foreach($t as $e) $options['events'][] = $l . '@' . $e;
+		        $options['events'][]=$l;
+				foreach($t as $e) {
+                    $options['eventLevels'][] = "'$l'" . ',' . $e;
+                }
 			}
 		} else {
 			foreach($Arr_Ph as $p) {
@@ -160,8 +163,8 @@ function rotRri($TVsettings, $RULE) {
 					$tmp2.='<div class="FlagDiv">'.get_flag_ianseo($item['oppCountryCode'], '', '', $IsCode).'</div>';
 				}
 				if($ViewTeams) {
-					$tmp1.='<div class="CountryName">'.$item['countryName'].'</div>';
-					$tmp2.='<div class="CountryName">'.$item['oppCountryName'].'</div>';
+					$tmp1.='<div class="CountryDescr">'.$item['countryName'].'</div>';
+					$tmp2.='<div class="CountryDescr">'.$item['oppCountryName'].'</div>';
 				}
 
 				if($tmp1) $ret[] = '<div class="GridId"><div class="IdPanel">'.$tmp1.'</div><div class="IdScore"></div><div class="IdPanel">'.$tmp2.'</div></div>';
@@ -236,8 +239,8 @@ function rotRri($TVsettings, $RULE) {
 						$tmp2.='<div class="Athlete">'.$item['oppAthlete'].'</div>';
 
 						if($ViewTeams) {
-							$tmp1.='<div class="CountryName">'.$item['countryCode'].'</div>';
-							$tmp2.='<div class="CountryName">'.$item['oppCountryCode'].'</div>';
+							$tmp1.='<div class="CountryDescr">'.$item['countryCode'].'</div>';
+							$tmp2.='<div class="CountryDescr">'.$item['oppCountryCode'].'</div>';
 						}
 
 						if($ViewEnds) {
@@ -333,9 +336,17 @@ function rotRriSettings($Settings) {
 	// if(!isset($RMain[''])) $RMain['']='';
 
 	foreach($PageDefaults as $key => $Value) {
-		if(!isset($PageDefaults[$key])) continue;
-		$ret.= '<tr>
-			<th nowrap="nowrap" class="Right">'.get_text('TVCss3'.$key,'Tournament').' <input type="button" value="reset" onclick="document.getElementById(\'P-Main['.$key.']\').value=\''.$Value.'\'"></th>
+//		if(!isset($PageDefaults[$key])) continue;
+        $ret.= '<tr ref="'.$Value.'">
+			<th nowrap="nowrap">
+			    <div class="d-flex">
+                    <div class="CssResetButton '.($Value==$RMain[$key] ? 'CssResetDisabled' : '').'" onclick="SetDefaults(this)">Default</div>
+                    <div class="CssTitle">
+                        '.get_text('TVCss3'.$key,'Tournament').'
+                        <i class="fa fa-pencil-alt ml-1" onclick="editCss(this)"></i>
+                    </div>
+                </div>
+            </th>
 			<td width="100%"><input type="text" name="P-Main['.$key.']" id="P-Main['.$key.']" value="'.$RMain[$key].'"></td>
 			</tr>';
 	}

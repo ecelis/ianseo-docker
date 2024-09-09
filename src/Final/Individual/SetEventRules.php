@@ -2,28 +2,36 @@
 define('debug',false);	// settare a true per l'output di debug
 
 require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
-if (!CheckTourSession() || !isset($_REQUEST['EvCode'])) printCrackError();
-checkACL(AclCompetition, AclReadWrite);
+require_once('Common/Lib/CommonLib.php');
 require_once('Common/Fun_FormatText.inc.php');
 require_once('Common/Lib/ArrTargets.inc.php');
 
+if (!CheckTourSession() || !isset($_REQUEST['EvCode'])) printCrackError();
+checkACL(AclCompetition, AclReadWrite);
+
+$AddOnsEnabled = 0;
+$listAddOns=array();
+if(module_exists("ExtraAddOns")) {
+    $AddOnsEnabled =  intval(getModuleParameter("ExtraAddOns","AddOnsEnable","0"));
+    $listAddOns = getModuleParameter("ExtraAddOns","AddOnsList", array());
+}
+
+$IncludeJquery = true;
 $JS_SCRIPT=array(
-    //'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
     '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Final/Individual/Fun_AJAX_SetEventRules.js"></script>',
-    //'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
-    //'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Final/Individual/Fun_JS.js"></script>',
-    );
+    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
+    phpVars2js(array(
+        'AddOnsEnabled'=>boolval($AddOnsEnabled != 0),
+    )),
+);
 
 include('Common/Templates/head.php');
 
-echo '<div align="center">';
-echo '<div class="medium">';
 echo '<table class="Tabella" id="MyTable">';
-echo '<tr><th class="Title" colspan="4">'. get_text('EventClass') . '</th></tr>';
-echo '<tr class="Divider"><td colspan="4"></td></tr>';
+echo '<tr><th class="Title" colspan="'.(4+$AddOnsEnabled).'">'. get_text('EventClass') . '</th></tr>';
+echo '<tr class="Divider"><td colspan="'.(4+$AddOnsEnabled).'"></td></tr>';
 
-$Select = "SELECT *, ToGoldsChars, ToGolds, ToXNineChars, ToXNine FROM Events inner join Tournament on ToId=EvTournament WHERE EvCode=" . StrSafe_DB($_REQUEST['EvCode']) . " AND EvTeamEvent='0' AND EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " ";
+$Select = "SELECT Events.*, ToGoldsChars, ToGolds, ToXNineChars, ToXNine FROM Events inner join Tournament on ToId=EvTournament WHERE EvCode=" . StrSafe_DB($_REQUEST['EvCode']) . " AND EvTeamEvent='0' AND EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " ";
 $RsEv = safe_r_sql($Select);
 
 if (safe_num_rows($RsEv)==1 and $RowEv=safe_fetch($RsEv)) {
@@ -67,13 +75,34 @@ if (safe_num_rows($RsEv)==1 and $RowEv=safe_fetch($RsEv)) {
             $ComboSubCl.= '<option value="' . $Row->ScId . '">' . $Row->ScId  . ' - ' . $Row->ScDescription . '</option>';
     }
     $ComboSubCl.= '</select>';
+    $ComboAddOns = '';
+    $cntAO=0;
+    foreach ($listAddOns as $kAO => $vAO) {
+        if(!empty($vAO)) {
+            $cntAO++;
+            $ComboAddOns .= '<option value="' . pow(2, $kAO) . '">' . $vAO . '</option>';
+        }
+    }
+    if($cntAO) {
+        $ComboAddOns = '<select name="New_EcExtraAddons" class="w-90" id="New_EcExtraAddons" multiple="multiple" disabled="disabled" size="' . $cntAO . '">' . $ComboAddOns . '</select>';
+    }
 
-    echo '<tr><td class="Title" colspan="4">'.get_text($RowEv->EvEventName,'','',true).'</td></tr>';
+    echo '<tr><td class="Title" colspan="'.(4+$AddOnsEnabled).'">'.get_text($RowEv->EvEventName,'','',true).'</td></tr>';
     echo '<tr>';
-    echo '<th class="w-30">'.get_text('Division').'</th>';
-    echo '<th class="w-30">'.get_text('Class').'</th>';
-    echo '<th class="w-30">'.get_text('SubClass','Tournament').'</th>';
-    echo '<th class="w-10">&nbsp;</th>';
+    echo '<td class="Center" colspan="'.(4+$AddOnsEnabled).'"><select name="d_EvTeamCreationMode" id="fld=teamode&team=0&event='.$_REQUEST['EvCode'].'" onChange="UpdateData(this)">'.
+        '<option value="0"'.(($RowEv!=null AND $RowEv->EvTeamCreationMode==0) ? ' selected' : '').'>'.get_text('SelectedClub-0','Tournament').'</option>'.
+        '<option value="1"'.(($RowEv!=null AND $RowEv->EvTeamCreationMode==1) ? ' selected' : '').'>'.get_text('SelectedClub-1','Tournament').'</option>'.
+        '<option value="2"'.(($RowEv!=null AND $RowEv->EvTeamCreationMode==2) ? ' selected' : '').'>'.get_text('SelectedClub-2','Tournament').'</option>'.
+        '</select></td>';
+    echo '</tr>';
+    echo '<tr>';
+    echo '<th class="w-25">'.get_text('Division').'</th>';
+    echo '<th class="w-25">'.get_text('Class').'</th>';
+    echo '<th class="w-25">'.get_text('SubClass','Tournament').'</th>';
+    if($AddOnsEnabled) {
+        echo '<th class="w-15">'.get_text('ExtraAddOns','Tournament').'</th>';
+    }
+    echo '<th>&nbsp;</th>';
     echo '</tr>';
 
     $Select = "SELECT * FROM EventClass 
@@ -84,32 +113,46 @@ if (safe_num_rows($RsEv)==1 and $RowEv=safe_fetch($RsEv)) {
 	echo '<tbody id="tbody">';
     if (safe_num_rows($Rs)>0) {
         while ($MyRow=safe_fetch($Rs)) {
-            print '<tr id="Row_' . $RowEv->EvCode . '_' . $MyRow->EcDivision . $MyRow->EcClass . $MyRow->EcSubClass . '">';
+            print '<tr id="Row_' . $RowEv->EvCode . '_' . $MyRow->EcDivision . $MyRow->EcClass . $MyRow->EcSubClass . $MyRow->EcExtraAddons  . '">';
             print '<td class="Center">' . $MyRow->EcDivision . '</td>';
             print '<td class="Center">' . $MyRow->EcClass . '</td>';
             print '<td class="Center">' . $MyRow->EcSubClass . '</td>';
+            if($AddOnsEnabled) {
+                $tmpAddOn = array();
+                foreach ($listAddOns as $kAO => $vAO) {
+                    if((pow(2,$kAO) & $MyRow->EcExtraAddons) !==0) {
+                        $tmpAddOn[] = $vAO;
+                    }
+                }
+                print '<td class="Center">' . implode('<br>',$tmpAddOn) . '</td>';
+            }
             print '<td class="Center">';
-            print '<img src="'.$CFG->ROOT_DIR.'Common/Images/drop.png" border="0" alt="Delete" title="Delete" onclick="DeleteEventRule(\'' . $RowEv->EvCode . '\',\'' . $MyRow->EcDivision . '\',\'' . $MyRow->EcClass . '\',\'' . $MyRow->EcSubClass . '\')">';
+            print '<img src="'.$CFG->ROOT_DIR.'Common/Images/drop.png" border="0" alt="Delete" title="Delete" onclick="DeleteEventRule(\'' . $RowEv->EvCode . '\',\'' . $MyRow->EcDivision . '\',\'' . $MyRow->EcClass . '\',\'' . $MyRow->EcSubClass . '\',\'' . $MyRow->EcExtraAddons. '\')">';
             print '</td>';
             print '</tr>';
         }
     }
     echo '</tbody>';
-    print '<tr id="RowDiv" class="Divider"><td colspan="4"></td></tr>';
+    print '<tr id="RowDiv" class="Divider"><td colspan="'.(4+$AddOnsEnabled).'"></td></tr>';
 
     echo '</table>';
 
     echo '<br/>';
     echo '<table class="Tabella">';
-    echo '<tr><td colspan="4" class="Center">'.get_text('PressCtrl2SelectAll').'</td></tr>';
+    echo '<tr><td colspan="'.(4+$AddOnsEnabled).'" class="Center">'.get_text('PressCtrl2SelectAll').'</td></tr>';
     echo '<tr id="NewRow">';
-    echo '<td style="width:30%;" class="Center Top">'.$ComboDiv.'<br/><br/>
+    echo '<td class="w-25 Center Top">'.$ComboDiv.'<br/><br/>
         <a class="Link" href="javascript:SelectAllOpt(\'New_EcDivision\');">'.get_text('SelectAll').'</a></td>';
-    echo '<td style="width:30%;" class="Center Top">'.$ComboCl.'<br/><br/>
+    echo '<td  class="w-25 Center Top">'.$ComboCl.'<br/><br/>
         <a class="Link" href="javascript:SelectAllOpt(\'New_EcClass\');">'.get_text('SelectAll').'</a></td>';
-    echo '<td style="width:30%;" class="Center Top">'.$ComboSubCl.'<br/><br/>
+    echo '<td class="w-25 Center Top">'.$ComboSubCl.'<br/><br/>
         <input type="checkbox" id="enableSubClass" onclick="enableSubclass(this)">'.get_text('UseSubClasses','Tournament').'</td>';
-    echo '<td style="width:10%;" class="Center Top">
+    if($AddOnsEnabled) {
+        echo '<td class="w-15 Center Top">'.$ComboAddOns.'<br/><br/>
+            <input type="checkbox" id="enableAddOns" onclick="enableAddOns(this)">'.get_text('UseAddOns','Tournament').'</td>';
+
+    }
+    echo '<td class="Center Top">
         <input type="button" name="Command" id="Command" value="'.get_text('CmdSave').'" onclick="AddEventRule(\''.$RowEv->EvCode.'\');"></td>';
     echo '</tr>';
     echo '</table>';
@@ -125,6 +168,7 @@ if (safe_num_rows($RsEv)==1 and $RowEv=safe_fetch($RsEv)) {
     echo '<th>'.get_text('EventStartPosition', 'Tournament').'</th>';
     echo '<th>'.get_text('EventHasMedal', 'Tournament').'</th>';
     echo '<th>'.get_text('EventParentCode', 'Tournament').'</th>';
+	echo '<th>'.get_text('EventParentWinningBranch', 'Tournament').'</th>';
 	echo '<th>'.get_text('EventWinnerFinalRank', 'Tournament').'</th>';
 	echo '<th>'.get_text('WaCategory', 'Tournament').'</th>';
 	echo '<th>'.get_text('RecordCategory', 'Tournament').'</th>';
@@ -133,6 +177,8 @@ if (safe_num_rows($RsEv)==1 and $RowEv=safe_fetch($RsEv)) {
 	echo '<th>'.get_text('XNineLabel','Tournament').'</th>';
 	echo '<th>'.get_text('PointsAsGold','Tournament').'<br/><span style="font-weight: normal">'.get_text('CommaSeparatedValues').'</span></th>';
 	echo '<th>'.get_text('PointsAsXNine','Tournament').'<br/><span style="font-weight: normal">'.get_text('CommaSeparatedValues').'</span></th>';
+	echo '<th>'.get_text('CheckGoldsInMatch','Tournament').'</th>';
+	echo '<th>'.get_text('CheckXNinesInMatch','Tournament').'</th>';
     echo '</tr>';
 
     echo '<tr>';
@@ -149,14 +195,20 @@ if (safe_num_rows($RsEv)==1 and $RowEv=safe_fetch($RsEv)) {
         echo '<option value="'.$r->EvCode.'" '.($RowEv->EvCodeParent==$r->EvCode ? ' selected="selected"' : '').'>'.$r->EvCode.' - '.$r->EvEventName.'</option>';
     }
     echo '</select></td>';
+	echo '<td class="Center"><select onchange="UpdateData(this)" id="fld=parentWinner&team=0&event='.$_REQUEST['EvCode'].'">
+            <option value="1" '.($RowEv->EvCodeParentWinnerBranch ? ' selected="selected"' : '').'>'.get_text('Yes').'</option>
+            <option value="0" '.($RowEv->EvCodeParentWinnerBranch ? '' : ' selected="selected"').'>'.get_text('No').'</option>
+        </select></td>';
 	echo '<td class="Center"><input min="0" max="9999" type="number" value="'.$RowEv->EvWinnerFinalRank.'" id="fld=final&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
 	echo '<td class="Center"><input size="12" maxlength="10" type="text" value="'.$RowEv->EvWaCategory.'" id="fld=wacat&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
 	echo '<td class="Center"><input size="12" maxlength="10" type="text" value="'.$RowEv->EvRecCategory.'" id="fld=reccat&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
 	echo '<td class="Center"><input type="text" value="'.$RowEv->EvOdfCode.'" id="fld=odfcode&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
-	echo '<td class="Center"><input size="5" type="text" value="'.($RowEv->EvGolds ?: $RowEv->ToGolds).'" id="fld=golds&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
-	echo '<td class="Center"><input size="5" type="text" value="'.($RowEv->EvXNine ?: $RowEv->ToXNine).'" id="fld=xnines&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
-	echo '<td class="Center"><input size="5" type="text" value="'.implode(',', DecodeFromString($RowEv->EvGoldsChars ?: $RowEv->ToGoldsChars, false, true)).'" id="fld=goldschars&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
-	echo '<td class="Center"><input size="5" type="text" value="'.implode(',', DecodeFromString($RowEv->EvXNineChars ?: $RowEv->ToXNineChars, false, true)).'" id="fld=xninechars&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
+	echo '<td class="Center"><input size="5" type="text" value="'.($RowEv->EvGolds ?: '').'" id="fld=golds&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
+	echo '<td class="Center"><input size="5" type="text" value="'.($RowEv->EvXNine ?: '').'" id="fld=xnines&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
+	echo '<td class="Center"><input size="5" type="text" value="'.implode(',', DecodeFromString($RowEv->EvGoldsChars ?: '', false, true)).'" id="fld=goldschars&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
+	echo '<td class="Center"><input size="5" type="text" value="'.implode(',', DecodeFromString($RowEv->EvXNineChars ?: '', false, true)).'" id="fld=xninechars&team=0&event='.$_REQUEST['EvCode'].'" onchange="UpdateData(this)"></td>';
+	echo '<td class="Center"><input size="5" type="checkbox" '.($RowEv->EvCheckGolds ? 'checked="checked"' : ''). ' id="fld=checkGolds&team=0&event='.$_REQUEST['EvCode'].'" onclick="UpdateData(this)"></td>';
+	echo '<td class="Center"><input size="5" type="checkbox" '.($RowEv->EvCheckXNines ? 'checked="checked"' : ''). ' id="fld=checkXnines&team=0&event='.$_REQUEST['EvCode'].'" onclick="UpdateData(this)"></td>';
     echo '</tr>';
     echo '</tbody>';
     echo '</table>';
@@ -166,8 +218,6 @@ if (safe_num_rows($RsEv)==1 and $RowEv=safe_fetch($RsEv)) {
     echo '<tr><td class="Center"><a class="Link" href="ListEvents.php">'.get_text('Back').'</a></td></tr>';
     echo '</table>';
     echo '<div id="idOutput"></div>';
-    echo '</div>';
-    echo '</div>';
 }
 
 include('Common/Templates/tail.php');

@@ -1,5 +1,12 @@
 function DiUpdate(obj) {
 //		if(obj.value=='') return;
+	if((obj.type=='date' || obj.type=='time')) {
+		if(obj.defaultValue==obj.value) {
+			return;
+		} else {
+			obj.defaultValue=obj.value;
+		}
+	}
 	var field=encodeURIComponent(obj.name)+'='+encodeURIComponent(obj.value);
 
 	$.getJSON("AjaxUpdate.php?"+field, function(data) {
@@ -76,7 +83,36 @@ function DiUpdate(obj) {
 	});
 }
 
+function editAdvanced(obj) {
+	let row=$(obj).closest('tr');
+	$.confirm({
+		title:titAdvanced,
+		content:'<div class="mt-3">'+labelTargets+'</div>' +
+			'<div><input class="w-100" type="text" value="'+row.find('.advTarget').val()+'" id="advancedTarget"></div>' +
+			'<div class="mt-3">'+labelLocation+'</div>' +
+			'<div><input class="w-100" type="text" value="'+row.find('.advLocation').val()+'" id="advancedLocation"></div>' +
+			'',
+		boxWidth:'50%',
+		useBootstrap: false,
+		buttons:{
+			ok:{
+				text:btnSubmit,
+				action:function() {
+					row.find('.advTarget').val($('#advancedTarget').val()).trigger('change');
+					row.find('.advLocation').val($('#advancedLocation').val()).trigger('change');
+				}
+			},
+			cancel:{
+				text:btnCancel,
+			},
+		},
+	});
+}
+
 function DiDelete(obj) {
+	if(!confirm('Sure')) {
+		return;
+	}
 	var field=encodeURIComponent(obj.id)+'=del';
 
 	var XMLHttp=CreateXMLHttpRequestObject();

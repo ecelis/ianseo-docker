@@ -10,4 +10,5 @@ $lang['Acc']='Идэвхижүүлэх';
 $lang['AccreditateAll']='Бүгдийг баталгаажуулах';
 $lang['AccreditateNone']='Бүх баталгаажуулсныг цуцлах';
 $lang['Accreditation']='Мандат';
+$lang['TVCss3Divider']='Таслагч';
 ?>

@@ -46,6 +46,7 @@ if(is_resource($process)) {
 	require_once(__DIR__.'/Common/config.inc.php');
 	$q=mysqli_connect($CFG->R_HOST, 'root','', $CFG->DB_NAME) or die('could not reconnect to server');
 	$q->query("flush privileges");
+	$q->query("CREATE USER IF NOT EXISTS '$CFG->R_USER'@'$CFG->R_HOST' identified by '$CFG->R_PASS'") or die($q->error);
 	$q->query("grant all privileges on {$CFG->DB_NAME}.* to '$CFG->R_USER'@'$CFG->R_HOST'") or die($q->error);
 
 	echo '<h1><a href="./">Back to Ianseo</a></h1>';

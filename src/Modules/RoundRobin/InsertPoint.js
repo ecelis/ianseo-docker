@@ -3,6 +3,12 @@ $(function() {
     $('#LevelSelector').empty().hide();
     $('#GroupSelector').empty().hide();
     $('#RoundSelector').empty().hide();
+
+    if(typeof reqSched != undefined && reqSched!='') {
+        $('#ScheduleSelector').val(reqSched);
+        selectMain();
+        return;
+    }
     if(reqTeam!='') {
         selectEvent(reqTeam);
     }
@@ -15,10 +21,11 @@ function selectEvent(sel) {
     let form={
         act:'selEvent',
         team:$('#TeamSelector').val(),
+        sched:$('#ScheduleSelector').val(),
     };
     $.getJSON('InsertPoint-action.php', form, function(data) {
         if(data.error==0) {
-            history.pushState(null, '', '?team='+form.team);
+            history.pushState(null, '', '?team='+form.team+'&sched='+form.sched);
             $('#EventSelector').empty();
             $('#LevelSelector').empty().hide();
             $('#GroupSelector').empty().hide();
@@ -123,6 +130,7 @@ function selectGroup(sel) {
 function selectMain() {
     let form={
         act:'getMain',
+        sched:$('#ScheduleSelector').val(),
         team:$('#TeamSelector').val(),
         event:$('#EventSelector').val(),
         level:$('#LevelSelector').val(),
@@ -166,19 +174,24 @@ function selectMain() {
             $('#tbody').empty();
             $.each(data.groups, function(gIdx) {
                 let groupId=this.id;
-                let row='<tr group="'+groupId+'">';
+                let row='<tr group="'+groupId+'" valign="top">';
                 let numRounds=this.rounds.length
                 $('#tbody').append('<tr><th class="Title" colspan="'+data.colRound+'">'+this.name+'</th></tr>');
+                let event='';
                 $.each(this.rounds, function(rIdx) {
                     row+='<td class="Center"><table group="'+groupId+'" round="'+this.id+'" class="w-'+data.roundWidth+'">';
                     row+='<tr><th colspan="'+numCols+'" class="Title">'+this.name+'</th></tr>';
                     row+=headers;
                     var numRows=this.rows.length;
                     $.each(this.rows, function(rowIdx) {
+                        if(event!=this.name) {
+                            row+='<tr><th colspan="'+numCols+'" >'+this.name+'</th></tr>';
+                            event=this.name;
+                        }
                         if(this.matchno>0 && this.matchno%2==0) {
                             row+='<tr class="Divider"><td></td></tr>';
                         }
-                        row+='<tr ref="'+this.matchno+'">' +
+                        row+='<tr ref="'+this.matchno+'" key="'+this.key+'" class="'+(this.finished ? 'disabled' : '')+(this.winner ? ' win' : '')+'">' +
                             '<th>'+this.target+'</th>' +
                             '<td>'+this.athlete+'</td>' +
                             '<td>'+this.country+'</td>' +
@@ -187,7 +200,7 @@ function selectMain() {
                             var numEnds=this.endPoints.length;
                             $.each(this.endPoints, function(idx) {
                                 var index=rowIdx + idx*numRows + gIdx*numEnds*numRows + rIdx*data.numGroups*numEnds*numRows;
-                                row+='<input class="w-5ch" type="number" name="end-'+idx+'" onchange="updateScore(this)" value="'+this+'" tabindex="'+index+'" min="0" max="'+data.maxValue+'">';
+                                row+='<input class="w-7ch" type="number" name="end-'+idx+'" onchange="updateScore(this)" value="'+this+'" tabindex="'+index+'" min="0" max="'+data.maxValue+'">';
                             });
                         } else {
                             row+='<input class="w-10ch" type="number" name="score" onchange="updateScore(this)" value="'+this.matchScore+'">';
@@ -202,6 +215,7 @@ function selectMain() {
                                 row+='<div class="SoCell"><span>SO '+(idx+1)+'</span>';
                                 $.each(this, function() {
                                     row+='<input type="text" class="w-3ch" name="tb['+i+']" value="'+this+'" onchange="updateScore(this)">';
+                                    i++;
                                 });
                                 row+='</div>';
                             });
@@ -231,12 +245,9 @@ function updateScore(obj) {
     let form={
         act:'updateScore',
         field:obj.name,
+        sched:$('#ScheduleSelector').val(),
         team:$('#TeamSelector').val(),
-        event:$('#EventSelector').val(),
-        level:$('#LevelSelector').val(),
-        group:$(obj).closest('table').attr('group'),
-        round:$(obj).closest('table').attr('round'),
-        matchno:$(obj).closest('tr').attr('ref'),
+        key:$(obj).closest('tr').attr('key'),
     };
     if(obj.type=='checkbox') {
         if(obj.checked) {
@@ -251,15 +262,20 @@ function updateScore(obj) {
         if(data.error==0) {
             // returns both the opponents!
             $.each(data.rows, function() {
-                $('table[group="'+this.idGroup+'"][round="'+this.idRound+'"] tr[ref="'+this.matchno+'"] .tot').html(this.score);
-                $('table[group="'+this.idGroup+'"][round="'+this.idRound+'"] tr[ref="'+this.matchno+'"] .mPoints').html(this.mPoints);
-                $('table[group="'+this.idGroup+'"][round="'+this.idRound+'"] tr[ref="'+this.matchno+'"] [name="bye"]').prop('checked',this.tie=='2');
+                $('[key="'+this.key+'"] .tot').html(this.score);
+                $('[key="'+this.key+'"] .mPoints').html(this.mPoints);
+                $('[key="'+this.key+'"] [name="bye"]').prop('checked',this.tie=='2');
+                $('[key="'+this.key+'"] [name="tie"]').val(this.tie);
+                $('[key="'+this.key+'"] [name="c"]').prop('checked',this.closest=='1');
+                $('[key="'+this.key+'"]')
+                    .toggleClass('disabled',this.finished)
+                    .toggleClass('win',this.winner);
             });
             $.each(data.gRank, function() {
-                $('table[group="'+this.g+'"][round="'+this.r+'"] tr[ref="'+this.m+'"] .gRank').html(this.v);
+                $('[key="'+this.key+'"] .gRank').html(this.v);
             });
             $.each(data.gPoints, function() {
-                $('table[group="'+this.g+'"][round="'+this.r+'"] tr[ref="'+this.m+'"] .gPoints').html(this.v);
+                $('[key="'+this.key+'"] .gPoints').html(this.v);
             });
         } else {
             showAlert(data.msg);

@@ -69,6 +69,38 @@ switch($_REQUEST['act']) {
 			$ret=InsertSchedComment($_REQUEST['comment']);
 			$JSON['error']=$ret['error'];
 			$Value=$ret['options'];
+		} elseif(!empty($_REQUEST['shoot'])) {
+			foreach($_REQUEST['shoot'] as $Session => $Distances) {
+				foreach($Distances as $Dist => $Value) {
+					safe_w_sql("insert into DistanceInformation set
+						DiTournament={$_SESSION['TourId']},
+						DiDistance=$Dist,
+						DiSession=$Session,
+						DiType='Q',
+						DiScoringEnds=$Value
+						on duplicate key update
+						DiScoringEnds=$Value,
+						DiTourRules=''
+						");
+					$JSON['error']=0;
+				}
+			}
+		} elseif(!empty($_REQUEST['offset'])) {
+			foreach($_REQUEST['offset'] as $Session => $Distances) {
+				foreach($Distances as $Dist => $Value) {
+					safe_w_sql("insert into DistanceInformation set
+						DiTournament={$_SESSION['TourId']},
+						DiDistance=$Dist,
+						DiSession=$Session,
+						DiType='Q',
+						DiScoringOffset=$Value
+						on duplicate key update
+						DiScoringOffset=$Value,
+						DiTourRules=''
+						");
+					$JSON['error']=0;
+				}
+			}
 		}
 		break;
 	default:

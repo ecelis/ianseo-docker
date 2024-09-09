@@ -179,7 +179,7 @@ foreach($SessionMatches as $vSes => $items) {
         }
 	}
 }
-$pdf->Cell(25, CellH, "", 'T', 0, 'L', 0);
+$pdf->Line($pdf->GetX(), $pdf->GetY(), $pdf->GetX()+25, $pdf->GetY());
 
 
 

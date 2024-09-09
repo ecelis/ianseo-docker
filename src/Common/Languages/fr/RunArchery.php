@@ -1,6 +1,6 @@
 <?php
 $lang['AdjustedTime']='Ajustements';
-$lang['ArrowPenaltyTime']='Pénalité flèche';
+$lang['ArrowPenaltyTime']='Secondes de pénalité par flèche';
 $lang['ArrowShort']='Fl.';
 $lang['ArrowsShot']='Flèches tirées';
 $lang['CallTime']='Chambre d\'appel';
@@ -17,7 +17,8 @@ $lang['FinalRank']='Placement final';
 $lang['FinalTime']='Temps final';
 $lang['FinishTime']='Temps total de course';
 $lang['GroupedStart']='Départ groupé';
-$lang['Hits']='coups';
+$lang['Hits']='Cibles touchées';
+$lang['ImportArrows']='Importer les flèches';
 $lang['ImportTimes']='Importation feuille des temps';
 $lang['Lap']='Tour';
 $lang['LapLength']='Longueur du Tour';
@@ -56,7 +57,7 @@ $lang['ResultsIndividual']='Résultats individuel';
 $lang['ResultsTeam']='Résultats par équipe';
 $lang['RunningTime']='Temps de course';
 $lang['ScheduledDay']='Jour prévu';
-$lang['ScheduledTime']='Horaire prévu';
+$lang['ScheduledTime']='Programme prévu';
 $lang['SingleRound']='Qualification seulement';
 $lang['SingleStart']='Départ individuel';
 $lang['SpareArrows']='Flèches de rechange';

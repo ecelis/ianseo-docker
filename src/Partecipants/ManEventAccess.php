@@ -13,9 +13,6 @@
             'CmdCancel' => get_text('CmdCancel'),
             'CmdConfirm' => get_text('Confirm', 'Tournament'),
         )),
-        '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.6.0.min.js"></script>',
-        '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>',
-        '<link href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css" media="screen" rel="stylesheet" type="text/css">',
         '<script type="text/javascript" src="./ManEventAccess.js"></script>',
         '<style>
 			input.ck {
@@ -47,7 +44,7 @@
 		);
 
 	$PAGE_TITLE=get_text('EventAccess','Tournament');
-
+    $IncludeJquery = true;
 	$Order=empty($_REQUEST['Order']) ? '' : $_REQUEST['Order'];
 
 	include('Common/Templates/head.php');

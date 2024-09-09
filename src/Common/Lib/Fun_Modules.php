@@ -100,6 +100,17 @@ function setModuleParameter($module, $param, $value, $TourId=0) {
 	return getModuleParameter($module, $param, $value, $TourId, true);
 }
 
+function resetModuleParameters($module, $saved=[], $TourId=0) {
+	if(empty($TourId)) $TourId=$_SESSION['TourId'];
+	$Query = "delete from ModulesParameters
+		where MpTournament={$TourId}
+			and MpModule=" . StrSafe_DB($module);
+	if($saved) {
+		$Query.=" and MpParameter not in (" . implode(',', StrSafe_DB($saved)) . ")";
+	}
+	safe_w_SQL($Query);
+}
+
 function delModuleParameter($module, $param, $TourId=0) {
 	if(empty($TourId)) $TourId=$_SESSION['TourId'];
 	$Query = "delete from ModulesParameters
@@ -140,9 +151,11 @@ function runJack($JackEvent, $TourId=0, $param=array()) {
     if($udpData['enable']) {
         $msg = json_encode(array('comp'=>getCodeFromId($TourId), 'evt'=>$JackEvent, 'data'=>$param));
         $sock = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
-        socket_set_option($sock, SOL_SOCKET, SO_BROADCAST, 1);
-        socket_sendto($sock, $msg, strlen($msg), 0, "255.255.255.255", $udpData['port']);
-        socket_close($sock);
+        if($sock !== false) {
+            @socket_set_option($sock, SOL_SOCKET, SO_BROADCAST, 1);
+            @socket_sendto($sock, $msg, strlen($msg), 0, "255.255.255.255", $udpData['port']);
+            @socket_close($sock);
+        }
     }
 
     if(!($udpData['jackDisable'])) {

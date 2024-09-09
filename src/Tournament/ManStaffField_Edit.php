@@ -54,6 +54,7 @@ if($CanEdit) {
 				"TiTournament={$_SESSION['TourId']}",
 				"TiType=".intval($_REQUEST['Type']),
 				"TiCode=".StrSafe_DB($_REQUEST['Code']),
+                "TiCodeLocal=".StrSafe_DB($_REQUEST['CodeLocal']),
 				"TiName=".StrSafe_DB($_REQUEST['FamilyName']),
 				"TiGivenName=".StrSafe_DB($_REQUEST['GivenName']),
 				"TiCountry=$CoId",
@@ -101,7 +102,8 @@ if($CanEdit) {
 	while($r=safe_fetch($q)) {
 		$JSON['table'].='<tr ref="'.$r->TiId.'" class="rowHover">'.
 				'<td class="Center"><input type="text" style="width: 95%" maxlength="9" name="Code" value="' . $r->TiCode . '" onchange="editFieldStaff(this)"></td>'.
-				'<td class="Center"><input type="text" style="width: 97%" maxlength="64" name="FamilyName" value="' . $r->TiName . '" onchange="editFieldStaff(this)"></td>'.
+                '<td class="Center"><input type="text" style="width: 95%" maxlength="9" name="CodeLocal" value="' . $r->TiCodeLocal . '" onchange="editFieldStaff(this)"></td>'.
+                '<td class="Center"><input type="text" style="width: 97%" maxlength="64" name="FamilyName" value="' . $r->TiName . '" onchange="editFieldStaff(this)"></td>'.
 				'<td class="Center"><input type="text" style="width: 97%" maxlength="64"name="GivenName" value="' . $r->TiGivenName . '" onchange="editFieldStaff(this)"></td>'.
 				'<td class="Center"><select name="Gender" style="width: 95%" onchange="editFieldStaff(this)">'.str_replace('value="'.$r->TiGender.'"','value="'.$r->TiGender.'" selected="selected"', $Genders).'</select></td>'.
 				'<td class="Center"><input type="text" style="width: 95%" maxlength="10" name="CountryCode" value="' . $r->CoCode . '" ' . (empty($r->CoName) ? '' : 'onchange="editFieldStaff(this)"') . '></td>'.
@@ -114,6 +116,7 @@ if($CanEdit) {
 	while($r=safe_fetch($q)) {
 		$JSON['table'].='<tr>'.
 				'<td class="Center">' . $r->TiCode . '</td>'.
+                '<td class="Center">' . $r->TiCodeLocal . '</td>'.
 				'<td class="Center">' . $r->TiName . '</td>'.
 				'<td class="Center">' . $r->TiGivenName . '</td>'.
 				'<td class="Center">'.($r->TiGender ? get_text('ShortFemale', 'Tournament') : get_text('ShortMale', 'Tournament')).'</td>'.

@@ -31,10 +31,10 @@ function CreateStandardClasses($TourId, $SubRule, $Field='', $Type=0) {
     CreateClass($TourId, $i++, 21,  49, 1, '21W', '21W,W,21M,M', '21 Women',1);
 	CreateClass($TourId, $i++, 21,  49, 0, 'M', 'M,21M', 'Men',1);
 	CreateClass($TourId, $i++, 21,  49, 1, 'W', 'W,21W,M,21M', 'Women',1);
-	CreateClass($TourId, $i++, 50,  59, 0, '50M', '50M,21M,M', '50 Men',1);
-	CreateClass($TourId, $i++, 50,  59, 1, '50W', '50W,21W,W,50M,21M,M', '50 Women',1);
-	CreateClass($TourId, $i++, 60, 100, 0, '60M', '60M,50M,21M,M', '60 Men',1);
-	CreateClass($TourId, $i++, 60, 100, 1, '60W', '60W,50W,21W,W,60M,50M,21M,M', '60 Women',1);
+	CreateClass($TourId, $i++, 50,  59, 0, '50M', '50M,21M,M', '50+ Men',1);
+	CreateClass($TourId, $i++, 50,  59, 1, '50W', '50W,21W,W,50M,21M,M', '50+ Women',1);
+	CreateClass($TourId, $i++, 60, 100, 0, '60M', '60M,50M,21M,M', '60+ Men',1);
+	CreateClass($TourId, $i++, 60, 100, 1, '60W', '60W,50W,21W,W,60M,50M,21M,M', '60+ Women',1);
 }
 
 function CreateStandardSubClasses($TourId) {

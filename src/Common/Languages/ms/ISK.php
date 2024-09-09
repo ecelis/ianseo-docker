@@ -195,6 +195,8 @@ $lang['Scorecard']='Kad skor';
 $lang['ScorecardsManagement']='Pengurusan Kertas Markah';
 $lang['ScoredPoints']='Skor Markah';
 $lang['ScoreHelp']='Bantuan';
+$lang['ScoreHelpDesc']='208/5000
+Skrin ini membolehkan anda menjaringkan anak panah yang ditembak. Maklumat mengenai jarak semasa, jenis sasaran, dan maklumat pemanah juga dipaparkan. Masukkan nilai anak panah menggunakan butang bernombor.';
 $lang['ScoringEntry']='Masuk Skor';
 $lang['SelDist']='Sila pilih jarak dan cuba lagi';
 $lang['SelTgtNum']='Sila pilih nombor sasaran dan cuba lagi';

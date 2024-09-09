@@ -5,11 +5,11 @@
 	require_once('Common/Fun_FormatText.inc.php');
 	require_once('Common/Fun_Modules.php');
 
+	$IncludeJquery = true;
 	$JS_SCRIPT=array(
 		'<script type="text/javascript" src="../Common/ajax/ObjXMLHttpRequest.js"></script>',
 		'<script type="text/javascript" src="../Common/js/Fun_JS.inc.js"></script>',
 		'<script type="text/javascript" src="../Qualification/Fun_AJAX_index.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 		'<script type="text/javascript" src="Fun_JS.js"></script>',
 		'<script type="text/javascript">',
 		'function DisableChkOther(NoDist, NumDist)',
@@ -38,12 +38,8 @@
 	include('Common/Templates/head.php');
 
 	$RowTour=NULL;
-	/*$Select
-		= "SELECT ToId,TtNumDist,TtElabTeam "
-		. "FROM Tournament INNER JOIN Tournament*Type ON ToType=TtId "
-		. "WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " ";*/
 	$Select
-		= "SELECT ToId,ToNumDist AS TtNumDist,ToElabTeam AS TtElabTeam "
+		= "SELECT ToId,ToNumDist AS TtNumDist, ToCategory&12 AS IsField3D "
 		. "FROM Tournament "
 		. "WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " ";
 	$RsTour=safe_r_sql($Select);
@@ -55,7 +51,7 @@
 
 	echo '<form id="PrnParameters" action="../Qualification/PDFScore.php" method="post" target="PrintOut">';
     echo '<input name="SessionType" type="hidden" value="E" >';
-    echo '<input type="hidden" name="TourField3D" value="'.($RowTour->TtElabTeam==0 ? '': ($RowTour->TtElabTeam==1 ? 'FIELD'  : '3D')).'">';
+    echo '<input type="hidden" name="TourField3D" value="'.($RowTour->IsField3D==0 ? '': ($RowTour->IsField3D==4 ? 'FIELD'  : '3D')).'">';
 	echo '<table class="Tabella">';
 	echo '<tr><th class="Title" colspan="2">' . get_text('PrintScore','Tournament')  . '</th></tr>';
 	echo '<tr><th class="SubTitle" colspan="2">' . get_text('ScorePrintMode','Tournament')  . '</th></tr>';

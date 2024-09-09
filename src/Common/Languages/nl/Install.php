@@ -197,7 +197,6 @@ $lang['SpecialUpdate']='U hebt een "test" installatie.<br/>Alleen geselecteerde 
 $lang['Start Ianseo']='Start Ianseo';
 $lang['Status']='Status';
 $lang['stdValue']='Waarde';
-$lang['Suboptimal']='Uw php.ini bestand bevat niet de optimale waardes. <br/>IANSEO zou over het algemeen juist moeten werken.<br/> Wij adviseren ten zeerste om de parameters wel op de optimale waardes te zetten.';
 $lang['System value']='Systeem waarde';
 $lang['UpdatePrepared']='Uw installatie wordt automatisch bijgewerkt. Denk er om om een backup te maken van de toernooien voor dat u start. Het wijzigingsproces kan lang duren.  Dit hangt af van de verbinding en het aantal elementen dat moet worden bijgewerkt.<Br>Denk er om dat alle niet orginele bestanden worden verwijderd behalve de modules/custom map';
 $lang['Updating']='Ianseo bestanden op de pc worden bijgewerkt';

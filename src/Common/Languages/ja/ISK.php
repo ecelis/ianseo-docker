@@ -146,6 +146,7 @@ $lang['Scorecard']='スコアカード';
 $lang['ScorecardsManagement']='スコアカード管理';
 $lang['ScoredPoints']='入力した点数';
 $lang['ScoreHelp']='Help';
+$lang['ScoreHelpDesc']='この画面で点数の入力を行います。距離、ターゲットの種類、選手名といった情報も表示されています。数字ボタンを使って、点数を入力して下さい。';
 $lang['ScoringEntry']='<b>点数入力</b>';
 $lang['ServerInfo']='サーバー情報';
 $lang['ServerUrl']='IanseoサーバーのURL';

@@ -420,10 +420,10 @@ switch($TourType) {
         break;
 	case 3:
 	    if ($SubRule==1) {
-            CreateTargetFace($TourId, 1, '~Default', 'REG-^R|^B|^T|^L|^CU13|^CU15|^COU13|^COU15|^W1U13|^W1U15', '1', TGT_OUT_FULL, 122, TGT_OUT_FULL, 122);
+            CreateTargetFace($TourId, 1, '~Default', 'REG-^R|^B|^T|^L|^CU13|^COU13|^W1U13|^W1U15', '1', TGT_OUT_FULL, 122, TGT_OUT_FULL, 122);
             CreateTargetFace($TourId, 2, '~DefaultCO', 'REG-^CU18|^CU21|^C50|^C65|^C[M|W]$', '1', TGT_OUT_5_big10, 80, TGT_OUT_5_big10, 80);
             CreateTargetFace($TourId, 3, '~DefaultCO', 'REG-^COU18|^COU21|^CO50|^CO65|^CO[M|W]$', '1', TGT_OUT_5_big10, 80, TGT_OUT_5_big10, 80);
-            CreateTargetFace($TourId, 4, '~Default', 'REG-^W1U18|^W1U21|^W150|^W165|^W1[M|W]$', '1', TGT_OUT_FULL, 80, TGT_OUT_FULL, 80);
+            CreateTargetFace($TourId, 4, '~Default', 'REG-^W1U18|^W1U21|^W150|^W165|^CU15|^COU15|^W1[M|W]$', '1', TGT_OUT_FULL, 80, TGT_OUT_FULL, 80);
         } else {
             CreateTargetFace($TourId, 1, '~Default', 'REG-^R|^B|^T|^L|', '1', TGT_OUT_FULL, 122, TGT_OUT_FULL, 122);
             CreateTargetFace($TourId, 2, '~DefaultCO', 'REG-^C', '1', TGT_OUT_5_big10, 80, TGT_OUT_5_big10, 80);
@@ -485,10 +485,10 @@ switch($TourType) {
 		break;
     case 37:
         if ($SubRule==1) {
-            CreateTargetFace($TourId, 1, '~Default', 'REG-^R|^B|^T|^L|^CU13|^CU15|^COU13|^COU15|^W1U13|^W1U15', '1', TGT_OUT_FULL, 122, TGT_OUT_FULL, 122,TGT_OUT_FULL, 122, TGT_OUT_FULL, 122);
+            CreateTargetFace($TourId, 1, '~Default', 'REG-^R|^B|^T|^L|^CU13|^COU13|^W1U13|^W1U15', '1', TGT_OUT_FULL, 122, TGT_OUT_FULL, 122,TGT_OUT_FULL, 122, TGT_OUT_FULL, 122);
             CreateTargetFace($TourId, 2, '~DefaultCO', 'REG-^CU18|^CU21|^C50|^C65|^C[M|W]$', '1', TGT_OUT_5_big10, 80, TGT_OUT_5_big10, 80,TGT_OUT_5_big10, 80, TGT_OUT_5_big10, 80);
             CreateTargetFace($TourId, 3, '~DefaultCO', 'REG-^COU18|^COU21|^CO50|^CO65|^CO[M|W]$', '1', TGT_OUT_5_big10, 80, TGT_OUT_5_big10, 80,TGT_OUT_5_big10, 80, TGT_OUT_5_big10, 80);
-            CreateTargetFace($TourId, 4, '~Default', 'REG-^W1U18|^W1U21|^W150|^W165|^W1[M|W]$', '1', TGT_OUT_FULL, 80, TGT_OUT_FULL, 80,TGT_OUT_FULL, 80, TGT_OUT_FULL, 80);
+            CreateTargetFace($TourId, 4, '~Default', 'REG-^W1U18|^W1U21|^W150|^W165|^W1[M|W]$|^CU15|^COU15', '1', TGT_OUT_FULL, 80, TGT_OUT_FULL, 80,TGT_OUT_FULL, 80, TGT_OUT_FULL, 80);
         } else {
             CreateTargetFace($TourId, 1, '~Default', 'REG-^R|^B|^T|^L', '1',  TGT_OUT_FULL, 122, TGT_OUT_FULL, 122,TGT_OUT_FULL, 122, TGT_OUT_FULL, 122);
             CreateTargetFace($TourId, 2, '~DefaultCO', 'REG-^C', '1', TGT_OUT_5_big10, 80, TGT_OUT_5_big10, 80,TGT_OUT_5_big10, 80, TGT_OUT_5_big10, 80);

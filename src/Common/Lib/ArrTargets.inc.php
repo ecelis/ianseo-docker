@@ -26,12 +26,12 @@
 		"O" => array("P" => "O", "N" => "1", 'W' =>110),
 		"P" => array("P" => "X", "N" => "0", 'W' => 0),
 		"Q" => array("P" => "X", "N" => "15", 'W' => 250),
-		//"R" => array("P" => "13", "N" => "13", 'W' => 260),
-		//"S" => array("P" => "14", "N" => "14", 'W' => 270),
-		//"T" => array("P" => "16", "N" => "16", 'W' => 280),
-		//"U" => array("P" => "17", "N" => "17", 'W' => 290),
+        "R" => array("P" => "IX", "N" => "5", 'W' => 265),
+       // "S" => array("P" => "21", "N" => "0", 'W' => 300),
+        //"T" => array("P" => "22", "N" => "22", 'W' => 305),
+		//"U" => array("P" => "19", "N" => "19", 'W' => 285),
 		"V" => array("P" => "20", "N" => "20", 'W' => 290),
-		//"W" => array("P" => "18", "N" => "18", 'W' => 300),
+		"W" => array("P" => "16", "N" => "16", 'W' => 260),
 		"X" => array("P" => "X", "N" => "11", 'W' => 205),
 		"Y" => array("P" => "X", "N" => "6", 'W' => 205),
 		"Z" => array("P" => "X", "N" => "5", 'W' => 205),
@@ -41,12 +41,23 @@
 		"4" => array("P" => "17", "N" => "17", 'W' => 260),
 		"5" => array("P" => "18", "N" => "18", 'W' => 265),
 		"6" => array("P" => "21", "N" => "21", 'W' => 295),
-		//"7" => array("P" => "X", "N" => "5", 'W' => 160),
-		//"8" => array("P" => "X", "N" => "5", 'W' => 160),
+		"7" => array("P" => "19", "N" => "19", 'W' => 270),
+		"8" => array("P" => "22", "N" => "22", 'W' => 300),
 		//"9" => array("P" => "X", "N" => "5", 'W' => 160),
+        "(" => array("P" => "M$", "N" => "0", 'W' => 0),
+        ")" => array("P" => "5$", "N" => "5", 'W' => 150),
+        "[" => array("P" => "8$", "N" => "8", 'W' => 180),
+        "]" => array("P" => "10$", "N" => "10", 'W' => 200),
 	);
-
 	$GLOBALS['LetterPoint']=$LetterPoint;
+
+    $extraLetter = array(
+        "A" => "(",
+        "F" => ")",
+        "I" => "[",
+        "L" => "]",
+    );
+    $GLOBALS['extraLetter']=$extraLetter;
 
 /*
 	- GetTargetType($EventCode,$TeamEvent=0)
@@ -160,8 +171,9 @@ function GetHigerArrowValue($EventCode,$TeamEvent=0,$curValue='',$TourId=-1)
 		{
 			$letter=$MyStr[$i];
 
-			if(array_key_exists($letter,$LetterPoint))
-				$Tot+=$LetterPoint[$letter]["N"];
+			if(array_key_exists($letter,$LetterPoint)) {
+                $Tot += $LetterPoint[$letter]["N"];
+            }
 		}
 
 		return $Tot;
@@ -174,15 +186,17 @@ function GetHigerArrowValue($EventCode,$TeamEvent=0,$curValue='',$TourId=-1)
  *  @param string $MyStr: lettera chiave di $LetterPoint
  *  @param string $G: string di chiavi di $LetterPoint da usare come gold
  *  @param string $X: string di chiavi di $LetterPoint da usare come xnine
+ *  @param string $asArray: if true returns an array of print letters instead of the total
  *  @return int[]: Array di 3 elementi: [Score,Gold,XNine]
  */
-	function ValutaArrowStringGX($MyStr,$G=null,$X=null)
+	function ValutaArrowStringGX($MyStr,$G=null,$X=null,$asArray=false)
 	{
 		global $LetterPoint;
 
 		$TotScore=0;
 		$TotGold=0;
 		$TotXNine=0;
+        $array=[];
 
 		if(is_null($G) or is_null($X)) {
 			$q=safe_r_sql("select ToGoldsChars, ToXNineChars from Tournament where ToId={$_SESSION['TourId']}");
@@ -209,6 +223,7 @@ function GetHigerArrowValue($EventCode,$TeamEvent=0,$curValue='',$TourId=-1)
 			{
 			// score
 				$TotScore+=$LetterPoint[$letter]["N"];
+                $array[]=$LetterPoint[$letter]["P"];
 
 			/* gold e xnine */
 
@@ -233,18 +248,57 @@ function GetHigerArrowValue($EventCode,$TeamEvent=0,$curValue='',$TourId=-1)
 //				}
 			}
 		}
+        if($asArray) {
+            return array($TotScore,$TotGold,$TotXNine,$array);
+        }
 
 		return array($TotScore,$TotGold,$TotXNine);
 	}
+
+/**
+ * Calculates the weight of the "drops" Lancaster style, up to 8th drop, higher value wins
+ * @param $QuId int of the archer
+ * @param $X string the letter representing the X
+ * @return void
+*/
+function CalculateDropWeight($QuId, $X='M') {
+    // there is a fake miss (A) at the end to get the last sequence
+    $q=safe_r_sql("select concat(rtrim(QuD1Arrowstring),rtrim(QuD2Arrowstring),rtrim(QuD3Arrowstring),rtrim(QuD4Arrowstring),rtrim(QuD5Arrowstring),rtrim(QuD6Arrowstring),rtrim(QuD7Arrowstring),rtrim(QuD8Arrowstring),'A') as FullArrowString
+        from Qualifications 
+        where QuId={$QuId}");
+    if($r=safe_fetch($q)) {
+        $drops=[];
+        $totLen=strlen($r->FullArrowString)-1;
+        preg_match_all('/'.$X.'*[^'.$X.']/sim', $r->FullArrowString, $match);
+        $n=0;
+        $Weight='';
+        foreach(array_slice($match[0], 0, 10) as $num => $item) {
+            $n+=strlen($item);
+            $len=strlen($item)-1;
+            $val=ValutaArrowString(substr($item,-1));
+            if($n>$totLen) {
+                $drops[]=[$len];
+            } else {
+                $drops[]=[$len,$val];
+            }
+            // 1 ^ 14
+            $Weight.=str_pad(($len+1)*100 + $val, 4, '0', STR_PAD_LEFT);
+        }
+        $Weight=str_pad($Weight, 50, '0', STR_PAD_RIGHT);
+        safe_w_sql("update Qualifications set QuTieWeight='$Weight', QuTieWeightDrops=".StrSafe_DB(json_encode($drops))." where QuId={$QuId}");
+    }
+}
 
 	/**
 	 *  Nuova(2) ver di ValutaArrowStringGX.
 	 *  Valuta l'arrowstring contanto ori e x usando $LetterPoint
 	 *
-	 *  @param string $MyStr: lettera chiave di $LetterPoint
-	 *  @return int[]: Array di 6 elements: <ul><li>Points</li><li>Max Weight</li><li>Number of stars</li><li>Number of Xs</li><li>SOArrows in Order of value</li><li>SOArrows in Order of input</li></ul>
+	 *  @param string $MyStr: string to decode
+     * @param string $XChar: Char to be evaluated as "closer to center", defaults to X as printed value
+     * @param string $LetterPointKey: if 'P' $XChar is evaluated as the printed value, otherwise as the key of $LetterPoint
+	 *  @return int[]: Array of 6 elements: <ul><li>Points</li><li>Max Weight</li><li>Number of stars</li><li>Number of Xs</li><li>SOArrows in Order of value</li><li>SOArrows in Order of input</li></ul>
 	 */
-	function ValutaArrowStringSO($MyStr) {
+	function ValutaArrowStringSO($MyStr, $XChar=null, $LetterPointKey=null) {
 		global $LetterPoint;
 
 		$TotScore = 0;
@@ -252,6 +306,8 @@ function GetHigerArrowValue($EventCode,$TeamEvent=0,$curValue='',$TourId=-1)
 		$TotStars = 0;
 		$TotX = 0;
 		$Letters=array();
+        if(is_null($XChar)) $XChar='X';
+        if(is_null($LetterPointKey)) $LetterPointKey='P';
 
 		for ($i=0;$i<strlen($MyStr);++$i) {
 			/*
@@ -267,8 +323,16 @@ function GetHigerArrowValue($EventCode,$TeamEvent=0,$curValue='',$TourId=-1)
 				$TotScore += $LetterPoint[$letter]["N"];
 				$MaxWeight=max($MaxWeight, $LetterPoint[$letter]["W"]);
 				$Letters[]=$LetterPoint[$letter]["N"];
-				if($LetterPoint[$letter]["P"]=='X') $TotX++;
-			}
+                if($LetterPointKey=='P') {
+                    if($LetterPoint[$letter]["P"]==$XChar) {
+                        $TotX++;
+                    }
+                } else {
+                    if($letter==$XChar) {
+                        $TotX++;
+                    }
+                }
+            }
 		}
         $LettersSorted = $Letters;
 		rsort($LettersSorted);
@@ -454,7 +518,10 @@ function GetHigerArrowValue($EventCode,$TeamEvent=0,$curValue='',$TourId=-1)
  * NOTA3: se $entry = "T" il $dist è l'ID del bersaglio
  *
  * @param string $Value valore di stampa da cercare
- * @param int $entry id della persona
+ * @param int $entry <ul>
+ *     <li>array: the available target (subset of $LetterPoint)</li>
+ *     <li>"T": $dist must be the distance shot</li>
+ * </ul>if array
  * @param int $dist distanza tirata
  * @return string chiave di $LetterPoint. Se c'è qualche problema ritorna uno spazio
  */
@@ -541,7 +608,157 @@ function GetMaxScores($EventCode, $MatchNo=0, $TeamEvent=0, $TourId=-1){
 
 	$ToId=($TourId!=-1 ? $TourId : StrSafe_DB($_SESSION['TourId']));
 
-	if($MatchNo<=1) {
+    if($MatchNo>256) {
+        $Select = "SELECT Targets.*, EvMatchMode, EvFinalTargetType, EvTargetSize, EvDistance,
+			RrLevEnds CalcEnds, 
+			RrLevArrows CalcArrows, 
+			RrLevSO CalcSO 
+		FROM Events
+		INNER JOIN Targets ON EvFinalTargetType=TarId 
+		inner join RoundRobinMatches on RrMatchTournament=EvTournament and RrMatchTeam=EvTeamEvent and RrMatchEvent=EvCode and (RrMatchLevel*1000000)+ (RrMatchGroup*10000) + (RrMatchRound*100) + RrMatchMatchNo = $MatchNo
+		inner join RoundRobinLevel on RrLevTournament=RrMatchTournament and RrLevTeam=RrMatchTeam and RrLevEvent=RrMatchEvent and RrLevLevel=RrMatchLevel		
+		WHERE EvTournament=" . $ToId . "
+			AND EvCode=" . StrSafe_DB($EventCode) . " 
+			AND EvTeamEvent=" . StrSafe_DB($TeamEvent);
+        $Rs=safe_r_sql($Select);
+
+        if ($MyRow=safe_fetch($Rs)) {
+            $ret['Arrows']=array('A' => array(0, '', ''));
+            $ret['HasDot']=($MyRow->TarId==24);
+            $ret['MaxPoint']=0;
+            $ret['MinPoint']=999;
+            if(isset($GLOBALS['CurrentTarget'])) {
+                $GLOBALS['CurrentTarget']['A'] = $LetterPoint['A'];
+            }
+            $size=0;
+            $targetRings=array(PHP_INT_MAX => array(
+                'size'=>0,
+                'fillColor'=>'',
+                'lineColor'=>'',
+                'letter'=>'A',
+                'value'=>$LetterPoint['A']['N'],
+                'print'=>$LetterPoint['A']['P'],
+                'radius'=>-1)
+            );
+            foreach(range('A','Z') as $key) {
+                if($MyRow->{$key.'_size'}) {
+                    $targetRings[$MyRow->{$key.'_size'}] = array(
+                        "size"=>$MyRow->{$key.'_size'},
+                        "fillColor"=>$MyRow->{$key.'_color'},
+                        "lineColor"=>'000000',
+                        "letter"=>$key,
+                        "value"=>$LetterPoint[$key]['N'],
+                        "print"=>$LetterPoint[$key]['P'],
+                        "radius"=>0
+                    );
+
+                    if($size < $MyRow->{$key.'_size'}) {
+                        $size = $MyRow->{$key . '_size'};
+                    }
+                    /*
+                    // fills the accepted arrows array
+                    $ret['Arrows'][$key]=array(
+                        $MyRow->{$key.'_size'},
+                        $MyRow->{$key.'_color'},
+                        ($MyRow->{$key.'_color'}=='000000' && $oldcolor=='000000')?'FFFFFF':'000000'
+                    );
+                    $oldcolor=$MyRow->{$key.'_color'};
+    */
+                    // check the maxpoint
+                    if($LetterPoint[$key]['N']>$ret['MaxPoint']) {
+                        $ret['MaxPoint']=$LetterPoint[$key]['N'];
+                    }
+
+                    // check the minpoint
+                    if($LetterPoint[$key]['N'] and $LetterPoint[$key]['N']<$ret['MinPoint']) {
+                        $ret['MinPoint']=$LetterPoint[$key]['N'];
+                    }
+
+                    if(isset($GLOBALS['CurrentTarget'])) {
+                        $GLOBALS['CurrentTarget'][$key] = $LetterPoint[$key];
+                    }
+                }
+            }
+            foreach(range('1','9') as $key) {
+                if($MyRow->{$key.'_size'}) {
+                    $targetRings[$MyRow->{$key.'_size'}] = array(
+                        "size"=>$MyRow->{$key.'_size'},
+                        "fillColor"=>$MyRow->{$key.'_color'},
+                        "lineColor"=>'000000',
+                        "letter"=>$key,
+                        "value"=>$LetterPoint[$key]['N'],
+                        "print"=>$LetterPoint[$key]['P'],
+                        "radius"=>0
+                    );
+
+                    if($size < $MyRow->{$key.'_size'}) {
+                        $size = $MyRow->{$key . '_size'};
+                    }
+                    /*
+                    // fills the accepted arrows array
+                    $ret['Arrows'][$key]=array(
+                        $MyRow->{$key.'_size'},
+                        $MyRow->{$key.'_color'},
+                        ($MyRow->{$key.'_color'}=='000000' && $oldcolor=='000000')?'FFFFFF':'000000'
+                    );
+                    $oldcolor=$MyRow->{$key.'_color'};
+    */
+                    // check the maxpoint
+                    if($LetterPoint[$key]['N']>$ret['MaxPoint']) {
+                        $ret['MaxPoint']=$LetterPoint[$key]['N'];
+                    }
+
+                    // check the minpoint
+                    if($LetterPoint[$key]['N'] and $LetterPoint[$key]['N']<$ret['MinPoint']) {
+                        $ret['MinPoint']=$LetterPoint[$key]['N'];
+                    }
+
+                    if(isset($GLOBALS['CurrentTarget'])) {
+                        $GLOBALS['CurrentTarget'][$key] = $LetterPoint[$key];
+                    }
+                }
+            }
+            $ExtraPoint=0;
+            if($MyRow->TarId=='25') {
+                $ret['MaxPoint']--;
+                $ExtraPoint=1;
+            }
+            $ret['MaxEnd']=$ret['MaxPoint']*$MyRow->CalcArrows + $ExtraPoint;
+            $ret['MaxMatch']=$ret['MaxEnd']*$MyRow->CalcEnds;
+            $ret['MaxSetPoints']=($MyRow->EvMatchMode ? $MyRow->CalcEnds+2 : 0);
+            $ret['MaxSO']=$ret['MaxPoint']*$MyRow->CalcSO + $ExtraPoint;
+            $ret['ArrowsPerEnd']=$MyRow->CalcArrows;
+            $ret['Ends']=$MyRow->CalcEnds;
+            $ret['SO']=$MyRow->CalcSO;
+            $ret['Distance']=$MyRow->EvDistance;
+            $ret['TargetRadius'] = ($MyRow->TarFullSize ? ($MyRow->EvTargetSize ? $MyRow->EvTargetSize : 122) * ($size/$MyRow->TarFullSize) * 5 : 0);
+            $ret['Size']=($MyRow->EvTargetSize ? $MyRow->EvTargetSize : 122) * ($size/2);
+            $ret['TargetSize']= ($MyRow->EvTargetSize ? $MyRow->EvTargetSize : 122);
+            $ret['FullSize']= $MyRow->TarFullSize;
+            $ret['MaxSize']= $size;
+            krsort($targetRings);
+            $oldColor='';
+
+            if($MyRow->TarId=='25') {
+                $ret['MaxPoint']++;
+            }
+
+            foreach ($targetRings as $k=>$v) {
+                $v['radius'] = ($ret['TargetRadius'] / $size) * $v['size'];
+                if($oldColor == $v['fillColor'] AND $v['fillColor']=='000000') {
+                    $v['lineColor'] = 'FFFFFF';
+                }
+                $ret['Arrows'][$v['letter']] = $v;
+
+                $oldColor= $v['fillColor'];
+            }
+        }
+
+        return $ret;
+
+    }
+
+    if($MatchNo<=1) {
 		$Phase=0;
 	} else {
 		$Phase= pow(2, intval(log($MatchNo, 2)));
@@ -560,7 +777,9 @@ function GetMaxScores($EventCode, $MatchNo=0, $TeamEvent=0, $TourId=-1){
 
 	if ($MyRow=safe_fetch($Rs))
 	{
+        $ret['TargetId']=$MyRow->TarId;
 		$ret['Arrows']=array('A' => array(0, '', ''));
+		$ret['HasDot']=($MyRow->TarId==24);
 		$ret['MaxPoint']=0;
 		$ret['MinPoint']=999;
 		if(isset($GLOBALS['CurrentTarget'])) {
@@ -755,7 +974,7 @@ function GetTargetColors($TourId, $TrgName='') {
  * @param int $dist: distanza
  * @return chars[]: lettere presenti nel bersaglio. La 'A' (zero) ci sarà sempre
  */
-	function GetGoodLettersFromDist($entry,$dist=1)
+	function GetGoodLettersFromDist($entry,$dist=1,&$TgtId=0)
 	{
 		$ret=array();
 
@@ -785,6 +1004,7 @@ function GetTargetColors($TourId, $TrgName='') {
 			$ret[]='A';	// lo zero lo metto sempre
 
 			$row=safe_fetch($r);
+            $TgtId=$row->TarId;
 			foreach (range('B','Z') as $letter)
 			{
 				if ($row->{$letter . '_size'}!=0)
@@ -808,6 +1028,7 @@ function GetTargetColors($TourId, $TrgName='') {
  * @return chars[]: lettere presenti nel bersaglio. La 'A' (zero) ci sarà sempre
  */
 	function GetGoodLettersFromTgtId($target, $SortByWeight=0) {
+        global $extraLetter;
 		$ret=array();
 
 		$q="SELECT * FROM Targets where TarId=$target";
@@ -815,12 +1036,19 @@ function GetTargetColors($TourId, $TrgName='') {
 
 		if ($row=safe_fetch($r)) {
 			$ret[]='A';	// lo zero lo metto sempre
-			foreach (range('B','Z') as $letter) {
-				if ($row->{$letter . '_size'}!=0) $ret[]=$letter;
+            $ret[]=$extraLetter['A'];
+            foreach (range('B','Z') as $letter) {
+				if ($row->{$letter . '_size'}!=0) {
+                    $ret[]=$letter;
+                    if($target==18 AND $letter!='N') {
+                        $ret[]=$extraLetter[$letter];
+                    }
+                }
 			}
 			foreach (range('1','9') as $letter) {
 				if ($row->{$letter . '_size'}!=0) $ret[]=(string) $letter;
 			}
+
 		}
 
 		if($SortByWeight>0) {
@@ -873,7 +1101,7 @@ function GetTargetColors($TourId, $TrgName='') {
 	}
 
 	function GetTargetNgInfo($TrgId, $size=0) {
-		global $LetterPoint;
+		global $LetterPoint, $extraLetter;
 		$q=safe_r_SQL("select Targets.* from Targets where TarId=$TrgId");
 
 		if(!($MyRow=safe_fetch($q))) return false;
@@ -887,7 +1115,7 @@ function GetTargetColors($TourId, $TrgName='') {
 					min(255,round(hexdec(substr($MyRow->{$key.'_color'},2,2))*1.5)),
 					min(255,round(hexdec(substr($MyRow->{$key.'_color'},-2))*1.5))
 					]) ? '#FFFFFF' : '#000000';
-				$ret[$key]=["letter" => $key, "point" => $LetterPoint[$key]['P'], "num" => (int)$LetterPoint[$key]['N'], "bg" => "#".$MyRow->{$key.'_color'}, "fg" => $col];
+				$ret["$key"]=["letter" => "$key", "point" => $LetterPoint[$key]['P'], "num" => (int)$LetterPoint[$key]['N'], "bg" => "#".$MyRow->{$key.'_color'}, "fg" => $col];
 			}
 		}
 		foreach(range('Z','A') as $key) {
@@ -898,16 +1126,22 @@ function GetTargetColors($TourId, $TrgName='') {
 					min(255,round(hexdec(substr($MyRow->{$key.'_color'},-2))*1.5))
 				]) ? '#FFFFFF' : '#000000';
 				$ret[$key]=["letter" => $key, "point" => $LetterPoint[$key]['P'], "num" => (int)$LetterPoint[$key]['N'], "bg" => "#".$MyRow->{$key.'_color'}, "fg" => $col];
+                if($TrgId==18 AND $key!='N') {
+                   $ret[strtolower($key)] = ["letter" => $extraLetter[$key], "point" => $LetterPoint[$extraLetter[$key]]['P'], "num" => (int)$LetterPoint[$extraLetter[$key]]['N'], "bg" => "#" . $MyRow->{$key . '_color'}, "fg" => $col];
+                }
 			}
 		}
 		if(empty($ret['A'])) {
 			$ret['A'] = ["letter" => "A", "point" => "M", "num" => 0, "bg" => "#999999", "fg" => "#000000"];
+            if($TrgId==18) {
+               $ret['a'] = ["letter" => $extraLetter["A"], "point" => $LetterPoint[$extraLetter["A"]]['P'], "num" => 0, "bg" => "#999999", "fg" => "#000000"];
+            }
 		}
 
 		// need to sort based on the weight of the $LetterPoint
 		uksort($ret, function($a,$b) {
 			global $LetterPoint;
-			return $LetterPoint[$b]['W']<=>$LetterPoint[$a]['W'];
+			return $LetterPoint[strtoupper($b)]['W']<=>$LetterPoint[strtoupper($a)]['W'];
 		});
 		return array_values($ret);
 	}
@@ -975,9 +1209,14 @@ function RaiseStars($ArrowString, &$Regexp='', $Event='', $TeamEvent=0, $TourId=
 	return strlen($ArrowString) - strlen(preg_replace('/['.$Regexp.']/', '', $ArrowString));
 }
 
-function getLettersFromPrintList($printList) {
+function getLettersFromPrintList($printList, $FilterFromTarget=0) {
     global $LetterPoint;
+    static $Targets=[];
     $retValue = '';
+    if($FilterFromTarget and empty($Targets[$FilterFromTarget])) {
+        $Targets[$FilterFromTarget]=GetGoodLettersFromTgtId($FilterFromTarget);
+    }
+
     if(!is_array($printList)) {
         if(strpos(str_replace(' ','',$printList),',')!==false) {
             $printList = explode(',',str_replace(' ','',$printList));
@@ -989,7 +1228,7 @@ function getLettersFromPrintList($printList) {
     }
     foreach ($printList as $v) {
         foreach ($LetterPoint as $k=>$l) {
-            if ($v==$l['P']) {
+            if ($v==$l['P'] and (!$FilterFromTarget or in_array($k, $Targets[$FilterFromTarget]))) {
                 $retValue .= $k;
             }
         }

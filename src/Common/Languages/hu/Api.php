@@ -2,6 +2,7 @@
 $lang['API-AutoGroup']='Kötegelt csoport alakítás';
 $lang['API-ConfirmDeleteRow']='Biztosan törölni akarid a sort?';
 $lang['API-DeviceGrouping']='Eszköz csoport';
+$lang['API-EnableDeviceGrouping']='Eszköz csoportosítás engedélyezve';
 $lang['API-Group']='Csoport';
 $lang['API-TargetGrouping']='Cél csoport (?)';
 $lang['API-Targets']='Célok';
@@ -122,8 +123,6 @@ $lang['ScorecardsEmpty']='Üres beírólapok';
 $lang['ScorecardsFull']='Beírólapok pont értékekkel';
 $lang['ScorerNum']='Beíró $a';
 $lang['StickyAlreadySet']='Beragadt sorozatok más munkamenetből!';
-$lang['TVCss3Divider']='Elválasztó';
-$lang['TVCss3Loser']='Vesztes módosítása';
 $lang['WAToolbox-MissingParams']='Hiányzó paraméter';
 $lang['WAToolbox-NoCompCode']='Hiányzó verseny kód';
 ?>

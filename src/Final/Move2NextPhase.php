@@ -17,12 +17,13 @@
     checkACL(($team ? AclTeams : AclIndividuals), AclReadWrite);
 
 	$Errore=0;
-	$msg=get_text('CmdOk');
 
 	$ok=false;
 	$action='';
 
 	$isBlocked=($team==0 ? IsBlocked(BIT_BLOCK_IND) : IsBlocked(BIT_BLOCK_TEAM));
+
+    $msg=get_text('Error');
 
 	if (is_null($event) || is_null($team) || is_null($match) || $isBlocked )
 	{
@@ -44,8 +45,8 @@
 	}
 
 
-	if ($Errore==1) {
-		$msg=get_text('Error');
+	if ($Errore==0) {
+        $msg=get_text('CmdOk');
 	}
 
 	if (!debug)

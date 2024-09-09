@@ -32,6 +32,7 @@
 		$Arr_Pages = array
 		(
 			'ALFA'  => get_text('StartlistAlfabetical','Tournament'),//'Session_rot.php')
+			'CAT'  => get_text('StartlistCategory','Tournament'),//'Session_rot.php')
 			'LIST'  => get_text('StartlistSession','Tournament'),//'Session_rot.php')
 			'LSPH'  => get_text('StartlistSessionPicture','Tournament'),//'Session_rot.php')
 			'QUAL'  => get_text('ResultIndClass','Tournament'), //'Qualification_Ind_rot.php'),

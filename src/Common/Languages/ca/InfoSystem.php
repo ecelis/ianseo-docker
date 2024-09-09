@@ -1,6 +1,7 @@
 <?php
 $lang['AutoUpdate']='Actualització automàtica';
 $lang['BarRecord']='Mostra barra del rècord mitjà';
+$lang['BrokenRecords']='Rècords Trencats';
 $lang['ByClub']='Per Associació/Club';
 $lang['ByEvent']='Per esdeveniment';
 $lang['ByName']='Per nom';
@@ -17,7 +18,7 @@ $lang['HomeButton']='Inici';
 $lang['Individual']='Individual';
 $lang['InfoPointAlert']='<b> Fes el mateix en el teu Portàtil, Tablet, Smartphone:</b><br/>Connecteu el dispositiu a la connexió WI-FI«ianseo» (gratis - sense contrasenya), aneu a http://ianseo/ i seguiu en directe!';
 $lang['InfoPointIndex']='Utilitzeu el menú de dalt per descobrir els resultats de la competició i trobeu la classificació d\'un arquer.';
-$lang['Kiosk']='Quiosc';
+$lang['Kiosk']='Terminal';
 $lang['LineToExamine']='Feu clic a la sessió que voleu obrir.';
 $lang['Live']='Directe';
 $lang['Matches']='Encontres';
@@ -76,6 +77,7 @@ $lang['Record-WR-avg']='Mitjana de Rècord del Món';
 $lang['Record-WR-WA']='Rècord del Món';
 $lang['Record-WR-WA-avg']='Mitjana de Rècord del Món';
 $lang['RR_Score']='marcador RR';
+$lang['StandingRecords']='Rècords Imbatuts';
 $lang['Teams']='Equips';
 $lang['TypeName']='Escriviu el nom que vostè està buscant';
 $lang['ViewIndividualResults']='Mostra Resultats Individual';

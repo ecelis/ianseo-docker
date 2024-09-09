@@ -9,15 +9,13 @@
 	require_once('Common/Fun_Number.inc.php');
 	require_once('Common/Fun_Various.inc.php');
 
+	$IncludeJquery = true;
 	$JS_SCRIPT=array(
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Qualification/Fun_AJAX_index.js"></script>',
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Qualification/Fun_JS.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>',
 		'<script type="text/javascript" src="./index.js"></script>',
-		'<link href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css" media="screen" rel="stylesheet" type="text/css" />',
 		'<link href="./index.css" media="screen" rel="stylesheet" type="text/css" />',
 		phpVars2js(array(
             'CmdPostUpdate'=>get_text('CmdPostUpdate'),

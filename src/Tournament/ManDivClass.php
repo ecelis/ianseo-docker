@@ -13,13 +13,13 @@
 		exit;
 	}
 
+	$IncludeJquery = true;
 	$JS_SCRIPT = array(
         phpVars2js(array(
             'MsgAreYouSure' => get_text('MsgAreYouSure'),
 	        'MsgRowMustBeComplete' => str_replace('<br>','\n',get_text('MsgRowMustBeComplete')),
         )),
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Tournament/Fun_AJAX_ManDivClass.js"></script>',
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
 		);
@@ -59,7 +59,7 @@ if (safe_num_rows($Rs)>0) {
     while ($MyRow=safe_fetch($Rs)) {
         echo '<tr id="Div_'.$MyRow->DivId.'">
             <td class="Bold Center">'.$MyRow->DivId.'</td>
-            <td><input type="text" '.$Disabled.' name="d_DivDescription_'.$MyRow->DivId.'" id="d_DivDescription_'.$MyRow->DivId.'" size="56" maxlength="32" value="'.ManageHTML($MyRow->DivDescription).'" onBlur="UpdateField(\'D\',\'d_DivDescription_'.$MyRow->DivId.'\')"></td>
+            <td><input type="text" '.$Disabled.' name="d_DivDescription_'.$MyRow->DivId.'" id="d_DivDescription_'.$MyRow->DivId.'" size="56" maxlength="50" value="'.ManageHTML($MyRow->DivDescription).'" onBlur="UpdateField(\'D\',\'d_DivDescription_'.$MyRow->DivId.'\')"></td>
             <td class="Center"><select '.$Disabled.' name="d_DivIsPara_'.$MyRow->DivId.'" id="d_DivIsPara_'.$MyRow->DivId.'"  onBlur="UpdateField(\'D\',\'d_DivIsPara_'.$MyRow->DivId.'\')">
                 <option value="0">'.get_text('No').'</option>
                 <option value="1"'.($MyRow->DivIsPara?' selected':'').'>'.get_text('Yes').'</option>
@@ -80,7 +80,7 @@ if (safe_num_rows($Rs)>0) {
 <?php if(!defined('dontEditClassDiv')) { ?>
 	<tr>
 	<td class="Center"><input type="text" name="New_DivId" id="New_DivId" size="5" maxlength="4"></td>
-	<td><input type="text" name="New_DivDescription" id="New_DivDescription" size="56" maxlength="32"></td>
+	<td><input type="text" name="New_DivDescription" id="New_DivDescription" size="56" maxlength="50"></td>
 	<td class="Center"><select name="New_DivIsPara" id="New_DivIsPara">
 		<option value="0"><?php echo get_text('No'); ?></option>
 		<option value="1"><?php echo get_text('Yes'); ?></option>
@@ -134,7 +134,7 @@ if (safe_num_rows($Rs)>0) {
 <option value="-1"<?php print ($MyRow->ClSex==-1 ? ' selected' : '');?>><?php print get_text('ShortUnisex','Tournament');?></option>
 </select>
 </td>
-<td><input <?php print (!defined('dontEditClassDiv') ? '' :' disabled="disabled"');?> type="text" name="d_ClDescription_<?php print $id_post;?>" id="d_ClDescription_<?php print $id_post;?>" size="56" maxlength="32" value="<?php print ManageHTML($MyRow->ClDescription);?>" onBlur="UpdateField('C','d_ClDescription_<?php print $id_post;?>')"></td>
+<td><input <?php print (!defined('dontEditClassDiv') ? '' :' disabled="disabled"');?> type="text" name="d_ClDescription_<?php print $id_post;?>" id="d_ClDescription_<?php print $id_post;?>" size="56" maxlength="50" value="<?php print ManageHTML($MyRow->ClDescription);?>" onBlur="UpdateField('C','d_ClDescription_<?php print $id_post;?>')"></td>
 <td class="Center"><select <?php print (!defined('dontEditClassDiv') ? '' :' disabled="disabled"');?> name="d_ClIsPara_<?php print $id_post;?>" id="d_ClIsPara_<?php print $id_post;?>"  onChange="UpdateField('C','d_ClIsPara_<?php print $id_post;?>')">
 	<option value="0"><?php echo get_text('No'); ?></option>
 	<option value="1"<?php print ($MyRow->ClIsPara?' selected':'');?>><?php echo get_text('Yes'); ?></option>
@@ -167,7 +167,7 @@ echo '</tbody>';
 	<option value="-1"><?php print get_text('ShortUnisex','Tournament');?></option>
 	</select>
 	</td>
-	<td><input type="text" name="New_ClDescription" id="New_ClDescription" size="56" maxlength="32"></td>
+	<td><input type="text" name="New_ClDescription" id="New_ClDescription" size="56" maxlength="50"></td>
 	<td class="Center"><select name="New_ClIsPara" id="New_ClIsPara">
 		<option value="0"><?php echo get_text('No'); ?></option>
 		<option value="1"><?php echo get_text('Yes'); ?></option>

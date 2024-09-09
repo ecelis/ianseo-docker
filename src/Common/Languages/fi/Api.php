@@ -84,8 +84,6 @@ $lang['RasLastSeen']='Viimeisin yhteys';
 $lang['RaspControl']='Raspberry Hallinta';
 $lang['RaspDevice']='Laite';
 $lang['RasUrl']='Jaettava URL';
-$lang['TVCss3Divider']='Jakaja';
-$lang['TVCss3Loser']='Häviäjän muokkaus';
 $lang['WAToolbox-MissingParams']='Puuttuva Parametri';
 $lang['WAToolbox-NoCompCode']='Puuttuva Kilpailukoodi';
 ?>

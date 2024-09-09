@@ -254,7 +254,7 @@ function set_qual_session_flags() {
 
     $q = safe_r_sql("select EvCode, EvTeamEvent, EvFinalFirstPhase,  EvShootOff, EvE1ShootOff, EvE2ShootOff, EvElimType, EvElim1, EvElim2
 		from Events 
-		where EvTournament={$_SESSION['TourId']} AND EvCodeParent=''");
+		where EvTournament={$_SESSION['TourId']} AND (EvCodeParent='' or EvCodeParentWinnerBranch=1)");
 	while($r=safe_fetch($q)) {
 		$ConstToStore['MenuElimOn']=($ConstToStore['MenuElimOn'] or $r->EvE1ShootOff or $r->EvE2ShootOff);
         switch($r->EvElimType) {
@@ -270,7 +270,9 @@ function set_qual_session_flags() {
 				$ConstToStore['MenuElimPoolDo']=true;
                 break;
 	        case 5:
-		        if(!$r->EvE1ShootOff) $ConstToStore['MenuRobin'][$r->EvTeamEvent][]=$r->EvCode;
+		        if(!$r->EvE1ShootOff) {
+                    $ConstToStore['MenuRobin'][$r->EvTeamEvent][]=$r->EvCode;
+                }
 		        $ConstToStore['MenuRobinDo']=true;
 		        $ConstToStore['MenuRobinOn']=($ConstToStore['MenuRobinOn'] or $r->EvE1ShootOff);
 				break;
@@ -666,20 +668,25 @@ function IsBlocked($Bit) {
  *
  * @return int: id torneo se esiste; 0 altrimenti
  */
-function getIdFromCode($code, $ForceLang=false)
-{
-	$ret=0;
+function getIdFromCode($code, $ForceLang=false) {
+	static $codes=[];
 
-	$query
-		= "SELECT ToId, ToPrintLang FROM Tournament WHERE ToCode=" . StrSafe_DB($code) . " ";
-	$rs=safe_r_sql($query);
-	if (safe_num_rows($rs)==1)
-	{
-		$row=safe_fetch($rs);
-		$ret=$row->ToId;
-		if($row->ToPrintLang and !defined('PRINTLANG')) define('PRINTLANG', $row->ToPrintLang);
+	if(isset($codes[$code]) and !$ForceLang) {
+		return $codes[$code];
 	}
 
+	$ret=0;
+
+	$query = "SELECT ToId, ToPrintLang FROM Tournament WHERE ToCode=" . StrSafe_DB($code) . " ";
+	$rs=safe_r_sql($query);
+	if ($row=safe_fetch($rs)) {
+		$ret=$row->ToId;
+		if($row->ToPrintLang and !defined('PRINTLANG')) {
+			define('PRINTLANG', $row->ToPrintLang);
+		}
+	}
+
+	$codes[$code]=$ret;
 	return $ret;
 }
 
@@ -960,8 +967,8 @@ function JsonOut($JSON, $JsonP=false, $ExtraHeaders=array(), $Straight=false) {
     }
 
     header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type');
+	header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+	header('Access-Control-Allow-Headers: Content-Type, AccountKey, x-requested-with, origin, authorization, accept, client-security-token, host, date, cookie, cookie2');
     header('Cache-Control: no-store, no-cache, must-revalidate');
     foreach($ExtraHeaders as $h) {
     	header($h);

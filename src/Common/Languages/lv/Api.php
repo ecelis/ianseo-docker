@@ -1,6 +1,7 @@
 <?php
 $lang['API-ConfirmDeleteRow']='Vai Jūs esat pārliecināts, ka vēlaties izdzēst šo rindu?';
 $lang['API-DeviceGrouping']='Ierīču Grupēšana';
+$lang['API-EnableDeviceGrouping']='Iespējot iekārtu grupēšanu';
 $lang['API-Group']='Grupa';
 $lang['API-TargetGrouping']='Virogu grupēšana';
 $lang['API-Targets']='Vairogi';
@@ -9,6 +10,7 @@ $lang['AskSignature-1']='Skanēt loka šāvēja ID';
 $lang['AutoImport']='Importēt automātiski';
 $lang['CmdDelete']='Noņemt';
 $lang['CmdImport']='Importēt';
+$lang['DataRefresh']='Atjaunināt datus';
 $lang['Desc-Let-B']='Sērija importēta';
 $lang['Desc-Let-C']='Šajā sērijā trūkst trāpījumu rezultātu';
 $lang['Desc-Let-G']='Tukša vieta';
@@ -90,8 +92,6 @@ $lang['RasIpAddress']='IP adrese';
 $lang['RasLastSeen']='Pēdējā pieslēgšanās';
 $lang['RaspControl']='Raspberry Pārvaldība';
 $lang['RaspDevice']='Ierīce';
-$lang['TVCss3Divider']='Sadalītājs';
-$lang['TVCss3Loser']='Zaudētāju modificēšana';
 $lang['WAToolbox-MissingParams']='Trūkst parametri';
 $lang['WAToolbox-NoCompCode']='Trūkst sacensību kods';
 ?>

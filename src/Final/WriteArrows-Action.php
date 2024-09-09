@@ -35,6 +35,9 @@ switch($_REQUEST['act']) {
 		];
 		if($Schedule) {
 			$options['schedule']=substr($Schedule, 1);
+			if(strlen($options['schedule'])==16) {
+				$options['schedule'].=':00';
+			}
 			if($Events) {
 				$options['events']=$Events;
 			}
@@ -81,7 +84,7 @@ switch($_REQUEST['act']) {
 		$TieSelect.='<option value="2">'.get_text('Bye').'</option>';
 		$q=safe_r_SQL("select * from IrmTypes where IrmId>0 order by IrmId");
 		while($irm=safe_fetch($q)) {
-			$TieSelect.= '<option value="'.($irm->IrmShowRank ? 'irm-'.$irm->IrmId : 'man').'">' . $irm->IrmType .' - '. get_text($irm->IrmType, 'Tournament'). '</option>';
+			$TieSelect.= '<option value="irm-'.$irm->IrmId . '">' . $irm->IrmType .' - '. get_text('IRM-'.$irm->IrmId, 'Tournament'). '</option>';
 		}
 
 		$JSON['html']='';
@@ -109,6 +112,12 @@ switch($_REQUEST['act']) {
 						$JSON['html'].='<th>'.($n+1).'</th>';
 					}
 					$JSON['html'].='<th>'.get_text('Total').'</th>';
+                    if($Phases['meta']['checkGolds']) {
+					    $JSON['html'].='<th>'.get_text('TieBreak-1-Short', 'RoundRobin').'</th>';
+                    }
+                    if($Phases['meta']['checkXnines']) {
+					    $JSON['html'].='<th>'.get_text('TieBreak-2-Short', 'RoundRobin').'</th>';
+                    }
 					$JSON['html'].='<th>'.get_text('SetPoints', 'Tournament').'</th>';
 					if($EndIdx==$MaxArrows) {
 						for($n=0; $n<3*$Phases['meta'][$Items['meta']['FinElimChooser']?'elimSO':'finSO']; $n++) {
@@ -124,7 +133,7 @@ switch($_REQUEST['act']) {
 					$TabIndex=1;
 
 					foreach($Items['items'] as $Match) {
-						$Class='';
+						$Class=(($Match['winner'] or $Match['oppWinner'] or ($Match['irm'] and $Match['oppIrm'])) ? 'disabled'.($Match['winner'] ? ' win' : '') : '');
 						$ByeChooser=intval($Match['tie']==2 or $Match['irm'] or $Match['oppTie']==2 or $Match['oppIrm']);
 						if($ByeChooser) {
 							$Class= 'Bye';
@@ -136,7 +145,7 @@ switch($_REQUEST['act']) {
 
 							$id=$Team.'_'.$EvCode.'_'.$Match['matchNo'];
 
-							$Html[$ByeChooser].='<tr class="'.$Class.'">
+							$Html[$ByeChooser].='<tr class="'.$Class.'" id="row_'.$id.'">
 								<td id="tgt_'.$id.'">'.ltrim($Match['target'], '0').'</td>
 								<td id="nam_'.$id.'">'.$Match[$Athlete1].'</td>
 								<td id="cty_'.$id.'">'.$Match['countryCode'].'</td>';
@@ -146,17 +155,24 @@ switch($_REQUEST['act']) {
 								$Html[$ByeChooser].='<td><input type="text" size="2" id="s_'.$id.'_'.$n.'" value="'.$a.'" onblur="updateScore(this)" onfocus="this.select()" tabindex="'.($TabIndex++).'"></td>';
 							}
 							$Html[$ByeChooser].='<td id="tot_'.$id.'" class="Right">'.$Match['score'].'</td>';
+                            if($Phases['meta']['checkGolds']) {
+                                $Html[$ByeChooser].='<td id="tb1_'.$id.'" class="Right">'.$Match['golds'].'</td>';
+                            }
+                            if($Phases['meta']['checkXnines']) {
+                                $Html[$ByeChooser].='<td id="tb2_'.$id.'" class="Right">'.$Match['xnines'].'</td>';
+                            }
 							$Html[$ByeChooser].='<td id="set_'.$id.'" class="Center">'.($Phases['meta']['matchMode']?$Match['setScore']:'').'</td>';
 							if($EndIdx==$MaxArrows) {
 								$TieBreak=str_pad($Match['tiebreak'], $Phases['meta'][$Items['meta']['FinElimChooser']?'elimSO':'finSO'], ' ', STR_PAD_RIGHT);
+								$SoArrs=$Phases['meta'][$Items['meta']['FinElimChooser']?'elimSO':'finSO'];
 
 								for($pSo=0; $pSo<3; $pSo++ ) {
-									for ($n = 0; $n < $Phases['meta'][$Items['meta']['FinElimChooser']?'elimSO':'finSO']; $n++) {
-										$ArrI = $MaxArrows+$n+($pSo*$Phases['meta'][$Items['meta']['FinElimChooser']?'elimSO':'finSO']);
-										$Html[$ByeChooser] .= '<td><input type="text" size="2" id="s_' . $id . '_' . $ArrI . '" value="' . (!empty($TieBreak[$ArrI]) ? DecodeFromLetter($TieBreak[$ArrI]):'') . '" onblur="SendToServer(this, this.value)" onfocus="this.select()" tabindex="' . ($TabIndex++) . '"></td>';
+									for ($n = 0; $n < $SoArrs; $n++) {
+										$ArrI = $n+($pSo*$SoArrs);
+										$Html[$ByeChooser] .= '<td><input type="text" size="2" id="s_' . $id . '_' . ($MaxArrows+$ArrI) . '" value="' . (!empty($TieBreak[$ArrI]) ? DecodeFromLetter($TieBreak[$ArrI]):'') . '" onblur="updateScore(this)" onfocus="this.select()" tabindex="' . ($TabIndex++) . '"></td>';
 									}
 								}
-								$Html[$ByeChooser] .= '<td align="center"><input type="checkbox" id="cl_' . $id . '" ' . ($Match['closest'] ? ' checked="checked"' : '') . ' onclick="SendToServer(this)" tabindex="' . ($TabIndex++) . '"></td>';
+								$Html[$ByeChooser] .= '<td align="center"><input type="checkbox" id="cl_' . $id . '" ' . ($Match['closest'] ? ' checked="checked"' : '') . ' onclick="updateScore(this)" tabindex="' . ($TabIndex++) . '"></td>';
 							}
 							$Html[$ByeChooser].='<td>';
 							$Html[$ByeChooser].='<input '.(($Match['winner'] or $Match['oppWinner'] or ($Match['irm'] and $Match['oppIrm']))?'':'class="d-none"').' type="button" value="'.get_text('NextPhase').'" id="next_'.$id.'" onclick="move2next(this)" tabindex="'.($Offset++).'">';
@@ -171,16 +187,21 @@ switch($_REQUEST['act']) {
 							}
 							$Val='value="'.$Val.'"';
 							$Html[$ByeChooser].='<td><select id="irm_' . $id .'" onChange="SendToServer(this, this.value)" tabindex="'.($Offset++).'">'.str_replace($Val, $Val.' selected="selected"', $TieSelect).'</select></td>';
-							$Html[$ByeChooser].='<td><input value="'.$Match['notes'].'" id="note_' . $id .'" onChange="SendToServer(this, this.value)" tabindex="'.($Offset++).'"></td>';
+							// $Html[$ByeChooser].='<td><input value="'.$Match['notes'].'" id="note_' . $id .'" onChange="SendToServer(this, this.value)" tabindex="'.($Offset++).'"></td>';
 							$Html[$ByeChooser].='</tr>';
 						}
 
 						if($Match[$Athlete2]) {
+                            $Class=(($Match['winner'] or $Match['oppWinner'] or ($Match['irm'] and $Match['oppIrm'])) ? 'disabled'.($Match['oppWinner'] ? ' win' : '') : '');
+                            $ByeChooser=intval($Match['tie']==2 or $Match['irm'] or $Match['oppTie']==2 or $Match['oppIrm']);
+                            if($ByeChooser) {
+                                $Class= 'Bye';
+                            }
 							$Arrowstring=str_pad($Match['oppArrowstring'], $MaxArrows, ' ', STR_PAD_RIGHT);
 
 							$id=$Team.'_'.$EvCode.'_'.$Match['oppMatchNo'];
 
-							$Html[$ByeChooser].='<tr class="'.$Class.'">
+							$Html[$ByeChooser].='<tr class="'.$Class.'" id="row_'.$id.'">
 								<td id="tgt_'.$id.'">'.ltrim($Match['oppTarget'], '0').'</td>
 								<td id="nam_'.$id.'">'.$Match[$Athlete2].'</td>
 								<td id="cty_'.$id.'">'.$Match['oppCountryCode'].'</td>';
@@ -190,17 +211,23 @@ switch($_REQUEST['act']) {
 								$Html[$ByeChooser].='<td><input type="text" size="2" id="s_'.$id.'_'.$n.'" value="'.$a.'" onblur="updateScore(this)" onfocus="this.select()" tabindex="'.($TabIndex++).'"></td>';
 							}
 							$Html[$ByeChooser].='<td id="tot_'.$id.'" class="Right">'.$Match['oppScore'].'</td>';
+                            if($Phases['meta']['checkGolds']) {
+                                $Html[$ByeChooser].='<td id="tb1_'.$id.'" class="Right">'.$Match['oppGolds'].'</td>';
+                            }
+                            if($Phases['meta']['checkXnines']) {
+                                $Html[$ByeChooser].='<td id="tb2_'.$id.'" class="Right">'.$Match['oppXnines'].'</td>';
+                            }
 							$Html[$ByeChooser].='<td id="set_'.$id.'" class="Center">'.($Phases['meta']['matchMode']?$Match['oppSetScore']:'').'</td>';
 							if($EndIdx==$MaxArrows) {
 								$TieBreak=str_pad($Match['oppTiebreak'], $Phases['meta'][$Items['meta']['FinElimChooser']?'elimSO':'finSO'], ' ', STR_PAD_RIGHT);
-
+								$SoArrs=$Phases['meta'][$Items['meta']['FinElimChooser']?'elimSO':'finSO'];
 								for($pSo=0; $pSo<3; $pSo++ ) {
-									for ($n = 0; $n < $Phases['meta'][$Items['meta']['FinElimChooser']?'elimSO':'finSO']; $n++) {
-										$ArrI = $MaxArrows+$n+($pSo*$Phases['meta'][$Items['meta']['FinElimChooser']?'elimSO':'finSO']);
-										$Html[$ByeChooser] .= '<td><input type="text" size="2" id="s_' . $id . '_' . $ArrI . '" value="' . (!empty($TieBreak[$ArrI]) ? DecodeFromLetter($TieBreak[$ArrI]):'') . '" onblur="updateScore(this)" onfocus="this.select()" tabindex="' . ($TabIndex++) . '"></td>';
+									for ($n = 0; $n < $SoArrs; $n++) {
+										$ArrI = $n+($pSo*$SoArrs);
+										$Html[$ByeChooser] .= '<td><input type="text" size="2" id="s_' . $id . '_' . ($MaxArrows+$ArrI) . '" value="' . (!empty($TieBreak[$ArrI]) ? DecodeFromLetter($TieBreak[$ArrI]):'') . '" onblur="updateScore(this)" onfocus="this.select()" tabindex="' . ($TabIndex++) . '"></td>';
 									}
 								}
-								$Html[$ByeChooser] .= '<td align="center"><input type="checkbox" id="cl_' . $id . '" ' . ($Match['oppClosest'] ? ' checked="checked"' : '') . ' onclick="SendToServer(this)" tabindex="' . ($TabIndex++) . '"></td>';
+								$Html[$ByeChooser] .= '<td align="center"><input type="checkbox" id="cl_' . $id . '" ' . ($Match['oppClosest'] ? ' checked="checked"' : '') . ' onclick="updateScore(this)" tabindex="' . ($TabIndex++) . '"></td>';
 							}
 							$Html[$ByeChooser].='<td>';
 							if(!$Match[$Athlete1]) {
@@ -217,7 +244,7 @@ switch($_REQUEST['act']) {
 							}
 							$Val='value="'.$Val.'"';
 							$Html[$ByeChooser].='<td><select id="irm_' . $id .'" onChange="SendToServer(this, this.value)" tabindex="'.($Offset++).'">'.str_replace($Val, $Val.' selected="selected"', $TieSelect).'</select></td>';
-							$Html[$ByeChooser].='<td><input value="'.$Match['oppNotes'].'" id="note_' . $id .'" onChange="SendToServer(this, this.value)" tabindex="'.($Offset++).'"></td>';
+							// $Html[$ByeChooser].='<td><input value="'.$Match['oppNotes'].'" id="note_' . $id .'" onChange="SendToServer(this, this.value)" tabindex="'.($Offset++).'"></td>';
 							$Html[$ByeChooser].='</tr>';
 						}
 
@@ -235,8 +262,10 @@ switch($_REQUEST['act']) {
 		}
 		break;
 	case 'updateArrow':
-		if(!(isset($_REQUEST['event']) and isset($_REQUEST['team']) and isset($_REQUEST['match']) and isset($_REQUEST['what']) and isset($_REQUEST['arrow']) and isset($_REQUEST['index']))) {
-			JsonOut($JSON);
+		if(!(isset($_REQUEST['event']) and isset($_REQUEST['team']) and isset($_REQUEST['match']) and isset($_REQUEST['what']) and isset($_REQUEST['arrow']))) {
+			if($_REQUEST['what']!='cl' and !isset($_REQUEST['index'])) {
+				JsonOut($JSON);
+			}
 		}
 		$TeamEvent = intval($_REQUEST['team']);
 		if(!hasACL(($TeamEvent ? AclTeams : AclIndividuals), AclReadWrite) or ($TeamEvent==0 ? IsBlocked(BIT_BLOCK_IND) : IsBlocked(BIT_BLOCK_TEAM))) {
@@ -246,7 +275,7 @@ switch($_REQUEST['act']) {
 		$match = intval($_REQUEST['match']);
 		$what = $_REQUEST['what'];
 		$arrow = $_REQUEST['arrow'];
-		$index = intval($_REQUEST['index']);
+		$index = intval($_REQUEST['index']??-1);
 
 		// check what is being called!
 		switch($what) {
@@ -257,9 +286,8 @@ switch($_REQUEST['act']) {
 					$arrow="M";
 				}
 				// Check the arrow value is OK
-				if(array_key_exists(strtoupper(GetLetterFromPrint($arrow)) , $validData["Arrows"])) {
-					$ArrowLetter = GetLetterFromPrint($arrow);
-				} else {
+                $ArrowLetter = GetLetterFromPrint(strtoupper($arrow), $validData["Arrows"]);
+                if(!$ArrowLetter) {
 					$ArrowLetter = ' ';
 				}
 
@@ -267,6 +295,23 @@ switch($_REQUEST['act']) {
 
 				UpdateArrowString($match, $event, $TeamEvent, $ArrowLetter, $index+1, $index+1);
 				$JSON['error']=0;
+				break;
+			case 'cl':
+				if($TeamEvent) {
+					$prefix='Tf';
+					$table='TeamFinals';
+				} else {
+					$prefix='Fin';
+					$table='Finals';
+				}
+				$JSON['error']=0;
+				if($arrow) {
+					$oppMatch=($match%2 ? $match-1 : $match+1);
+					// we need to remove the other closest in case
+					safe_w_sql("update $table set {$prefix}TbClosest=0 where {$prefix}tournament={$_SESSION['TourId']} and {$prefix}Event='$event' and {$prefix}Matchno=$oppMatch");
+				}
+				safe_w_sql("update $table set {$prefix}TbClosest={$arrow} where {$prefix}tournament={$_SESSION['TourId']} and {$prefix}Event='$event' and {$prefix}Matchno=$match");
+				EvaluateMatch($event,$TeamEvent,$match);
 				break;
 			default:
 				JsonOut($JSON);
@@ -307,6 +352,28 @@ switch($_REQUEST['act']) {
 				'id'=>"#tot_{$TeamEvent}_{$event}_{$tmp['oppMatchNo']}",
 				'k'=>'html',
 				'val'=>$tmp['oppScore']
+			];
+
+			$JSON['updates'][]=[
+				'id'=>"#tb1_{$TeamEvent}_{$event}_{$tmp['matchNo']}",
+				'k'=>'html',
+				'val'=>$tmp['golds']
+			];
+			$JSON['updates'][]=[
+				'id'=>"#tb1_{$TeamEvent}_{$event}_{$tmp['oppMatchNo']}",
+				'k'=>'html',
+				'val'=>$tmp['oppGolds']
+			];
+
+			$JSON['updates'][]=[
+				'id'=>"#tb2_{$TeamEvent}_{$event}_{$tmp['matchNo']}",
+				'k'=>'html',
+				'val'=>$tmp['xnines']
+			];
+			$JSON['updates'][]=[
+				'id'=>"#tb2_{$TeamEvent}_{$event}_{$tmp['oppMatchNo']}",
+				'k'=>'html',
+				'val'=>$tmp['oppXnines']
 			];
 
 			$JSON['updates'][]=[
@@ -358,6 +425,18 @@ switch($_REQUEST['act']) {
 				'id'=>"#next_{$TeamEvent}_{$event}_{$tmp['oppMatchNo']}",
 				'k'=>'class',
 				'val'=>(($tmp['winner'] or $tmp['oppWinner'] or ($tmp['irm'] and $tmp['oppIrm']))?'':'d-none')
+			];
+
+            // finished match
+			$JSON['updates'][]=[
+				'id'=>"#row_{$TeamEvent}_{$event}_{$tmp['matchNo']}",
+				'k'=>'class',
+				'val'=>(($tmp['winner'] or $tmp['oppWinner'] or ($tmp['irm'] and $tmp['oppIrm'])) ? ($tmp['winner'] ? 'disabled win' : 'disabled') : '')
+			];
+			$JSON['updates'][]=[
+				'id'=>"#row_{$TeamEvent}_{$event}_{$tmp['oppMatchNo']}",
+				'k'=>'class',
+				'val'=>(($tmp['winner'] or $tmp['oppWinner'] or ($tmp['irm'] and $tmp['oppIrm'])) ? ($tmp['oppWinner'] ? 'disabled win' : 'disabled') : '')
 			];
 		}
 

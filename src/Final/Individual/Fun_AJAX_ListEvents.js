@@ -77,12 +77,16 @@ function UpdatePhase(Event, OldValue, Msg) {
 	per creare un nuovo evento
 	ErrMsg è il messaggio di errore nel caso non si possa proseguire
 */
-function AddEvent(ErrMsg) {
+function AddEvent() {
     if ($('#New_EvCode').val()!='' &&
             $('#New_EvEventName').val()!='' &&
             $('#New_EvProgr').val()!='' &&
             (($('#New_EvElim1').length>0 && $('#New_EvElim1').val()!='') || $('#New_EvElim1').length == 0) &&
             (($('#New_EvElim2').length>0 && $('#New_EvElim2').val()!='') || $('#New_EvElim2').length == 0)) {
+        if($('#New_EvCode').val().search(/[^0-9a-z_.-]/i)!=-1) {
+            doAlert(InvalidCode);
+            return;
+        }
         var New_EvCode = encodeURIComponent($('#New_EvCode').val());
         var New_EvEventName = encodeURIComponent($('#New_EvEventName').val());
         var New_EvProgr = encodeURIComponent($('#New_EvProgr').val());
@@ -119,7 +123,7 @@ function AddEvent(ErrMsg) {
             location = 'SetEventRules.php?EvCode='+data.new_evcode;
         });
     } else {
-        alert(ErrMsg.replace(/\+/g," "));
+        alert(ErrorRowComplete.replace(/\+/g," "));
 	}
 }
 
@@ -141,9 +145,15 @@ function autoEventAddDel() {
                 action: () => {
                     $.getJSON("ListEvents-autoEventAddDel.php?checkEvents=1", function(data) {
                         if(data.error == 0 ) {
+                            var content='';
+                            if(data.Add>0) {
+                                content+='<div>'+EventsToAdd+' <span class="text-warning bold">'+data.Add+'</span></div>';
+                            }
+                            if(data.Del>0) {
+                                content+='<div>'+EventsToDelete+' <span class="text-danger bold">'+data.Del+'</span> ('+data.DelList+')'+'</div>';
+                            }
                             $.confirm({
-                                content: 'You are going to add ' + data.Add + ' events<br>'+
-                                    (data.Del > 0 ? 'You are delete ' + data.Del + ' events ('+data.DelList+')' : ''),
+                                content: content,
                                 boxWidth: '50%',
                                 useBootstrap: false,
                                 title: EvAddDelTitle,

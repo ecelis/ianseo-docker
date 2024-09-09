@@ -105,7 +105,7 @@
 					sort($tmp);
 					$filter.=" AND EnDivision IN (" . implode(',',$tmp). ") ";
 				} else {
-					$filter.=" AND EnDivision LIKE " . StrSafe_DB($this->opts['divs']) ;
+					$filter.=" AND EnDivision = " . StrSafe_DB($this->opts['divs']) ;
 				}
 			}
 			if (!empty($this->opts['cls'])) {
@@ -115,7 +115,7 @@
 					sort($tmp);
 					$filter.=" AND EnClass IN (" . implode(',',$tmp). ") ";
 				} else {
-					$filter.=" AND EnClass LIKE " . StrSafe_DB($this->opts['cls']) ;
+					$filter.=" AND EnClass = " . StrSafe_DB($this->opts['cls']) ;
 				}
 			}
 

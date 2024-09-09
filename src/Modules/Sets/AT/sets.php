@@ -20,10 +20,6 @@ foreach($AllowedTypes as $val) {
             'SetOneClass'
         );
     }
-    if($val >= 9 and $val != 37) {
-        $SetType['AT']['rules']["$val"][] = 'SetWAPools-All';
-        $SetType['AT']['rules']["$val"][] = 'SetWAPools-One';
-    }
 }
 
 /* No subrules requests as of today */

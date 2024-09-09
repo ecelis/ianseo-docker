@@ -64,13 +64,13 @@ if (safe_num_rows($q)>0) {
 				foreach($vSec['items'] as $kItem=>$vItem) {
 					$tmp = array("Rank"=>$vItem["rank"], "AwardName"=>"");
 					if($EvType==0) {
-						$tmp += array("Id"=>$vItem["bib"], "FamilyName"=>$vItem["familyname"], "GivenName"=>$vItem["givenname"], "NameOrder"=>$vItem["nameOrder"], "Gender"=>$vItem["gender"]);
+						$tmp += array("Id"=>$vItem["localBib"], "FamilyName"=>$vItem["familyname"], "GivenName"=>$vItem["givenname"], "NameOrder"=>$vItem["nameOrder"], "Gender"=>$vItem["gender"]);
 					}
 					$tmp += array("TeamCode"=>$vItem["countryCode"], "TeamName"=>$vItem["countryName"]);
 					if($EvType==1) {
 						$tmpAth=array();
 						foreach($vItem["athletes"] as $kAth=>$vAth) {
-							$tmpAth[$kAth]= array("Id"=>$vAth["bib"], "FamilyName"=>$vAth["familyname"], "GivenName"=>$vAth["givenname"], "NameOrder"=>$vAth["nameOrder"], "Gender"=>$vAth["gender"]);
+							$tmpAth[$kAth]= array("Id"=>$vAth["localBib"], "FamilyName"=>$vAth["familyname"], "GivenName"=>$vAth["givenname"], "NameOrder"=>$vAth["nameOrder"], "Gender"=>$vAth["gender"]);
 						}
 						$tmp["Components"] = $tmpAth;
 					}

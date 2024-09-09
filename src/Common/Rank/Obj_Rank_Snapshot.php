@@ -283,7 +283,6 @@
 					, " . ($isAbs ? "IF(EvElim1=0 && EvElim2=0, EvNumQualified,IF(EvElim1=0,EvElim2,EvElim1))" : "''") . " as QualifiedNo
 					FROM Tournament
 					INNER JOIN Entries ON ToId=EnTournament
-					INNER JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament AND EnTournament={$this->tournament}
 					INNER JOIN Qualifications ON EnId=QuId
 					INNER JOIN Classes ON EnClass=ClId AND ClTournament={$this->tournament}
 					INNER JOIN Divisions ON EnDivision=DivId AND DivTournament={$this->tournament} ";
@@ -292,11 +291,21 @@
 					INNER JOIN Individuals ON EnId=IndId AND EnTournament=IndTournament 
 					inner join IrmTypes on IrmId=IndIrmType
 					INNER JOIN Events ON EvCode=IndEvent AND EvTeamEvent=0 AND EvTournament=IndTournament
+					left JOIN Countries ON CoId=
+						case EvTeamCreationMode 
+							when 0 then EnCountry
+							when 1 then EnCountry2
+							when 2 then EnCountry3
+							else EnCountry
+						end
+						AND EnTournament=CoTournament AND EnTournament={$this->tournament}
 					LEFT JOIN DocumentVersions DV1 on EvTournament=DV1.DvTournament AND DV1.DvFile = 'QUAL-IND' and DV1.DvEvent=''
 					LEFT JOIN DocumentVersions DV2 on EvTournament=DV2.DvTournament AND DV2.DvFile = 'QUAL-IND' and DV2.DvEvent=EvCode
 					";
 			} else {
-				$q.=" inner join IrmTypes on IrmId=QuIrmType ";
+				$q.=" inner join IrmTypes on IrmId=QuIrmType 
+					INNER JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament AND EnTournament={$this->tournament}
+					";
 			}
 			if($SnapDistance!=0) {
 				if(is_array($ArrowNo)) {

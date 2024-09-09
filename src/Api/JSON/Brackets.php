@@ -48,17 +48,19 @@ foreach($Data['sections'] as $kSec=>$vSec) {
 				$tmpL = array();
 				$tmpR = array();
 				if($EvType==0) {
-					$tmpL += array("Id"=>$vItem["bib"], "FamilyName"=>$vItem["familyName"], "GivenName"=>$vItem["givenName"], "NameOrder"=>$vItem["nameOrder"], "Gender"=>$vItem["gender"]);
-					$tmpR += array("Id"=>$vItem["oppBib"], "FamilyName"=>$vItem["oppFamilyName"], "GivenName"=>$vItem["oppGivenName"], "NameOrder"=>$vItem["oppNameOrder"], "Gender"=>$vItem["oppGender"]);
+					$tmpL += array("Id"=>$vItem["localBib"], "FamilyName"=>$vItem["familyName"], "GivenName"=>$vItem["givenName"], "NameOrder"=>$vItem["nameOrder"], "Gender"=>$vItem["gender"]);
+					$tmpR += array("Id"=>$vItem["oppLocalBib"], "FamilyName"=>$vItem["oppFamilyName"], "GivenName"=>$vItem["oppGivenName"], "NameOrder"=>$vItem["oppNameOrder"], "Gender"=>$vItem["oppGender"]);
 				}
 				$tmpL += array("TeamCode"=>$vItem["countryCode"], "TeamName"=>$vItem["countryName"],
 					"Score"=>$vItem[($vSec['meta']['matchMode']==1 ?  'setScore': 'score')],
 					"TieBreak"=>$vItem['tiebreakDecoded'],
-					"Winner"=>($vItem['winner']? true:false));
+					"Winner"=>($vItem['winner']? true:false),
+                    "IRM"=>$vItem["irmText"]);
 				$tmpR += array("TeamCode"=>$vItem["oppCountryCode"], "TeamName"=>$vItem["oppCountryName"],
 					"Score"=>$vItem[($vSec['meta']['matchMode']==1 ?  'oppSetScore': 'oppScore')],
 					"TieBreak"=>$vItem['oppTiebreakDecoded'],
-					"Winner"=>($vItem['oppWinner']? true:false));
+					"Winner"=>($vItem['oppWinner']? true:false),
+                    "IRM"=>$vItem["oppIrmText"]);
 
 				$tmpPhase["Matches"][] = Array("MatchId"=>$vItem['matchNo'], "ScheduledDateTime"=>date("Y-m-d H:i",strtotime($vItem["scheduledDate"] . " ". $vItem["scheduledTime"])), "LeftOpponent"=>$tmpL, "RightOpponent"=>$tmpR);
 			}

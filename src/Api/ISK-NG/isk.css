@@ -1,0 +1,447 @@
+* {
+    box-sizing: border-box;
+}
+.dot-status {
+    font-size: 8px;
+    display:inline-block;
+    width:2em;
+    height:2em;
+    border-radius: 1.1em;
+    border:solid 1px green;
+    text-align:center;
+    color:#bbb;
+    background-color:green;
+    line-height: 2em;
+    font-weight: bold;
+    margin:0 0.25em;
+}
+
+[id^="End_"] {
+    min-width:3em;
+}
+
+.dot-status.disabled {
+    background-color:red !important;
+    border-color: red;
+}
+
+.icoGreen {
+    color: green;
+    padding: 2px 4px;
+}
+.icoNoGreen {
+    color: lightgray;
+    padding: 2px 4px;
+}
+.hidden {display: none;}
+.txtFixW {font-family: monospace, monospace}
+
+.loadParams {
+    margin-right: 5px;
+}
+input[type=button] {margin: 0.2rem}
+
+/** Groups **/
+.deviceGroup {
+    font-weight:bold;
+    text-align:center;
+    font-size: 200%;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    height: 60px;
+}
+.deviceGroupSmaller {
+    font-weight:bold;
+    text-align:center;
+    font-size: 200%;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+}
+
+#DeviceGroupsContainers, #hGroups, #bGroups {
+    font-size: x-small;
+}
+
+.spacingGroup {height: 0.5em;}
+
+/** Devices **/
+.TargetAssigned{font-weight:bold; text-align:center; font-size: 125%;}
+.devDisconnected {font-weight: bold; color:darkred; text-align: center}
+.devConnected {font-weight: normal; color:green; text-align: center}
+
+/** Battery **/
+.charging {background-color: lightgreen;}
+.fullCharged {font-weight: bold; color: darkgreen; font-size: 125%}
+.charging.fullCharged {font-weight: bold; background-color: darkgreen; color: white; font-size: 125%}
+.emptyBattery {background-color: orange;}
+
+/** Socket **/
+#ctrConnStatus {
+    font-weight: bold;
+    font-size: 1.2rem;
+    text-align: center;
+    cursor: crosshair;
+}
+td.socketON {
+    background-color: lightgreen;
+    color: black;
+}
+td.socketOUTDATED {
+    background-color: lightblue;
+    color: black;
+}
+td.socketOFF {
+    background-color: darkred;
+    color: white;
+}
+
+
+/** Popup **/
+.PopUp {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    font-size: 120%;
+}
+.PopUpContent {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 0px;
+    border: 1px solid #888;
+    width: 50%;
+    text-align:center;
+}
+.PopUpHeader {
+    top:0;
+    width:100%;
+    position:relative;
+    background-color: #004488;
+    color: white;
+    font-weight: bold;
+    padding: 1%;
+    text-align: left;
+}
+.PopUpFooter {
+    width:100%;
+    padding: 0.5em;
+}
+.PopUp table {
+    margin: 0.5em auto;
+    width: 95%;
+}
+.PopUp table td {
+    padding: 0.5em;
+    border-collapse: separate;
+}
+
+/** Target Grouping **/
+.TargetGrouped {font-weight:bold; font-family: monospace, monospace; font-size: 110%;}
+.TargetShow {background-color: yellow !important; color: darkred !important;}
+.TargetUsed {background-color: rgba(0, 0, 0, 0.25);}
+.TargetChosen {color: red}
+.MissingDistances {background-color: red;}
+
+/* QR COde */
+.MustSave {background-color: lightgreen;}
+
+/* Get Info */
+.infoGroup{
+    padding: 5px;
+    font-weight: bold;
+    font-size: 150%;
+    text-align: center;
+    vertical-align: top;
+}
+
+.infoTarget{
+    padding: 5px;
+    font-weight: bold;
+    font-size: 200%;
+    text-align: center;
+    vertical-align: top;
+}
+
+.infoDevice {
+    font-size: 125%;
+    vertical-align: top;
+    font-family: Monospace;
+}
+
+.notExisting td {background-color:#ffffcc;}
+.notResponding td {background-color:#ffcccc;}
+
+.infoDetails {
+    display:none;
+}
+
+[id^=settings_],
+[id^=data_] {
+    vertical-align: top;
+}
+
+[id^=settings_] div.infoDetails div,
+[id^=data_] div.infoDetails div {
+    margin-left:1em;
+    font-family: monospace, monospace;
+}
+
+.ArcherBlock {
+    display:flex;
+}
+.ArcherBlock div {
+    margin-right:0.5em;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.ArcherBlock div:nth-child(1) {
+    flex:1 0 3em;
+}
+.ArcherBlock div:nth-child(2) {
+    flex:1 0 4em;
+}
+.ArcherBlock div:nth-child(3) {
+    flex:1 0 4em;
+}
+.ArcherBlock div:nth-child(4) {
+    flex:1 0 15em;
+}
+.ArcherBlock div:nth-child(5) {
+    flex:1 0 6em;
+}
+.ArcherBlock div:nth-child(6) {
+    flex:1 0 5em;
+}
+.ArcherBlock div:nth-child(7) {
+    flex:1 0 5em;
+}
+
+.Button {
+    padding: 0.35em 0.5em 0.35em 0.5em;
+    margin-left: 0.5em;
+    margin-right: 0.5em;
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+}
+.Button:hover, .Button:active {
+    border: 1px solid darkblue;
+    border-bottom-color: lightblue;
+    border-right-color: lightblue;
+}
+.Button.highlight {
+    background-color: black;
+    color: white;
+}
+
+.infoButtonContainer {
+    display:flex;
+    align-items: start;
+    margin-bottom:1em;
+}
+.infoButtonContainer div {
+}
+
+/* Results and Devices */
+#DeviceGroupsContainers {
+    overflow-y: auto;
+    margin-top:5px;
+}
+
+.sizeS0 { font-size: 80%; }
+.sizeS1 { font-size: 70%; }
+.sizeS2 { font-size: 50%; }
+.size { font-size: 100%; }
+.sizeL0 { font-size: 120%; }
+.sizeL1 { font-size: 130%; }
+.sizeL2 { font-size: 150%; }
+.resTarget {
+    margin:0.2em;
+    border:0.4em solid darkgrey;
+    border-radius: 0.4em;
+    min-height: 6em;
+    display: inline-block;
+    box-shadow: 1px 1px 1px #888888;
+}
+.targetInfoImg {
+    color: darkblue;
+    width: 100%;
+    text-align: right;
+    margin-top: 2px;
+    margin-bottom: 5px;
+    font-size: larger;
+}
+.deviceInfoImg {
+    color: black;
+    float: left;
+}
+.deviceInfoImg .fa-mobile-screen, .deviceInfo .fa-mobile-screen {
+    margin-right: 2px;
+}
+.deviceInfo {
+    color: black;
+    display: block;
+    text-align: left;
+    padding-top: 5px;
+    font-size: initial;
+    font-weight: normal;
+    font-family: Monospace;
+}
+
+.devHeader {
+    padding:0.5em;
+    border-bottom:5px solid darkgrey;
+    text-align: center;
+    font-weight: bold;
+    font-size: larger;
+}
+.devHeaderSmall {
+    padding:0.2em;
+    border-bottom:2px solid darkgrey;
+    text-align: center;
+    font-weight: bold;
+    font-size: 175%;
+}
+.devFooter {
+    text-align:center;
+    font-size: larger;
+    min-height: 1em;
+}
+.resDisconnected {
+    border-color: red;
+    border-bottom-color: red;
+}
+.fa-mobile-screen.resDisconnected {
+    color: red;
+}
+
+.cmdIRM {
+    font-weight: bold;
+}
+.irmActive {
+    text-decoration: line-through;
+}
+
+.resConnected {
+    border-color: green;
+    border-bottom-color: green;
+}
+.fa-mobile-screen.resConnected {
+    color: green;
+}
+.devBody {
+    white-space: nowrap;
+    padding: 0.5em;
+    text-align: center;
+}
+.devLetter {
+    display: inline-block;
+    margin:0.25em;
+    padding:0.5em;
+    width: 2em;
+    border:1px solid gray;
+}
+.letBlack {
+    background-color:black;
+    color:white;
+}
+
+.Let-1 {background-color: #7070ff; color:#ffffff;} /* scored (Blue) */
+.Let-2 {background-color:#33ffff;} /* missing (Cyan) */
+.Let-3 {background-color:#dddd00;} /* scoring (Yellow) */
+.Let-4 {background-color:#00A000;} /* scoring in progress (green) */
+
+.Let-O {background-color: #FFD580 !important;} /* scoring different end (Orange) */
+.Let-G {background-color:#000000; color: #000000;} /* dimmed (Gray) */
+.Let-F {background-color:#cccccc;} /* Match Over (darker Gray) */
+
+.Bot-1 {border-bottom:4px solid #7070ff;border-top:4px solid #7070ff;} /* scored (Blue) */
+.Bot-2 {border-bottom:4px solid #33ffff;border-top:4px solid #33ffff;} /* missing (Cyan) */
+.Bot-3 {border-bottom:4px solid #dddd00;border-top:4px solid #dddd00;} /* scoring (Yellow) */
+.Bot-4 {border-bottom:4px solid #00A000;border-top:4px solid #00A000;} /* scoring in progress (green) */
+.Bot-9 {border-bottom:4px solid #8d0000;border-top:4px solid #8d0000;} /* scoring in progress (dark red) */
+
+.disabled {color:#E8E8E8;cursor: default;}
+.importDisabled {
+    color: red;
+}
+.cntStillToScore {
+    font-size: larger;
+    font-weight: bold;
+    color: inherit;
+    background-color: inherit;
+}
+.cntScoreComplete {
+    background-color: #0E9700;
+    color: white;
+    font-size: larger;
+    font-weight: bold;
+    padding: 0.4em;
+}
+
+.detailbox {margin:auto;width:fit-content;}
+.detailRow {display:flex; align-items: center;}
+.detailName {flex:0 1 15em;overflow: hidden; text-align: left}
+.detailLetter {flex:0 1 1em;text-align: center; padding:0.25em 0; white-space: pre; min-width: 3em;}
+
+.grpPartialBtn {
+    margin-left: 2em;
+    padding-top: 1em;
+    padding-bottom: 0.5em;
+    font-weight: bold;
+}
+
+.iskButton {
+    border-radius: 3px;
+    box-shadow: 2px 2px 2px 1px rgb(0 0 0 / 10%);
+    transition: 0.2s all;
+    height: 25px;
+}
+.iskButtonBigText{
+    font-size: 1.2rem;
+}
+.iskButton:active {
+    transform: scale(0.98);
+    box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 20%);
+}
+.iskButton:hover {
+    border-color: var(--border-dark);
+}
+.iskIconButton {
+    filter: drop-shadow(3px 3px 2px rgb(0 0 0 / 20%));
+}
+.iskIconButton:active {
+    transform: scale(0.98);
+    filter: drop-shadow(3px 3px 2px rgb(0 0 0 / 40%));
+}
+
+.buttonBox {
+    display: flex;
+    justify-content: space-between;
+}
+
+.tLastOp-0 {
+    background-color: #ccffcc;
+}
+
+.tLastOp-1 {
+    background-color: #ffffcc;
+}
+
+.tLastOp-2 {
+    background-color: #ffe0cc;
+}
+
+.tLastOp-3 {
+    background-color: #ffcccc;
+}
+
+.tempArrows {
+    font-family: monospace, monospace;
+    font-size: large;
+    font-weight: bold;
+    text-align: right;
+}

@@ -2,7 +2,7 @@
 
 body
 {
-	font-size: 10px;
+	font-size: small;
 	font-family: Verdana, Helvetica, Arial, sans-serif;
 	color: var(--black);
 	margin: 0px;
@@ -11,8 +11,11 @@ body
 	background-color:var(--header-light);
 }
 
+body, body * {
+	max-height: 10000000px;
+}
+
 [onclick] {cursor: pointer;}
-.d-none {display:none;}
 .NoWrap {
     white-space: nowrap;
 }
@@ -102,7 +105,7 @@ a.text-dark:focus,a.text-dark:hover{
 	{
 		position: relative;
 		font-family: Verdana, Helvetica, Arial, sans-serif;
-		font-size:11px;
+		font-size:small;
 		top: 0px;
 		font-weight:bold;
 		left: 0px;
@@ -159,7 +162,7 @@ a.text-dark:focus,a.text-dark:hover{
 }
 
 table.Tabella {width:100%; background-color:var(--table-background); border: 2px; border-color:var(--table-background); border-collapse:separate; border-spacing:1px;}
-table.Tabella.freeWidth {width:unset; min-width: 50%; margin:auto; }
+table.Tabella.freeWidth {width:unset; min-width: 50%; margin-left:auto; margin-right:auto; }
 table.Tabella tr { background-color:var(--row-background); color: var(--header-dark);}
 table.Tabella tr.OtherColor { background-color:white; color: var(--header-dark);}
 table.Tabella tr.CanShoot { background-color:var(--bg-green); color: var(--header-dark);}
@@ -221,6 +224,8 @@ table.Tabella th.Left {text-align: left;}
 tr.active td {background-color:var(--bg-yellow);}
 
 .LetteraGrande { font-size:150%; font-weight:bold; }
+.bold {font-weight:bold; }
+.small {font-size: smaller }
 
 table.Tabella2 {margin:auto; background-color:var(--row-background); border: 2px; border-color:var(--table-background); border-collapse:separate; border-spacing:1px; }
 table.Tabella2 td { padding:1px;}
@@ -260,7 +265,8 @@ select.red {font-weight:bold; background-color:var(--dark-red);}
 
 .blue {background-color: #2cc0f1}
 .green  {background-color:#96f886;}
-.yellow  {background-color:var(--bg-yellow);}
+.yellow {background-color:var(--bg-yellow);}
+.orange {background-color:var(--bg-orange);}
 .red  {background-color:var(--dark-red);}
 
 .win {font-weight: bold;}
@@ -358,6 +364,7 @@ body.loading .modal {
 
 .rowHover:hover {background-color: #9fff7c !important;}
 .rowHover:hover input, .rowHover:hover select { background-color: #e1ffde !important;}
+.rowDoubleH { line-height: 2em}
 
 #securityBox {
 	font-size: 80%;
@@ -378,6 +385,12 @@ body.loading .modal {
     font-size:3em;
     padding:1em!important;
 }
+
+.alert {margin:1rem; padding:1rem; font-size:125%; border-radius: 0.5em;}
+.alert-warning {background-color: #ffe0a0; border:1px solid #bfa575;}
+.alert-danger {background-color:lightpink; border:1px solid hotpink;}
+.alert-success {background-color:lightgreen; border:1px solid darkgreen;}
+
 
 .ml-1, .m-1, .mx-1 {margin-left:0.25em;}
 .mr-1, .m-1, .mx-1 {margin-right:0.25em;}
@@ -400,10 +413,7 @@ body.loading .modal {
 .mt-5, .m-5, .my-5 {margin-top:2em;}
 .mb-5, .m-5, .my-5 {margin-bottom:2em;}
 
-.alert {margin:1rem;padding:1rem;font-size:125%;border-radius: 0.5em;}
-.alert-warning {background-color: #ffe0a0;border:1px solid #bfa575;}
-.alert-danger {background-color:lightpink;;border:1px solid hotpink;}
-
+.w-3  {width:  3% !important}
 .w-5  {width:  5% !important}
 .w-10 {width: 10% !important}
 .w-15 {width: 15% !important}
@@ -425,7 +435,16 @@ body.loading .modal {
 .w-95 {width: 95% !important}
 .w-100 {width: 100% !important}
 
+.h-0 {height: 0; vertical-align: top;}
+
+.p-1 {padding:0.25em;}
+.p-2 {padding:0.5em;}
+.p-3 {padding:1em;}
+.p-4 {padding:1.5em;}
+.p-5 {padding:3em;}
+
 .Center > table {margin:auto;}
+div.Center  {text-align: center; margin: auto}
 
 .jconfirm-title  {
 	font-size: 20px;
@@ -434,6 +453,7 @@ body.loading .modal {
 .jconfirm-content  {
 	font-size: 14px;
 }
+.d-none {display:none!important;}
 
 @MEDIA print {
 	.print_debug {display:none;}

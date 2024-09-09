@@ -7,6 +7,17 @@ CheckTourSession(true);
 
 $JSON=array('error' => 1, 't' => array());
 
+if(!empty($_REQUEST['stopAlternate']) and isset($_REQUEST['team']) and isset($_REQUEST['event']) and isset($_REQUEST['match'])) {
+    $Match1=intval($_REQUEST['match']/2)*2;
+    $Match2=$Match1+1;
+    if($_REQUEST['team']) {
+        safe_w_SQL("update TeamFinals set TfShootFirst=0 where TfTournament={$_SESSION['TourId']} and trim(TfArrowstring)='' and TfEvent=".StrSafe_DB($_REQUEST['event'])." and TfMatchNo in ($Match1,$Match2)");
+    } else {
+        safe_w_SQL("update Finals set FinShootFirst=0 where FinTournament={$_SESSION['TourId']} and trim(FinArrowstring)='' and FinEvent=".StrSafe_DB($_REQUEST['event'])." and FinMatchNo in ($Match1,$Match2)");
+    }
+	JsonOut($JSON);
+}
+
 if(empty($_REQUEST['first'])) {
 	JsonOut($JSON);
 }
@@ -18,9 +29,6 @@ foreach($_REQUEST['first'] as $Team => $Events) {
 	foreach($Events as $Event => $Matches) {
 		foreach($Matches as $Matchno => $Ends) {
 			foreach($Ends as $End => $Start) {
-				$rows=4;
-				$cols=3;
-				$so=1;
 				$Sql1='';
 				$Sql2='';
 				$Params=getEventArrowsParams($Event, intval(log($Matchno, 2)), $Team);
@@ -115,12 +123,11 @@ foreach($_REQUEST['first'] as $Team => $Events) {
 				if($Sql2) safe_w_sql($Sql2);
 
 				$JSON['error']=0;
+                runJack("FinShootingFirst", $_SESSION['TourId'], array("Event"=>$Event, "Team"=>$Team, "MatchNo"=>($Matchno % 2 ? $Matchno-1 : $Matchno), "End"=>$End, "TourId"=>$_SESSION['TourId']));
 			}
 		}
 	}
 }
-
-runJack("FinShootingFirst", $_SESSION['TourId'], array("Event"=>$Event ,"Team"=>$Team,"MatchNo"=>($Matchno % 2 ? $Matchno-1 : $Matchno) ,"TourId"=>$_SESSION['TourId']));
 
 JsonOut($JSON);
 

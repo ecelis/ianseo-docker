@@ -79,6 +79,14 @@ function draw_pip($r) {
 			if(!isset($im)) {
 				$im=$CFG->DOCUMENT_PATH.'TV/Photos/'.$_SESSION['TourCodeSafe'].'-RandomImage-'.$CardFile.'.jpg';
 			}
+        case 'WRankImage':
+            if(!isset($im)) {
+                $im=$CFG->DOCUMENT_PATH.'TV/Photos/'.$_SESSION['TourCodeSafe'].'-WRankImage-'.$CardFile.'.jpg';
+            }
+        case 'ExtraAddOnsImage':
+            if(!isset($im)) {
+                $im=$CFG->DOCUMENT_PATH.'TV/Photos/'.$_SESSION['TourCodeSafe'].'-ExtraAddOnsImage-'.$CardFile.'.jpg';
+            }
 		case 'TgtSequence':
 			if(!isset($im)) {
 				$im=$CFG->DOCUMENT_PATH.'Common/Images/TgtSequence'.($r->IceContent=='Coloured' ? 'Col' : 'BW').'.png';
@@ -104,7 +112,7 @@ function draw_pip($r) {
 					} elseif(!$w) {
 						$w=$h*imagesx($im2)/imagesy($im2);
 					}
-					imagecopyresampled($img, $im2, $Options['X']*2, $Options['Y']*2, 0, 0, $w, $h, imagesx($im2), imagesy($im2));
+					imagecopyresampled($img, $im2, intval(round($Options['X']*2)), intval(round($Options['Y']*2)), 0, 0, intval(round($w)), intval(round($h)), imagesx($im2), imagesy($im2));
 				}
 			}
 			break;
@@ -145,21 +153,30 @@ function draw_pip($r) {
 				switch($r->IceContent) {
 					case 'FamCaps': $Text=get_text('FamCaps', 'BackNumbers'); break;
 					case 'FamCaps-GAlone': $Text=get_text('FamCaps-GAlone', 'BackNumbers'); break;
-					case 'FamCaps-GivCamel': $Text=get_text('FamCaps-GivCamel', 'BackNumbers'); break;
 					case 'FamCaps-GivCaps': $Text=get_text('FamCaps-GivCaps', 'BackNumbers'); break;
+                    case 'FamCaps-GivCaps-ClubCaps': $Text=get_text('FamCaps-GivCaps-ClubCaps', 'BackNumbers'); break;
+                    case 'FamCaps-GivCamel': $Text=get_text('FamCaps-GivCamel', 'BackNumbers'); break;
+                    case 'FamCaps-GivCamel-ClubCamel': $Text=get_text('FamCaps-GivCamel-ClubCamel', 'BackNumbers'); break;
+                    case 'FamCaps-GivCamel-ClubCaps': $Text=get_text('FamCaps-GivCamel-ClubCaps', 'BackNumbers'); break;
 					case 'FamCamel': $Text=get_text('FamCamel', 'BackNumbers'); break;
 					case 'FamCamel-GAlone': $Text=get_text('FamCamel-GAlone', 'BackNumbers'); break;
 					case 'FamCamel-GivCamel': $Text=get_text('FamCamel-GivCamel', 'BackNumbers'); break;
 					case 'GivCamel':    $Text=get_text('GivCamel',    'BackNumbers'); break;
 					case 'GivCamel-FamCamel': $Text=get_text('GivCamel-FamCamel', 'BackNumbers'); break;
+                    case 'GivCamel-FamCamel-ClubCamel': $Text=get_text('GivCamel-FamCamel-ClubCamel', 'BackNumbers'); break;
 					case 'GivCamel-FamCaps': $Text=get_text('GivCamel-FamCaps', 'BackNumbers'); break;
+                    case 'GivCamel-FamCaps-ClubCamel': $Text=get_text('GivCamel-FamCaps-ClubCamel', 'BackNumbers'); break;
+                    case 'GivCamel-FamCaps-ClubCaps': $Text=get_text('GivCamel-FamCaps-ClubCaps', 'BackNumbers'); break;
 					case 'GivCaps': $Text=get_text('GivCaps', 'BackNumbers'); break;
 					case 'GivCaps-FamCaps': $Text=get_text('GivCaps-FamCaps', 'BackNumbers'); break;
+                    case 'GivCaps-FamCaps-ClubCaps': $Text=get_text('GivCaps-FamCaps-ClubCaps', 'BackNumbers'); break;
 					case 'GAlone-FamCaps':   $Text=get_text('GAlone-FamCaps',   'BackNumbers'); break;
 					case 'GAlone-FamCamel':   $Text=get_text('GAlone-FamCamel',   'BackNumbers'); break;
 				}
 			}
 		case 'Club':
+        case 'Club2':
+        case 'Club3':
 			if(!isset($Text)) {
 				switch($r->IceContent) {
 					case 'NocCaps-ClubCamel':$Text=get_text('NocCaps-ClubCamel','BackNumbers'); break;
@@ -195,7 +212,11 @@ function draw_pip($r) {
 			if(!isset($Text)) $Text=get_text('Rank');
 		case 'FinalRanking':
 			if(!isset($Text)) $Text=get_text('FinalRanking','BackNumbers');
-		case 'Event':
+        case 'WRank':
+            if(!isset($Text)) $Text=get_text('WRank','BackNumbers');
+        case 'ExtraAddOns':
+            if(!isset($Text)) $Text=get_text('ExtraAddOns','BackNumbers');
+        case 'Event':
 			if(!isset($Text)) {
 				switch($r->IceContent) {
 					case 'EvCode':$Text=get_text('EvCode','BackNumbers'); break;
@@ -209,7 +230,6 @@ function draw_pip($r) {
 			if(!isset($Text)) $Text=get_text('SessionTarget','BackNumbers');
 		case 'Access':
 			if(!isset($Text)) $Text='0/9*';
-
 			if(isset($Text)) {
 				if($Options and $Options['H']>0 and $Options['W']>0) {
 					// Calculate the dimensions of the box containing the text
@@ -217,7 +237,7 @@ function draw_pip($r) {
 					if(strpos($Options['Size'],'-') !== false) {
 						list($Options['Size'],) = explode('-',$Options['Size']);
 					}
-					$size=$Options['Size']*0.35278*2;
+					$size=intval($Options['Size'])*0.35278*2;
 					$pos=imagettfbbox($size, 0, $font, $Text);
 					$width=$pos[4]-$pos[0];
 					$height=$pos[1]-$pos[5];
@@ -229,7 +249,7 @@ function draw_pip($r) {
 						default: $x=0; break; // right
 					}
 
-					$txt1=imagecreatetruecolor($Options['W']*2, $Options['H']*2);
+					$txt1=imagecreatetruecolor(intval(round($Options['W']*2)), intval(round($Options['H']*2)));
 					$Back=imagecolorallocate($txt1, 250, 250, 250); // background
 					imagefill($txt1, 0, 0, $Back);
 					if($Options['Col']) {
@@ -244,21 +264,21 @@ function draw_pip($r) {
 						for($i=0; $i<imagesx($txt1); $i+=10) {
 							for($j=0; $j<imagesy($txt1); $j+=5) {
 								$Offset=($j%2==0);
-								imagefilledrectangle($txt1, $i+5*$Offset, $j, $i+4+5*$Offset, $j+4, $ColBlk);
+								imagefilledrectangle($txt1, intval(round($i+5*$Offset)), intval(round($j)), intval(round($i+4+5*$Offset)), intval(round($j+4)), $ColBlk);
 							}
 						}
 					} else {
 						imagecolortransparent($txt1, $Back);
 					}
 
-					imagettftext ($txt1, $size, 0, $x, $y+$size, $color, $font, $Text);
-					imagecopymerge ($img, $txt1, $Options['X']*2, $Options['Y']*2, 0, 0, $Options['W']*2, $Options['H']*2, 100);
-					imagerectangle($img, $Options['X']*2, $Options['Y']*2, $Options['X']*2+$Options['W']*2-1, $Options['Y']*2+$Options['H']*2-1, $ColBlk);
+					imagettftext ($txt1, $size, 0, intval(round($x)), intval(round($y+$size)), $color, $font, $Text);
+					imagecopymerge ($img, $txt1, intval(round($Options['X']*2)), intval(round($Options['Y']*2)), 0, 0, intval(round($Options['W']*2)), intval(round($Options['H']*2)), 100);
+					imagerectangle($img, intval(round($Options['X']*2)), intval(round($Options['Y']*2)), intval(round($Options['X']*2+$Options['W']*2-1)), intval(round($Options['Y']*2+$Options['H']*2-1)), $ColBlk);
 				}
 			} else {
 				if($Options['BackCol']) {
 					$color=imagecolorallocate($img, hexdec(substr($Options['BackCol'], 1, 2)), hexdec(substr($Options['BackCol'], 3, 2)), hexdec(substr($Options['BackCol'], 5, 2)));
-					imagefilledrectangle($img, $Options['X']*2, $Options['Y']*2, $Options['X']*2+$Options['W']*2-1, $Options['Y']*2+$Options['H']*2-1, $color);
+					imagefilledrectangle($img, intval(round($Options['X']*2)), intval(round($Options['Y']*2)), intval(round($Options['X']*2+$Options['W']*2-1)), intval(round($Options['Y']*2+$Options['H']*2-1)), $color);
 				}
 			}
 			break;
@@ -272,11 +292,11 @@ function draw_pip($r) {
 			if(!isset($txt1)) $txt1=imagecreatefrompng($CFG->DOCUMENT_PATH.'Common/Images/AccessCodes.png');
 		case 'Accomodation':
 			if(!isset($txt1)) $txt1=imagecreatefrompng($CFG->DOCUMENT_PATH.'Common/Images/Accomodations.png');
-			imagecopyresampled($img, $txt1, $Options['X']*2, $Options['Y']*2, 0, 0, $Options['W']*2, $Options['H']*2, imagesx($txt1), imagesy($txt1));
+			imagecopyresampled($img, $txt1, intval(round($Options['X']*2)), intval(round($Options['Y']*2)), 0, 0, intval(round($Options['W']*2)), intval(round($Options['H']*2)), imagesx($txt1), imagesy($txt1));
 			break;
 		case 'HLine':
 			$color=imagecolorallocate($img, hexdec(substr($Options['Col'], 1, 2)), hexdec(substr($Options['Col'], 3, 2)), hexdec(substr($Options['Col'], 5, 2)));
-			imagefilledrectangle($img, $Options['X']*2, $Options['Y']*2, $Options['X']*2+$Options['W']*2, $Options['Y']*2+$Options['H']*2, $color);
+			imagefilledrectangle($img, intval(round($Options['X']*2)), intval(round($Options['Y']*2)), intval(round($Options['X']*2+$Options['W']*2)), intval(round($Options['Y']*2+$Options['H']*2)), $color);
 			break;
 	}
 
@@ -294,7 +314,7 @@ function draw_pip($r) {
 	$width=$pos[2]-$pos[0];
 	$height=$pos[1]-$pos[5];
 
-	$txt1=imagecreatetruecolor($RowBn->Settings[$Field.'_W'], $RowBn->Settings[$Field.'_H']);
+	$txt1=imagecreatetruecolor(intval(round($RowBn->Settings[$Field.'_W'])), intval(round($RowBn->Settings[$Field.'_H'])));
 
 	$col0=imagecolorallocate($txt1, 0, 0, 0); // black e sfondo
 	$col2=imagecolorallocate($txt1, 255, 255, 255); // white
@@ -307,9 +327,9 @@ function draw_pip($r) {
 		default: $x=0; break; // right
 	}
 
-	imagettftext ($txt1, $size, 0, $x, $RowBn->Settings[$Field.'_H']-2, $col1, $font, $Name );
+	imagettftext ($txt1, $size, 0, $x, intval(round($RowBn->Settings[$Field.'_H']-2)), $col1, $font, $Name );
 
-	imagecopy ($img, $txt1, $RowBn->Settings[$Field.'_X'], $RowBn->Settings[$Field.'_Y'], 0, 0, $RowBn->Settings[$Field.'_W'], $RowBn->Settings[$Field.'_H'] );
-	imagerectangle($img, $RowBn->Settings[$Field.'_X'], $RowBn->Settings[$Field.'_Y'], $RowBn->Settings[$Field.'_X']+$RowBn->Settings[$Field.'_W']-1, $RowBn->Settings[$Field.'_Y']+$RowBn->Settings[$Field.'_H']-1, $ColBlk);
+	imagecopy ($img, $txt1, intval(round($RowBn->Settings[$Field.'_X'])), intval(round($RowBn->Settings[$Field.'_Y'])), 0, 0, intval(round($RowBn->Settings[$Field.'_W'])), intval(round($RowBn->Settings[$Field.'_H'])));
+	imagerectangle($img, intval(round($RowBn->Settings[$Field.'_X'])), intval(round($RowBn->Settings[$Field.'_Y'])), intval(round($RowBn->Settings[$Field.'_X']+$RowBn->Settings[$Field.'_W']-1)), intval(round($RowBn->Settings[$Field.'_Y']+$RowBn->Settings[$Field.'_H']-1)), $ColBlk);
 }
 

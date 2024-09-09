@@ -43,7 +43,7 @@ $Data=$rank->getData();
 foreach($Data['sections'] as $kSec=>$vSec) {
 	if(!empty($vSec['phases'])) {
 		foreach($vSec['phases'] as $kPh=>$vPh) {
-			$json_array = Array("Event"=>$EvCode, "Type"=>$EvType, "MatchId"=>$MatchId, "PhaseId"=>strval($kPh), "ScheduledDateTime"=>'', "SessionId"=>strval(0), "SessionName"=>'');
+			$json_array = Array("Event"=>$EvCode, "Type"=>$EvType, "MatchId"=>$MatchId, "PhaseId"=>strval($kPh), "ScheduledDateTime"=>'', "SessionId"=>strval(0), "SessionName"=>'', "LineJudge"=>"", "LineJudgeId"=>"", "TargetJudge"=>"", "TargetJudgeId"=>"");
 			$objParam=getEventArrowsParams($kSec,$kPh,$EvType,$TourId);
 			$json_array['Mode'] = Array("ScoringMode"=>($vSec["meta"]["matchMode"]==1 ? "S" : "C"),
 				"Arrows"=>strval($objParam->arrows), "Ends"=>strval($objParam->ends), "ShootoffArrows"=>strval($objParam->so),
@@ -59,14 +59,28 @@ foreach($Data['sections'] as $kSec=>$vSec) {
 					$json_array["SessionId"] = $r->SesOrder;
 					$json_array["SessionName"] = $r->SesName;
 				}
+                if(!empty($vItem["lineJudge"])) {
+                    $json_array["LineJudge"] = $vItem["lineJudge"];
+                    $json_array["LineJudgeId"] = $vItem["lineCodeLocal"];
+                } else {
+                    unset($json_array["LineJudge"]);
+                    unset($json_array["LineJudgeId"]);
+                }
+                if(!empty($vItem["targetJudge"])) {
+                    $json_array["TargetJudge"] = $vItem["targetJudge"];
+                    $json_array["TargetJudgeId"] = $vItem["targetCodeLocal"];
+                } else {
+                    unset($json_array["TargetJudge"]);
+                    unset($json_array["TargetJudgeId"]);
+                }
 				$tmpL = array();
 				$tmpR = array();
 				if($EvType==0) {
-					$tmpL += array("Id"=>$vItem["bib"], "FamilyName"=>$vItem["familyName"], "GivenName"=>$vItem["givenName"], "NameOrder"=>$vItem["nameOrder"], "Gender"=>$vItem["gender"]);
+					$tmpL += array("Id"=>$vItem["localBib"], "FamilyName"=>$vItem["familyName"], "GivenName"=>$vItem["givenName"], "NameOrder"=>$vItem["nameOrder"], "Gender"=>$vItem["gender"]);
 					if(file_exists($CFG->DOCUMENT_PATH.'TV/Photos/'.$TourCode.'-En-'.$vItem['id'].'.jpg')) {
 						$tmpL += array("ProfilePicURL"=>sprintf($imgPath, 'En', $vItem['id']));
 					}
-					$tmpR += array("Id"=>$vItem["oppBib"], "FamilyName"=>$vItem["oppFamilyName"], "GivenName"=>$vItem["oppGivenName"], "NameOrder"=>$vItem["oppNameOrder"], "Gender"=>$vItem["oppGender"]);
+					$tmpR += array("Id"=>$vItem["oppLocalBib"], "FamilyName"=>$vItem["oppFamilyName"], "GivenName"=>$vItem["oppGivenName"], "NameOrder"=>$vItem["oppNameOrder"], "Gender"=>$vItem["oppGender"]);
 					if(file_exists($CFG->DOCUMENT_PATH.'TV/Photos/'.$TourCode.'-En-'.$vItem['oppId'].'.jpg')) {
 						$tmpR += array("ProfilePicURL"=>sprintf($imgPath, 'En', $vItem['oppId']));
 					}
@@ -86,14 +100,22 @@ foreach($Data['sections'] as $kSec=>$vSec) {
 					$tmpR += array("FlagURL"=>sprintf($imgPath, 'Fl', $vItem['oppCountryCode']));
 				}
 
-				$q= safe_r_SQL("SELECT RankRanking FROM Rankings WHERE RankTournament={$TourId} AND RankTeam={$EvType} AND RankEvent='{$EvCode}' AND RankCode='".($EvType==0 ? $vItem["bib"] : $vItem["countryCode"])."'");
+				$q= safe_r_SQL("SELECT RankRanking FROM Rankings WHERE RankTournament={$TourId} AND RankTeam={$EvType} AND RankEvent='{$EvCode}' AND RankCode='".($EvType==0 ? $vItem["localBib"] : $vItem["countryCode"])."'");
 				if($r=safe_fetch($q)){
 					$tmpL["WorldRanking"] = $r->RankRanking;
 				}
-				$q= safe_r_SQL("SELECT RankRanking FROM Rankings WHERE RankTournament={$TourId} AND RankTeam={$EvType} AND RankEvent='{$EvCode}' AND RankCode='".($EvType==0 ? $vItem["oppBib"] : $vItem["oppCountryCode"])."'");
+				$q= safe_r_SQL("SELECT RankRanking FROM Rankings WHERE RankTournament={$TourId} AND RankTeam={$EvType} AND RankEvent='{$EvCode}' AND RankCode='".($EvType==0 ? $vItem["oppLocalBib"] : $vItem["oppCountryCode"])."'");
 				if($r=safe_fetch($q)){
 					$tmpR["WorldRanking"] = $r->RankRanking;
 				}
+                if(!empty($vItem["coach"])) {
+                    $tmpL["Coach"] = $vItem["coach"];
+                    $tmpL["CoachId"] = $vItem["coachCode"];
+                }
+                if(!empty($vItem["oppCoach"])) {
+                    $tmpR["Coach"] = $vItem["oppCoach"];
+                    $tmpR["CoachId"] = $vItem["oppCoachCode"];
+                }
 				if($EvType) {
 					$q= safe_r_SQL("SELECT EdcExtra FROM ExtraDataCountries WHERE EdcId='".$vItem['teamId']."' AND EdcType='Y' and EdcEvent='{$EvCode}'");
 					if($r=safe_fetch($q)){
@@ -108,7 +130,7 @@ foreach($Data['sections'] as $kSec=>$vSec) {
 					$tmp=array();
 					if(!empty($vSec["athletes"][$vItem["teamId"]][$vItem["subTeam"]] )) {
 						foreach($vSec["athletes"][$vItem["teamId"]][$vItem["subTeam"]] as $kAth=>$vAth) {
-							$tmp[$kAth]= array("Id"=>$vAth["code"], "FamilyName"=>$vAth["familyName"], "GivenName"=>$vAth["givenName"], "NameOrder"=>$vAth["nameOrder"], "Gender"=>$vAth["gender"]);
+							$tmp[$kAth]= array("Id"=>$vAth["localBib"], "FamilyName"=>$vAth["familyName"], "GivenName"=>$vAth["givenName"], "NameOrder"=>$vAth["nameOrder"], "Gender"=>$vAth["gender"]);
 							if(file_exists($CFG->DOCUMENT_PATH.'TV/Photos/'.$TourCode.'-En-'.$vAth['id'].'.jpg')) {
 								$tmp[$kAth] += array("ProfilePicURL"=>sprintf($imgPath, 'En', $vAth['id']));
 							}
@@ -118,7 +140,7 @@ foreach($Data['sections'] as $kSec=>$vSec) {
 					$tmp=array();
 					if(!empty($vSec["athletes"][$vItem["oppTeamId"]][$vItem["oppSubTeam"]] )) {
 						foreach($vSec["athletes"][$vItem["oppTeamId"]][$vItem["oppSubTeam"]] as $kAth=>$vAth) {
-							$tmp[$kAth]= array("Id"=>$vAth["code"], "FamilyName"=>$vAth["familyName"], "GivenName"=>$vAth["givenName"], "NameOrder"=>$vAth["nameOrder"], "Gender"=>$vAth["gender"]);
+							$tmp[$kAth]= array("Id"=>$vAth["localBib"], "FamilyName"=>$vAth["familyName"], "GivenName"=>$vAth["givenName"], "NameOrder"=>$vAth["nameOrder"], "Gender"=>$vAth["gender"]);
 							if(file_exists($CFG->DOCUMENT_PATH.'TV/Photos/'.$TourCode.'-En-'.$vAth['id'].'.jpg')) {
 								$tmp[$kAth] += array("ProfilePicURL"=>sprintf($imgPath, 'En', $vAth['id']));
 							}

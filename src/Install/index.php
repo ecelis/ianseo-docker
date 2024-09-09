@@ -54,7 +54,7 @@ $STEP=1;
 if(!empty($_REQUEST['step'])) $STEP=max(0,min(4,intval($_REQUEST['step'])));
 
 // prepara i dati da richiedere
-if(empty($CFG->W_HOST)) $CFG->W_HOST='127.0.0.1';
+if(empty($CFG->W_HOST)) $CFG->W_HOST='localhost';
 if(empty($CFG->R_HOST)) $CFG->R_HOST='';
 if(empty($CFG->W_USER)) $CFG->W_USER='ianseo';
 if(empty($CFG->R_USER)) $CFG->R_USER='';
@@ -91,7 +91,7 @@ echo '<form method="POST">';
 echo '<h2>'.get_text('Install-'.$STEP.' Title', 'Install').'</h2>';
 echo '<table class="Tabella" style="width:auto">';
 if(!empty($_SESSION['INSTALL']['CFG']['ERROR'])) {
-    echo '<tr><td colspan="3" class="Warning red">'.$_SESSION['INSTALL']['CFG']['ERROR'].'</td></tr>';
+    echo '<tr style="background-color: red"><td colspan="3" class="text-light">'.$_SESSION['INSTALL']['CFG']['ERROR'].'</td></tr>';
     echo '<tr class="Divider"><td colspan="3"></td></tr>';
 }
 
@@ -107,6 +107,7 @@ include('Common/Templates/tail.php');
 /** ********* *************   ******************* */
 
 function install_blank_db() {
+    ini_set('max_execution_time', 0);
 	$SQL=file('./install.sql');
 	$query='';
 	foreach($SQL as $riga) {
@@ -123,5 +124,3 @@ function install_blank_db() {
 	SetParameter('AcceptGPL', date('Y-m-d H:i:s'));
 }
 
-
-?>

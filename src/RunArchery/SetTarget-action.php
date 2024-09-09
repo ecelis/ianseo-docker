@@ -131,17 +131,30 @@ switch($_REQUEST['act']) {
 
 		$StartTime=strtotime($Start);
 		// people is already in so just run the timing part
-		$q=safe_r_sql("select RarEntry, RarSubTeam
+		$q=safe_r_sql("select RarEntry, RarSubTeam, RarGroup
 			from RunArcheryRank
 			where RarTournament={$_SESSION['TourId']} and RarTeam=$Team and RarEvent=".StrSafe_DB($Event)." and RarPhase=$Phase
-			order by RarPool, rand()");
+			order by if(RarPhase=0, RarGroup,RarPool), rand()");
 		$Bib=0;
 		$Grp=0;
 		// spread entries more "equaly" between groups
 		$MaxGroupNums=ceil(safe_num_rows($q)/$Group);
 		$Group=$Phase ? 10 : ceil(safe_num_rows($q)/$MaxGroupNums);
+        $RarGroup=0;
 		while($r=safe_fetch($q)) {
 			$Bib++;
+            if($Type) {
+                // single delayed adjustments
+                if($RarGroup!=$r->RarGroup) {
+                    if($r->RarGroup%2==0) {
+                        $StartTime+=(180-$Delay); // 3 minutes added delay for groups 2, 4, 5
+                    } elseif ($r->RarGroup>1) {
+                        $StartTime+=(1500-$Delay); // 25 minutes added delay for groups 3, 5, 7...
+                    }
+                }
+            }
+            $RarGroup=$r->RarGroup;
+            $Start=date('Y-m-d H:i:s', $StartTime);
 			safe_w_sql("update RunArcheryRank set RarStartlist='$Start', RarDateTimeStart=unix_timestamp('$Start')
                 where RarEntry=$r->RarEntry 
                     and RarSubTeam=$r->RarSubTeam 
@@ -151,13 +164,11 @@ switch($_REQUEST['act']) {
                     and RarPhase=$Phase");
 			if($Type) {
 				// single delayed starts
-				$StartTime+=$Delay;
-				$Start=date('Y-m-d H:i:s', $StartTime);
+                $StartTime+=$Delay;
 			} elseif($Bib==$Group) {
 				$Grp++;
 				$Bib=0;
 				$StartTime+=$Delay;
-				$Start=date('Y-m-d H:i:s', $StartTime);
 			}
 		}
 
@@ -334,7 +345,7 @@ switch($_REQUEST['act']) {
 			left join RunArchery on RaTournament=RarTournament and RaEntry=RarEntry and RaSubTeam=RarSubTeam and RaTeam=RarTeam and RaEvent=RarEvent and RaPhase=RarPhase
 			where TeTournament={$_SESSION['TourId']} and TeFinEvent=1 and TeEvent=".StrSafe_DB($Event)."
 			group by TeCoId, TeSubTeam, TeEvent, RarPhase
-			order by RapEntry is null, if(RarStartList=0, 0, RarStartList), RarBib+0, RarBib";
+			order by RapEntry is null, RarStartList=0, RarStartList, RarBib+0, RarBib";
 			$q=safe_r_sql($SQL);
 			while($r=safe_fetch($q)) {
 				if($r->LapMembers) {
@@ -395,7 +406,7 @@ switch($_REQUEST['act']) {
 				    where EnTournament={$_SESSION['TourId']}
 				) Entries on EnId=RarEntry and EnTournament=RarTournament
 				where RarTournament={$_SESSION['TourId']} and RarTeam=0 and RarEvent=".StrSafe_DB($Event)." and RarPhase=$Phase
-				order by RarStartList, RarBib+0, RarBib, RarPool, RarFromType=0, RarFromType, RarFromRank";
+				order by RarStartList=0, RarStartList, RarBib+0, RarBib, RarPool, RarFromType=0, RarFromType, RarFromRank";
 			} else {
 				$SQL="select EnId, coalesce(RarBib, EdExtra, EnCode) as RarBib, EnCode, EnFirstName, EnName, EnSex,
 	                CoCode, CoName, coalesce(RapEntry, 0)>0 as IsIn, RarGroup, RarTarget,
@@ -409,13 +420,13 @@ switch($_REQUEST['act']) {
 	            left join RunArcheryRank on RarTournament=EnTournament and RarEntry=EnId and RarSubTeam=0 and RarTeam=EvTeamEvent and RarEvent=EvCode and RarPhase=$Phase
 	            left join ExtraData on EdId=EnId and EdType='Z'
 				where EnTournament={$_SESSION['TourId']} and EnIndFEvent=1
-				order by RapEntry is null, if(RarStartList=0, 0, RarStartList), RarBib+0, RarBib";
+				order by RapEntry is null, RarStartList=0, RarStartList, RarBib+0, RarBib";
 			}
 			$q=safe_r_sql($SQL);
 			while($r=safe_fetch($q)) {
 				// if no semifinals, always come straight from qualification
 				$r->From="QUAL {$r->RarFromRank}";
-				$r->Pool=get_text('PoolName', 'Tournament', $r->RarPool);
+				$r->Pool=get_text('SemiFinalName', 'RunArchery', $r->RarPool);
 				if($Phase==1) {
 					$r->Pool=get_text('Final'.$r->RarPool, 'RunArchery');
 					// finals, check if we have semi, as "0" in fromtype means overall rank of semi
@@ -437,7 +448,7 @@ switch($_REQUEST['act']) {
 			$r->RarGroup=($r->RarGroup?:'');
 			$r->RarTarget=($r->RarTarget?:'');
 			$JSON['rows'][]=$r;
-			if($r->StartList and $r->StartList!='0000-00-00 00:00:00') {
+			if($r->StartList and substr($r->StartList,0,4)!='0000') {
 				if(!$JSON['start'] or $r->StartList<$JSON['start']) {
 					$JSON['start']=$r->StartList;
 				}

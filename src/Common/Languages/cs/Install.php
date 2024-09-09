@@ -105,7 +105,6 @@ $lang['SetVegas-WAF']='Světový lukostřelecký festival - Las Vegas';
 $lang['SpecialUpdate']='Máte testovací instalaci. Pouze vybraní uživatelé mají tuto funkci: pošlete email, že jste registrován. <br/>Oznámení bude zasláno vám a zaměstnancům Ianseo.';
 $lang['Start Ianseo']='Jdi na IANSEO!';
 $lang['Status']='Status';
-$lang['Suboptimal']='Ačkoliv php.ini soubor není nastaven na optimální hodnoty, <br/>IANSEO by měl provádět většinu funkcí správně.<br/>Velmi doporučujeme nastavit parametry na optimální hodnoty.';
 $lang['System value']='Systémová hodnota';
 $lang['UpdatePrepared']='Vaše instalace má být automaticky aktualizována. Mějte na paměti, že je třeba vytvořit zálohu všech závodů před zahájením. Proces aktualizace může trvat delší dobu v závislosti na připojení a elementech, které je třeba aktualizovat.<br/>Mějte na paměti, že všechny neoriginální soubory budou odstraněny kromě obsahu složky «Modules/Custom».';
 $lang['Updating']='Aktualizace lokální instalace Ianseo';

@@ -18,7 +18,11 @@
                 'Advanced' => get_text('Advanced'),
                 'MsgForExpert' => get_text('MsgForExpert', 'Tournament'),
                 'EvAddDelTitle' =>get_text('EventCreationCancellation','Tournament'),
-                'ConfirmMsg' => get_text('MsgAreYouSure')
+                'ConfirmMsg' => get_text('MsgAreYouSure'),
+                'ErrorRowComplete' => str_replace('<br>','\n',get_text('MsgRowMustBeComplete')),
+                'InvalidCode' => get_text('ErrInvalidCode', 'Errors'),
+                'EventsToDelete' => get_text('EventsToDelete', 'Tournament'),
+                'EventsToAdd' => get_text('EventsToAdd', 'Tournament'),
 			)
         ),
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
@@ -241,7 +245,7 @@
 <td class="Center"><input type="text" name="New_EvDistance" id="New_EvDistance" size="12" maxlength="10"></td>
 
 <td class="Center">
-<input type="button" name="Command" id="Command" value="<?php print get_text('CmdSave');?>" onClick="javascript:AddEvent(<?php print "'" . str_replace('<br>','\n',get_text('MsgRowMustBeComplete')) . "'";?>);">
+<input type="button" name="Command" id="Command" value="<?php print get_text('CmdSave');?>" onClick="AddEvent();">
 </td>
 </tr>
 </tbody>

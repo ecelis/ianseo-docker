@@ -6,7 +6,7 @@ if (!CheckTourSession())
 
 $Json = array();
 if(!empty($_REQUEST["IP"]) AND $ip =checkValidIP($_REQUEST["IP"]) AND $ip!='127.0.0.1') {
-    $name = empty($_REQUEST["Name"]) ? "" : filter_var($_REQUEST["Name"], FILTER_SANITIZE_STRING);
+    $name = empty($_REQUEST["Name"]) ? "" : StrSafe_DB($_REQUEST["Name"],true);
     $Sql = "INSERT INTO ACL (AclTournament, AclIP, AclNick, AclEnabled) VALUES (".StrSafe_DB($_SESSION['TourId']).",'{$ip}','{$name}',1) 
       ON DUPLICATE KEY UPDATE AclNick='{$name}'";
     $q = safe_w_SQL($Sql);
@@ -73,9 +73,6 @@ if(!empty($_REQUEST['export'])) {
 }
 
 if(isset($_REQUEST["AclOnOff"]) AND preg_match("/^[0|1]$/",$_REQUEST["AclOnOff"]) AND isset($_REQUEST["AclRecord"]) AND preg_match("/^[0|1]$/",$_REQUEST["AclRecord"])) {
-    if($_REQUEST["AclOnOff"]=="0") {
-        $_REQUEST["AclRecord"]="0";
-    }
     setModuleParameter("ACL","AclEnable",$_REQUEST["AclOnOff"] . $_REQUEST["AclRecord"]);
     $lockEnabled = getModuleParameter("ACL","AclEnable","00",0,true);
     $Json['AclEnable'] = substr($lockEnabled,0,1);
@@ -97,7 +94,7 @@ if(isset($_REQUEST["AclOnOff"]) AND preg_match("/^[0|1]$/",$_REQUEST["AclOnOff"]
                 $tmpFeatures[$tmp[0]] = intval($tmp[1]);
             }
         }
-        $tmpIP[$r->AclIP] = array("Ip" => $r->AclIP, "Name" => $r->AclNick, "Opt" => $tmpFeatures);
+        $tmpIP[$r->AclIP] = array("Ip" => $r->AclIP, "Name" => $r->AclNick, "Value"=>addslashes($r->AclNick), "Opt" => $tmpFeatures);
     }
     $tmpSort=array_keys($tmpIP);
     natsort($tmpSort);
@@ -113,9 +110,9 @@ function checkValidIP($ip) {
     /*
      /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
      */
-    if(preg_match("/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/",$ip)) {
+    if(preg_match("/^(\d{1,3}\.)+\d{1,3}$/",$ip)) {
         return filter_var($ip, FILTER_VALIDATE_IP);
-    } else if(preg_match("/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\*$/",$ip)) {
+    } else if(preg_match("/^(\d{1,3}\.)+\*$/",$ip)) {
         return($ip);
     } else {
         return false;
@@ -123,5 +120,5 @@ function checkValidIP($ip) {
 }
 
 function isStarIP($ip) {
-    return preg_match("/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\*$/",$ip);
+    return preg_match("/^\d(\d{1,3}\.)+\*$/",$ip);
 }

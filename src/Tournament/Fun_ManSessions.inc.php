@@ -12,16 +12,17 @@
  * @param int $SesFollow: 0 no, 1 sì
  * @return mixed: true se ok; messaggio di errore altrimenti
  */
-	function insertSession($SesTournament,$SesOrder,$SesType,$SesName,$SesTar4Session,$SesAth4Target,$SesFirstTarget,$SesFollow,$SesDtStart=0,$SesDtEnd=0,$SesOdfCode='',$SesOdfPeriod='',$SesOdfVenue='',$SesOdfLocation='') {
+	function insertSession($SesTournament,$SesOrder,$SesType,$SesName,$SesLoc,$SesTar4Session,$SesAth4Target,$SesFirstTarget,$SesFollow,$SesDtStart=0,$SesDtEnd=0,$SesOdfCode='',$SesOdfPeriod='',$SesOdfVenue='',$SesOdfLocation='') {
 		$ret=true;
 
 		$q
-			= "INSERT ignore INTO Session (SesTournament,SesOrder,SesType,SesName,SesTar4Session,SesAth4Target,SesFirstTarget,SesFollow,SesDtStart,SesDtEnd,SesOdfCode,SesOdfPeriod,SesOdfVenue,SesOdfLocation) "
+			= "INSERT ignore INTO Session (SesTournament,SesOrder,SesType,SesName,SesLocation,SesTar4Session,SesAth4Target,SesFirstTarget,SesFollow,SesDtStart,SesDtEnd,SesOdfCode,SesOdfPeriod,SesOdfVenue,SesOdfLocation) "
 			. "VALUES( "
 				. StrSafe_DB($SesTournament) . ", "
 				. StrSafe_DB($SesOrder) . ", "
 				. StrSafe_DB($SesType) . ", "
 				. StrSafe_DB($SesName) . ", "
+				. (is_null($SesLoc) ? 'SesLocation' : StrSafe_DB($SesLoc)) . ", "
 				. StrSafe_DB(($SesType=='Q' || $SesType=='E' ? $SesTar4Session : 0)) . ", "
 				. StrSafe_DB(($SesType=='Q' || $SesType=='E' ? $SesAth4Target : 0)) . ", "
 				. StrSafe_DB(($SesType=='Q' || $SesType=='E' ? $SesFirstTarget : 0)) . ", "
@@ -115,7 +116,7 @@
  * @param boll $forceRegenerateTargets: true per forzare la rigenerazione dei bersagli
  * @return mixed: true se ok; messaggio di errore altrimenti
  */
-	function updateSession($SesTournament,$SesOrder,$SesType,$SesName,$SesTar4Session,$SesAth4Target,$SesFirstTarget,$SesFollow,$SesDtStart=0,$SesDtEnd=0,$SesOdfCode='',$SesOdfPeriod='',$SesOdfVenue='',$SesOdfLocation='',$forceRegenerateTargets=false)
+	function updateSession($SesTournament,$SesOrder,$SesType,$SesName,$SesLoc,$SesTar4Session,$SesAth4Target,$SesFirstTarget,$SesFollow,$SesDtStart=0,$SesDtEnd=0,$SesOdfCode='',$SesOdfPeriod='',$SesOdfVenue='',$SesOdfLocation='',$forceRegenerateTargets=false)
 	{
 		$ret=true;
 
@@ -134,6 +135,7 @@
 
 		$q = "UPDATE Session
 			SET SesName=".StrSafe_DB($SesName). ",
+				SesLocation=".(is_null($SesLoc) ? 'SesLocation' : StrSafe_DB($SesLoc)). ",
 				SesTar4Session=".StrSafe_DB(($SesType=='Q' || $SesType=='E' ? $SesTar4Session : 0)). ",
 				SesAth4Target=".StrSafe_DB(($SesType=='Q' || $SesType=='E' ? $SesAth4Target : 0)). ",
 				SesFirstTarget=".StrSafe_DB(($SesType=='Q' || $SesType=='E' ? $SesFirstTarget : 0)) . ",
@@ -537,6 +539,7 @@
 						$newOrder,
 						$row->SesType,
 						$row->SesName,
+						$row->SesLocation,
 						$row->SesTar4Session,
 						$row->SesAth4Target,
 						$row->SesFirstTarget,
@@ -688,6 +691,7 @@
 						$newOrder,
 						$row->SesType,
 						$row->SesName,
+						$row->SesLocation,
 						$row->SesTar4Session,
 						$row->SesAth4Target,
 						$row->SesFirstTarget,

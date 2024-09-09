@@ -35,7 +35,7 @@ if (isset($_REQUEST['Exec'])) {
 	exit;
 }
 
-$JS_SCRIPT[]='<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>';
+$IncludeJquery = true;
 $JS_SCRIPT[]='<script type="text/javascript" src="index.js"></script>';
 include('Common/Templates/head.php');
 
@@ -44,9 +44,9 @@ include('Common/Templates/head.php');
 <table class="Tabella">
 <tr><th class="Title" colspan="3"><?php echo get_text('Accreditation','Tournament'); ?></th></tr>
 <tr>
-<th class="Title" width="33%"><?php echo get_text('Session'); ?></th>
-<th class="Title" width="33%"><?php echo get_text('Descr','Tournament'); ?></th>
-<th class="Title" width="33%"><?php echo get_text('SetFilter','Tournament'); ?></th>
+<th class="Title w-30"><?php echo get_text('Session'); ?></th>
+<th class="Title w-30"><?php echo get_text('Descr','Tournament'); ?></th>
+<th class="Title w-30"><?php echo get_text('SetFilter','Tournament'); ?></th>
 </tr>
 <?php
 

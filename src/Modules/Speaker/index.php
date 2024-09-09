@@ -38,7 +38,7 @@ if($enableHHT)
 }
 
 if(empty($CFG->IS)) {
-	$JS_SCRIPT[]='<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>';
+	$IncludeJquery = true;
 	include('Common/Templates/head' . (isset($_REQUEST["showMenu"]) ? '': '-min') . '.php');
 } else {
 	include_once ($CFG->DOCUMENT_PATH . "Common/Styles/head.php");

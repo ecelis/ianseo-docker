@@ -1,80 +1,77 @@
 <?php
-	define('debug',false);	// settare a true per l'output di debug
+define('debug',false);	// settare a true per l'output di debug
 
-	require_once(dirname(dirname(__FILE__)) . '/config.php');
-	CheckTourSession(true);
-    checkACL(AclQualification, AclReadWrite);
+require_once(dirname(dirname(__FILE__)) . '/config.php');
+CheckTourSession(true);
+checkACL(AclQualification, AclReadWrite);
 
-	require_once('Common/Lib/CommonLib.php');
-	require_once('Common/Lib/ArrTargets.inc.php');
-	require_once('Common/Fun_FormatText.inc.php');
-	require_once('Common/Fun_Various.inc.php');
-
-
-
-	$JS_SCRIPT=array(
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Qualification/Fun_AJAX_index.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Qualification/Fun_AJAX_WriteArrows.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
-		phpVars2js(array(
-			'CmdPostUpdate'=>get_text('CmdPostUpdate'),
-			'PostUpdating'=>get_text('PostUpdating'),
-			'PostUpdateEnd'=>get_text('PostUpdateEnd'),
-			'RootDir'=>$CFG->ROOT_DIR.'Qualification/',
-			'MsgAreYouSure' => get_text('MsgAreYouSure'),
-		)),
-	);
-
-	$PAGE_TITLE=get_text('QualRound');
-
-	include('Common/Templates/head.php');
-
-	/*$Select
-		= "SELECT ToId,ToNumSession,TtGolds,TtXNine,TtNumDist,(TtMaxDistScore/TtGolds) AS MaxArrows "
-		. "FROM Tournament INNER JOIN Tournament*Type ON ToType=TtId "
-		. "WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " ";*/
-
-	$Select
-		= "SELECT ToId,ToNumSession,ToGolds AS TtGolds,ToXNine AS TtXNine,ToNumDist AS TtNumDist,(ToMaxDistScore/ToGolds) AS MaxArrows "
-		. "FROM Tournament "
-		. "WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " ";
-	$RsTour=safe_r_sql($Select);
-
-	$RowTour=NULL;
-	$ComboSes='';
-	$TxtFrom='';
-	$TxtTo='';
-	$ComboDist='';
-
-	$TxtArrows = '';
-	$TxtVolee = '';
-
-	if (safe_num_rows($RsTour)==1)
-	{
-		$RowTour=safe_fetch($RsTour);
-
-		$ComboSes = '<select name="x_Session" id="x_Session" onChange="javascript:SelectSession();">' . "\n";
-		$ComboSes.= '<option value="-1">---</option>' . "\n";
-
-		$ComboDist = '<select name="x_Dist" id="x_Dist">' . "\n";
-		$ComboDist.= '<option value="-1">---</option>' . "\n";
-
-		for ($i=1;$i<=$RowTour->ToNumSession;++$i)
-			$ComboSes.= '<option value="' . $i . '"' . (isset($_REQUEST['x_Session']) && $_REQUEST['x_Session']==$i ? ' selected' : '') . '>' . $i . '</option>' . "\n";
-		$ComboSes.= '</select>' . "\n";
-
-		for ($i=1;$i<=$RowTour->TtNumDist;++$i)
-			$ComboDist.= '<option value="' . $i . '"' . (isset($_REQUEST['x_Dist']) && $_REQUEST['x_Dist']==$i ? ' selected' : '') . '>' . $i . '</option>' . "\n";
-		$ComboDist.= '</select>' . "\n";
+require_once('Common/Lib/CommonLib.php');
+require_once('Common/Lib/ArrTargets.inc.php');
+require_once('Common/Fun_FormatText.inc.php');
+require_once('Common/Fun_Various.inc.php');
 
 
-		$TxtFrom = '<input type="text" name="x_From" id="x_From" size="5" maxlength="' . (TargetNoPadding +1) . '" value="' . (isset($_REQUEST['x_From']) ? $_REQUEST['x_From'] : '') . '">';
-		$TxtTo = '<input type="text" name="x_To" id="x_To" size="5" maxlength="' . (TargetNoPadding +1) . '" value="' . (isset($_REQUEST['x_To']) ? $_REQUEST['x_To'] : '') . '">';
+/*$Select
+    = "SELECT ToId,ToNumSession,TtGolds,TtXNine,TtNumDist,(TtMaxDistScore/TtGolds) AS MaxArrows "
+    . "FROM Tournament INNER JOIN Tournament*Type ON ToType=TtId "
+    . "WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " ";*/
 
-		$TxtArrows = '<input type="text" name="x_Arrows" id="x_Arrows" size="3" maxlength="3" value="' . (isset($_REQUEST['x_Arrows']) ? $_REQUEST['x_Arrows'] : '') . '">';
-		$TxtVolee = '<input type="text" name="x_Volee" id="x_Volee" size="3" maxlength="3" value="' . (isset($_REQUEST['x_Volee']) ? $_REQUEST['x_Volee'] : '') . '">';
+$Select = "SELECT ToId,ToNumSession,ToGolds AS TtGolds,ToXNine AS TtXNine,ToNumDist AS TtNumDist,(ToMaxDistScore/ToGolds) AS MaxArrows,
+   ToElabTeam!=127 as MakeTeams
+    FROM Tournament
+    WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " ";
+$RsTour=safe_r_sql($Select);
+$RowTour=safe_fetch($RsTour);
+
+$ComboSes='';
+$TxtFrom='';
+$TxtTo='';
+$ComboDist='';
+
+$TxtArrows = '';
+$TxtVolee = '';
+
+
+$ComboSes = '<select name="x_Session" id="x_Session" onChange="javascript:SelectSession();">' . "\n";
+$ComboSes.= '<option value="-1">---</option>' . "\n";
+
+$ComboDist = '<select name="x_Dist" id="x_Dist">' . "\n";
+$ComboDist.= '<option value="-1">---</option>' . "\n";
+
+for ($i=1;$i<=$RowTour->ToNumSession;++$i)
+    $ComboSes.= '<option value="' . $i . '"' . (isset($_REQUEST['x_Session']) && $_REQUEST['x_Session']==$i ? ' selected' : '') . '>' . $i . '</option>' . "\n";
+$ComboSes.= '</select>' . "\n";
+
+for ($i=1;$i<=$RowTour->TtNumDist;++$i)
+    $ComboDist.= '<option value="' . $i . '"' . (isset($_REQUEST['x_Dist']) && $_REQUEST['x_Dist']==$i ? ' selected' : '') . '>' . $i . '</option>' . "\n";
+$ComboDist.= '</select>' . "\n";
+
+
+$TxtFrom = '<input type="text" name="x_From" id="x_From" size="5" maxlength="' . (TargetNoPadding +1) . '" value="' . (isset($_REQUEST['x_From']) ? $_REQUEST['x_From'] : '') . '">';
+$TxtTo = '<input type="text" name="x_To" id="x_To" size="5" maxlength="' . (TargetNoPadding +1) . '" value="' . (isset($_REQUEST['x_To']) ? $_REQUEST['x_To'] : '') . '">';
+
+$TxtArrows = '<input type="text" name="x_Arrows" id="x_Arrows" size="3" maxlength="3" value="' . (isset($_REQUEST['x_Arrows']) ? $_REQUEST['x_Arrows'] : '') . '">';
+$TxtVolee = '<input type="text" name="x_Volee" id="x_Volee" size="3" maxlength="3" value="' . (isset($_REQUEST['x_Volee']) ? $_REQUEST['x_Volee'] : '') . '">';
+
+$IncludeJquery = true;
+$JS_SCRIPT=array(
+    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
+    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
+    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Qualification/Fun_AJAX_index.js"></script>',
+    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Qualification/WriteScoreCard.js"></script>',
+    phpVars2js(array(
+        'CmdPostUpdate'=>get_text('CmdPostUpdate'),
+        'PostUpdating'=>get_text('PostUpdating'),
+        'PostUpdateEnd'=>get_text('PostUpdateEnd'),
+        'RootDir'=>$CFG->ROOT_DIR.'Qualification/',
+        'MsgAreYouSure' => get_text('MsgAreYouSure'),
+        'MustMakeTeams' => $RowTour->MakeTeams ? true : false,
+    )),
+);
+
+$PAGE_TITLE=get_text('QualRound');
+
+include('Common/Templates/head.php');
 
 ?>
 <?php print prepareModalMask('PostUpdateMask','<div align="center" style="font-size: 20px; font-weight: bold;"><br/><br/><br/><br/><br/>'.get_text('PostUpdating').'</div>');?>
@@ -114,11 +111,9 @@
 </tr>
 <tr class="Divider"><td colspan="8"></td></tr>
 <tr><td colspan="8" class="Bold">
-	<input type="checkbox" name="chk_BlockAutoSave" id="chk_BlockAutoSave" value="1"<?php print (isset($_REQUEST['chk_BlockAutoSave']) && $_REQUEST['chk_BlockAutoSave']==1 ? ' checked' : '');?>><?php echo get_text('CmdBlocAutoSave') ?>
-	&nbsp;&nbsp;
 	<input type="checkbox" name="chk_PostUpdate" id="chk_PostUpdate" value="1"
 		<?php print (isset($_REQUEST['chk_PostUpdate']) && $_REQUEST['chk_PostUpdate']==1 ? ' checked' : '');?>
-		onclick="ManagePostUpdateArrow(this.checked);"
+		onclick="ManagePostUpdateArrow();"
 	/><?php print get_text('CmdPostUpdate');?>
 </td></tr>
 <tr class="Divider"><td colspan="8">
@@ -276,7 +271,7 @@
 							$ScoreTD
 								.='<td class="Center">'
 								. '<input type="text" id="' . $FieldId . '" '
-								. 'size="2" maxlength="2" value="' . $vv . '" '
+								. 'size="2" maxlength="'.($_SESSION['TourType']==49 ? 3 : 2).'" value="' . $vv . '" '
 								. 'onBlur="javascript:UpdateArrow(\'' . $FieldId . '\');">'
 								. '</td>';
 						}
@@ -303,7 +298,7 @@
 			else
 				print get_text('BadParams','Tournament');
 		}
-	}
+
 ?>
 <div id="idOutput"></div>
 <?php

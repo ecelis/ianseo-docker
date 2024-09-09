@@ -89,9 +89,13 @@ switch ($msgType) {
         }
 		break;
 	case 'SS':
-		if($side!=0) {
+        if($side==0) {
+            break;
+            $json_array["Error"]=0;
+        } else if($end != 0 OR $end == 'T'){
 			$json_array["Info"] = "Start Shooting - " . ($side==1 ? "Left":"Right") . " - End " . (is_numeric($end) ? $end : "S.O.") ;
 			$json_array["Error"]=0;
+            SendStartShooting($side,$end,$TourId);
 		}
 		break;
 	case 'AB':
@@ -119,12 +123,12 @@ SendResult($json_array);
 
 function UpdateShootFirst($Side, $End, $TourId) {
     // gets the live match
-    $q=safe_r_SQL("(select 0 TeamEvent, FinMatchNo MatchNo, FinEvent Event
+    $q=safe_r_SQL("(select 0 TeamEvent, FinMatchNo MatchNo, FinEvent Event, FinTiebreak as arrNo
 			from Finals
 			inner join Events on FinTournament=EvTournament and FinEvent=EvCode and EvTeamEvent=0
 			where FinTournament={$TourId} and FinLive=1
 		) union (
-			select 1, TfMatchNo, TfEvent
+			select 1, TfMatchNo, TfEvent, TfTiebreak
 			from TeamFinals
 			inner join Events on TfTournament=EvTournament and TfEvent=EvCode and EvTeamEvent=1
 			where TfTournament={$TourId} and TfLive=1)
@@ -135,12 +139,15 @@ function UpdateShootFirst($Side, $End, $TourId) {
         $MatchNoClear=$MatchNoSet + ($MatchNoSet %2 ==0 ? 1:-1);
         $event=$r->Event;
         $TeamEvent=$r->TeamEvent;
+        $objParam=getEventArrowsParams($event,($MatchNo<=1 ? 0 : pow(2, intval(log($MatchNo, 2)))),$TeamEvent,$TourId);
+        $updateEnd=$End;
 
         if(is_numeric($End)) {
             $End = intval($End) - 1;
+            $updateEnd=$End;
         } else {
-            $objParam=getEventArrowsParams($event,($MatchNo<=1 ? 0 : pow(2, intval(log($MatchNo, 2)))),$TeamEvent,$TourId);
-            $End = $objParam->ends;
+            $End = $objParam->ends + intval(strlen(trim($r->arrNo))/$objParam->so);
+            $updateEnd=$objParam->ends;
         }
 
 
@@ -148,12 +155,39 @@ function UpdateShootFirst($Side, $End, $TourId) {
         $Table=($TeamEvent ? 'Team' : '');
 
         safe_w_sql("UPDATE {$Table}Finals 
-			SET {$TabPrefix}ShootFirst=({$TabPrefix}ShootFirst | ".pow(2, $End).") 
+			SET {$TabPrefix}ShootFirst=({$TabPrefix}ShootFirst | ".pow(2, $updateEnd).") 
 			WHERE {$TabPrefix}Tournament={$TourId} AND {$TabPrefix}Event='$event' AND {$TabPrefix}MatchNo={$MatchNoSet}");
 
         safe_w_sql("UPDATE {$Table}Finals 
-			SET {$TabPrefix}ShootFirst=({$TabPrefix}ShootFirst & ~".pow(2, $End).") 
+			SET {$TabPrefix}ShootFirst=({$TabPrefix}ShootFirst & ~".pow(2, $updateEnd).") 
 			WHERE {$TabPrefix}Tournament={$TourId} and {$TabPrefix}Event='$event' and {$TabPrefix}MatchNo={$MatchNoClear}");
-        runJack("FinShootingFirst", $TourId, array("Event"=>$event ,"Team"=>$TeamEvent ,"MatchNo"=>$MatchNo ,"TourId"=>$TourId));
+        runJack("FinShootingFirst", $TourId, array("Event"=>$event, "Team"=>$TeamEvent, "MatchNo"=>$MatchNo, "End"=>$End, "TourId"=>$TourId));
+    }
+}
+
+function SendStartShooting($Side, $End, $TourId) {
+    // gets the live match
+    $q=safe_r_SQL("(select 0 TeamEvent, FinMatchNo MatchNo, FinEvent Event, FinTiebreak as arrNo
+			from Finals
+			inner join Events on FinTournament=EvTournament and FinEvent=EvCode and EvTeamEvent=0
+			where FinTournament={$TourId} and FinLive=1
+		) union (
+			select 1, TfMatchNo, TfEvent, TfTiebreak
+			from TeamFinals
+			inner join Events on TfTournament=EvTournament and TfEvent=EvCode and EvTeamEvent=1
+			where TfTournament={$TourId} and TfLive=1)
+		order by MatchNo");
+    if($r=safe_fetch($q)) {
+        $MatchNo = $r->MatchNo;
+        $event=$r->Event;
+        $TeamEvent=$r->TeamEvent;
+
+        if(is_numeric($End)) {
+            $End = intval($End) - 1;
+        } else {
+            $objParam=getEventArrowsParams($r->Event,($r->MatchNo<=1 ? 0 : pow(2, intval(log($r->MatchNo, 2)))),$r->TeamEvent,$TourId);
+            $End = $objParam->ends + intval(strlen(trim($r->arrNo))/$objParam->so);
+        }
+        runJack("StartShooting", $TourId, array("Event"=>$r->Event, "Team"=>$r->TeamEvent, "MatchNo"=>$MatchNo, "Side"=>($Side==1 ? "Left":"Right"), "End"=>$End, "TourId"=>$TourId));
     }
 }

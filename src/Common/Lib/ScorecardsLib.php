@@ -62,7 +62,19 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
 
 	$pdf = new ScorePDF(true);
 	//error_reporting(E_ALL);
-	$pdf->BottomImage=empty($Options['QRCode']);
+    if(!empty($Options["QRCode"])) {
+        $pdf->QRCode=$Options["QRCode"];
+        $pdf->BottomImage=false;
+    }
+    if($ScoreDraw=="HorScoreAllDist") {
+        $pdf->BottomImage=false;
+        $pdf->HideLogo();
+        $pdf->HideHeader();
+    }
+    if(!empty($Options["ScoreQrPersonal"])) {
+        $pdf->ScoreQrPersonal=true;
+        $pdf->BottomImage=false;
+    }
 	$pdf->FillWithArrows=$FillWithArrows;
 	if(empty($Options["ScoreHeader"])) {
 		$pdf->HideHeader();
@@ -82,12 +94,18 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
 	switch($ScoreDraw) {
 		case 'Data': $pdf->NoDrawing(); break;
 		case 'CompleteTotals': $pdf->PrintTotalColumns(); break;
-		case 'FourScoresNFAA': $pdf->NoTensOnlyX(); break;
+		case 'FourScoresNFAA':
+            if(empty($pdf->prnGolds)) {
+                $pdf->NoTensOnlyX();
+            }
+            break;
 	}
 
 	if(!isset($Options["TourField3D"])) {
 		$Options["TourField3D"]=''; // target archery
-	}
+	} elseif($Options["TourField3D"]) {
+        $Options["IsRedding"]=($_SESSION['TourLocSubRule']=='NFAA3D-ReddingWestern');
+    }
 
 	$Data=QualificationScorecards($Session, $FromTgt, $ToTgt, $IncludeEmpty=(empty($Options["noEmpty"])), $ScoreDraw, $FillWithArrows, false, $PersonalScore=(!empty($Options['PersonalScore'])), $Options);
 	if($SaveDir) {
@@ -126,9 +144,18 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
 		} elseif($Data->Ath4Target==3) {
 			$defScoreH = ($pdf->GetPageWidth()-$pdf->getSideMargin()*2);
 			$defScoreW = ($pdf->GetPageHeight()-$pdf->getSideMargin()*4)/3;
-		}
+		} elseif($ScoreDraw=='HorScoreAllDist' or $ScoreDraw=='HorScore') {
+            $ScoreGutter=$pdf->getSideMargin()/2;
+            $defScoreH = ($pdf->GetPageWidth()-$pdf->getSideMargin()-34);
+            $defScoreW = ($pdf->GetPageHeight()-$pdf->getSideMargin()*2-$ScoreGutter*3)/4;
+            $defScoreY+=3;
+		} elseif($ScoreDraw=='VertScoreAllDist') {
+            $ScoreGutter=$pdf->getSideMargin();
+            $defScoreH = ($pdf->GetPageHeight()-$pdf->getSideMargin()-83);
+            $defScoreW = ($pdf->GetPageWidth()-$pdf->getSideMargin()*3)/2;
+        }
 
-		if(!empty($Options['QRCode']) and $ScoreDraw!='Draw') {
+		if(($pdf->QRCode or $pdf->ScoreQrPersonal) and $ScoreDraw!='Draw') {
 			$QRCodeX=0;
 			$QRCodeY=0;
 			switch($Data->Ath4Target) {
@@ -137,28 +164,50 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
 				case 3:
 					// ATTENTION HERE: Landscape page!
 					$defScoreH-=25;
-					$quanti=count($Options['QRCode']);
+					$quanti=count($pdf->QRCode)+($pdf->ScoreQrPersonal ? 1 : 0);
 					$QRCodeY=min($pdf->GetPageHeight(),$pdf->GetPageWidth()) - $pdf->getSideMargin() - 25;
 					$QRCodeX=(max($pdf->GetPageWidth(), $pdf->GetPageHeight()) + 5 - (25*$quanti))/2;
 					break;
-				case 4:
-					$defScoreH-=6;
-					$defScoreY2+=6;
-					if(count($Options['QRCode'])>1) {
-						$quanti=count($Options['QRCode']);
-						$QRCodeX=($pdf->GetPageWidth() + 5 - (25*$quanti))/2;
-					}
+				default:
+                    if($ScoreDraw=='HorScoreAllDist' or $ScoreDraw=='HorScore') {
+                        $defScoreH-=25;
+                        $quanti=count($pdf->QRCode)+($pdf->ScoreQrPersonal ? 1 : 0);
+                        $QRCodeY=min($pdf->GetPageHeight(),$pdf->GetPageWidth()) - $pdf->getSideMargin() - 25;
+                        $QRCodeX=(max($pdf->GetPageWidth(), $pdf->GetPageHeight()) + 5 - (25*$quanti))/2;
+                    } else {
+                        $defScoreH-=8;
+                        $defScoreY2+=8;
+                        $QRCodeY=(($pdf->GetPageHeight() - 25)/2)-0.5;
+                        if(count($pdf->QRCode)>1 or $pdf->ScoreQrPersonal) {
+                            $quanti=count($pdf->QRCode)+($pdf->ScoreQrPersonal ? 1 : 0);
+                            $QRCodeX=($pdf->GetPageWidth() + 5 - (30*$quanti))/2;
+                        }
+                    }
 					break;
 			}
 		}
 	} else {
 		// field and 3D all scorecards are portrait, but takes the whole width
-		$defScoreW = ($pdf->GetPageWidth()-$pdf->getSideMargin()*2);
-		if(!empty($_REQUEST['QRCode'])) {
+        // If the competition is of redding style then scorecard is landscape, 3 distance on 1 page, 3rd on another
+        if($_SESSION['TourLocSubRule']=='NFAA3D-ReddingWestern') {
+            $pdf->IsRedding=true;
+            $defScoreW = ($pdf->GetPageHeight()-$pdf->getSideMargin()*3)/2;
+            $defScoreH = ($pdf->GetPageWidth()-$pdf->getSideMargin()*2);
+            $defScoreX2=$defScoreW+$pdf->getSideMargin()+5;
+            if($PersonalScore) {
+                $defScoreW = ($pdf->GetPageHeight()-$pdf->getSideMargin()*4)/3;
+            } elseif(count($DistArray)==1 and $DistArray[0]!=0) {
+                // reprint only one distance so each scorecard has 4 archers
+                $defScoreW = ($pdf->GetPageHeight()-$pdf->getSideMargin()*5)/4;
+            }
+        } else {
+            $defScoreW = ($pdf->GetPageWidth()-$pdf->getSideMargin()*2);
+        }
+		if($pdf->QRCode or $pdf->ScoreQrPersonal) {
 			$QRCodeY=0;
 			$defScoreH-=12;
 			$defScoreY2+=12;
-			$quanti=count($_REQUEST['QRCode']);
+			$quanti=count($pdf->QRCode)+($pdf->ScoreQrPersonal ? 1 : 0);
 			$QRCodeX=($pdf->GetPageWidth() + 5 - (30*$quanti))/2;
 		}
 	}
@@ -175,17 +224,27 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
 						case 'G':
 						case 'I':
 						case 'K':
+						case 'M':
+						case 'O':
+						case 'Q':
+						case 'S':
+						case 'U':
+						case 'W':
+						case 'Y':
 							$pdf->AddPage();
 							$Yscore = $defScoreY;
 					}
 
 					$pdf->DrawScoreField($defScoreX, $Yscore, $defScoreW, $defScoreH, 0, $Value, $Data->SesTar4Session, $Data->SesFirstTarget);
-					if($Yscore == $defScoreY2 and !empty($_REQUEST['QRCode'])) {
-						foreach($_REQUEST['QRCode'] as $k => $Api) {
+					if($Yscore == $defScoreY2 and ($pdf->QRCode or $pdf->ScoreQrPersonal)) {
+						foreach($pdf->QRCode as $k => $Api) {
 							require_once('Api/'.$Api.'/DrawQRCode.php');
 							$Function='DrawQRCode_'.preg_replace('/[^a-z0-9]/sim', '_', $Api);
-							$Function($pdf, $QRCodeX + 30*$k, $QRCodeY, $_REQUEST['x_Session'], 0, substr($Value["tNo"],0,-1));
+							$Function($pdf, $QRCodeX + 30*$k, $QRCodeY, $Options['x_Session'], 0, substr($Value["tNo"],0,-1));
 						}
+                        if($pdf->ScoreQrPersonal) {
+                            DrawScoreQrPersonal($pdf, $Value['AtTarget'], $QRCodeX + 30*$k, $QRCodeY);
+                        }
 					}
 				}
 			} else {
@@ -214,14 +273,11 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
 						$pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, 0, $Cards[3]);
 
 				}
-				if (!empty($Options['QRCode']) and $ScoreDraw!='Draw') {
-					foreach ($Options['QRCode'] as $k => $Api) {
-						require_once('Api/' . $Api . '/DrawQRCode.php');
-						$Function = 'DrawQRCode_' . preg_replace('/[^a-z0-9]/sim', '_', $Api);
-						$Function($pdf, $QRCodeX + 30 * $k, $QRCodeY);
-					}
-				}
-			}
+                $k=0;
+                if($pdf->ScoreQrPersonal) {
+                    DrawScoreQrPersonal($pdf, $Cards[0]['AtTarget'], $QRCodeX + 30*$k, $QRCodeY);
+                }
+            }
 		}
 	} elseif($PersonalScore) {
 		// this prints all distances of a single archer defined by distances on a same scorecard
@@ -235,7 +291,10 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
 		$Origins[]=array($defScoreX, $defScoreY);
 
 		if($Options["TourField3D"]) {
-
+            if($pdf->IsRedding) {
+                $Origins[]=array(2*$defScoreX+$defScoreW, $defScoreY);
+                $Origins[]=array(3*$defScoreX+2*$defScoreW, $defScoreY);
+            }
 		} else {
 			if($Data->Ath4Target <= 3) {
 				$pdf->setPageOrientation('L');
@@ -289,13 +348,12 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
 					$Origins[]=array($defScoreX2, $defScoreY2);
 					break;
 			}
-
 		}
-		if(!empty($Options['QRCode'])) {
+		if($pdf->QRCode or $pdf->ScoreQrPersonal) {
 			$QRCodeX=0;
             $QRCodeX2=0;
 			$QRCodeY=0;
-			$quanti=count($Options['QRCode']);
+			$quanti=count($pdf->QRCode)+($pdf->ScoreQrPersonal ? 1 : 0);
 			switch($Data->Ath4Target) {
                 case 1:
 				case 2:
@@ -314,7 +372,6 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
 					break;
 				case 3:
 					$defScoreH-=5;
-					$quanti=count($Options['QRCode']);
 					$QRCodeY=$pdf->GetPageHeight() - $pdf->getSideMargin() - 25;
 					$QRCodeX=($defScoreW + 5 - (25*$quanti))/2;
 					if(!$FillWithArrows) {
@@ -329,14 +386,13 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
                     $Origins[3][1]+=1;
                     $QRCodeX +=5;
 					$QRCodeX2 = $QRCodeX + ($defScoreW/2);
-					if(count($Options['QRCode'])>1) {
-						$quanti=count($Options['QRCode']);
+					if($quanti>1) {
 						$QRCodeX = ($defScoreW + 5 - (25*$quanti))/2;
                         $QRCodeX2 = $QRCodeX + ($defScoreW + 5 - (25*$quanti))/4;
 					}
 					break;
 			}
-		} elseif($Data->Ath4Target<=3 and !$FillWithArrows) {
+		} elseif($Data->Ath4Target<=3 and !$FillWithArrows and !$pdf->IsRedding) {
 			// we still need to have the 2 scorers to sign!
 			$defScoreH-=25;
 			$SecondScorer=true;
@@ -346,7 +402,10 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
 		if($SaveDir) {
 			$OrgPdf=clone $pdf;
 		}
-		foreach($Data->Scores as $Target => $Cards) {
+        if($pdf->IsRedding) {
+            $pdf->setPageOrientation('L');
+        }
+        foreach($Data->Scores as $Target => $Cards) {
 			set_time_limit(120);
 			foreach($Cards as $Card) {
 				$Card['SecondScorer']=$SecondScorer;
@@ -371,20 +430,30 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
 					if($Options["TourField3D"]) {
 						// Odd Distances on top
 						$Yscore = $defScoreY2;
+                        $Xscore=$defScoreX;
 						if($k%2 == 0) {
 							$Yscore = $defScoreY;
-							if($k>1) {
+							if($k>1 and !$pdf->IsRedding) {
 								$pdf->AddPage();
 							}
 						}
+                        if($pdf->IsRedding) {
+                            $Card['PersonalScore']=1;
+                            $Yscore=$defScoreY;
+                            $Xscore=$Origins[max(0,$CurDist-1)][0];
+                        }
 
-						$pdf->DrawScoreField($defScoreX, $Yscore, $defScoreW, $defScoreH, $CurDist, $Card, $Data->SesTar4Session, $Data->SesFirstTarget);
-						if(($Yscore == $defScoreY2 or count($DistArray)==1) and !empty($_REQUEST['QRCode'])) {
-							foreach($_REQUEST['QRCode'] as $j => $Api) {
+						$pdf->DrawScoreField($Xscore, $Yscore, $defScoreW, $defScoreH, $CurDist, $Card, $Data->SesTar4Session, $Data->SesFirstTarget);
+						if(($Yscore == $defScoreY2 or count($DistArray)==1) and ($pdf->QRCode or $pdf->ScoreQrPersonal)) {
+							$j=0;
+                            foreach($pdf->QRCode as $j => $Api) {
 								require_once('Api/'.$Api.'/DrawQRCode.php');
 								$Function='DrawQRCode_'.preg_replace('/[^a-z0-9]/sim', '_', $Api);
 								$Function($pdf, $QRCodeX + 30*$j, $QRCodeY, $Card['Session'], 0, substr($Card["tNo"],0,-1), '', 'Q', $PersonalScore);
 							}
+                            if($pdf->ScoreQrPersonal) {
+                                DrawScoreQrPersonal($pdf, $Card['AtTarget'], $QRCodeX + 30*$j, $QRCodeY);
+                            }
 						}
 					} else {
 						// target archery
@@ -393,7 +462,7 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
 						}
 						$pdf->DrawScoreNew($Origins[$k][0], $Origins[$k][1], $defScoreW, $defScoreH, $CurDist, $Card);
 
-						if(!empty($Options['QRCode'])) {
+						if($pdf->QRCode) {
 						    $qrOrigin = $Origins[$k][0];
 						    if($Data->Ath4Target==4) {
 						        switch ($k) {
@@ -409,11 +478,15 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
                                 }
                             }
 	                        $TmpTarget = substr($Cards[0]['tNo'],0,-1);
-							foreach($Options['QRCode'] as $kQr => $Api) {
+                            $kQr=0;
+							foreach($pdf->QRCode as $kQr => $Api) {
 								require_once('Api/'.$Api.'/DrawQRCode.php');
 								$Function='DrawQRCode_'.preg_replace('/[^a-z0-9]/sim', '_', $Api);
 								$Function($pdf, $qrOrigin + $QRCodeX + 30*$kQr, $QRCodeY, $Card['Session'], $CurDist, $TmpTarget, '', 'Q', $PersonalScore, $Card["D".$CurDist]);
 							}
+                            if($pdf->ScoreQrPersonal) {
+                                DrawScoreQrPersonal($pdf, $Card['AtTarget'], $QRCodeX + 30*$kQr, $QRCodeY);
+                            }
 						}
 					}
 				}
@@ -432,108 +505,233 @@ function CreateSessionScorecard($Session, $FromTgt=1, $ToTgt=999, $Options=array
         }
 	} else {
 		foreach($Data->Scores as $Target => $Cards) {
-			foreach($DistArray as $CurDist) {
-				if ($CurDist and $Cards[0]["D" . $CurDist] == '-') {
-					continue 2;
-				}
+            if(false and ($ScoreDraw=='HorScoreAllDist' or $ScoreDraw=='VertScoreAllDist')) {
+                // Lancaster style
+                // we fake a single distance of all ends together
+                foreach($Cards as $k=>$v) {
+                    $Cards[$k]['D0']='18m';
+                    $Cards[$k]['Arr0']=$Cards[$k]['Arr1'].$Cards[$k]['Arr2'].$Cards[$k]['Arr3'].$Cards[$k]['Arr4'].$Cards[$k]['Arr5'].$Cards[$k]['Arr6'].$Cards[$k]['Arr7'].$Cards[$k]['Arr8'];
+                    $Cards[$k]['QuD0']=$Cards[$k]['QuD1']+$Cards[$k]['QuD2']+$Cards[$k]['QuD3']+$Cards[$k]['QuD4']+$Cards[$k]['QuD5']+$Cards[$k]['QuD6']+$Cards[$k]['QuD7']+$Cards[$k]['QuD8'];
+                    $Cards[$k]['NumEnds0']=$Cards[$k]['NumEnds1']+$Cards[$k]['NumEnds2'];
+                }
+                // regular scorecards
+                $CurDist='0';
+                if($ScoreDraw=='VertScoreAllDist') {
+                    $pdf->AddPage('P');
+                    $pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
+                    $pdf->DrawScoreNew($defScoreX+$ScoreGutter+$defScoreW, $defScoreY, $defScoreW, $defScoreH,$CurDist, ($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
+                    $pdf->AddPage('P');
+                    $pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH,$CurDist,(($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C'))));
+                    $pdf->DrawScoreNew($defScoreX+$defScoreW+$ScoreGutter, $defScoreY, $defScoreW, $defScoreH,$CurDist,(($Cards[3] ?? $Data->DefaultScore+array('tNo'=>'D'))));
+                } else {
+                    $pdf->AddPage('L');
+                    $pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
+                    $pdf->DrawScoreNew($defScoreX+$ScoreGutter+$defScoreW, $defScoreY, $defScoreW, $defScoreH,$CurDist, ($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
+                    $pdf->DrawScoreNew($defScoreX+2*($defScoreW+$ScoreGutter), $defScoreY, $defScoreW, $defScoreH,$CurDist,(($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C'))));
+                    $pdf->DrawScoreNew($defScoreX+3*($defScoreW+$ScoreGutter), $defScoreY, $defScoreW, $defScoreH,$CurDist,(($Cards[3] ?? $Data->DefaultScore+array('tNo'=>'D'))));
+                }
+                if($pdf->QRCode or $pdf->ScoreQrPersonal) {
+                    $TmpTarget = substr($Cards[0]['tNo'],0,-1);
+                    $k=-1;
+                    foreach($pdf->QRCode as $k => $Api) {
+                        require_once('Api/'.$Api.'/DrawQRCode.php');
+                        $Function='DrawQRCode_'.preg_replace('/[^a-z0-9]/sim', '_', $Api);
+                        $Function($pdf, $QRCodeX + 30*$k, $QRCodeY, $Cards[0]['Session'], $CurDist, $TmpTarget, '', 'Q', $PersonalScore);
+                    }
+                    if($pdf->ScoreQrPersonal) {
+                        $k++;
+                        DrawScoreQrPersonal($pdf, $Cards[0]['AtTarget'], $QRCodeX + 30*$k, $QRCodeY);
+                    }
+                }
+            } else {
+                if($pdf->IsRedding) {
+                    // scorecard is like regular field BUT distance 1 and 2 on one side and distance 3 on the other
+                    $n=0;
+                    if(count($DistArray)==1 and $DistArray[0]!=0) {
+                        $pdf->HideLogo();
+                        $pdf->HideFlags();
+                        foreach($Cards as $k=>$Card) {
+                            if(!$Card['EnCode']) {
+                                continue;
+                            }
+                            if($n%4==0) {
+                                $n=0;
+                                $pdf->AddPage('L');
+                                $X=$defScoreX;
+                            }
+                            $Card['MonoDistance']=1;
+                            $pdf->DrawScoreField($X, $defScoreY, $defScoreW, $defScoreH, $DistArray[0], $Card, $Data->SesTar4Session, $Data->SesFirstTarget);
+                            $n++;
+                            $X+=($defScoreW+$pdf->getSideMargin());
+                        }
+                    } else {
+                        for($n=0;$n<count($Cards);$n+=2) {
+                            $pdf->AddPage('L');
+                            $pdf->DrawScoreField($defScoreX, $defScoreY, $defScoreW, $defScoreH, 1, $Cards[$n], $Data->SesTar4Session, $Data->SesFirstTarget);
+                            if($Cards[$n+1] ?? '') {
+                                $pdf->DrawScoreField($defScoreX2, $defScoreY, $defScoreW, $defScoreH, 1, $Cards[$n+1], $Data->SesTar4Session, $Data->SesFirstTarget);
+                            }
+                            $pdf->AddPage('L');
+                            $pdf->DrawScoreField($defScoreX, $defScoreY, $defScoreW, $defScoreH, 3, $Cards[$n], $Data->SesTar4Session, $Data->SesFirstTarget);
+                            if($Cards[$n+1] ?? '') {
+                                $pdf->DrawScoreField($defScoreX2, $defScoreY, $defScoreW, $defScoreH, 3, $Cards[$n+1], $Data->SesTar4Session, $Data->SesFirstTarget);
+                            }
+                        }
+                    }
+                } else {
+                    foreach($DistArray as $CurDist) {
+                        if ($CurDist and $Cards[0]["D" . $CurDist] == '-') {
+                            continue 2;
+                        }
 
-				if($Options["TourField3D"]) {
-					foreach($Cards as $Value) {
-						$Yscore = $defScoreY2;
-						switch(substr($Value["tNo"],-1,1)) {
-							case 'A':
-							case 'C':
-							case 'E':
-							case 'G':
-							case 'I':
-							case 'K':
-								$pdf->AddPage();
-								$Yscore = $defScoreY;
-						}
+                        if($Options["TourField3D"] and $ScoreDraw!='FourScoresNFAA') {
+                            foreach($Cards as $Value) {
+                                $Yscore = $defScoreY2;
+                                switch(substr($Value["tNo"],-1,1)) {
+                                    case 'A':
+                                    case 'C':
+                                    case 'E':
+                                    case 'G':
+                                    case 'I':
+                                    case 'K':
+                                    case 'M':
+                                    case 'O':
+                                    case 'Q':
+                                    case 'S':
+                                    case 'U':
+                                    case 'W':
+                                    case 'Y':
+                                        $pdf->AddPage($pdf->IsRedding?'L':'P');
+                                        $Yscore = $defScoreY;
+                                }
 
-						$pdf->DrawScoreField($defScoreX, $Yscore, $defScoreW, $defScoreH, $CurDist, $Value, $Data->SesTar4Session, $Data->SesFirstTarget);
-						if($Yscore == $defScoreY2 and !empty($_REQUEST['QRCode'])) {
-							foreach($_REQUEST['QRCode'] as $k => $Api) {
-								require_once('Api/'.$Api.'/DrawQRCode.php');
-								$Function='DrawQRCode_'.preg_replace('/[^a-z0-9]/sim', '_', $Api);
-								$Function($pdf, $QRCodeX + 30*$k, $QRCodeY, $Cards[0]['Session'], $CurDist, substr($Value["tNo"],0,-1), '', 'Q', $PersonalScore);
-							}
-						}
-					}
+                                $pdf->DrawScoreField($defScoreX, $Yscore, $defScoreW, $defScoreH, $CurDist, $Value, $Data->SesTar4Session, $Data->SesFirstTarget);
+                                if($Yscore == $defScoreY2 and ($pdf->QRCode or $pdf->ScoreQrPersonal)) {
+                                    $k=0;
+                                    foreach($pdf->QRCode as $k => $Api) {
+                                        require_once('Api/'.$Api.'/DrawQRCode.php');
+                                        $Function='DrawQRCode_'.preg_replace('/[^a-z0-9]/sim', '_', $Api);
+                                        $Function($pdf, $QRCodeX + 30*$k, $QRCodeY, $Cards[0]['Session'], $CurDist, substr($Value["tNo"],0,-1), '', 'Q', $PersonalScore);
+                                    }
+                                    if($pdf->ScoreQrPersonal) {
+                                        DrawScoreQrPersonal($pdf, $Value['AtTarget'], $QRCodeX + 30*$k, $QRCodeY);
+                                    }
+                                }
+                            }
 
-				} else {
-					$pdf->AddPage(($Data->Ath4Target <= 3) ? 'L' : 'P');
-					switch($Data->Ath4Target) {
-						case 1:
-							if(empty($Cards[0]['Ath'])) {
-								continue 2;
-							}
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
-							break;
-						case 2:
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
-							$pdf->DrawScoreNew(2*$defScoreX+$defScoreW, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
-							break;
-						case 3:
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
-							$pdf->DrawScoreNew(2*$defScoreX+$defScoreW, $defScoreY, $defScoreW, $defScoreH,$CurDist, ($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
-							$pdf->DrawScoreNew(3*$defScoreX+2*$defScoreW, $defScoreY, $defScoreW, $defScoreH,$CurDist,(($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C'))));
-							break;
-						case 4:
-							$pdf->DrawScoreNew( $defScoreX,  $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
-							$pdf->DrawScoreNew($defScoreX2,  $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
-							$pdf->DrawScoreNew( $defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist, ($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C')));
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, $CurDist, ($Cards[3] ?? $Data->DefaultScore+array('tNo'=>'D')));
-							break;
-						case 5:
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
-							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C')));
-							$pdf->AddPage('P');
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[3] ?? $Data->DefaultScore+array('tNo'=>'D')));
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[4] ?? $Data->DefaultScore+array('tNo'=>'E')));
-							break;
-						case 6:
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
-							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C')));
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[3] ?? $Data->DefaultScore+array('tNo'=>'D')));
-							$pdf->AddPage('P');
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[4] ?? $Data->DefaultScore+array('tNo'=>'E')));
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[5] ?? $Data->DefaultScore+array('tNo'=>'F')));
-							break;
-						case 7:
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
-							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C')));
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[3] ?? $Data->DefaultScore+array('tNo'=>'D')));
-							$pdf->AddPage('P');
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[4] ?? $Data->DefaultScore+array('tNo'=>'E')));
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[5] ?? $Data->DefaultScore+array('tNo'=>'F')));
-							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[6] ?? $Data->DefaultScore+array('tNo'=>'G')));
-							break;
-						case 8:
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
-							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C')));
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[3] ?? $Data->DefaultScore+array('tNo'=>'D')));
-							$pdf->AddPage('P');
-							$pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[4] ?? $Data->DefaultScore+array('tNo'=>'E')));
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[5] ?? $Data->DefaultScore+array('tNo'=>'F')));
-							$pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[6] ?? $Data->DefaultScore+array('tNo'=>'G')));
-							$pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[7] ?? $Data->DefaultScore+array('tNo'=>'H')));
-							break;
-					}
-					if(!empty($Options['QRCode'])) {
-						$TmpTarget = substr($Cards[0]['tNo'],0,-1);
-						foreach($Options['QRCode'] as $k => $Api) {
-							require_once('Api/'.$Api.'/DrawQRCode.php');
-							$Function='DrawQRCode_'.preg_replace('/[^a-z0-9]/sim', '_', $Api);
-							$Function($pdf, $QRCodeX + 30*$k, $QRCodeY, $Cards[0]['Session'], $CurDist, $TmpTarget, '', 'Q', $PersonalScore);
-						}
-					}
-				}
-			}
+                        } else {
+                            if($Options["TourField3D"] and $ScoreDraw=='FourScoresNFAA') {
+                                // REDDING SCORECARDS
+                                while(count($Cards)%4!=0) {
+                                    $Cards[]=$Data->DefaultScore+array('tNo'=>substr($Cards[0]['tNo'],0,-1).chr(65+count($Cards)));
+                                }
+                                $pdf->setPageOrientation('L');
+                                $defScoreW=($pdf->getPageWidth()-5*$pdf->getSideMargin())/4;
+                                $defScoreH=$pdf->getPageHeight()-2*$pdf->getSideMargin()-7;
+                                $defScoreX=[$pdf->getSideMargin()];
+                                $defScoreX[]=end($defScoreX)+$pdf->getSideMargin()+$defScoreW;
+                                $defScoreX[]=end($defScoreX)+$pdf->getSideMargin()+$defScoreW;
+                                $defScoreX[]=end($defScoreX)+$pdf->getSideMargin()+$defScoreW;
+                                foreach($Cards AS $i => $Card) {
+                                    if(empty($Card["EnCode"])) {
+                                        continue;
+                                    }
+                                    $Card['isField']=true;
+                                    $Card['is3dNFAA']=true;
+                                    if($i%4 == 0) {
+                                        $pdf->AddPage('L');
+                                    }
+                                    $pdf->DrawScoreNew($defScoreX[$i%4], $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Card ?? $Data->DefaultScore+array('tNo'=>'A')));
+                                }
+                            } else {
+                                // regular scorecards
+                                if($ScoreDraw=='HorScoreAllDist') {
+                                    $pdf->AddPage('L');
+                                    $pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
+                                    $pdf->DrawScoreNew($defScoreX+$ScoreGutter+$defScoreW, $defScoreY, $defScoreW, $defScoreH,$CurDist, ($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
+                                    $pdf->DrawScoreNew($defScoreX+2*($defScoreW+$ScoreGutter), $defScoreY, $defScoreW, $defScoreH,$CurDist,(($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C'))));
+                                    $pdf->DrawScoreNew($defScoreX+3*($defScoreW+$ScoreGutter), $defScoreY, $defScoreW, $defScoreH,$CurDist,(($Cards[3] ?? $Data->DefaultScore+array('tNo'=>'D'))));
+
+                                } else {
+                                    $pdf->AddPage(($Data->Ath4Target <= 3 or $ScoreDraw=='HorScore') ? 'L' : 'P');
+                                    switch($Data->Ath4Target) {
+                                        case 1:
+                                            if(empty($Cards[0]['Ath'])) {
+                                                continue 2;
+                                            }
+                                            $pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
+                                            break;
+                                        case 2:
+                                            $pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
+                                            $pdf->DrawScoreNew(2*$defScoreX+$defScoreW, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
+                                            break;
+                                        case 3:
+                                            $pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
+                                            $pdf->DrawScoreNew(2*$defScoreX+$defScoreW, $defScoreY, $defScoreW, $defScoreH,$CurDist, ($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
+                                            $pdf->DrawScoreNew(3*$defScoreX+2*$defScoreW, $defScoreY, $defScoreW, $defScoreH,$CurDist,(($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C'))));
+                                            break;
+                                        case 4:
+                                            if($ScoreDraw=='HorScore') {
+                                                $pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
+                                                $pdf->DrawScoreNew($defScoreX+$ScoreGutter+$defScoreW, $defScoreY, $defScoreW, $defScoreH,$CurDist, ($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
+                                                $pdf->DrawScoreNew($defScoreX+2*($defScoreW+$ScoreGutter), $defScoreY, $defScoreW, $defScoreH,$CurDist,(($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C'))));
+                                                $pdf->DrawScoreNew($defScoreX+3*($defScoreW+$ScoreGutter), $defScoreY, $defScoreW, $defScoreH,$CurDist,(($Cards[3] ?? $Data->DefaultScore+array('tNo'=>'D'))));
+                                            } else {
+                                                $pdf->DrawScoreNew( $defScoreX,  $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
+                                                $pdf->DrawScoreNew($defScoreX2,  $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
+                                                $pdf->DrawScoreNew( $defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist, ($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C')));
+                                                $pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, $CurDist, ($Cards[3] ?? $Data->DefaultScore+array('tNo'=>'D')));
+                                            }
+                                            break;
+                                        case 5:
+                                            $pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist, ($Cards[0] ?? $Data->DefaultScore+array('tNo'=>'A')));
+                                            $pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[1] ?? $Data->DefaultScore+array('tNo'=>'B')));
+                                            $pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[2] ?? $Data->DefaultScore+array('tNo'=>'C')));
+                                            $pdf->AddPage('P');
+                                            $pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[3] ?? $Data->DefaultScore+array('tNo'=>'D')));
+                                            $pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[4] ?? $Data->DefaultScore+array('tNo'=>'E')));
+                                            break;
+                                        default:
+                                            for($n=0;$n<count($Cards);$n++) {
+                                                switch($n%4) {
+                                                    case 0:
+                                                        if($n) {
+                                                            $pdf->AddPage(($Data->Ath4Target <= 3 or $ScoreDraw=='HorScore') ? 'L' : 'P');
+                                                        }
+                                                        $pdf->DrawScoreNew($defScoreX, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[$n] ?? $Data->DefaultScore+array('tNo'=>chr(65+$n))));
+                                                        break;
+                                                    case 1:
+                                                        $pdf->DrawScoreNew($defScoreX2, $defScoreY, $defScoreW, $defScoreH, $CurDist,($Cards[$n] ?? $Data->DefaultScore+array('tNo'=>chr(65+$n))));
+                                                        break;
+                                                    case 2:
+                                                        $pdf->DrawScoreNew($defScoreX, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[$n] ?? $Data->DefaultScore+array('tNo'=>chr(65+$n))));
+                                                        break;
+                                                    case 3:
+                                                        $pdf->DrawScoreNew($defScoreX2, $defScoreY2, $defScoreW, $defScoreH, $CurDist,($Cards[$n] ?? $Data->DefaultScore+array('tNo'=>chr(65+$n))));
+                                                        break;
+                                                }
+                                            }
+                                            break;
+                                    }
+                                }
+                                if($pdf->QRCode or $pdf->ScoreQrPersonal) {
+                                    $TmpTarget = substr($Cards[0]['tNo'],0,-1);
+                                    $k=-1;
+                                    foreach($pdf->QRCode as $k => $Api) {
+                                        require_once('Api/'.$Api.'/DrawQRCode.php');
+                                        $Function='DrawQRCode_'.preg_replace('/[^a-z0-9]/sim', '_', $Api);
+                                        $Function($pdf, $QRCodeX + 30*$k, $QRCodeY, $Cards[0]['Session'], $CurDist, $TmpTarget, '', 'Q', $PersonalScore);
+                                    }
+                                    if($pdf->ScoreQrPersonal) {
+                                        $k++;
+                                        DrawScoreQrPersonal($pdf, $Cards[0]['AtTarget'], $QRCodeX + 30*$k, $QRCodeY);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 		}
 	}
 	if($SaveDir) {
@@ -567,7 +765,6 @@ function QualificationScorecards($Session, $FromTgt, $ToTgt, $IncludeEmpty=true,
 	        }
 	    }
 	} else {
-
 		$MyQuery = "SELECT ToNumEnds AS TtNumEnds FROM Tournament  WHERE ToId=" . StrSafe_DB($_SESSION['TourId']);
 		$Rs=safe_r_sql($MyQuery);
 		if($r=safe_fetch($Rs)) {
@@ -661,7 +858,7 @@ function QualificationScorecards($Session, $FromTgt, $ToTgt, $IncludeEmpty=true,
 		if($Category) {
 			$MyQuery=GetScoreByCategoryQuery();
 		} else {
-			$MyQuery=GetScoreBySessionQuery($Session, $FromTgt, $ToTgt, $IncludeEmpty, $PersonalScore, empty($Options['Entry']) ? 0 : intval($Options['Entry']));
+			$MyQuery=GetScoreBySessionQuery($Session, $FromTgt, $ToTgt, $IncludeEmpty, $PersonalScore or !empty($Options['IsRedding']), empty($Options['Entry']) ? 0 : intval($Options['Entry']));
 		}
 	}
 	$Rs=safe_r_sql($MyQuery);
@@ -778,6 +975,10 @@ function GetScoreBySessionQuery($Session, $FromTgt, $ToTgt, $IncludeEmpty=true, 
 			WHERE EnTournament = {$_SESSION['TourId']} AND EnAthlete=1 " . ($Session!=-1 ? "AND QuSession=$Session ".(($FromTgt+$ToTgt > 0) ? " and QuTarget between $FromTgt and $ToTgt " : "")  : "") .
 			") as Tgt ON TgtTournament=AtTournament AND TgtNo=AtTarget and TgtSession=AtSession";
 	}
+	$EndSql='d1.DiEnds as NumEnds0, d1.DiArrows as NumArrows0, d1.DiScoringEnds as ScoringEnds0, d1.DiScoringOffset as ScoringOffset0';
+	for($i=1;$i<=8;$i++) {
+		$EndSql.=", d{$i}.DiEnds as NumEnds{$i}, d{$i}.DiArrows as NumArrows{$i}, d{$i}.DiScoringEnds as ScoringEnds{$i}, d{$i}.DiScoringOffset as ScoringOffset{$i}";
+	}
 	$MyQuery = "SELECT concat(AtTarget,AtLetter) as tNo, AtTargetNo, AtTarget, AtSession as Session, '' as Dist, EnCode, QuTimestamp, EnDob as DoB, CoCode, CoName, QuTargetNo, CONCAT(EnFirstName,' ', EnName) AS Ath, CONCAT(CoCode, ' - ', CoName) as Noc, EnDivision as `Div`, EnClass as Cls, EdEmail as Email, 
             concat(EnDivision, ' ', EnClass) as Cat, SesName, 
             IF(TfGolds='',ToGolds,TfGolds) as Golds, IF(TfXNine='',ToXNine,TfXNine) as XNine,
@@ -790,9 +991,7 @@ function GetScoreBySessionQuery($Session, $FromTgt, $ToTgt, $IncludeEmpty=true, 
             '' as QuXD0, QuD1XNine as QuXD1, QuD2XNine as QuXD2, QuD3XNine as QuXD3, QuD4XNine as QuXD4, QuD5XNine as QuXD5, QuD6XNine as QuXD6, QuD7XNine as QuXD7, QuD8XNine as QuXD8,
             '' as gxD0, QuD1Gold+QuD1XNine as gxD1, QuD2Gold+QuD2XNine as gxD2, QuD3Gold+QuD3XNine as gxD3, QuD4Gold+QuD4XNine as gxD4, QuD5Gold+QuD5XNine as gxD5, QuD6Gold+QuD6XNine as gxD6, QuD7Gold+QuD7XNine as gxD7, QuD8Gold+QuD8XNine as gxD8,
             length(trim(concat(QuD1Arrowstring, QuD2Arrowstring, QuD3Arrowstring, QuD4Arrowstring, QuD5Arrowstring, QuD6Arrowstring, QuD7Arrowstring, QuD8Arrowstring))) as Arrows,
-       		d1.DiEnds as NumEnds0, d1.DiArrows as NumArrows0,
-       		d1.DiEnds as NumEnds1, d1.DiArrows as NumArrows1, d2.DiEnds as NumEnds2, d2.DiArrows as NumArrows2, d3.DiEnds as NumEnds3, d3.DiArrows as NumArrows3, d4.DiEnds as NumEnds4, d4.DiArrows as NumArrows4,
-       		d5.DiEnds as NumEnds5, d5.DiArrows as NumArrows5, d6.DiEnds as NumEnds6, d6.DiArrows as NumArrows6, d7.DiEnds as NumEnds7, d7.DiArrows as NumArrows7, d8.DiEnds as NumEnds8, d8.DiArrows as NumArrows8
+       		$EndSql
 		FROM AvailableTarget " .
         ((!$IncludeEmpty AND $PersonalScore) ? "INNER" : "LEFT") . " join (select * from Qualifications 
 			inner join Entries on EnId=QuId and EnTournament={$_SESSION['TourId']}
@@ -853,4 +1052,37 @@ function GetScoreByCategoryQuery($Category='') {
         WHERE EnTournament = {$_SESSION['TourId']} ".($Category ? "AND concat(EnDivision,EnClass)='$Category'" : '')."
         ORDER BY EnFirstName, EnName, CoCode";
 	return $MyQuery;
+}
+
+function DrawScoreQrPersonal(&$pdf, $Target, $X, $Y, $Group=null, $Width=25, $Border=true) {
+    $Oldx=$pdf->getX();
+    $Oldy=$pdf->getY();
+
+    $Offset=($Border ? min(5, max(2,$Width/25)) : 0);
+    $QrWidth=$Width - 2*$Offset;
+
+    $Data=[
+        'scanTrigger' => 'TargetRequest',
+        'Target' => $Target,
+        'ToCode' => $_SESSION['TourCode'],
+    ];
+
+    if(!is_null($Group)) {
+        $Data['Group']=$Group;
+    }
+
+    $text=json_encode(['payload' => json_encode($Data)]);
+
+    require_once('Common/tcpdf/tcpdf_barcodes_2d.php');
+    // create new barcode object
+    $barcodeobj = new TCPDF2DBarcode($text, 'QRCODE,L');
+    $img=$barcodeobj->getBarcodePngData();
+
+    // draws a white background square
+    if($Border) {
+        $pdf->Rect($X, $Y, $Width, $Width, '', array('all'=>array('color'=>100)), array(255));
+    }
+    $pdf->Image('@'.$img, $X+$Offset, $Y+$Offset, $QrWidth, $QrWidth, 'PNG');
+
+    $pdf->setXY($Oldx, $Oldy);
 }

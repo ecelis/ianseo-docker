@@ -86,11 +86,12 @@ if(!empty($_POST['W_HOST']) and !empty($_POST['W_USER']) and !empty($_POST['W_PA
 					$Gara=export_tournament($r->ToId);
 					$filename=$working_dir . "/{$Gara['Tournament']['ToCode']}.ianseo";
 					$f=fopen($filename,'w');
-					fwrite($f,gzcompress(serialize($Gara),9));
-					fclose($f);
-
-					$CompToReload[]=$filename;
-					tour_delete($r->ToId);
+					if($f) {
+                        fwrite($f, gzcompress(serialize($Gara), 9));
+                        fclose($f);
+                        $CompToReload[]=$filename;
+                        tour_delete($r->ToId);
+                    }
 				}
 
 				// per sicurezza fai un secondo dump del DB svuotato...
@@ -204,12 +205,12 @@ function check_write_DB($tipo, $W_HOST, $W_USER, $W_PASS) {
 			if(is_array($a2) and $a2[1]=='NO_DATABASE') {
 				// beh... bisogna creare il DB :)
 				$WRIT_CON=(is_array($a2) ? $a2[0] : $a2);
-				safe_w_sql("CREATE DATABASE IF NOT EXISTS `$CFG->DB_NAME` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;");
+				safe_w_sql("CREATE DATABASE IF NOT EXISTS `$CFG->DB_NAME` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;");
 
 				// poi garantire l'accesso all'utente
-                safe_w_sql("SET old_passwords=0");
-                safe_w_sql("CREATE USER IF NOT EXISTS '$W_USER'@'$W_HOST' IDENTIFIED BY '".addslashes($W_PASS)."'");
-				safe_w_sql("GRANT ALL PRIVILEGES on `".$CFG->DB_NAME."`.* to '$W_USER'@'$W_HOST'");
+                //safe_w_sql("SET old_passwords=0");
+                safe_w_sql("CREATE USER IF NOT EXISTS '$W_USER'@'$W_HOST' IDENTIFIED BY ".StrSafe_DB($W_PASS));
+				safe_w_sql("GRANT ALL PRIVILEGES on `".$CFG->DB_NAME."`.* to '$W_USER'@'$W_HOST';");
 
 				// infine inserire nel DB la struttura di base
 				// ma prima rimuovere la connessione per forzarne una nuova

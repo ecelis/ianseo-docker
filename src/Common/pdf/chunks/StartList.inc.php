@@ -109,8 +109,8 @@ foreach($PdfData->Data['Items'] as $MyRows) {
 		$temprow[]= $MyRow->Nation . ($MyRow->EnSubTeam==0 ? "" : " (" . $MyRow->EnSubTeam . ")");
 		$temprow[]= ($MyRow->AgeClass ?? '');
 		$temprow[]= ($MyRow->SubClass ?? '');
-		$temprow[]= ($pdf->HideCols ? $MyRow->DivDescription : $MyRow->DivCode);
-		$temprow[]= ($pdf->HideCols ? $MyRow->ClDescription : $MyRow->ClassCode);
+		$temprow[]= ($pdf->HideCols ? $MyRow->DivDescription : $MyRow->DivCode) ?? '';
+		$temprow[]= ($pdf->HideCols ? $MyRow->ClDescription : $MyRow->ClassCode) ?? '';
 		$temprow[]= array($MyRow->IC, $MyRow->IF, $MyRow->TC, $MyRow->TF, $MyRow->TM);
 		$temprow[]= $MyRow->Status==0 ? '' : ($MyRow->Status ?? '');
 		$temprow[]= ($MyRow->NationCode2 ?? '');

@@ -51,11 +51,13 @@ function selectMain() {
 
 function buildPhases(phases, EvCode) {
     let ret='';
+    let newRows=false;
     $.each(phases, function(idx) {
         let cssClass=(this.disabled==1 ? 'disabled' : '');
-        if(parseInt(idx)>0) {
+        if(newRows) {
             ret+='<tr soEvent="'+EvCode+'" soLevel="'+idx+'" soGroup="1">';
         }
+        newRows=true;
         ret+='<td rowspan="'+this.rowspan+'" class="w-5 Center '+cssClass+'" onclick="getShootOff(this, '+idx+', 0)"><div class="so-status'+(this.completed==1 ? '' : ' notsolved')+'"></div></td>';
         ret+='<td rowspan="'+this.rowspan+'" class="w-5 '+cssClass+'">';
         if(this.hasSoCt) {

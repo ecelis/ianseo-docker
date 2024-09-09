@@ -100,7 +100,6 @@ $lang['Setup-Select']='Valitse paikallinen sääntö';
 $lang['SpecialUpdate']='Sinulla on "testiasennus".<br/>Vain valituilla käyttäjillä voi olla tämä ominaisuus: syötä sähköpostiosoite, jolla olet rekisteröitynyt<br/>Ilmoitus lähetetään sekä sinulle että Ianseo tekijöille.';
 $lang['Start Ianseo']='Aloita IANSEO!';
 $lang['Status']='Tila';
-$lang['Suboptimal']='Vaikka php.ini -tiedostosi ei olekaan asetettu parhailla arvoilla,<br/>IANSEO:n pitäisi toimi oikein suurimmilta osin.<br/>Suosittelemme, että asetat parametrit optimi arvoihin.';
 $lang['System value']='Järjestelmän arvo';
 $lang['UpdatePrepared']='Asennusta ollaan automaattisesti päivittämässä. Muista otta varmuuskopio kaikista kilpailuista ennen aloittamista. Päivitys voi kestää pitkänkin aikaa riippuen yhteyden nopeudesta ja päivitettävien osien määrästä.<br/>Muista, että kaikki ei alkuperäiset tiedostot poistetaan lukuunottamatta «Modules/Custom»-hakemistoa.';
 $lang['Updating']='Ianseo asennuksen päivitys';

@@ -52,7 +52,7 @@ if(!empty($_REQUEST["RESET"]) AND intval($_REQUEST["RESET"])==(count($EventCodes
     die();
 }
 
-
+$IncludeJquery = true;
 $JS_SCRIPT = array( phpVars2js(array(
         'ROOT_DIR'=>$CFG->ROOT_DIR,
         'MsgInitFinalGridsError'=>get_text('MsgInitFinalGridsError'),
@@ -62,12 +62,9 @@ $JS_SCRIPT = array( phpVars2js(array(
         'Advanced' => get_text('Advanced'),
         'MsgForExpert' => get_text('MsgForExpert', 'Tournament')
     )),
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>',
     '<script type="text/javascript" src="./AbsTeam.js"></script>',
     '<link href="./AbsTeam.css" rel="stylesheet" type="text/css">',
-    '<link href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css" media="screen" rel="stylesheet" type="text/css">',
-    );
+);
 include('Common/Templates/head.php');
 
 if(count($EventCodes) != 0) {
@@ -82,7 +79,7 @@ if(count($EventCodes) != 0) {
         // check received ranks
         $Events = array_keys($_REQUEST['R']);
         foreach ($_REQUEST['R'] as $Event => $EnIds) {
-            $q = safe_r_sql("select EvFinalFirstPhase, EvNumQualified, EvFirstQualified from Events where EvCode=" . StrSafe_DB($Event) . " and EvTeamEvent=1 and EvTournament='{$_SESSION['TourId']}'");
+            $q = safe_r_sql("select EvFinalFirstPhase, EvNumQualified, EvFirstQualified, EvFinalTargetType from Events where EvCode=" . StrSafe_DB($Event) . " and EvTeamEvent=1 and EvTournament='{$_SESSION['TourId']}'");
             $r = safe_fetch($q);
 
             // Check CT and SO have been done - need to check that in the range of allowed vales, none is present double
@@ -130,7 +127,7 @@ if(count($EventCodes) != 0) {
 			            $Decoded=array();
 			            $idx=0;
                         foreach ($_REQUEST['T'][$Event][$EnId] as $k => $v) {
-                            $tmpValue['tiebreak'] .= GetLetterFromPrint(str_replace('*','',$v));
+                            $tmpValue['tiebreak'] .= GetLetterFromPrint(str_replace('*','',$v), 'T', $r->EvFinalTargetType);
                         }
                         $tmpValue['tiebreak'] = trim($tmpValue['tiebreak']);
                         if (isset($_REQUEST['C'][$Event][$EnId])) {

@@ -49,12 +49,8 @@ if(isset($_REQUEST['arrIndex']) && preg_match("/^[0-9]+$/", $_REQUEST['arrIndex'
         $arrIndex = $tmp[0];
     }
 }
-if(isset($_REQUEST['arrValue']) AND $arrValue=GetLetterFromPrint($_REQUEST['arrValue'])) {
-    if(array_key_exists(strtoupper($arrValue) , $validData["Arrows"])) {
-        $arrValue = GetLetterFromPrint($_REQUEST['arrValue']);
-    } else {
-        $arrValue = ' ';
-    }
+if(isset($_REQUEST['arrValue'])) {
+    $arrValue=GetLetterFromPrint($_REQUEST['arrValue'], $validData['Arrows']);
 }
 
 if($arrSide != -1 AND $arrEnd != -1 and $arrIndex != -1) {
@@ -68,14 +64,32 @@ if($arrSide != -1 AND $arrEnd != -1 and $arrIndex != -1) {
     $calculatedIndex++;
     UpdateArrowString($MatchId+$arrSide, $EvCode, $EvType, $arrValue, $calculatedIndex, $calculatedIndex,$TourId);
 
+	$Position=null;
+	$Wind=null;
+	$Time=null;
     if(isset($_REQUEST["X"]) AND preg_match("/^[\-0-9.]+$/", $_REQUEST['X']) AND isset($_REQUEST["Y"]) AND preg_match("/^[\-0-9.]+$/", $_REQUEST['Y']) AND isset($_REQUEST["R"]) AND preg_match("/^[0-9.]+$/", $_REQUEST['R']) AND isset($_REQUEST["Dist"]) AND preg_match("/^[0-9.]+$/", $_REQUEST['Dist'])) {
-        $X = floatval($_REQUEST["X"]);
-        $Y = floatval($_REQUEST["Y"]);
-        $R = floatval($_REQUEST["R"]);
-        $Dist = floatval($_REQUEST["Dist"]);
-
-        UpdateArrowPosition($MatchId+$arrSide, $EvCode, $EvType, $calculatedIndex, $Dist, $X, $Y, $R*2, $TourId);
+	    $Position=[
+		    'X' => floatval($_REQUEST["X"]),
+		    'Y' => floatval($_REQUEST["Y"]),
+		    'R' => floatval($_REQUEST["R"]),
+		    'D' => floatval($_REQUEST["Dist"]),
+        ];
     }
+
+	if(isset($_REQUEST['Ws']) and isset($_REQUEST['Wd']) and is_numeric($_REQUEST['Ws']) and is_numeric($_REQUEST['Wd'])) {
+		$Wind=[
+			'Ws'=>round(floatval($_REQUEST["Ws"]), 1),
+			'Wd'=>intval($_REQUEST["Wd"]),
+		];
+	}
+
+	if(isset($_REQUEST['T']) and is_numeric($_REQUEST['T'])) {
+		$Time=intval($_REQUEST['T']);
+	}
+
+	if($Position or $Wind or $Time) {
+		UpdateArrowPosition($MatchId+$arrSide, $EvCode, $EvType, $calculatedIndex, $Position, $Wind, $Time, $TourId);
+	}
 }
 
 

@@ -40,7 +40,6 @@ $lang['Setup-PAR']='Torneo Paralimpico (regole IPC)';
 $lang['Setup-Select']='Selezzione la regola coretta';
 $lang['Start Ianseo']='Fà partì IANSEO!';
 $lang['Status']='Stato';
-$lang['Suboptimal']='Sebbene er fail php.ini nun sia configurato cò li valori ottimali, <br/> la maggiore parte de le funzionalità de IANZEO sò operative. <br/> Se conzijia cardamente de impostà li parametri a li valori ottimali.';
 $lang['System value']='Valore Attuale';
 $lang['User']='Chi sei ahò? Come t\'antitoli?';
 $lang['Write connection failed']='La connessione cor servere de scrittura è zompata: o nun è stata fornita la passuorde de amministrazzione oppure le informazzioni de loghinne nun sò corette!';

@@ -20,8 +20,17 @@ if($Team==-1) {
 	OutputError(get_text('ErrGenericError', 'Errors'));
 }
 
-$pdf = new ResultPDF(get_text('R-Session','Tournament'),false);
-$pdf->setBarcodeHeader(100);
+$Options=[];
+if($_SESSION['TourLocRule']=='LANC') {
+    $Options=[
+        'PrintLogo'=>false,
+        'print_header'=>false,
+        'print_footer'=>false,
+    ];
+}
+
+$pdf = new ResultPDF(get_text('R-Session','Tournament'),false, '', true, $Options);
+$pdf->setBarcodeHeader(empty($_REQUEST['Barcode']) ? '10' : '100');
 $pdf->ScoreCellHeight=9;
 $pdf->FillWithArrows=($_REQUEST['ScoreFilled']??0);
 $pdf->PrintFlags=($_REQUEST['ScoreFlags']??0);
@@ -39,7 +48,7 @@ if (isset($_REQUEST['Blank'])) {
 		'tournament'=>$_SESSION['TourId']
 	);
 
-	if (isset($_REQUEST['schedule']) && $_REQUEST['schedule']!=-1) {
+	if (isset($_REQUEST['schedule']) and $_REQUEST['schedule'] and $_REQUEST['schedule']!=-1) {
 		$options['schedule']=$_REQUEST['schedule'];
 		$OrderBy=true;
 	} else {
@@ -76,14 +85,27 @@ if (safe_num_rows($Rs)>0) {
 	$AtlheteName=NULL;
 	$FollowingRows=false;
 
+    $BarCodeX=$pdf->BarcodeHeaderX;
+    $BarCodeY=10;
+
+    if(!empty($_REQUEST['Margins'])) {
+        $BarCodeX=intval($_REQUEST['LeftMargin']??$BarCodeX);
+        $BarCodeY=intval($_REQUEST['TopMargin']??$BarCodeY);
+    }
+
 	//DrawScore
 	while($MyRow=safe_fetch($Rs)) {
 		set_time_limit(30);
-		if(empty($_REQUEST["Blank"]) &&  empty($_REQUEST["IncEmpty"]) && (empty($MyRow->M1Athlete) || empty($MyRow->M2Athlete))) {
+		if(empty($_REQUEST["Blank"]) && empty($_REQUEST["IncEmpty"]) && (empty($MyRow->M1Athlete) || empty($MyRow->M2Athlete))) {
 			// se è vuoto uno dei due arcieri e non è selezionata l'inclusione
 			continue;
 		}
 		if(empty($MyRow->M1Athlete) and empty($MyRow->M2Athlete)) {
+			continue;
+		}
+
+		if(empty($_REQUEST["IncEmpty"]) and (!$MyRow->M1Athlete or !$MyRow->M2Athlete)) {
+			// skip if targets are not set!
 			continue;
 		}
 
@@ -105,23 +127,21 @@ if (safe_num_rows($Rs)>0) {
 		// print barcode if any
 		if(!empty($_REQUEST['Barcode'])) {
 			$BarCode=mb_convert_encoding(implode('-', [$MyRow->M1MatchNo, $MyRow->M1Round, $MyRow->M1Group, $MyRow->M1Level, $MyRow->EvTeamEvent, $MyRow->EvCode]), "UTF-8","cp1252");
-			$pdf->setxy($pdf->BarcodeHeaderX, 10);
+			$pdf->setxy($BarCodeX, $BarCodeY);
 			$pdf->SetFont('barcode','',25);
 			$pdf->SetFillColor(255);
 			$pdf->Cell($pdf->BarcodeHeader, 10, '*' . $BarCode . "*",0,1,'C',1);
 			$pdf->SetDefaultColor();
 			$pdf->SetFont($pdf->FontStd,'',10);
-			$pdf->setxy($pdf->BarcodeHeaderX, 20);
+			$pdf->setxy($BarCodeX, $BarCodeY+10);
 			$pdf->Cell($pdf->BarcodeHeader, 4, $BarCode,0,1,'C',0);
-		} else {
-			$pdf->setBarcodeHeader(10);
 		}
 
 		if(!empty($_REQUEST['QRCode'])) {
 			foreach($_REQUEST['QRCode'] as $k => $Api) {
 				require_once('Api/'.$Api.'/DrawQRCode.php');
 				$Function='DrawQRCode_'.preg_replace('/[^a-z0-9]/sim', '_', $Api);
-				$Function($pdf, $pdf->BarcodeHeaderX -(25 * ($k+1)), 5, $MyRow->EvCode, $MyRow->M1MatchNo, $MyRow->M1Level, 0, "MI");
+				$Function($pdf, $BarCodeX -(25 * ($k+1)), 5, $MyRow->EvCode, $MyRow->M1MatchNo, $MyRow->M1Level.'|'.$MyRow->M1Group.'|'.$MyRow->M1Round, 0, "R".($MyRow->M1Team ? 'T' : 'I'));
 			}
 		}
 	}
@@ -145,19 +165,34 @@ function DrawScore(&$pdf, $MyRow, $Side='L') {
 	$TotalW=$defTotalW;
 	$GoldW=$defGoldW;
 
-	$Prefix='2';
-	$Opponent='1';
-	$ScorePrefix='';
-	if($MyRow->RrLevMatchMode) {
-		$ScorePrefix='Set';
-	}
+    $ScorePrefix='';
+    if($MyRow->RrLevMatchMode) {
+        $ScorePrefix='Set';
+    }
 
-	//		echo $MyRow->EvMatchArrowsNo . "." . $MyRow->GrPhase ."." . ($MyRow->EvMatchArrowsNo & ($MyRow->GrPhase>0 ? $MyRow->GrPhase*2:1)) . "/" . $NumRow . "--<br>";
-	if($Side=='L') {
-		if($FollowingRows) $pdf->AddPage();
-		$Prefix='1';
-		$Opponent='2';
-	}
+    if($MyRow->Swapped) {
+        $Prefix='1';
+        $Opponent='2';
+
+        if($Side=='L') {
+            if($FollowingRows) {
+                $pdf->AddPage();
+            }
+            $Prefix='2';
+            $Opponent='1';
+        }
+    } else {
+        $Prefix='2';
+        $Opponent='1';
+
+        if($Side=='L') {
+            if($FollowingRows) {
+                $pdf->AddPage();
+            }
+            $Prefix='1';
+            $Opponent='2';
+        }
+    }
 
 	$FollowingRows=true;
 	$WhichScore=($Side=='R');

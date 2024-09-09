@@ -17,7 +17,6 @@ $lang['ISK-LicenseNumber']='ISK Pro лиценз дугаар';
 $lang['ISK-LicenseVoucher']='ISK Pro ваучер ашиглах';
 $lang['RaspDevice']='Төхөөрөмж';
 $lang['RasUrl']='Ашиглах URL';
-$lang['TVCss3Divider']='Таслагч';
 $lang['WAToolbox-MissingParams']='Тохиргоо байхгүй';
 $lang['WAToolbox-NoCompCode']='Тэмцээний код байхгүй';
 ?>

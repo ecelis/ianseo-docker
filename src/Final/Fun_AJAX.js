@@ -1,16 +1,7 @@
-/*
-													- Fun_AJAX.js -
-	Contiene le funzioni ajax usate in tutta la sezione
-*/
-var need2Change = 'd';
-var callChangeEventPhase=false;
-var addAllEvents=false;
-var Reload=false;
-/*
-	- ChangeEvent(TeamEvent);
-	Invia la post a ChangeEvent.php.
-	Se TeamEvent=1 l'evento è di squadra
-*/
+let need2Change = 'd';
+let callChangeEventPhase=false;
+let addAllEvents=false;
+let Reload=false;
 
 function ChangeEvent(TeamEvent, whichForm, call, addAll) {
 	if (call != null) {
@@ -51,12 +42,12 @@ function ChangeEventPhase(TeamEvent, whichForm) {
 		need2Change = whichForm;
 	}
 
-	var Ev=$('#'+need2Change + '_Event').val();
-	var Ph=$('#'+need2Change + '_Phase').val();
+	let Ev=$('#'+need2Change + '_Event').val();
+	let Ph=$('#'+need2Change + '_Phase').val();
 
 	$.getJSON(WebDir+"Final/ChangeEventPhase.php?Ev=" + Ev + "&Ph=" + Ph + "&TeamEvent=" + TeamEvent, function(data) {
 		if(data.error==0) {
-			var selectedItem = $('#'+need2Change + '_Match').val();
+			let selectedItem = $('#'+need2Change + '_Match').val();
 			$('#'+need2Change + '_Match').empty();
 			$(data.match).each(function() {
 				$('#'+need2Change + '_Match').append('<option value="'+this.matchno1+'">'+this.name1+' - '+this.name2+'</option>');
@@ -115,21 +106,21 @@ function move2nextPhase_StateChange()
 function move2nextPhase_Response()
 {
 	// leggo l'xml
-	var XMLResp=XMLHttp.responseXML;
+	let XMLResp=XMLHttp.responseXML;
 
 // intercetto gli errori di IE e Opera
 	if (!XMLResp || !XMLResp.documentElement)
 		throw("XML non valido:\n"+XMLResp.responseText);
 
 // Intercetto gli errori di Firefox
-	var XMLRoot;
+	let XMLRoot;
 	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
 		throw("XML non valido:\n");
 
 	XMLRoot = XMLResp.documentElement;
 
-	var Error=XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
-	var msg=XMLRoot.getElementsByTagName('msg').item(0).firstChild.data;
+	let Error=XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
+	let msg=XMLRoot.getElementsByTagName('msg').item(0).firstChild.data;
 
 	if(XMLRoot.getAttribute('action')=='reload') {
         Reload=true;
@@ -137,4 +128,25 @@ function move2nextPhase_Response()
     }
 
 	alert(msg);
+}
+
+function updateSchedule(indTeam) {
+	let form={
+		indTeam: indTeam,
+		today:$('#OnlyToday').is(':checked') ? 1 : 0,
+		unfinished:$('#Unfinished').is(':checked') ? 1 : 0,
+	}
+	$.getJSON('../PrintScore-action.php', form, function(data) {
+		if(data.error==0) {
+			let seqSelector = $('#x_Session');
+			seqSelector.empty();
+			seqSelector.append($('<option value="-1">').text('---'));
+			$.each(data.schedule, (seqIndex, seqItem) => {
+				seqSelector.append($('<option>', {
+					value: seqItem.key,
+					text: seqItem.value,
+				}));
+			});
+		}
+	});
 }

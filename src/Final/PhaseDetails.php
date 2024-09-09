@@ -52,11 +52,11 @@ $JS_SCRIPT[] = phpVars2js(array(
     'TeamType' => $Team,
     'OptionType' => $Option,
 ));
-$JS_SCRIPT[] = '<script type="text/javascript" src="../Common/js/jquery-3.2.1.min.js"></script>';
 $JS_SCRIPT[] = '<script type="text/javascript" src="./PhaseDetails.js"></script>';
 $JS_SCRIPT[] = '<link href="./PhaseDetails.css" rel="stylesheet" type="text/css">';
-$JS_SCRIPT[] = '<link href="../Common/css/font-awesome.css" rel="stylesheet" type="text/css">';
 
+$IncludeFA = true;
+$IncludeJquery = true;
 $PAGE_TITLE=get_text('PhasesDetails', 'Tournament');
 
 include('Common/Templates/head.php');

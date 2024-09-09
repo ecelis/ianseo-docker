@@ -86,6 +86,7 @@ if($DataSource) {
     $t=safe_r_sql("select IFnull(ToIocCode,'') as nocCode from Tournament WHERE ToId={$_SESSION['TourId']}");
 	$u=safe_fetch($t);
 	$nocCode=$u->nocCode;
+    $doRecalcQualRank=array();
 
     foreach($tmpRequest as $Line => $Value) {
 		$Value=trim($Value);
@@ -263,7 +264,7 @@ if($DataSource) {
                     $ImportResult['Refused'][]='<tr class="error"><td>Row ' . $Line  . ' incorrect, Invalid Session reference<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
                     continue;
                 }
-                if(!preg_match('/^[0-9]+[A-F]{1}$/sim', $tmpString[3])) {
+                if(!preg_match('/^[0-9]+[A-Z]{1}$/sim', $tmpString[3])) {
                     $ImportResult['Refused'][]='<tr class="error"><td>Row ' . $Line  . ' incorrect, Invalid target No. reference<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
                     continue;
                 }
@@ -363,9 +364,9 @@ if($DataSource) {
 					WHERE SesTournament={$_SESSION['TourId']} AND SesOrder={$tmpString[1]} AND SesType='Q'";
 				$q=safe_r_SQL($Sql);
 				if(safe_num_rows($q)) {
-					updateSession($_SESSION['TourId'],$tmpString[1],'Q',$tmpString[2],$tmpString[3],4,1,0,0,0,'','','','',false);
+					updateSession($_SESSION['TourId'],$tmpString[1],'Q',$tmpString[2], null, $tmpString[3],4,1,0,0,0,'','','','',false);
 				} else {
-					insertSession($_SESSION['TourId'],$tmpString[1],'Q',$tmpString[2],$tmpString[3],4,1,0,0,0);
+					insertSession($_SESSION['TourId'],$tmpString[1],'Q',$tmpString[2],null, $tmpString[3],4,1,0,0,0);
 				}
 				$ImportResult['Inserted'][]='<tr><td>Inserted/updated</td><td>'.$tmpString[1].'</td><td>'.$tmpString[2].'</td><td>'.$tmpString[3].'</td></tr>';
 				$ImportResult['Imported']++;
@@ -421,23 +422,41 @@ if($DataSource) {
 					$ImportResult['Refused'][]='<tr class="error"><td>Row ' . $Line  . ' incorrect, wrong number of fields<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
 					continue;
 				}
+                $NocId = 0;
                 $EnCode=$tmpString[1];
                 $NocCode=mb_strtoupper($tmpString[2], 'UTF-8');
                 $NocName=$tmpString[3];
-                // check if the NOC is already there, otherwise creates the nation
-                $q=safe_r_sql("select CoId from Countries where CoCode=".StrSafe_DB($NocCode)." and CoTournament={$_SESSION['TourId']}");
-                if($r=safe_fetch($q)) {
-                    $NocId=$r->CoId;
+                if(str_starts_with($NocCode,"##")){
+                    $q=safe_r_sql("select CoId from Countries where CoName=".StrSafe_DB($NocName)." and CoTournament={$_SESSION['TourId']}");
+                    if ($r = safe_fetch($q)) {
+                        $NocId = $r->CoId;
+                    } else {
+                        $NocCode=substr($NocCode, 2);
+                        $q=safe_r_sql("select CoCode from Countries where CoCode LIKE ".StrSafe_DB($NocCode.'%')." and CoTournament={$_SESSION['TourId']} ORDER BY CoCode DESC");
+                        if ($r = safe_fetch($q)) {
+                            $NocCode .= '-' . str_pad(intval(substr($r->CoCode,-3))+1,3,"0",STR_PAD_LEFT);
+                        } else {
+                            $NocCode .= '-001';
+                        }
+                        safe_w_sql("insert into Countries set CoTournament={$_SESSION['TourId']}, CoCode=" . StrSafe_DB($NocCode) . ", CoName=" . StrSafe_DB($NocName) . ", CoNameComplete=" . StrSafe_DB($NocName) . ", CoLevelBitmap=4");
+                        $NocId = safe_w_last_id();
+                    }
                 } else {
-                    safe_w_sql("insert into Countries set CoTournament={$_SESSION['TourId']}, CoCode=".StrSafe_DB($NocCode).", CoName=".StrSafe_DB($NocName).", CoNameComplete=".StrSafe_DB($NocName).", CoLevelBitmap=4");
-                    $NocId=safe_w_last_id();
+                    // check if the NOC is already there, otherwise creates the nation
+                    $q = safe_r_sql("select CoId from Countries where CoCode=" . StrSafe_DB($NocCode) . " and CoTournament={$_SESSION['TourId']}");
+                    if ($r = safe_fetch($q)) {
+                        $NocId = $r->CoId;
+                    } else {
+                        safe_w_sql("insert into Countries set CoTournament={$_SESSION['TourId']}, CoCode=" . StrSafe_DB($NocCode) . ", CoName=" . StrSafe_DB($NocName) . ", CoNameComplete=" . StrSafe_DB($NocName) . ", CoLevelBitmap=4");
+                        $NocId = safe_w_last_id();
+                    }
                 }
                 // add this as second/third team
                 $CoField=($tmpString[0]== "##TEAM2##" ? 'EnCountry2' : 'EnCountry3');
                 safe_w_sql("update Entries set $CoField=$NocId where EnTournament={$_SESSION['TourId']} and EnCode=".StrSafe_DB($EnCode));
 				$ImportResult['Inserted'][]='<tr><td>Inserted/updated</td><td>'.$tmpString[1].'</td><td>'.$tmpString[2].'</td></tr>';
 				$ImportResult['Imported']++;
-			} elseif($tmpString[0]== "##OC-PRACTICE##") {
+			} elseif($tmpString[0]== "##EXTRAS##") {
 				if(count($tmpString)!=3) {
 					$ImportResult['Refused'][]='<tr class="error"><td>Row ' . $Line  . ' incorrect, wrong number of fields<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
 					continue;
@@ -447,7 +466,7 @@ if($DataSource) {
 					continue;
 				}
 				// gets the EnIds of the archer with that OC COde
-				$q=safe_r_SQL("select EnId from Entries INNER JOIN ExtraData ON EnId=EdId AND EdType='Z' where EdExtra=".StrSafe_DB($tmpString[1])." and EnTournament={$_SESSION['TourId']}");
+                $q=safe_r_SQL("select EnId from Entries where EnCode=".StrSafe_DB($tmpString[1])." and EnTournament={$_SESSION['TourId']}");
 				if(safe_num_rows($q)) {
 					while($r=safe_fetch($q)) {
 						safe_w_sql("insert into ExtraData set EdId=$r->EnId, EdType='P', EdExtra=".StrSafe_DB($tmpString[2])." on duplicate key update EdExtra=".StrSafe_DB($tmpString[2])."");
@@ -515,7 +534,67 @@ if($DataSource) {
 
                 $ImportResult['Inserted'][]='<tr><td>Inserted/updated</td><td>'.$tmpString[1].'</td><td>'.($Preferred ? 'Preferred' : '').'</td></tr>';
                 $ImportResult['Imported']++;
-			}
+            } elseif($tmpString[0]== "##QUAL-ARROWS##") {
+                if(count($tmpString)<4) {
+                    $ImportResult['Refused'][]='<tr class="error"><td>Row ' . $Line  . ' incorrect, wrong number of fields<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
+                    continue;
+                }
+                if(!preg_match('/^[a-z0-9_.-]+$/sim', $tmpString[1]) || !($Dist = intval($tmpString[2])) || $Dist>9) {
+                    $ImportResult['Refused'][]='<tr class="error"><td>Row ' . $Line  . ' incorrect, Invalid data<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
+                    continue;
+                }
+                // gets the EnIds of the archer with that Bib Code
+                $Sql = "SELECT EnId, QuD{$Dist}ArrowString AS ArrowString, EnClass, EnDivision, DiEnds*DiArrows as MaxArrows, DiEnds, DiArrows, TfT{$Dist} as TargetId, ToGoldsChars, ToXNineChars, TfGoldsChars, TfXNineChars, TfGoldsChars{$Dist}, TfXNineChars{$Dist}
+                    FROM Entries
+                    INNER JOIN Qualifications ON QuId=EnId 
+                    INNER JOIN Tournament on ToId=EnTournament
+                    LEFT JOIN DistanceInformation on DiTournament=EnTournament and QuSession=DiSession and DiDistance={$Dist} and DiType='Q'
+                    LEFT JOIN TargetFaces ON TfTournament=EnTournament and EnTargetFace=TfId
+                    WHERE EnCode={$tmpString[1]} AND EnTournament={$_SESSION['TourId']}";
+                $q=safe_r_sql($Sql);
+                if($r=safe_fetch($q)) {
+                    $doRecalcQualRank[]=($r->EnDivision.'|'.$r->EnClass.'|'.$Dist);
+                    $G=$r->ToGoldsChars;
+                    if(!empty($r->{"TfGoldsChars{$Dist}"})) {
+                        $G=$r->{"TfGoldsChars{$Dist}"};
+                    } else if(!empty($r->TfGoldsChars)) {
+                        $G=$r->TfGoldsChars;
+                    }
+                    $X=$r->ToXNineChars;
+                    if(!empty($r->{"TfXNineChars".$Dist})) {
+                        $X=$r->{"TfXNineChars".$Dist};
+                    } else if(!empty($r->TfXNineChars)) {
+                        $X=$r->TfXNineChars;
+                    }
+                    $arr = explode(',',$tmpString[3]);
+                    $ArrowString='';
+                    for($i = 0; $i<min(count($arr),$r->MaxArrows); $i++) {
+                        $ArrowString[$i] = GetLetterFromPrint(trim($arr[$i]),'T', $r->TargetId);
+                    }
+                    list($Score,$Gold,$XNine) = ValutaArrowStringGX($ArrowString,$G,$X);
+                    $Update = "UPDATE Qualifications SET
+                        QuD{$Dist}ArrowString=" . StrSafe_DB($ArrowString) . ",
+                        QuD{$Dist}Score=" . StrSafe_DB($Score) . ",
+                        QuD{$Dist}Gold=" . StrSafe_DB($Gold) . ",
+                        QuD{$Dist}Xnine=" . StrSafe_DB($XNine) . ",
+                        QuD{$Dist}Hits=" . StrSafe_DB(strlen(str_replace(' ','', $ArrowString))) . ",
+                        QuConfirm = QuConfirm & (255-".pow(2, $Dist) ."),
+                        QuScore=QuD1Score+QuD2Score+QuD3Score+QuD4Score+QuD5Score+QuD6Score+QuD7Score+QuD8Score,
+                        QuGold=QuD1Gold+QuD2Gold+QuD3Gold+QuD4Gold+QuD5Gold+QuD6Gold+QuD7Gold+QuD8Gold,
+                        QuXnine=QuD1Xnine+QuD2Xnine+QuD3Xnine+QuD4Xnine+QuD5Xnine+QuD6Xnine+QuD7Xnine+QuD8Xnine,
+                        QuHits=QuD1Hits+QuD2Hits+QuD3Hits+QuD4Hits+QuD5Hits+QuD6Hits+QuD7Hits+QuD8Hits,
+                        QuTimestamp=" . StrSafe_DB(date('Y-m-d H:i:s')) . "
+                        WHERE QuId={$r->EnId}";
+                    $RsUp=safe_w_sql($Update);
+                    if($_SESSION['TourLocRule']=='LANC') {
+                        CalculateDropWeight($r->EnId, $G);
+                    }
+                    $ImportResult['Inserted'][]='<tr><td>Inserted/updated</td><td>'.$tmpString[1].'</td><td>'.implode('</td><td>', $tmpString).'</td></tr>';
+                    $ImportResult['Imported']++;
+                } else {
+                    $ImportResult['Refused'][]='<tr class="error"><td>Row ' . $Line  . ' incorrect, Athlete not found<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
+                }
+            }
 		} else {
 			if(empty($tmpString[0])) {
 				$ImportResult['Refused'][]= '<tr class="error"><td>Row ' . $Line  . ' missing mandatory fields Entry Code<br/>Row not imported</td><td>'.implode('</td><td>', $tmpString)."</td></tr>";
@@ -1001,6 +1080,39 @@ if($DataSource) {
                     }
                 }
             }
+        }
+        $Rows=GetRows();
+    }
+
+    if(count($doRecalcQualRank)) {
+        $tmpSql = array();
+        $Dist = 0;
+        $evDivCl = [];
+        $evAbsI = [];
+        $evAbsT = [];
+        foreach (array_unique($doRecalcQualRank) as $ClDiv) {
+            $tmp = explode('|', $ClDiv);
+            $tmpSql[] = "(EcClass='{$tmp[1]}' AND EcDivision='$tmp[0]')";
+            $evDivCl[] = $tmp[0].$tmp[1];
+            $Dist = $tmp[2];
+        }
+        $Sql = "SELECT EcCode as evCode, (EcTeamEvent!=0) as evTeam FROM EventClass WHERE EcTournament={$_SESSION['TourId']} AND (" . implode(' OR ', $tmpSql) . ")";
+        $q = safe_r_SQL($Sql);
+        while($r = safe_fetch($q)) {
+            if($r->evTeam) {
+                $evAbsT[] = $r->evCode;
+            } else {
+                $evAbsI[] = $r->evCode;
+            }
+        }
+        Obj_RankFactory::create('DivClass',array('tournament' => $_SESSION['TourId'], 'events'=>$evDivCl,'dist'=>$Dist))->calculate();
+        Obj_RankFactory::create('DivClass',array('tournament' => $_SESSION['TourId'], 'events'=>$evDivCl,'dist'=>0))->calculate();
+        if(count($evAbsI)) {
+            Obj_RankFactory::create('Abs',array('tournament' => $_SESSION['TourId'], 'events'=>$evDivCl,'dist'=>$Dist))->calculate();
+            Obj_RankFactory::create('Abs',array('tournament' => $_SESSION['TourId'], 'events'=>$evDivCl,'dist'=>0))->calculate();
+        }
+        if(count($evAbsT)) {
+            MakeTeamsAbs();
         }
     }
 

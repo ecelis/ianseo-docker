@@ -67,9 +67,9 @@ require_once('Common/Lib/CommonLib.php');
 		// tipo, localizzazione e sottotipo
 			$q=safe_r_sql("select ToType, ToLocRule, ToTypeSubRule from Tournament where ToId={$tournament}");
 			$r=safe_fetch($q);
-			$ToType=$r->ToType;
-			$ToLocRule=$r->ToLocRule;
-			$ToSubRule=str_replace('-','',$r->ToTypeSubRule);
+			$ToType=$r->ToType ?? 0;
+			$ToLocRule=$r->ToLocRule ?? '';
+			$ToSubRule=str_replace('-','',$r->ToTypeSubRule ?? '');
 
 		// sicuramente includo la classe base
 			if (!file_exists($_baseClass=dirname(__DIR__) . '/Rank/Obj_Rank.php'))

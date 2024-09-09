@@ -31,11 +31,12 @@ $Delete = "DELETE FROM EventClass
 		AND EcTournament=" . StrSafe_DB($_SESSION['TourId']) . " 
 		AND EcClass=" . StrSafe_DB($_REQUEST['DelCl']) . " 
 		AND EcDivision=" . StrSafe_DB($_REQUEST['DelDiv']) . " 
-		AND EcSubClass=" . StrSafe_DB($_REQUEST['DelSubCl']) ;
+		AND EcSubClass=" . StrSafe_DB($_REQUEST['DelSubCl']) . " 
+		AND EcExtraAddons=" . StrSafe_DB($_REQUEST['DelExtraAO']) ;
 $Rs=safe_w_sql($Delete);
 
 if(safe_w_affected_rows()) {
-	safe_w_sql("UPDATE Events SET EvTourRules='' where EvCode=" . StrSafe_DB($_REQUEST['EvCode']) . " AND EvTeamEvent='0' AND EvTournament = " . StrSafe_DB($_SESSION['TourId']));
+	safe_w_sql("UPDATE Events SET EvTourRules='' where EvCode=" . StrSafe_DB($_REQUEST['EvCode']) . " AND EvTeamEvent=0 AND EvTournament = " . StrSafe_DB($_SESSION['TourId']));
 
 	// SO Reset
 	ResetShootoff($_REQUEST['EvCode'],0,0);

@@ -6,6 +6,7 @@ define("TYPE_HANDSHAKE","HandShake");
 define("TYPE_LIVEUPDATE","LiveMatchUpdated");
 define("TYPE_MATCHUPDATE","MatchUpdated");
 define("TYPE_RANKUPDATE","RankUpdated");
+define("TYPE_QRRANKUPDATE","QRRankUpdated");
 define("TYPE_WIND","Wind");
 define("TYPE_ARROWSPEED","ArrowSpeed");
 define("TYPE_TIME","Time");
@@ -55,6 +56,28 @@ function JackRunUpdate_RankUpdate($Event, $Team, $TourId) {
 	}
 }
 
+function JackRunUpdate_QRRankUpdate($Event, $Team, $TourId) {
+    $Targets = getModuleParameter('Jack', "HandShake", array(), $TourId);
+    if(!empty($Targets["API-JSON"])) {
+        if(!empty($Targets["API-JSON"]["extraparams"])) {
+            foreach ($Targets["API-JSON"]["extraparams"] as $k=>$v) {
+                $Response = "Notification=".TYPE_QRRANKUPDATE."&ClientId={$k}&Timestap=".time()."&Event={$Event}&Type={$Team}&CompCode=".getCodeFromId($TourId);
+                $ch = curl_init();
+                curl_setopt($ch,CURLOPT_URL, $Targets["API-JSON"]["extraparams"][$k]["Address"]);
+                curl_setopt($ch,CURLOPT_CONNECTTIMEOUT, 1);
+                curl_setopt($ch,CURLOPT_TIMEOUT, 2);
+                curl_setopt($ch,CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch,CURLOPT_HTTPHEADER, array('Content-Type: application/x-www-form-urlencoded'));
+                curl_setopt($ch,CURLOPT_POSTFIELDS, $Response);
+                $result = curl_exec($ch);
+                curl_close($ch);
+                //				echo "--Jack--\t$Response\t$result\n";
+            }
+        }
+    }
+}
+
 function JackRunUpdate_ArrowSpeed($Speed, $UM, $TourId) {
 	$Targets = getModuleParameter('Jack', "HandShake", array(), $TourId);
 	if(!empty($Targets["API-JSON"])) {
@@ -99,12 +122,13 @@ function JackRunUpdate_Wind($Speed, $Direction, $UM, $TourId) {
 	}
 }
 
-function JackRunUpdate_Time($Time, $Side, $TourId) {
+function JackRunUpdate_Time($Time, $Side, $Color, $TourId) {
 	$Targets = getModuleParameter('Jack', "HandShake", array(), $TourId);
 	if(!empty($Targets["API-JSON"])) {
 		if(!empty($Targets["API-JSON"]["extraparams"])) {
 			foreach ($Targets["API-JSON"]["extraparams"] as $k=>$v) {
-				$Response = "Notification=".TYPE_TIME."&ClientId={$k}&Timestap=".time()."&TimeValue={$Time}&Side={$Side}";
+                $isRunning = ($Color == 'green' OR $Color == 'yellow') ? 1 : 0;
+                $Response = "Notification=".TYPE_TIME."&ClientId={$k}&Timestap=".time()."&TimeValue={$Time}&Side={$Side}&Color={$Color}&Running={$isRunning}";
 				$ch = curl_init();
 				curl_setopt($ch,CURLOPT_URL, $Targets["API-JSON"]["extraparams"][$k]["Address"]);
 				curl_setopt($ch,CURLOPT_CONNECTTIMEOUT, 1);

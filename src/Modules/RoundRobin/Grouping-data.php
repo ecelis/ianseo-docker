@@ -24,7 +24,7 @@ if($IsBracket) {
 
 // Check the event exists
 if($Event) {
-	$q=safe_r_sql("select EvCode, EvEventName, EvElim1, EvFinalFirstPhase, EvNumQualified, coalesce(RrLevGroupArchers,EvNumQualified) as RrLevGroupArchers
+	$q=safe_r_sql("select EvCodeParent, EvCode, EvEventName, EvElim1, EvFinalFirstPhase, EvNumQualified, coalesce(RrLevGroupArchers,EvNumQualified) as RrLevGroupArchers
 		from Events 
 		left join RoundRobinLevel on RrLevTournament=EvTournament and RrLevTeam=EvTeamEvent and RrLevEvent=EvCode and RrLevLevel=$Level
 		where EvElimType=5 and EvTeamEvent=$Team and EvCode=".StrSafe_DB($Event)." and EvTournament={$_SESSION['TourId']}");
@@ -41,7 +41,7 @@ switch($_REQUEST['act']) {
 		// if no events, load an array of events that fit the "team" and select the first one
 		if(!$Event) {
 			$JSON['events']=[];
-			$q=safe_r_sql("select EvCode, EvEventName, EvElim1, EvFinalFirstPhase, EvNumQualified, coalesce(RrLevGroupArchers,EvNumQualified) as RrLevGroupArchers 
+			$q=safe_r_sql("select EvCodeParent, EvCode, EvEventName, EvElim1, EvFinalFirstPhase, EvNumQualified, coalesce(RrLevGroupArchers,EvNumQualified) as RrLevGroupArchers 
 				from Events 
 				left join RoundRobinLevel on RrLevTournament=EvTournament and RrLevTeam=EvTeamEvent and RrLevEvent=EvCode and RrLevLevel=$Level
 				where EvElimType=5 and EvTeamEvent=$Team and EvTournament={$_SESSION['TourId']} order by EvProgr");
@@ -99,7 +99,7 @@ switch($_REQUEST['act']) {
 				inner join Events on EvTournament=RrPartTournament and EvTeamEvent=RrPartTeam and EvCode=RrPartEvent
     			inner join Grids on GrPhase=$RealPhase and $Position=RrPartDestItem
     			left join Entries on EnId=RrPartParticipant and RrPartTeam=0
-				left join Teams on TeCoId=RrPartParticipant and RrPartTeam=1 and TeSubTeam=RrPartSubTeam and TeFinEvent=1
+				left join Teams on TeCoId=RrPartParticipant and TeSubTeam=RrPartSubTeam and TeFinEvent=1 and TeEvent=RrPartEvent and RrPartTeam=1
 				left join Countries on CoId=TeCoId and CoTournament=RrPartTournament
 				where RrPartLevel=0 and RrPartGroup=0 and RrPartTeam=$Team and RrPartEvent=".StrSafe_DB($Event)." and  RrPartTournament={$_SESSION['TourId']}
 				order by GrMatchNo");
@@ -107,7 +107,7 @@ switch($_REQUEST['act']) {
 			$q=safe_r_sql("select RrPartGroup, RrPartSourceLevel, RrPartSourceGroup, RrPartSourceRank, RrPartDestItem, RrGrName, RrGrSession, RrGrTargetArchers, RrGrArcherWaves, coalesce(concat(upper(EnFirstName), ' ', EnName), concat(CoCode, '-', CoName, if(TeSubTeam>0, concat(' (', TeSubTeam, ')'), ''))) as PartName from RoundRobinParticipants
 	            inner join RoundRobinGroup on RrGrTournament=RrPartTournament and RrGrTeam=RrPartTeam and RrGrEvent=RrPartEvent and RrGrLevel=RrPartLevel and RrGrGroup=RrPartGroup
 				left join Entries on EnId=RrPartParticipant and RrPartTeam=0
-				left join Teams on TeCoId=RrPartParticipant and RrPartTeam=1 and TeSubTeam=RrPartSubTeam and TeFinEvent=1
+				left join Teams on TeCoId=RrPartParticipant and TeSubTeam=RrPartSubTeam and TeFinEvent=1 and TeEvent=RrPartEvent and RrPartTeam=1
 				left join Countries on CoId=TeCoId and CoTournament=RrPartTournament
 				left join Session on SesTournament=RrPartTournament and SesType='R' and SesOrder=RrGrSession
 				where RrPartLevel=$Level and RrPartTeam=$Team and RrPartEvent=".StrSafe_DB($Event)." and  RrPartTournament={$_SESSION['TourId']}
@@ -138,11 +138,11 @@ switch($_REQUEST['act']) {
 		$JSON['groups']=array_values($JSON['groups']);
 
 		// gets all the source levels+groups of previous level
-		// if $Level==1 than previous level is qualification
+		// if $Level==1 than previous level is qualification or Parent Event!
 		$JSON['srcLevels']=array(
 			[
 				'val' => '0-0',
-				'txt' => get_text('QualRound')
+				'txt' => $EVENT->EvCodeParent ?: get_text('QualRound')
 			],
 		);
 		$oldLevel='-1';

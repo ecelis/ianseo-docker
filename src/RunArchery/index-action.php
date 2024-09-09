@@ -161,11 +161,11 @@ switch($_REQUEST['act']) {
 			$MaxRank=$r->EvElim2-6;
 			$q=safe_r_sql("select RarEntry, RarSubTeam, RarBib
 				from RunArcheryRank
-				where RarTournament={$_SESSION['TourId']} and RarTeam=$Team and RarPhase=$Phase and RarEvent=".StrSafe_DB($Event)." and RarQualified=''
+				where RarEntry<4000000000 and RarTournament={$_SESSION['TourId']} and RarTeam=$Team and RarPhase=$Phase and RarEvent=".StrSafe_DB($Event)." and RarQualified=''
 				order by RarTimeFinal, rand()");
 			while($r=safe_fetch($q) and $Rank<=$MaxRank) {
 				safe_w_sql("update RunArcheryRank
-					set RarEntry=$r->RarEntry, RarSubTeam=$r->RarSubTeam, RarBib=$r->RarBib
+					set RarEntry=$r->RarEntry, RarSubTeam=$r->RarSubTeam, RarBib='$r->RarBib'
 					where RarTournament={$_SESSION['TourId']} and RarTeam=$Team and RarPhase=1 and RarFromRank=$Rank and RarFromType=0 and RarEvent=".StrSafe_DB($Event));
 				// set the qualified
 				safe_w_sql("update RunArcheryRank
@@ -239,7 +239,7 @@ switch($_REQUEST['act']) {
 				$Pool=1;
 			}
 			while($r=safe_fetch($q)) {
-				$JSON['pools'][]=['k'=>$r->RarPool, 's'=>($Pool==$r->RarPool), 'v'=>($Phase==1 ? get_text('Final'.$r->RarPool, 'RunArchery') : get_text('PoolName', 'Tournament', $r->RarPool))];
+				$JSON['pools'][]=['k'=>$r->RarPool, 's'=>($Pool==$r->RarPool), 'v'=>($Phase==1 ? get_text('Final'.$r->RarPool, 'RunArchery') : get_text('SemiFinalName', 'RunArchery', $r->RarPool))];
 			}
 		}
 		$SoStatusField='EvShootOff';
@@ -306,6 +306,7 @@ switch($_REQUEST['act']) {
 					'FinTime' => $r->FinTime>0 ? date_format(date_create_from_format('U.u', $r->FinTime), 'H:i:s.v') : '',
 					'FinRank' => $r->IrmShowRank ? $r->FinRank : $r->IrmType,
 					'Bib' => $r->Bib,
+					'RarBib' => $r->RarBib,
 					'Irm' => $r->RarIrmType,
 					'Laps'=>[],
 				];
@@ -313,6 +314,7 @@ switch($_REQUEST['act']) {
 			}
 			$Rows[$r->RarBib]['Laps'][]=[
 				'Bib' => $r->Bib,
+                'RarBib' => $r->RarBib,
 				'LapNum' => $r->RaLap,
 				'EditStart' => $r->EditStart,
 				'LapTime' => date_format(date_create_from_format('U.u', $r->Lap), 'H:i:s.v'), // DateTime::createFromFormat('U.u', $r->Lap)->format('H:i:s.u', ),

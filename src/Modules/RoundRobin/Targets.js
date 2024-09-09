@@ -47,7 +47,11 @@ function getEventDetail() {
             });
             $('#EvRound').val(data.evRound);
 
-            $('#LevDetails').empty();
+            let Settings=$('#Settings');
+            let Footer=$('#Footer');
+
+            $('#MyTable').empty();
+            $('#MyTable').append(Settings);
 
             // sets all the colspan to the correct number
             let roundNum=(data.evRound=='0' ? data.rounds.length : 1);
@@ -73,66 +77,77 @@ function getEventDetail() {
 
             // loops in the groups
             $.each(data.groups, function() {
-                let groupId=this.gId;
-                if(this.gM4T!='0') {
-                    checkABCD=true;
-                }
-                $('#LevDetails').append('<tr><td colspan="'+ colSpan+'">&nbsp;</td></tr>');
+                let levelId=this.lId;
+                let levBody=$('<tbody ref="'+levelId+'">' +
+                    '<tr><td colspan="'+ colSpan+'">&nbsp;</td></tr>' +
+                    '<tr><th class="Title" colspan="'+ colSpan+'">'+this.lName+'</th></tr>' +
+                    '</tbody>');
 
-                let row='<tr ref="'+groupId+'">' +
-                    '<th class="Title" colspan="'+ colSpan+'">'+this.gName+'</th>' +
-                    '</tr>'+
-                    (this.gM4T==1 ? '<tr><th class="Left" colspan="'+ colSpan+'">'+data.headers.mMatTgt+': <input type="radio" value="AB" name="Multiple-'+groupId+'" checked="checked">AB - <input type="radio" value="CD" name="Multiple-'+groupId+'">CD - <input type="radio" value="ABCD" name="Multiple-'+groupId+'">ABCD</th></tr>' : '');
-                $('#LevDetails').append(row);
+                $('#MyTable').append(levBody);
 
-                let rounds='<tr class="round-row">';
-                $.each(this.gRounds, function() {
-                    let roundId=this.rId;
-                    let round='<table class="Tabella" group="'+groupId+'" round="'+roundId+'">';
-                    // first line of round is always a "set to all"
-                    round+='<tr class="setToAllRow">' +
-                        '<th colspan="3" group="'+groupId+'" round="'+roundId+'">'+setToAll+'</th>' +
-                        '</tr>';
-
-                    // round name
-                    round+='<tr><th colspan="3">' + this.rName + '</th></tr>';
-
-                    // column names
-                    round+='<tr>' +
-                        '<th>'+data.headers.mItem+'</th>' +
-                        '<th>'+data.headers.mTarget+'</th>' +
-                        '<th>'+data.headers.mSchedule+'</th>' +
-                        '</tr>';
-
-                    // rows
-                    $.each(this.rComponents, function() {
-                        let evenMatch=(parseInt(this.mMatchno/2)*2==this.mMatchno);
-                        if(evenMatch && this.mMatchno!=0) {
-                            round+='<tr><td colspan="3">&nbsp;</td></tr>';
-                        }
-                        round+='<tr matchno="'+this.mMatchno+'">' +
-                            '<th>'+this.mItem+'</th>' +
-                            '<td><input class="w-5ch" type="text" name="tgt" value="'+this.mTarget+'"'+(this.mIsBye ? ' disabled="disabled"' : '')+' onchange="updateField(this)"></td>';
-                        if(evenMatch) {
-                            round += '<td class="NoWrap" rowspan="2">' +
-                                '<div>' + data.headers.mDate + '<input class="w-10ch" type="text" name="date" value="'+this.mDate+'"'+(this.mIsBye ? ' disabled="disabled"' : '')+' onchange="updateField(this)"></div>' +
-                                '<div>' +
-                                data.headers.mTime + '<input class="w-5ch" type="text" name="time" value="'+this.mTime+'"'+(this.mIsBye ? ' disabled="disabled"' : '')+' onchange="updateField(this)">' +
-                                data.headers.mLength + '<input class="w-3ch" type="text" name="length" value="'+this.mLength+'"'+(this.mIsBye ? ' disabled="disabled"' : '')+' onchange="updateField(this)">' +
-                                '</div>' +
-                                '</td>';
-                        }
-                        round+= '</tr>';
-                    });
-
-                    round+='</table>';
-                    if(roundId!=1) {
-                        rounds+='<td></td>';
+                $.each(this.groups, function() {
+                    let groupId=this.gId;
+                    if(this.gM4T!='0') {
+                        checkABCD=true;
                     }
-                    rounds+='<td colspan="3">'+round+'</td>';
+                    // levBody.append('<tr><td colspan="'+ colSpan+'">&nbsp;</td></tr>');
+
+                    let row='<tr ref="'+groupId+'">' +
+                        '<th class="Title" colspan="'+ colSpan+'">'+this.gName+'</th>' +
+                        '</tr>'+
+                        (this.gM4T==1 ? '<tr><th class="Left" colspan="'+ colSpan+'">'+data.headers.mMatTgt+': <input type="radio" value="AB" name="Multiple-'+groupId+'" checked="checked">AB - <input type="radio" value="CD" name="Multiple-'+groupId+'">CD - <input type="radio" value="ABCD" name="Multiple-'+groupId+'">ABCD</th></tr>' : '');
+                    levBody.append(row);
+
+                    let rounds='<tr class="round-row">';
+                    $.each(this.gRounds, function() {
+                        let roundId=this.rId;
+                        let round='<table class="Tabella" level="'+levelId+'" group="'+groupId+'" round="'+roundId+'">';
+                        // first line of round is always a "set to all"
+                        round+='<tr class="setToAllRow">' +
+                            '<th colspan="3" group="'+groupId+'" round="'+roundId+'">'+setToAll+'</th>' +
+                            '</tr>';
+
+                        // round name
+                        round+='<tr><th colspan="3">' + this.rName + '</th></tr>';
+
+                        // column names
+                        round+='<tr>' +
+                            '<th>'+data.headers.mItem+'</th>' +
+                            '<th>'+data.headers.mTarget+'</th>' +
+                            '<th>'+data.headers.mSchedule+'</th>' +
+                            '</tr>';
+
+                        // rows
+                        $.each(this.rComponents, function() {
+                            let evenMatch=(parseInt(this.mMatchno/2)*2==this.mMatchno);
+                            if(evenMatch && this.mMatchno!=0) {
+                                round+='<tr><td colspan="3">&nbsp;</td></tr>';
+                            }
+                            round+='<tr matchno="'+this.mMatchno+'">' +
+                                '<th>'+this.mItem+'</th>' +
+                                '<td><input class="w-5ch" type="text" name="tgt" value="'+this.mTarget+'"'+(this.mIsBye ? ' disabled="disabled"' : '')+' onchange="updateField(this)"></td>';
+                            if(evenMatch) {
+                                round += '<td class="NoWrap" rowspan="2">' +
+                                    '<div>' + data.headers.mDate + '<input class="w-10ch" type="text" name="date" value="'+this.mDate+'"'+(this.mIsBye ? ' disabled="disabled"' : '')+' onchange="updateField(this)"></div>' +
+                                    '<div>' +
+                                    data.headers.mTime + '<input class="w-5ch" type="text" name="time" value="'+this.mTime+'"'+(this.mIsBye ? ' disabled="disabled"' : '')+' onchange="updateField(this)">' +
+                                    data.headers.mLength + '<input class="w-3ch" type="text" name="length" value="'+this.mLength+'"'+(this.mIsBye ? ' disabled="disabled"' : '')+' onchange="updateField(this)">' +
+                                    '</div>' +
+                                    '</td>';
+                            }
+                            round+= '</tr>';
+                        });
+
+                        round+='</table>';
+                        if(roundId!=1) {
+                            rounds+='<td></td>';
+                        }
+                        rounds+='<td colspan="3">'+round+'</td>';
+                    });
+                    rounds+='</tr>';
+                    levBody.append(rounds);
+
                 });
-                rounds+='</tr>';
-                $('#LevDetails').append(rounds);
 
 
             });
@@ -174,6 +189,9 @@ function getEventDetail() {
                 $('.setToAllRow').show();
             }
 
+            $('#MyTable').append(Footer);
+            $('#MyTable #Footer [colspan]').attr('colspan', colSpan);
+
             checkDuplicates();
         } else if(data.msg!='') {
             $.alert(data.msg);
@@ -211,7 +229,7 @@ function updateField(obj) {
     let form={
         Team:$('#EvTeam').val(),
         Event:$('#EvCode').val(),
-        Level:$('#EvLevel').val(),
+        Level:$(obj).closest('table').attr('level'),
         Group:$(obj).closest('table').attr('group'),
         Round:$(obj).closest('table').attr('round'),
         Matchno:$(obj).closest('tr').attr('matchno'),
@@ -229,13 +247,13 @@ function updateField(obj) {
         if(data.error==0) {
             if(obj.name=='tgt') {
                 $.each(data.targets, function () {
-                    $('.Tabella[group="'+this.g+'"][round="'+this.r+'"] [matchno="'+this.m+'"] [name="tgt"]').val(this.t);
+                    $('.Tabella[level="'+this.l+'"][group="'+this.g+'"][round="'+this.r+'"] [matchno="'+this.m+'"] [name="tgt"]').val(this.t);
                 });
             } else {
                 $.each(data.dates, function () {
-                    $('.Tabella[group="'+this.g+'"][round="'+this.r+'"] [matchno="'+this.m+'"] [name="date"]').val(this.d);
-                    $('.Tabella[group="'+this.g+'"][round="'+this.r+'"] [matchno="'+this.m+'"] [name="time"]').val(this.t);
-                    $('.Tabella[group="'+this.g+'"][round="'+this.r+'"] [matchno="'+this.m+'"] [name="length"]').val(this.l);
+                    $('.Tabella[level="'+this.lv+'"][group="'+this.g+'"][round="'+this.r+'"] [matchno="'+this.m+'"] [name="date"]').val(this.d);
+                    $('.Tabella[level="'+this.lv+'"][group="'+this.g+'"][round="'+this.r+'"] [matchno="'+this.m+'"] [name="time"]').val(this.t);
+                    $('.Tabella[level="'+this.lv+'"][group="'+this.g+'"][round="'+this.r+'"] [matchno="'+this.m+'"] [name="length"]').val(this.l);
                 });
 
 

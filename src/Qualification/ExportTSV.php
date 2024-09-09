@@ -26,7 +26,7 @@ $Sql = "SELECT EnCode as Bib, ifnull(bib.EdExtra,'') as LocalBib, EnFirstName AS
 	CoCode AS NOC, CoName AS Country, EnDivision AS Division, EnClass as Class, EnSubClass as SubClass,  
 	$DistQuery
    	QuScore,QuHits,QuGold,QuXnine,
-	if(QuClRank=0,'',QuClRank) as QuClRank, IndEvent, if(IndRank=0,'',IndRank) as IndRank, if(IndRankFinal=0,'',IndRankFinal) as IndRankFinal, ifnull(mail.EdEmail,'') as Email
+	if(QuClRank=0,'',QuClRank) as QuClRank, IndEvent, if(IndRank=0,'',IndRank) as IndRank, if(IndRankFinal=0,'',IndRankFinal) as IndRankFinal, QuTieWeightDecoded,IndTieWeightDecoded, IndFinTieWeightDecoded, ifnull(mail.EdEmail,'') as Email
 	FROM Qualifications
 	INNER JOIN Entries ON QuId=EnId
 	INNER JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament
@@ -42,7 +42,7 @@ $header = array('WaID','Local Bib','FamilyName','GivenName','DoB','Gender','Sess
 for ($i=1;$i<=$tourData->ToNumDist;++$i) {
     $header =array_merge($header, array("D{$i} Score","D{$i} ".$tourData->ToGolds,"D{$i} ". $tourData->ToXNine, "D{$i} Arrows"));
 }
-$header =array_merge($header, array("Score", "Hits", $tourData->ToGolds, $tourData->ToXNine, 'Category Rank','Event', 'Qual Rank','Final Rank','Email'));
+$header =array_merge($header, array("Score", "Hits", $tourData->ToGolds, $tourData->ToXNine, 'Category Rank','Event', 'Qual Rank','Final Rank','Category Drops', 'Qualification Drops','Elimination Drops','Email'));
 $data = array();
 $data[] = $header;
 while ($r=safe_fetch_assoc($q)) {

@@ -1,6 +1,6 @@
 <?php
 
-$Indices=array('bis','ter','quat', 'quin', 'sex', 'sept', 'oct');
+require_once('Common/Lib/CommonLib.php');
 
 $PdfData->HeaderPool[6]='';
 $PdfData->HeaderPool[5]='';
@@ -269,14 +269,14 @@ foreach($PdfData->Data['Items'] as $EvCode => $MyRows) {
 			if($targetNo != substr($MyRow->TargetNo,0,-1)) {
 				$TargetToPrint=$MyRow->TargetNo;
 				if($MyRow->TargetNo and $NumTarget!=intval($MyRow->TargetNo)) {
-					$TargetToPrint = $NumTarget . $Indices[ceil(intval($MyRow->TargetNo)/($NumEnd))-2] . '-' . substr($MyRow->TargetNo,-1,1);
+					$TargetToPrint = CheckBisTargets($MyRow->TargetNo, $NumEnd);
 				}
 				$pdf->lastY += 3.5;
 				$arc=array(
-					trim($TargetToPrint,'0') . "  #",
+					ltrim($TargetToPrint,'0') . "  #",
 					$athlete,
                     ($MyRow->NationCode ?? ''),
-                    ($MyRow->Nation == ''));
+                    ($MyRow->Nation ?? ''));
 				if($MyRow->EvElimType==3) {
 					$arc[]=$MyRow->Score.(isset($MyRow->TiebreakDecoded) ? ' T.'.$MyRow->TiebreakDecoded.($MyRow->Closest ? '+' : '') : '');
 				}

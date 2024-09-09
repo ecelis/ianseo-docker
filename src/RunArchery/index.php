@@ -86,6 +86,8 @@ echo '<tr>
     <th class="Header PoolSel d-none" id="headPool"></th>
     <th class="Header" id="headLap"></th>
     <th class="Header" id="headIO">
+    	<div class="Button mx-5" onclick="importArrows()"><i class="fa fa-compress-arrows-alt mr-2"></i>'.get_text('ImportArrows', 'RunArchery').'</div>
+    	<div class="Button mx-5" onclick="importLoops()"><i class="fa fa-redo mr-2"></i>'.get_text('ImportLoops', 'RunArchery').'</div>
     	<div class="Button mx-5" onclick="importTimes()"><i class="fa fa-upload mr-2"></i>'.get_text('ImportTimes', 'RunArchery').'</div>
     	<div class="Button mx-5 d-none" id="sendNextPhase" onclick="sendNextPhase()"><i class="far fa-circle-right mr-2"></i>'.get_text('MoveToNextPhase', 'RunArchery').'</div>
     </th>

@@ -114,8 +114,6 @@ $lang['RaspControl']='Raspberry controle';
 $lang['RaspDevice']='Apparaat';
 $lang['RasUrl']='URL naar server';
 $lang['StickyAlreadySet']='Deze niet te wijzigen series zijn al ingevoerd in een andere sessie.';
-$lang['TVCss3Divider']='Verdeler';
-$lang['TVCss3Loser']='Wijziging verliezer';
 $lang['WAToolbox-MissingParams']='Ontbrekende parameter';
 $lang['WAToolbox-NoCompCode']='Ontbrekende competitie code';
 ?>

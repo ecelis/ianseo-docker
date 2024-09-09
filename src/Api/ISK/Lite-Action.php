@@ -42,7 +42,6 @@ switch($_REQUEST['act']) {
     case 'CalcClDivTeam':
     case 'CalcFinInd':
     case 'CalcFinTeam':
-    case 'CalcFinRobin':
 		if(isset($_REQUEST['val'])) {
 			setModuleParameter('ISK', $_REQUEST['act'], intval($_REQUEST['val']));
 		} else {
@@ -58,7 +57,8 @@ switch($_REQUEST['act']) {
 
                 // we import EVERYTHING related to this competition...
 			$SQL="SELECT Qualifications.*, IskDtArrowstring, IskDtDistance, IskDtEndNo, DIDistance, DIEnds, DIArrows, IF(TfGoldsChars='',ToGoldsChars,TfGoldsChars) as GoldsChars, IF(TfXNineChars='',ToXNineChars,TfXNineChars) as XNineChars,
-                    `TfGoldsChars1`, `TfXNineChars1`, `TfGoldsChars2`, `TfXNineChars2`, `TfGoldsChars3`, `TfXNineChars3`, `TfGoldsChars4`, `TfXNineChars4`, `TfGoldsChars5`, `TfXNineChars5`, `TfGoldsChars6`, `TfXNineChars6`, `TfGoldsChars7`, `TfXNineChars7`, `TfGoldsChars8`, `TfXNineChars8`
+                    `TfGoldsChars1`, `TfXNineChars1`, `TfGoldsChars2`, `TfXNineChars2`, `TfGoldsChars3`, `TfXNineChars3`, `TfGoldsChars4`, `TfXNineChars4`, `TfGoldsChars5`, `TfXNineChars5`, `TfGoldsChars6`, `TfXNineChars6`, `TfGoldsChars7`, `TfXNineChars7`, `TfGoldsChars8`, `TfXNineChars8`,
+                    ToElabTeam!=127 as MakeTeams
 				from Qualifications
 				INNER JOIN Entries ON QuId=EnId
 				INNER JOIN Tournament ON ToId=EnTournament
@@ -116,7 +116,7 @@ switch($_REQUEST['act']) {
 						Obj_RankFactory::create('DivClass', array('tournament' => $_SESSION['TourId'], 'events' => $r->EnDivision . $r->EnClass, 'dist' => $Dist))->calculate();
 						Obj_RankFactory::create('DivClass', array('tournament' => $_SESSION['TourId'], 'events' => $r->EnDivision . $r->EnClass, 'dist' => 0))->calculate();
 					}
-					if ($r->TeamCl != 0) {
+					if ($r->MakeTeams and $r->TeamCl != 0) {
 						MakeTeams(NULL, $r->EnDivision . $r->EnClass, $_SESSION['TourId']);
 					}
 				}
@@ -133,16 +133,19 @@ switch($_REQUEST['act']) {
 				}
 
 				// Abs Team recalc
-				$SQL = "SELECT DISTINCT EvCode, EnDivision, EnClass
+                if($r->MakeTeams) {
+
+                    $SQL = "SELECT DISTINCT EvCode, EnDivision, EnClass
 						FROM Events
 						INNER JOIN EventClass ON EvCode=EcCode AND EcTeamEvent>0 AND EvTournament=EcTournament
 						inner join Entries on EnId in ($EnIds) and EnTournament=EvTournament and EnDivision=EcDivision and EnClass=EcClass and if(EcSubClass='', true, EnSubClass=EcSubClass) and EnTeamFEvent+EnTeamMixEvent>0
 						WHERE EvTournament={$_SESSION['TourId']} and EvTeamEvent=1
 						";
-				$q=safe_r_sql($SQL);
-				while($r=safe_fetch($q)) {
-					MakeTeamsAbs(NULL, $r->EnDivision, $r->EnClass, $_SESSION['TourId']);
-				}
+                    $q=safe_r_sql($SQL);
+                    while($r=safe_fetch($q)) {
+                        MakeTeamsAbs(NULL, $r->EnDivision, $r->EnClass, $_SESSION['TourId']);
+                    }
+                }
 			}
 			if($updated) {
 				$JSON['msg']=get_text('ImportDoneQual', 'ISK');

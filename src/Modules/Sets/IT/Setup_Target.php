@@ -275,6 +275,7 @@ switch($TourType) {
 				CreateDistanceNew($TourId, $TourType, 'COA_', array(array('50m-1',50)));
 				CreateDistanceNew($TourId, $TourType, 'COM_', array(array('50m-1',50)));
 				CreateDistanceNew($TourId, $TourType, 'COR_', array(array('40m-1',40)));
+				CreateDistanceNew($TourId, $TourType, 'COG_', array(array('25m-1',25)));
 				CreateDistanceNew($TourId, $TourType, 'ANS_', array(array('50m-1',50)));
 				CreateDistanceNew($TourId, $TourType, 'ANM_', array(array('50m-1',50)));
 				CreateDistanceNew($TourId, $TourType, 'ANJ_', array(array('50m-1',50)));
@@ -403,8 +404,8 @@ switch($TourType) {
         break;
     case 39:
         CreateTargetFace($TourId, $i++, 'Default', '%', '1', TGT_OUT_FULL, 122);
-        CreateTargetFace($TourId, $i++, 'Compound', 'REG-^CO', '1',  TGT_OUT_5_big10, 80);
-		CreateTargetFace($TourId, $i  , 'CO Ragazzi', 'REG-^CO', '1',  TGT_IND_1_small10, 122);
+        CreateTargetFace($TourId, $i++, 'Compound', 'REG-^CO[^R|^G]', '1',  TGT_OUT_5_big10, 80);
+		CreateTargetFace($TourId, $i  , 'CO R/G', 'REG-^CO[R|G]', '1', TGT_IND_1_small10, 122);
 		TargetFaceGoldsXnines($TourId, $i++, '10', '9', 'L', 'J');
         CreateTargetFace($TourId, $i++, 'W1', 'REG-^W1', '1',  TGT_OUT_FULL, 80);
         CreateTargetFace($TourId, $i++, 'VI', 'REG-^V', '1',  TGT_OUT_FULL, 80);

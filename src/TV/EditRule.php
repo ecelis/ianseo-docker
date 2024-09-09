@@ -11,6 +11,25 @@ $MMId=0;
 $NewOrder=0;
 $CHAIN=NULL;
 
+if($_REQUEST['addLeft']??'') {
+    // inserts the left logo of the competition in the TV contents
+    $q=safe_r_sql("SELECT coalesce(MAX(TVCId), 0) AS CurID FROM TVContents WHERE TVCTournament=$TourId");
+    $ID=(safe_fetch($q)->CurID)+1;
+    safe_w_sql("insert into TVContents (select $ID, ToId, 'Logo Left', ToImgL, 'image/jpeg', 5, 50, now() from Tournament where ToId=$TourId and ToImgL>'')");
+    include_once('Common/CheckPictures.php');
+    CheckPictures();
+    CD_redirect(go_get('addLeft', 0, true));
+}
+if($_REQUEST['addRight']??'') {
+    // inserts the left logo of the competition in the TV contents
+    $q=safe_r_sql("SELECT coalesce(MAX(TVCId), 0) AS CurID FROM TVContents WHERE TVCTournament=$TourId");
+    $ID=(safe_fetch($q)->CurID)+1;
+    safe_w_sql("insert into TVContents (select $ID, ToId, 'Logo Right', ToImgR, 'image/jpeg', 5, 50, now() from Tournament where ToId=$TourId and ToImgL>'')");
+    include_once('Common/CheckPictures.php');
+    CheckPictures();
+    CD_redirect(go_get('addRight', 0, true));
+}
+
 if(!empty($_GET['contdel'])) {
 	// item is deletable ony if not used in any rule
 	$q=safe_r_sql("select * from TVSequence where TVSTournament=$TourId and TVSTable='MM' and TVSCntSameTour='1' and TVSContent=" . intval($_GET['contdel']));
@@ -282,12 +301,23 @@ if($_POST) {
 
 	cd_redirect(go_get(array('NewDb'=>'', 'NewMm'=>''), true));
 }
-
+require_once('Common/Lib/CommonLib.php');
 $JS_SCRIPT=array(
 	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
 	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'TV/FuncRot.js"></script>',
 	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ColorPicker/302pop.js"></script>',
+    '<script src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
+	'<link href="./EditRule.css" media="screen" rel="stylesheet" type="text/css">',
+    phpVars2js([
+        'cmdConfirm'=>get_text('Confirm','Tournament'),
+        'cmdCancel'=>get_text('CmdCancel'),
+        'cssReminder'=>get_text('CssReminder','Boinx'),
+        'msgAreYouSure'=>get_text('MsgAreYouSure'),
+    ]),
 	);
+
+$IncludeFA=true;
+$IncludeJquery = true;
 
 $PAGE_TITLE=get_text('TVManagingRule', 'Tournament', ManageHTML($RULE->TVRName));
 

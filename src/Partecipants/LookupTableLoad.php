@@ -5,6 +5,18 @@ require_once('Common/Fun_Various.inc.php');
 
 CheckTourSession(true);
 checkACL(AclParticipants, AclReadWrite);
+$ML=ini_get('memory_limit');
+switch(substr($ML,-1)) {
+    case 'G':
+        break;
+    case 'M':
+        if (intval($ML)<512) {
+            ini_set('memory_limit', '512M');
+        }
+        break;
+    default:
+        ini_set('memory_limit', '512M');
+}
 
 if(!empty($_REQUEST['PrevPhoto']) and !empty($_REQUEST['EnId']) and !empty($_REQUEST['PhEnId'])) {
 	require_once('Common/CheckPictures.php');
@@ -340,7 +352,7 @@ function DoLookupEntries($u, $file='') {
 			safe_w_sql("update LookUpPaths set LupLastUpdate='".date('Y-m-d H:i:s')."' where LupIocCode='$u->LupIocCode'");
 		}
 	} else {
-	// dovrebbe essere il file tabulato
+        // dovrebbe essere il file tabulato
         if(!is_dir($CFG->DOCUMENT_PATH.'Tournament/TmpDownload')) {
             mkdir($CFG->DOCUMENT_PATH.'Tournament/TmpDownload', 0777);
             chmod($CFG->DOCUMENT_PATH.'Tournament/TmpDownload', 0777);
@@ -537,28 +549,47 @@ function DoLookupPhoto($u, $OnlyMissing=false, $ForceOld=false) {
 
 function DoLookupFlags($u) {
 	require_once('Common/CheckPictures.php');
-	$q=safe_r_sql("select distinct CoCode, CoName from Countries inner join Entries on CoId in (EnCountry, EnCountry2,EnCountry3) and CoTournament=EnTournament left join Flags ON FlTournament=CoTournament AND FlCode=CoCode where EnTournament={$_SESSION['TourId']} and EnIocCode='$u->LupIocCode' order by CoCode");
+    $q=safe_r_sql("select CoCode, CoName 
+        from Countries 
+        inner join Entries on CoId in (EnCountry, EnCountry2,EnCountry3) and CoTournament=EnTournament 
+        left join Flags ON FlTournament=CoTournament AND FlCode=CoCode 
+        where EnTournament={$_SESSION['TourId']} and EnIocCode='$u->LupIocCode' 
+        group by CoCode
+        order by CoCode");
 
-	$Opt='';
+    $Opt='';
 	if($_SESSION['TourLocRule']=='PAR') {
 		$Opt='opt=IPC&';
 	} elseif(!empty($_REQUEST['fisu'])) {
 		$Opt='opt=FISU&';
 	}
+    $FlagsDone=[];
 	while($r=safe_fetch($q)) {
+        $FlagToCheck=($u->LupIocCode=='FITA' ? substr($r->CoCode,0,3) : $r->CoCode);
+
+        if($u->LupIocCode=='FITA' and ($FlagsDone[$FlagToCheck]??'')) {
+            $SQL="FlCode='$r->CoCode',
+                    FlIocCode='$u->LupIocCode',
+                    FlTournament={$_SESSION['TourId']},
+                    FlJPG=" . $FlagsDone[$FlagToCheck][0] .",
+                    FlSVG=" . $FlagsDone[$FlagToCheck][1] ;
+            safe_w_sql("insert into Flags set $SQL on duplicate key update $SQL");
+            echo '<br/>'.$r->CoCode.' duplicate of '.$FlagToCheck;
+            continue;
+        }
 		echo '<br/>'.$r->CoCode.'-'.$r->CoName. '... ';
 		flush();
 		//ob_flush();
 
-		$imJPG=file_get_contents($u->LupFlagsPath."?{$Opt}jpg=".$r->CoCode);
+		$imJPG=file_get_contents($u->LupFlagsPath."?{$Opt}jpg=".$FlagToCheck);
 		if($Opt and !$imJPG) {
-			$imJPG=file_get_contents($u->LupFlagsPath."?jpg=".$r->CoCode);
+			$imJPG=file_get_contents($u->LupFlagsPath."?jpg=".$FlagToCheck);
 		}
 		if(!$imJPG) {
 			echo $u->LupFlagsPath."?png=".$r->CoCode . ' ';
-			$imgtmp=file_get_contents($u->LupFlagsPath."?{$Opt}png=".$r->CoCode);
+			$imgtmp=file_get_contents($u->LupFlagsPath."?{$Opt}png=".$FlagToCheck);
 			if($Opt and !$imgtmp) {
-				$imgtmp=file_get_contents($u->LupFlagsPath."?png=".$r->CoCode);
+				$imgtmp=file_get_contents($u->LupFlagsPath."?png=".$FlagToCheck);
 			}
 			if($imgtmp) {
 				$tmpnam=tempnam('/tmp', 'img');
@@ -568,9 +599,9 @@ function DoLookupFlags($u) {
 				}
 			}
 		}
-		$imSVG=file_get_contents($u->LupFlagsPath."?{$Opt}svg=".$r->CoCode);
+		$imSVG=file_get_contents($u->LupFlagsPath."?{$Opt}svg=".$FlagToCheck);
 		if($Opt and !$imSVG) {
-			$imSVG=file_get_contents($u->LupFlagsPath."?svg=".$r->CoCode);
+			$imSVG=file_get_contents($u->LupFlagsPath."?svg=".$FlagToCheck);
 		}
 
 		if($imJPG or $imSVG) {
@@ -580,7 +611,9 @@ function DoLookupFlags($u) {
 				FlJPG=" . ($imJPG ? StrSafe_DB(base64_encode($imJPG)) : "''") .",
 				FlSVG=" . ($imSVG ? "'".addslashes(gzdeflate($imSVG))."'" : "''");
 			safe_w_sql("insert into Flags set $SQL on duplicate key update $SQL");
-
+            if($u->LupIocCode=='FITA') {
+                $FlagsDone[$FlagToCheck]=[($imJPG ? StrSafe_DB(base64_encode($imJPG)) : "''"), ($imSVG ? "'".addslashes(gzdeflate($imSVG))."'" : "''")];
+            }
 			echo 'OK';
 		} else {
 			echo 'none';

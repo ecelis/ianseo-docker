@@ -79,6 +79,13 @@ foreach ($_REQUEST as $Key => $Value) {
 					if($r=safe_fetch($q)) {
 						safe_w_SQL("update Finals set FinSetScore=".($r->FinSetScore+1)." where FinTournament={$_SESSION['TourId']} and FinEvent='$ee' and FinMatchNo=$mm");
 					}
+				} else {
+					// set as max ends in case
+					safe_w_sql("update
+						Events
+						inner join Finals on FinTournament=EvTournament and FinEvent=EvCode and FinMatchNo=$mm
+						set FinSetScore=least(FinSetScore, EvFinEnds)
+						where EvMatchMode=1 and EvTournament={$_SESSION['TourId']} and EvCode='$ee' and EvTeamEvent=0");
 				}
 			}
 			break;
@@ -86,7 +93,8 @@ foreach ($_REQUEST as $Key => $Value) {
 		case 't':
 			// if at Sets Check if the set score is compatible with a SO
 			$Continue=false;
-			$q=safe_w_sql("select EvMatchMode, FinScore, FinSetScore, FinTiebreak, FinTbClosest, GrPhase from Finals
+			$q=safe_w_sql("select EvMatchMode, FinScore, FinSetScore, FinTiebreak, FinTbClosest, GrPhase, EvFinalTargetType
+                from Finals
 				inner join Events on EvTournament=FinTournament and EvCode=FinEvent and EvTeamEvent=0
 				inner join Grids on GrMatchNo=FinMatchNo
 				WHERE FinTournament={$_SESSION['TourId']} AND FinEvent='$ee' AND FinMatchNo in ($mm, $opp)
@@ -98,9 +106,9 @@ foreach ($_REQUEST as $Key => $Value) {
 				if(($r2->EvMatchMode and $r1->FinSetScore >= $obj->ends and $r2->FinSetScore >= $obj->ends) or (!$r2->EvMatchMode and $r1->FinScore==$r2->FinScore)) {
 					if($Items[1]=='t') {
 						$ArrowNum = $Items[4];
-						$tiebreak = GetLetterFromPrint($Value);
+						$tiebreak = GetLetterFromPrint($Value, 'T', $r1->EvFinalTargetType);
 						$r2->FinTiebreak = str_pad($r2->FinTiebreak, $ArrowNum + 1, ' ', STR_PAD_RIGHT);
-						$r2->FinTiebreak[$ArrowNum] = GetLetterFromPrint($Value);
+						$r2->FinTiebreak[$ArrowNum] = GetLetterFromPrint($Value, 'T', $r1->EvFinalTargetType);
 
 						safe_w_sql("UPDATE Finals SET FinTiebreak=" . StrSafe_DB($r2->FinTiebreak) . ", FinDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " WHERE FinTournament={$_SESSION['TourId']} AND FinEvent='$ee' AND FinMatchNo=$mm");
 					}

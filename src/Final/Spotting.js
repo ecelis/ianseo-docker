@@ -101,14 +101,16 @@ function toggleAlternate() {
         var Arrows=$('table.Scorecard').attr('arrows');
         var SO=$('table.Scorecard').attr('so');
         var tabindex=1;
-        $('.ShootsFirst:checked').each(function() {
-            // gets the rows set as shooting first and set them as alternates
-            // r1=$()
-        });
     } else {
         $('.Alternate').hide();
         $('[tabindexorg]').each(function() {
             this.prop('tabindex', this.attr('tabindexorg'));
+        });
+        $.getJSON('Spotting-setShootingFirst.php', {
+            'stopAlternate':1,
+            'team': ($('#spotType').val()=='Team' ? '1' : '0'),
+            'event': $('#spotCode').val(),
+            'match': $('#spotMatch').val(),
         });
     }
 }
@@ -257,26 +259,28 @@ function buildScorecard() {
                 .width(TgtSize)
                 .height(TgtSize);
         }
-        minTabEmpty=999;
-        $('[id^="Arrow"]').each(function() {
-            if(this.value=='' && $(this).prop('tabIndex') < minTabEmpty) {
-                minTabEmpty = $(this).prop('tabIndex');
-                $('[id="'+this.id+'"]').focus();
-                selectArrow($('[id="'+this.id+'"]')[0]);
+        if(!data.confirmed) {
+            minTabEmpty=999;
+            $('[id^="Arrow"]').each(function() {
+                if(this.value=='' && $(this).prop('tabIndex') < minTabEmpty) {
+                    minTabEmpty = $(this).prop('tabIndex');
+                    $('[id="'+this.id+'"]').focus();
+                    selectArrow($('[id="'+this.id+'"]')[0]);
+                }
+            });
+
+            if(keyPressedActive) {
+                // adapt the sscorecard
+                // makes all inputs inactive
+                $('.arrowcell').on('click', function() {
+                    selectArrow($(this).find('input')[0]);
+                });
+                $('#Spotting input[type="text"]').prop('disabled', true);
             }
-        });
 
-        if(keyPressedActive) {
-        	// adapt the sscorecard
-	        // makes all inputs inactive
-	        $('.arrowcell').on('click', function() {
-		        selectArrow($(this).find('input')[0]);
-	        });
-	        $('#Spotting input[type="text"]').prop('disabled', true);
+            // simulate call on the first arrow of each match to check the stars if any on loading the scorecard
+            updateArrow($('[id^="Arrow["]')[0], null);
         }
-
-        // simulate call on the first arrow of each match to check the stars if any on loading the scorecard
-	    updateArrow($('[id^="Arrow["]')[0], null);
 	    Preparation=false;
     });
 }
@@ -313,6 +317,15 @@ function updateArrow(obj, position) {
         if(data.error!=0) {
             return;
         }
+
+        // check all the buttons
+        if(data.hasChanges) {
+            $('#moveWinner').prop('disabled', true);
+            $('[ref="ConfirmL"]').prop('disabled', false);
+            $('[ref="ConfirmR"]').prop('disabled', false);
+            $('#confirmMatch').prop('disabled', true);
+        }
+
 	    obj.defaultValue=obj.value;
         $('#OpponentNameL').toggleClass('Winner', data.winner=='L');
         $('#OpponentNameR').toggleClass('Winner', data.winner=='R');
@@ -320,7 +333,6 @@ function updateArrow(obj, position) {
         $('#ScorecardR').toggleClass('Winner', data.winner=='R');
         $('.Confirmed').toggleClass('Confirmed', false);
 
-        $('#moveWinner').prop('disabled', data.finished?false:true);
 
         $('[id="'+data.arrowID+'"]').val(data.arrowValue);
         $.each(data.t, function() {
@@ -377,14 +389,14 @@ function updateArrow(obj, position) {
 	        $('[ref="ConfirmL"]').prop('disabled', true);
         } else {
 	        $('[ref="ScorecardL"]').hide();
-	        $('[ref="ConfirmL"]').prop('disabled', false);
+	        // $('[ref="ConfirmL"]').prop('disabled', !(data.status&1));
         }
         if(data.starsR) {
 	        $('[ref="ScorecardR"]').show();
 	        $('[ref="ConfirmR"]').prop('disabled', true);
         } else {
 	        $('[ref="ScorecardR"]').hide();
-	        $('[ref="ConfirmR"]').prop('disabled', false);
+	        // $('[ref="ConfirmR"]').prop('disabled', !(data.status&1));
         }
 
         if(data.showClosest) {
@@ -395,6 +407,13 @@ function updateArrow(obj, position) {
 
         if(data.DontMove) {
         	obj.focus();
+        }
+
+        if(data.resetFirst) {
+            $('[id^="first"]').prop('checked', false);
+            $.each(data.starters, function() {
+                $('[id="'+this+'"]').prop('checked', true);
+            });
         }
     });
 }
@@ -489,7 +508,7 @@ function ConfirmEnd(obj) {
                 // sets the shooting first selector
                 var shootingFirst=$('[id="'+data.starter+'"]');
                 if(shootingFirst.length>0) {
-                    shootingFirst.attr('checked', true);
+                    shootingFirst.prop('checked', true);
                     setShootingFirst(shootingFirst[0], data.tabindex);
                 }
             }
@@ -505,6 +524,7 @@ function ConfirmEnd(obj) {
 
 
             $('#confirmMatch').attr('disabled', true);
+            $('#moveWinner').attr('disabled', true);
             if(data.winner!='') {
                 // match is over, asks confirmation
                 $('#confirmMatch').attr('disabled', false);
@@ -529,6 +549,7 @@ function confirmMatch(obj) {
                 $('.ActiveArrow').toggleClass('ActiveArrow', false);
                 $('#Target').toggleClass('TargetL', false).toggleClass('TargetR', false);
                 obj.disabled=true;
+                $('#moveWinner').prop('disabled', false);
             }
         }
     });
@@ -813,6 +834,14 @@ function toggleKeypress() {
 
         KeyListener.simple_combo("e", function() {
             setValue('11');
+        });
+
+		KeyListener.simple_combo("shift f", function() {
+			setValue('12');
+		});
+
+        KeyListener.simple_combo("f", function() {
+            setValue('12');
         });
 
 		KeyListener.simple_combo("num_add", function() {

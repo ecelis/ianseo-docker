@@ -13,6 +13,7 @@ $excel = new ods();
 
 //$TXT=array();
 
+require_once('Participants.inc.php');
 require_once('ResultInd.inc.php');
 require_once('ResultTeam.inc.php');
 

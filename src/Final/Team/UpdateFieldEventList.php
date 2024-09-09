@@ -23,9 +23,9 @@ $Value=$_REQUEST['value'];
 if (substr($Key,0,2)=='d_') {
     $cc = '';
     $ee = '';
-    list (,$cc,$ee)=explode('_',$Key);
+    list (,$cc,$ee)=explode('_',$Key, 3);
 
-	if(!preg_match('/^[0-9a-z_]+$/i', $cc)) {
+	if(!preg_match('/^[0-9a-z]+$/i', $cc)) {
 		JsonOut($JSON);
 	}
 

@@ -193,7 +193,6 @@ $lang['TOG']='Togo';
 $lang['TPE']='Taipei Chinois';
 $lang['TRI']='Trinité-et-Tobago';
 $lang['TUN']='Tinisie';
-$lang['TUR']='Turquie';
 $lang['TUV']='Tuvalu';
 $lang['UAE']='Emirats Arabes Unis';
 $lang['UGA']='Ouganda';

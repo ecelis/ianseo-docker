@@ -1,8 +1,9 @@
 <?php
 
 echo '<!DOCTYPE html>';
-echo '<html lang="en">';
+echo '<html lang="en" translate="no">';
 echo '<head>';
+echo '<meta name="google" content="notranslate">';
 //<!-- Required meta tags -->
 echo '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">';
 echo '<meta charset="utf-8">';
@@ -14,7 +15,7 @@ echo '<link rel="stylesheet" href="'.$CFG->ROOT_DIR.'Common/css/bs4-switch.css">
 echo '<link rel="stylesheet" href="'.$CFG->ROOT_DIR.'Common/css/bootstrap-toggle.min.css">';
 echo '<link rel="stylesheet" href="'.$CFG->ROOT_DIR.'Common/css/ianseo.css">';
 //<!-- jQuery first, then Popper.js, then Bootstrap JS -->
-echo '<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.6.0.min.js"></script>';
+echo '<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.6.4.min.js"></script>';
 echo '<script src="'.$CFG->ROOT_DIR.'Common/js/popper.min.js"></script>';
 echo '<script src="'.$CFG->ROOT_DIR.'Common/js/bootstrap.min.js"></script>';
 echo '<script src="'.$CFG->ROOT_DIR.'Common/js/bootstrap-toggle.min.js"></script>';

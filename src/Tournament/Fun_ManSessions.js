@@ -16,6 +16,7 @@ Ext.onReady(function()
 	var d_SesOdfPeriod=Ext.get('d_SesOdfPeriod');
 	var d_SesOdfVenue=Ext.get('d_SesOdfVenue');
 	var d_SesOdfLocation=Ext.get('d_SesOdfLocation');
+	var d_SesLoc=Ext.get('d_SesLoc');
 
 	var orderInEdit=Ext.get('orderInEdit');
 
@@ -94,6 +95,7 @@ Ext.onReady(function()
 			d_SesOrder.dom.value=0;
 			d_SesType.dom.value='Q';
 			d_SesName.dom.value='';
+			d_SesLoc.dom.value='';
 			d_SesTar4Session.dom.value=0;
 			d_SesAth4Target.dom.value=0;
 			d_SesFirstTarget.dom.value=1;
@@ -136,6 +138,7 @@ Ext.onReady(function()
 			d_SesOrder.dom.value=Ext.get('order-' + id).getValue();
 			d_SesType.dom.value=id.split('_')[1];
 			d_SesName.dom.value=Ext.get('name-' + id).getValue();
+			d_SesLoc.dom.value=Ext.get('location-' + id).getValue();
 			d_SesDtStart.dom.value=Ext.get('dtstart-'+id).getValue();
 			d_SesDtEnd.dom.value=Ext.get('dtend-'+id).getValue();
 			d_SesTar4Session.dom.value=Ext.get('tar4session-'+id).getValue();

@@ -47,7 +47,9 @@ if($CHAIN) {
 	$MyRow->TVPMultimediaFullScreen=$CHAIN->TVSFullScreen; // new content name
 
 	$t=safe_r_sql("select * from TVContents where TVCId=$MMId and TVCTournament=" . ($CHAIN->TVSCntSameTour?$TourId:'-1'));
-	if($u=safe_fetch($t) and strstr($u->TVCMimeType, 'text/')==$u->TVCMimeType) $MyRow->TVPContentText=$u->TVCContent; // new content name
+	if($u=safe_fetch($t) and strstr($u->TVCMimeType, 'text/')==$u->TVCMimeType) {
+        $MyRow->TVPContentText=$u->TVCContent;
+    } // new content name
 }
 ?>
 <br/>
@@ -56,8 +58,10 @@ if($CHAIN) {
 <tr><th class="Title" colspan="3"><?php echo get_text('TVMultimediaContents','Tournament'); ?></th></tr>
 <?php
 
-$q=safe_r_sql("select * from TVContents where TVCTournament in (-1,$TourId)");
+$q=safe_r_sql("select TVContents.*, ToImgL, ToImgR from TVContents inner join Tournament on ToId=$TourId where TVCTournament in (-1,$TourId)");
 if(safe_num_rows($q)) {
+    $HasImageL=0;
+    $HasImageR=0;
 ?>
 <tr>
 <th class="TitleLeft" width="15%"><?php print get_text('TVMultimediaSelect','Tournament');?></th>
@@ -65,9 +69,17 @@ if(safe_num_rows($q)) {
 <table>
 <?php
 $ActId=$MMId;
-if(isset($CHAIN->TVSCntSameTour)) $ActId .= '|' . $CHAIN->TVSCntSameTour;
+if(isset($CHAIN->TVSCntSameTour)) {
+    $ActId .= '|' . $CHAIN->TVSCntSameTour;
+}
 
 while($r=safe_fetch($q)) {
+    if($r->ToImgL and (!$HasImageL or $r->TVCName=='Logo Left')) {
+        $HasImageL++;
+    }
+    if($r->ToImgR and (!$HasImageR or $r->TVCName=='Logo Right')) {
+        $HasImageR++;
+    }
 	$sel = $r->TVCId . '|' . ($r->TVCTournament!=-1 ? '1':'0');
 
 	echo '<tr><td><input type="radio" name="d_TVMultimedia" value="'.$sel.'"'.($sel==$ActId ?' checked="checked"':'').'></td>';
@@ -76,6 +88,17 @@ while($r=safe_fetch($q)) {
 	if($r->TVCTournament!=-1) echo '<a href="'.go_get('contdel', $r->TVCId).'"><img src="../Common/Images/drop.png" border="0"></a>';
 	else echo '&nbsp;';
 	echo '</td></tr>';
+}
+
+if($HasImageL==1 or $HasImageR==1) {
+    echo '<tr><td></td><td colspan="2">';
+    if($HasImageL==1) {
+        echo '<div><div class="Button" onclick="location.href=\''.go_get('addLeft', 1).'\'">'.get_text('InsertLeftLogo','Tournament').'</div></div>';
+    }
+    if($HasImageR==1) {
+        echo '<div><div class="Button" onclick="location.href=\''.go_get('addRight', 1).'\'">'.get_text('InsertRightLogo','Tournament').'</div></div>';
+    }
+    echo '</td></tr>';
 }
 ?>
 </table>

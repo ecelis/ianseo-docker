@@ -65,32 +65,12 @@
 		}
 
 		//Carico il vettore dei dati validi
-		$CurrentTarget=array();
 		$validData=GetMaxScores($event, $match, $TeamEvent);
-		//Se ho la posizione, salvo la posizione e ri-setto per i punti
-		//if(!(is_null($size) || is_null($xpos) || is_null($ypos))) {
-		//	$target = new Obj_Target($validData["Arrows"],$validData["Size"]);
-		//	$arrowHit = $target->getHitValue($size, $xpos, $ypos);
-		//	$arrUpdate = UpdateArrowPosition($match2edit, $event, $TeamEvent, $arrowHit["X"], $arrowHit["Y"], 0);
-		//	if(!is_null($arrUpdate))
-		//	{
-		//		list($what,$index)=preg_split("/[|]/",$arrUpdate);
-		//		$what = ($what == 1 ? 't' : 's');
-		//		$arrow = DecodeFromLetter($arrowHit["V"]);
-		//	}
-		//
-		//}
-// 		if($arrow==='0') $arrow='M';
-// 		elseif($arrow==='0*') $arrow='M*';
 		//Se ho i valori di freccia, indice della textbox e tipo textbox (std o so) procedo con il salvataggio dei punti
 		if(!(is_null($what) || is_null($arrow) || is_null($index) || !preg_match('/^[st]{1}$/i',$what))) {
 
 			// Verifico la arrow se il valore è valido per il target selezionato
-			if(array_key_exists(strtoupper(GetLetterFromPrint($arrow, $CurrentTarget)) , $validData["Arrows"])) {
-				$arrow = GetLetterFromPrint($arrow, $CurrentTarget);
-			} else {
-				$arrow = ' ';
-			}
+            $arrow = GetLetterFromPrint($arrow, $validData["Arrows"]);
 
 			// conti
 			$ArrowStart=$index+1;

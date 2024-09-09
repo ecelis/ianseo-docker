@@ -104,8 +104,6 @@ $lang['RaspControl']='  ';
 $lang['RaspDevice']='';
 $lang['RasUrl']=' ';
 $lang['StickyAlreadySet']='  !';
-$lang['TVCss3Divider']='';
-$lang['TVCss3Loser']=' ';
 $lang['WAToolbox-MissingParams']=' ';
 $lang['WAToolbox-NoCompCode']=' ';
 ?>

@@ -1,6 +1,8 @@
 <?php
 
-function createRound($Team, $Event, $Level) {
+require_once('Common/Lib/Obj_RankFactory.php');
+
+function createRound($Team, $Event, $Level, $Arch=1, $Waves=0) {
 	// gets the informations
 	$q=safe_r_sql("select RrLevGroups, RrLevGroupArchers, EvFinalFirstPhase from RoundRobinLevel
 		inner join Events on EvTournament=RrLevTournament and EvCode=RrLevEvent and EvTeamEvent=RrLevTeam
@@ -40,22 +42,12 @@ function createRound($Team, $Event, $Level) {
 
 	$Matches=(int) ceil($EVENT->RrLevGroupArchers/2);
 	$EvenNumber=(int) $Matches*2;
-	$Rounds=$EVENT->RrLevGroupArchers-1;
-
-	$GridSQL='insert into RoundRobinGrids set
-		RrGridTournament='.$_SESSION['TourId'].',
-		RrGridEvent='.StrSafe_DB($Event).',
-		RrGridTeam='.$Team.',
-		RrGridLevel='.$Level.',
-		RrGridGroup=%1$d,
-		RrGridRound=%2$d,
-		RrGridItem=%3$d,
-		RrGridMatchno=%4$d';
+	$Rounds=$EvenNumber-1;
 
 	/*****************
 	 * redo the groups, including for each group grid, matches and participants
 	 ***************** */
-	// removes the extra groups
+	$GridItems=[];
 	foreach(range(1,$EVENT->RrLevGroups) as $Group) {
 		safe_w_sql("insert ignore into RoundRobinGroup set
 			RrGrTournament={$_SESSION['TourId']},
@@ -65,8 +57,8 @@ function createRound($Team, $Event, $Level) {
 			RrGrTeam=$Team,
 			RrGrName=".StrSafe_DB(get_text('GroupNum', 'RoundRobin', $Group)).",
 			RrGrSession=0,
-			RrGrTargetArchers=1,
-			RrGrArcherWaves=0
+			RrGrTargetArchers={$Arch},
+			RrGrArcherWaves={$Waves}
 			");
 
 		// DO THE GRID
@@ -76,9 +68,11 @@ function createRound($Team, $Event, $Level) {
 			$RealCircle=array_merge([1],$Circle); // position 0 is always item 1!
 			for($Match=0; $Match<$Matches; $Match++) {
 				// Matchno EVEN
-				safe_w_sql(sprintf($GridSQL,$Group, $Round, $RealCircle[$Match], $Matchno++));
+				$GridItems[]="({$_SESSION['TourId']}, ".StrSafe_DB($Event).", $Team, $Level, $Group, $Round, ".$RealCircle[$Match].", $Matchno)";
+				$Matchno++;
 				// Matchno ODD (opponent)
-				safe_w_sql(sprintf($GridSQL,$Group, $Round, $RealCircle[$EvenNumber-$Match-1], $Matchno++));
+				$GridItems[]="({$_SESSION['TourId']}, ".StrSafe_DB($Event).", $Team, $Level, $Group, $Round, ".$RealCircle[$EvenNumber-$Match-1].", $Matchno)";
+				$Matchno++;
 			}
 
 			// do the magic!
@@ -86,6 +80,8 @@ function createRound($Team, $Event, $Level) {
 			array_unshift($Circle, $lastItem);
 		}
 	}
+
+	safe_w_sql("insert into RoundRobinGrids (RrGridTournament, RrGridEvent, RrGridTeam, RrGridLevel, RrGridGroup, RrGridRound, RrGridItem, RrGridMatchno) values ".implode(',', $GridItems));
 
 	// redo the matches
 	safe_w_sql("insert into RoundRobinMatches (RrMatchTournament, RrMatchLevel, RrMatchGroup, RrMatchEvent, RrMatchTeam, RrMatchRound, RrMatchMatchNo)  
@@ -107,47 +103,13 @@ function createRound($Team, $Event, $Level) {
  * @return void
  */
 function calculateFinalRank($Team, $Event, $Level, $TourId=0) {
-	if(!$TourId) {
-		$TourId=$_SESSION['TourId'];
-	}
-
-	if($Level==0) {
-		if($Team) {
-			Obj_RankFactory::create('FinalTeam', array('eventsC' => [$Event.'@-3']))->calculate();
-		} else {
-			Obj_RankFactory::create('FinalInd', array('eventsC' => [$Event.'@-3']))->calculate();
-		}
-		return;
-	}
-
-	// select the losers of this level
-	$q=safe_r_sql("select NumQualified+1 as RankPosition, RrPartParticipant, RrPartSubTeam
-		from RoundRobinParticipants
-		inner join (
-		    select count(*) as NumQualified, 1 as qualLink
-		    from RoundRobinParticipants 
-		    where RrPartTournament=$TourId and RrPartTeam=$Team and RrPartEvent=".StrSafe_DB($Event)." and RrPartSourceLevel=$Level
-			) quals on qualLink=1
-		left join (
-		    select RrPartParticipant as winParticipant, RrPartSubTeam as winSubTeam
-		    from RoundRobinParticipants 
-		    where RrPartTournament=$TourId and RrPartTeam=$Team and RrPartEvent=".StrSafe_DB($Event)." and RrPartSourceLevel=$Level
-			) winners on winParticipant=RrPartParticipant and winSubTeam=RrPartSubTeam
-		where RrPartTournament=$TourId and RrPartTeam=$Team and RrPartEvent=".StrSafe_DB($Event)." and RrPartLevel=$Level and winParticipant is null");
-
-	if($Team) {
-		while($r=safe_fetch($q)) {
-			safe_w_sql("UPDATE Teams
-				SET TeRankFinal=$r->RankPosition, TeTimestampFinal=now()
-				WHERE TeTournament={$TourId} AND TeEvent='{$Event}' AND TeFinEvent=1 and TeCoId=$r->RrPartParticipant and TeSubTeam=$r->RrPartSubTeam");
-		}
-	} else {
-		while($r=safe_fetch($q)) {
-			safe_w_sql("UPDATE Individuals
-				SET IndRankFinal=$r->RankPosition, IndTimestampFinal=now()
-				WHERE IndTournament={$TourId} AND IndEvent='{$Event}' AND IndId=$r->RrPartParticipant");
-		}
-	}
+	$options=[
+		'tournament' => ($TourId ?: $_SESSION['TourId']),
+		'team' => $Team,
+		'event' => $Event,
+		'level' => $Level,
+	];
+	Obj_RankFactory::create('Robin', $options)->calculate();
 }
 
 function CreateFinalLevel($Team, $Event, $NumQualified) {
@@ -161,7 +123,7 @@ function CreateFinalLevel($Team, $Event, $NumQualified) {
 	}
 	safe_w_SQL("insert ignore into RoundRobinParticipants (RrPartTournament, RrPartTeam, RrPartEvent, RrPartLevel, RrPartGroup, RrPartDestItem) 
 							values ".implode(', ', $sqlPart));
-	safe_w_sql("update RoundRobinParticipants set RrPartSourceLevel=0, RrPartSourceGroup=0, RrPartSourceRank=0, RrPartGroupRank=0, RrPartGroupRankBefSO=0, RrPartLevelRank=0, RrPartLevelRankBefSO=0, RrPartPoints=0, RrPartTieBreaker=0, RrPartParticipant=0, RrPartSubTeam=0 
+	safe_w_sql("update RoundRobinParticipants set RrPartSourceLevel=0, RrPartSourceGroup=0, RrPartSourceRank=0, RrPartGroupRank=0, RrPartGroupRankBefSO=0, RrPartLevelRank=0, RrPartLevelRankBefSO=0, RrPartPoints=0, RrPartTieBreaker=0, RrPartTieBreaker2=0, RrPartParticipant=0, RrPartSubTeam=0 
 							where (RrPartTournament, RrPartTeam, RrPartEvent, RrPartLevel, RrPartGroup) = ({$_SESSION['TourId']}, $Team, ".StrSafe_DB($Event).", 0, 0)");
 }
 
@@ -170,9 +132,10 @@ function SetRoundRobinTarget($Event, $Team, $Level, $Group, $Round, $Matchno, $V
 
 	$Value=$ValueOrg;
 	// cerco la fase del matchno
-	$Select = "SELECT RrGrTargetArchers as Ath4Tgt, RrGrArcherWaves as Match4Tgt, (ceil(RrLevGroupArchers/2)*2)-1 as MaxMatchno, RrLevGroupArchers-1 as TotRounds, RrLevGroupArchers
+	$Select = "SELECT EvElim1 as MaxLevels, RrGrTargetArchers as Ath4Tgt, RrGrArcherWaves as Match4Tgt, (ceil(RrLevGroupArchers/2)*2)-1 as MaxMatchno, RrLevGroupArchers-1 as TotRounds, RrLevGroupArchers
 		FROM RoundRobinGroup
 		inner join RoundRobinLevel on RrLevTournament=RrGrTournament and RrLevTeam=RrGrTeam and RrLevEvent=RrGrEvent and RrLevLevel=RrGrLevel
+		inner join Events on EvCode=RrGrEvent and EvTeamEvent=RrGrTeam and EvTournament=RrGrTournament
 		WHERE RrGrTournament={$_SESSION['TourId']} and RrGrTeam=$Team and RrGrEvent=".StrSafe_DB($Event)." and RrGrLevel=$Level and RrGrGroup=$Group";
 	$Rs=safe_r_sql($Select);
 	if (safe_num_rows($Rs)!=1) {
@@ -187,125 +150,133 @@ function SetRoundRobinTarget($Event, $Team, $Level, $Group, $Round, $Matchno, $V
 		case '+':
 			// target is followed by a "+" sign fills up the phase from this point up to the last with increments of 1
 			// target is followed by a "*" sign fills up the phase from this point up to the last with increments of 1, leaving a gap of 1 target after each match
+			// target is followed by a "++" sign fills up the phase from this point up to the last with increments of 1, repeating for all levels
 			// target is followed by a "**" sign fills up the phase from this point up to the last with increments of 1, leaving a gap of 2 targets after each match
 			$Gap=substr_count($Value,'*');
+            if(substr_count($Value,'+')>1) {
+                $LevelsToDo=range($Level, $RR->MaxLevels);
+            } else {
+                $LevelsToDo=[$Level];
+            }
 			$Value=intval($Value);
-			$val=$Value;
-			foreach(range($Matchno, $RR->MaxMatchno) as $k => $n) {
-				switch($RR->Ath4Tgt.'-'.$RR->Match4Tgt) {
-					case '0-0':
-						// one archer per butt, single wave, no letter
-						// always change from the current group to the last one
-						foreach(range($Round, $RR->TotRounds) as $r) {
-							$ret[]=SetRoundRobinTargetAssign($Event, $Team, $Level, $Group, $r, $n, $val);
-						}
-						$val++;
-						if($k%2==1) {
-							// every 2 matchnos
-							$val+=$Gap;
-						}
-						break;
-					case '1-0':
-						// two archers per butt, single wave, always A+B
-						$ABCD=($ABCD=='A' ? 'B' : 'A');
-						foreach(range($Round, $RR->TotRounds) as $r) {
-							$ret[]=SetRoundRobinTargetAssign($Event, $Team, $Level, $Group, $r, $n, $val, $ABCD);
-						}
-						if($ABCD=='B') {
-							$val++;
-							if($k%4==3) {
-								// every 4 matchnos, so 2 buts
-								$val+=$Gap;
-							}
-						}
-						break;
-					case '0-1':
-						// one archer per butt, double wave, based on $Type it can be always A, always C or A+A followed by C+C
-						switch($Type) {
-							case 'AB':
-								foreach(range($Round, $RR->TotRounds) as $r) {
-									$ret[]=SetRoundRobinTargetAssign($Event, $Team, $Level, $Group, $r, $n, $val, 'A');
-								}
-								$val++;
-								if($k%2==1) {
-									// every 2 matchnos
-									$val+=$Gap;
-								}
-								break;
-							case 'CD':
-								foreach(range($Round, $RR->TotRounds) as $r) {
-									$ret[]=SetRoundRobinTargetAssign($Event, $Team, $Level, $Group, $r, $n, $val, 'C');
-								}
-								$val++;
-								if($k%2==1) {
-									// every 2 matchnos
-									$val+=$Gap;
-								}
-								break;
-							case 'ABCD':
-								// means 1A vs 2A and 1C vs 2C
-								$ABCD=(($ABCD=='A' and $n%2) ? 'C' : 'A');
-								foreach(range($Round, $RR->TotRounds) as $r) {
-									$ret[]=SetRoundRobinTargetAssign($Event, $Team, $Level, $Group, $r, $n, $val, $ABCD);
-								}
-								$val++;
-								if($n%2 and $ABCD=='A') {
-									// 2nd matchno of the couple, if 'AB' needs to go back 2 targets
-									$val-=2;
-								}
-								if($k%4==3) {
-									// every 4 matchnos
-									$val+=$Gap;
-								}
-								break;
-						}
-						break;
-					case '1-1':
-						// two archers per butt, double wave, based on $Type it can be always A+B, always C+B or A+B followed by C+D
-						switch($Type) {
-							case 'AB': // always AB
-								$ABCD=($ABCD=='A' ? 'B' : 'A');
-								foreach(range($Round, $RR->TotRounds) as $r) {
-									$ret[]=SetRoundRobinTargetAssign($Event, $Team, $Level, $Group, $r, $n, $val, $ABCD);
-								}
-								if($ABCD=='B') {
-									$val++;
-								}
-								if($k%4==3) {
-									// every 4 matchnos (2 butts) jumps
-									$val+=$Gap;
-								}
-								break;
-							case 'CD': // always CD
-								$ABCD=($ABCD=='C' ? 'D' : 'C');
-								foreach(range($Round, $RR->TotRounds) as $r) {
-									$ret[]=SetRoundRobinTargetAssign($Event, $Team, $Level, $Group, $r, $n, $val, $ABCD);
-								}
-								if($ABCD=='D') {
-									$val++;
-								}
-								if($k%4==3) {
-									// every 4 matchnos (2 butts) jumps
-									$val+=$Gap;
-								}
-								break;
-							case 'ABCD':
-								$ABCD=($ABCD=='A' ? 'B' : ($ABCD=='B' ? 'C' : ($ABCD=='C' ? 'D' : 'A')));
-								foreach(range($Round, $RR->TotRounds) as $r) {
-									$ret[]=SetRoundRobinTargetAssign($Event, $Team, $Level, $Group, $r, $n, $val, $ABCD);
-								}
-								if($ABCD=='D') {
-									// after 4 matchnos, moves 1 target
-									$val++;
-								}
-								if($k%8==7) {
-									// every 4 matchnos (2 butts) jumps
-									$val+=$Gap;
-								}
-								break;
-						}
-				}
-			}
+            foreach($LevelsToDo as $Level) {
+                $val=$Value;
+                foreach(range($Matchno, $RR->MaxMatchno) as $k => $n) {
+                    switch($RR->Ath4Tgt.'-'.$RR->Match4Tgt) {
+                        case '0-0':
+                            // one archer per butt, single wave, no letter
+                            // always change from the current group to the last one
+                            foreach(range($Round, $RR->TotRounds) as $r) {
+                                $ret[]=SetRoundRobinTargetAssign($Event, $Team, $Level, $Group, $r, $n, $val);
+                            }
+                            $val++;
+                            if($k%2==1) {
+                                // every 2 matchnos
+                                $val+=$Gap;
+                            }
+                            break;
+                        case '1-0':
+                            // two archers per butt, single wave, always A+B
+                            $ABCD=($ABCD=='A' ? 'B' : 'A');
+                            foreach(range($Round, $RR->TotRounds) as $r) {
+                                $ret[]=SetRoundRobinTargetAssign($Event, $Team, $Level, $Group, $r, $n, $val, $ABCD);
+                            }
+                            if($ABCD=='B') {
+                                $val++;
+                                if($k%4==3) {
+                                    // every 4 matchnos, so 2 buts
+                                    $val+=$Gap;
+                                }
+                            }
+                            break;
+                        case '0-1':
+                            // one archer per butt, double wave, based on $Type it can be always A, always C or A+A followed by C+C
+                            switch($Type) {
+                                case 'AB':
+                                    foreach(range($Round, $RR->TotRounds) as $r) {
+                                        $ret[]=SetRoundRobinTargetAssign($Event, $Team, $Level, $Group, $r, $n, $val, 'A');
+                                    }
+                                    $val++;
+                                    if($k%2==1) {
+                                        // every 2 matchnos
+                                        $val+=$Gap;
+                                    }
+                                    break;
+                                case 'CD':
+                                    foreach(range($Round, $RR->TotRounds) as $r) {
+                                        $ret[]=SetRoundRobinTargetAssign($Event, $Team, $Level, $Group, $r, $n, $val, 'C');
+                                    }
+                                    $val++;
+                                    if($k%2==1) {
+                                        // every 2 matchnos
+                                        $val+=$Gap;
+                                    }
+                                    break;
+                                case 'ABCD':
+                                    // means 1A vs 2A and 1C vs 2C
+                                    $ABCD=(($ABCD=='A' and $n%2) ? 'C' : 'A');
+                                    foreach(range($Round, $RR->TotRounds) as $r) {
+                                        $ret[]=SetRoundRobinTargetAssign($Event, $Team, $Level, $Group, $r, $n, $val, $ABCD);
+                                    }
+                                    $val++;
+                                    if($n%2 and $ABCD=='A') {
+                                        // 2nd matchno of the couple, if 'AB' needs to go back 2 targets
+                                        $val-=2;
+                                    }
+                                    if($k%4==3) {
+                                        // every 4 matchnos
+                                        $val+=$Gap;
+                                    }
+                                    break;
+                            }
+                            break;
+                        case '1-1':
+                            // two archers per butt, double wave, based on $Type it can be always A+B, always C+B or A+B followed by C+D
+                            switch($Type) {
+                                case 'AB': // always AB
+                                    $ABCD=($ABCD=='A' ? 'B' : 'A');
+                                    foreach(range($Round, $RR->TotRounds) as $r) {
+                                        $ret[]=SetRoundRobinTargetAssign($Event, $Team, $Level, $Group, $r, $n, $val, $ABCD);
+                                    }
+                                    if($ABCD=='B') {
+                                        $val++;
+                                    }
+                                    if($k%4==3) {
+                                        // every 4 matchnos (2 butts) jumps
+                                        $val+=$Gap;
+                                    }
+                                    break;
+                                case 'CD': // always CD
+                                    $ABCD=($ABCD=='C' ? 'D' : 'C');
+                                    foreach(range($Round, $RR->TotRounds) as $r) {
+                                        $ret[]=SetRoundRobinTargetAssign($Event, $Team, $Level, $Group, $r, $n, $val, $ABCD);
+                                    }
+                                    if($ABCD=='D') {
+                                        $val++;
+                                    }
+                                    if($k%4==3) {
+                                        // every 4 matchnos (2 butts) jumps
+                                        $val+=$Gap;
+                                    }
+                                    break;
+                                case 'ABCD':
+                                    $ABCD=($ABCD=='A' ? 'B' : ($ABCD=='B' ? 'C' : ($ABCD=='C' ? 'D' : 'A')));
+                                    foreach(range($Round, $RR->TotRounds) as $r) {
+                                        $ret[]=SetRoundRobinTargetAssign($Event, $Team, $Level, $Group, $r, $n, $val, $ABCD);
+                                    }
+                                    if($ABCD=='D') {
+                                        // after 4 matchnos, moves 1 target
+                                        $val++;
+                                    }
+                                    if($k%8==7) {
+                                        // every 4 matchnos (2 butts) jumps
+                                        $val+=$Gap;
+                                    }
+                                    break;
+                            }
+                    }
+                }
+            }
 			break;
 		case '-':
 			// removes the byes... byes can only be the "true" byes from setup... this happens only if the participants are an odd number
@@ -472,7 +443,7 @@ function SetRoundRobinTargetAssign($Event, $Team, $Level, $Group, $Round, $Match
 
 	safe_w_sql(sprintf($Insert, $Matchno, $Target));
 
-	return array('g'=>$Group, 'r'=>$Round, 't' => $Target, 'm'=>$Matchno);
+	return array('l'=>$Level, 'g'=>$Group, 'r'=>$Round, 't' => $Target, 'm'=>$Matchno);
 }
 
 function getRrMatchDateTimes($Team) {
@@ -517,8 +488,8 @@ function setWinner($m1, $EV, $ScoreField, $Totals=true) {
 	$SQL1="RrMatchTieBreaker=RrMatchTieBreaker";
 	$SQL2="RrMatchTieBreaker=RrMatchTieBreaker";
 	$RetSQL="select 
-			m1.RrMatchSetPoints as EndPoints1, m1.RrMatchTie as Tie1, m1.RrMatchTbClosest as Closest1, m1.RrMatchTiebreak as TieArrows1, m1.RrMatchScore as Score1, m1.$ScoreField as Total1,
-			m2.RrMatchSetPoints as EndPoints2, m2.RrMatchTie as Tie2, m2.RrMatchTbClosest as Closest2, m2.RrMatchTiebreak as TieArrows2, m2.RrMatchScore as Score2, m2.$ScoreField as Total2
+			m1.RrMatchSetPoints as EndPoints1, m1.RrMatchTie as Tie1, m1.RrMatchTbClosest as Closest1, m1.RrMatchTiebreak as TieArrows1, m1.RrMatchScore as Score1, m1.$ScoreField as Total1, m1.RrMatchTbDecoded as TbDecoded1,
+			m2.RrMatchSetPoints as EndPoints2, m2.RrMatchTie as Tie2, m2.RrMatchTbClosest as Closest2, m2.RrMatchTiebreak as TieArrows2, m2.RrMatchScore as Score2, m2.$ScoreField as Total2, m2.RrMatchTbDecoded as TbDecoded2
 		from RoundRobinMatches m1
 		inner join RoundRobinMatches m2 on m2.RrMatchTournament=m1.RrMatchTournament and m2.RrMatchTeam=m1.RrMatchTeam and m2.RrMatchEvent=m1.RrMatchEvent and m2.RrMatchLevel=m1.RrMatchLevel and m2.RrMatchGroup=m1.RrMatchGroup and m2.RrMatchRound=m1.RrMatchRound and m2.RrMatchMatchNo=m1.RrMatchMatchNo+1				
 		where m1.RrMatchTournament={$_SESSION['TourId']} and m1.RrMatchTeam={$EV->Team} and m1.RrMatchEvent=".StrSafe_DB($EV->Event)." and m1.RrMatchLevel={$EV->Level} and m1.RrMatchGroup={$EV->Group} and m1.RrMatchRound={$EV->Round} and m1.RrMatchMatchNo=$m1
@@ -527,12 +498,12 @@ function setWinner($m1, $EV, $ScoreField, $Totals=true) {
 	$r=safe_fetch($q);
 	if($r->Tie1==2) {
 		// There is a bye, the whole row is empty except the winner!
-		$SQL1="RrMatchWinLose=1, RrMatchTiebreak='', RrMatchTbClosest=0, RrMatchTbDecoded='', RrMatchTiePosition='', RrMatchSetScore=0, RrMatchSetPointsByEnd='', RrMatchRoundPoints={$EV->WinPoints}";
-		$SQL2="RrMatchWinLose=0, RrMatchTiebreak='', RrMatchTbClosest=0, RrMatchTbDecoded='', RrMatchTiePosition='', RrMatchSetScore=0, RrMatchSetPointsByEnd='', RrMatchRoundPoints=0, RrMatchTie=0";
+		$SQL1="RrMatchWinLose=1, RrMatchTiebreak='', RrMatchTiebreaker='', RrMatchTiebreaker2='', RrMatchTbClosest=0, RrMatchTbDecoded='', RrMatchTiePosition='', RrMatchSetScore=0, RrMatchSetPointsByEnd='', RrMatchRoundPoints={$EV->WinPoints}";
+		$SQL2="RrMatchWinLose=0, RrMatchTiebreak='', RrMatchTiebreaker='', RrMatchTiebreaker2='', RrMatchTbClosest=0, RrMatchTbDecoded='', RrMatchTiePosition='', RrMatchSetScore=0, RrMatchSetPointsByEnd='', RrMatchRoundPoints=0, RrMatchTie=0";
 	} elseif($r->Tie2==2) {
 		// There is a bye, the whole row is empty except the winner!
-		$SQL1="RrMatchWinLose=0, RrMatchTiebreak='', RrMatchTbClosest=0, RrMatchTbDecoded='', RrMatchTiePosition='', RrMatchSetScore=0, RrMatchSetPointsByEnd='', RrMatchRoundPoints=0, RrMatchTie=0";
-		$SQL2="RrMatchWinLose=1, RrMatchTiebreak='', RrMatchTbClosest=0, RrMatchTbDecoded='', RrMatchTiePosition='', RrMatchSetScore=0, RrMatchSetPointsByEnd='', RrMatchRoundPoints={$EV->WinPoints}";
+		$SQL1="RrMatchWinLose=0, RrMatchTiebreak='', RrMatchTiebreaker='', RrMatchTiebreaker2='', RrMatchTbClosest=0, RrMatchTbDecoded='', RrMatchTiePosition='', RrMatchSetScore=0, RrMatchSetPointsByEnd='', RrMatchRoundPoints=0, RrMatchTie=0";
+		$SQL2="RrMatchWinLose=1, RrMatchTiebreak='', RrMatchTiebreaker='', RrMatchTiebreaker2='', RrMatchTbClosest=0, RrMatchTbDecoded='', RrMatchTiePosition='', RrMatchSetScore=0, RrMatchSetPointsByEnd='', RrMatchRoundPoints={$EV->WinPoints}";
 	} else {
 		if($Totals) {
 			$set1=$r->Total1;
@@ -545,6 +516,38 @@ function setWinner($m1, $EV, $ScoreField, $Totals=true) {
 				case '3':
 					$SQL1="RrMatchTieBreaker=$r->Score1";
 					$SQL2="RrMatchTieBreaker=$r->Score2";
+					break;
+				case '5':
+					if($EV->MatchMode) {
+						$SQL1="RrMatchTieBreaker=".($set1-$set2);
+						$SQL2="RrMatchTieBreaker=".($set2-$set1);
+					} else {
+						$SQL1="RrMatchTieBreaker=".($r->Score1-$r->Score2);
+						$SQL2="RrMatchTieBreaker=".($r->Score2-$r->Score1);
+					}
+					break;
+			}
+			switch($EV->TieSystem2) {
+				case '0':
+					$SQL1.=", RrMatchTieBreaker2=0";
+					$SQL2.=", RrMatchTieBreaker2=0";
+					break;
+				case '2':
+					$SQL1.=", RrMatchTieBreaker2=$set1";
+					$SQL2.=", RrMatchTieBreaker2=$set2";
+					break;
+				case '3':
+					$SQL1.=", RrMatchTieBreaker2=$r->Score1";
+					$SQL2.=", RrMatchTieBreaker2=$r->Score2";
+					break;
+				case '5':
+					if($EV->MatchMode) {
+						$SQL1.=", RrMatchTieBreaker2=".($set1-$set2);
+						$SQL2.=", RrMatchTieBreaker2=".($set2-$set1);
+					} else {
+						$SQL1.=", RrMatchTieBreaker2=".($r->Score1-$r->Score2);
+						$SQL2.=", RrMatchTieBreaker2=".($r->Score2-$r->Score1);
+					}
 					break;
 			}
 
@@ -583,35 +586,11 @@ function setWinner($m1, $EV, $ScoreField, $Totals=true) {
 					$setByEnds2[]=1;
 				}
 			}
-			/* Values are:
-			* <ul>
-			* <li>1: Number of sets won</li>
-			* <li>2: Total set points</li>
-			* <li>3: Total points</li>
-			* <li>4: Shoot off</li>
-			* <li>5: Sum (set)points - Sum opponents (set)points</li>
-			* </ul>*/
-			switch($EV->TieSystem) {
-				case '1':
-					$SQL1="RrMatchTieBreaker=$numWins1";
-					$SQL2="RrMatchTieBreaker=$numWins2";
-					break;
-				case '2':
-					$SQL1="RrMatchTieBreaker=$set1";
-					$SQL2="RrMatchTieBreaker=$set2";
-					break;
-				case '3':
-					$SQL1="RrMatchTieBreaker=$r->Score1";
-					$SQL2="RrMatchTieBreaker=$r->Score2";
-					break;
-				case '5':
-					$SQL1="RrMatchTieBreaker=".($set1-$set2);
-					$SQL2="RrMatchTieBreaker=".($set2-$set1);
-					break;
-			}
-			$SQL1.=", RrMatchSetPointsByEnd=".StrSafe_DB(implode('|',$setByEnds1)).", RrMatchWinnerSet=$numWins1";
-			$SQL2.=", RrMatchSetPointsByEnd=".StrSafe_DB(implode('|',$setByEnds2)).", RrMatchWinnerSet=$numWins2";
+			$SQL1="RrMatchSetPointsByEnd=".StrSafe_DB(implode('|',$setByEnds1)).", RrMatchWinnerSet=$numWins1";
+			$SQL2="RrMatchSetPointsByEnd=".StrSafe_DB(implode('|',$setByEnds2)).", RrMatchWinnerSet=$numWins2";
 		}
+		$r->TbDecoded1=rtrim($r->TbDecoded1,' ,+');
+		$r->TbDecoded2=rtrim($r->TbDecoded2,' ,+');
 		if($EV->MatchMode) {
 			// calculates the single sets
 			$SQL1.=", RrMatchSetScore=$set1";
@@ -644,29 +623,39 @@ function setWinner($m1, $EV, $ScoreField, $Totals=true) {
 				// both tie and ties allowed
 				$SQL1.=", RrMatchWinLose=0, RrMatchRoundPoints=".$EV->TiePoints.", RrMatchTie=0, RrMatchTiebreak='', RrMatchTbClosest=0, RrMatchTbDecoded='', RrMatchTiePosition=''";
 				$SQL2.=", RrMatchWinLose=0, RrMatchRoundPoints=".$EV->TiePoints.", RrMatchTie=0, RrMatchTiebreak='', RrMatchTbClosest=0, RrMatchTbDecoded='', RrMatchTiePosition=''";
-			} elseif($r->TieArrows1 and strlen($r->TieArrows1)==strlen($r->TieArrows2)) {
+			} elseif($r->TieArrows1 and strlen($r->TieArrows1)==strlen($r->TieArrows2) and strlen($r->TieArrows1)%$EV->NumSO==0) {
 				// no winners... and no points, check if ties...
 				$a1=str_split($r->TieArrows1, $EV->NumSO);
-				$a2=str_split($r->TieArrows1, $EV->NumSO);
+				$a2=str_split($r->TieArrows2, $EV->NumSO);
 				$arrows1=ValutaArrowString(end($a1));
 				$arrows2=ValutaArrowString(end($a2));
 				if($arrows1 and ($arrows1>$arrows2 or $r->Closest1)) {
 					// winner is 1 closest or higher value
-					$SQL1.=", RrMatchWinLose=1, RrMatchRoundPoints=".$EV->WinPoints.", RrMatchTie=1, RrMatchTbClosest={$r->Closest1}";
-					$SQL2.=", RrMatchWinLose=0, RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
+					if($r->Closest1) {
+						$r->TbDecoded1.='+';
+					}
+					$set1++;
+					$SQL1.=", RrMatchWinLose=1, RrMatchTbDecoded='$r->TbDecoded1', RrMatchSetScore=".($EV->NumEnds+1).", RrMatchRoundPoints=".$EV->WinPoints.", RrMatchTie=1, RrMatchTbClosest={$r->Closest1}";
+					$SQL2.=", RrMatchWinLose=0, RrMatchTbDecoded='$r->TbDecoded2', RrMatchSetScore=".($EV->NumEnds).", RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
 				} elseif($arrows2 and ($arrows2>$arrows1 or $r->Closest2)) {
 					// winner is 2 closest or higher value
-					$SQL1.=", RrMatchWinLose=0, RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
-					$SQL2.=", RrMatchWinLose=1, RrMatchRoundPoints=".$EV->WinPoints.", RrMatchTie=1, RrMatchTbClosest={$r->Closest2}";
+					if($r->Closest2) {
+						$r->TbDecoded2.='+';
+					}
+					$set2++;
+					$SQL1.=", RrMatchWinLose=0, RrMatchTbDecoded='$r->TbDecoded1', RrMatchSetScore=".($EV->NumEnds).", RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
+					$SQL2.=", RrMatchWinLose=1, RrMatchTbDecoded='$r->TbDecoded2', RrMatchSetScore=".($EV->NumEnds+1).", RrMatchRoundPoints=".$EV->WinPoints.", RrMatchTie=1, RrMatchTbClosest={$r->Closest2}";
 				} else {
 					// no winners yet
-					$SQL1.=", RrMatchWinLose=0, RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
-					$SQL2.=", RrMatchWinLose=0, RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
+					$SQL1.=", RrMatchWinLose=0, RrMatchTbDecoded='$r->TbDecoded1', RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
+					$SQL2.=", RrMatchWinLose=0, RrMatchTbDecoded='$r->TbDecoded2', RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
 				}
 			} else {
 				// no winners yet
-				$SQL1.=", RrMatchWinLose=0, RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
-				$SQL2.=", RrMatchWinLose=0, RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
+				$r->TbDecoded1=rtrim($r->TbDecoded1,' ,+');
+				$r->TbDecoded2=rtrim($r->TbDecoded2,' ,+');
+				$SQL1.=", RrMatchWinLose=0, RrMatchTbDecoded='$r->TbDecoded1', RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
+				$SQL2.=", RrMatchWinLose=0, RrMatchTbDecoded='$r->TbDecoded2', RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
 			}
 		} else {
 			// cumulative score! We have a winner only if we have the correct amount of ends shot
@@ -683,34 +672,106 @@ function setWinner($m1, $EV, $ScoreField, $Totals=true) {
 					// both tie and ties allowed
 					$SQL1.=", RrMatchWinLose=0, RrMatchRoundPoints=".$EV->TiePoints.", RrMatchTie=0, RrMatchTiebreak='', RrMatchTbClosest=0, RrMatchTbDecoded='', RrMatchTiePosition=''";
 					$SQL2.=", RrMatchWinLose=0, RrMatchRoundPoints=".$EV->TiePoints.", RrMatchTie=0, RrMatchTiebreak='', RrMatchTbClosest=0, RrMatchTbDecoded='', RrMatchTiePosition=''";
-				} elseif($r->TieArrows1 and strlen($r->TieArrows1)==strlen($r->TieArrows2)) {
+				} elseif($r->TieArrows1 and strlen($r->TieArrows1)==strlen($r->TieArrows2) and strlen($r->TieArrows1)%$EV->NumSO==0) {
 					// no winners... and no points, check if ties...
 					$a1=str_split($r->TieArrows1, $EV->NumSO);
-					$a2=str_split($r->TieArrows1, $EV->NumSO);
+					$a2=str_split($r->TieArrows2, $EV->NumSO);
 					$arrows1=ValutaArrowString(end($a1));
 					$arrows2=ValutaArrowString(end($a2));
 					if($arrows1 and ($arrows1>$arrows2 or $r->Closest1)) {
 						// winner is 1 closest or higher value
-						$SQL1.=", RrMatchWinLose=1, RrMatchRoundPoints=".$EV->WinPoints.", RrMatchTie=1, RrMatchTbClosest={$r->Closest1}";
-						$SQL2.=", RrMatchWinLose=0, RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
+						if($r->Closest1) {
+							$r->TbDecoded1.='+';
+						}
+						$SQL1.=", RrMatchWinLose=1, RrMatchTbDecoded='$r->TbDecoded1', RrMatchRoundPoints=".$EV->WinPoints.", RrMatchTie=1, RrMatchTbClosest={$r->Closest1}";
+						$SQL2.=", RrMatchWinLose=0, RrMatchTbDecoded='$r->TbDecoded2', RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
 					} elseif($arrows2 and ($arrows2>$arrows1 or $r->Closest2)) {
 						// winner is 2 closest or higher value
-						$SQL1.=", RrMatchWinLose=0, RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
-						$SQL2.=", RrMatchWinLose=1, RrMatchRoundPoints=".$EV->WinPoints.", RrMatchTie=1, RrMatchTbClosest={$r->Closest2}";
+						if($r->Closest2) {
+							$r->TbDecoded2.='+';
+						}
+						$SQL1.=", RrMatchWinLose=0, RrMatchTbDecoded='$r->TbDecoded1', RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
+						$SQL2.=", RrMatchWinLose=1, RrMatchTbDecoded='$r->TbDecoded2', RrMatchRoundPoints=".$EV->WinPoints.", RrMatchTie=1, RrMatchTbClosest={$r->Closest2}";
 					} else {
 						// no winners yet
-						$SQL1.=", RrMatchWinLose=0, RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
-						$SQL2.=", RrMatchWinLose=0, RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
+						$SQL1.=", RrMatchWinLose=0, RrMatchTbDecoded='$r->TbDecoded1', RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
+						$SQL2.=", RrMatchWinLose=0, RrMatchTbDecoded='$r->TbDecoded2', RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
 					}
 				} else {
 					// no winners yet
-					$SQL1.=", RrMatchWinLose=0, RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
-					$SQL2.=", RrMatchWinLose=0, RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
+					$SQL1.=", RrMatchWinLose=0, RrMatchTbDecoded='$r->TbDecoded1', RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
+					$SQL2.=", RrMatchWinLose=0, RrMatchTbDecoded='$r->TbDecoded2', RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
 				}
 			} else {
 				// no winners yet
-				$SQL1.=", RrMatchWinLose=0, RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
-				$SQL2.=", RrMatchWinLose=0, RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
+				$SQL1.=", RrMatchWinLose=0, RrMatchTbDecoded='$r->TbDecoded1', RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
+				$SQL2.=", RrMatchWinLose=0, RrMatchTbDecoded='$r->TbDecoded2', RrMatchRoundPoints=0, RrMatchTie=0, RrMatchTbClosest=0";
+			}
+		}
+
+		// calculates and sets the tiebreakers
+		if(!$Totals) {
+			/* Values are:
+			* <ul>
+			* <li>1: Number of sets won</li>
+			* <li>2: Total set points</li>
+			* <li>3: Total points</li>
+			* <li>4: Shoot off</li>
+			* <li>5: Sum (set)points - Sum opponents (set)points</li>
+			* </ul>*/
+			switch($EV->TieSystem) {
+				case '1':
+					if(isset($numWins1)) {
+						$SQL1.=", RrMatchTieBreaker=$numWins1";
+						$SQL2.=", RrMatchTieBreaker=$numWins2";
+					}
+					break;
+				case '2':
+					$SQL1.=", RrMatchTieBreaker=$set1";
+					$SQL2.=", RrMatchTieBreaker=$set2";
+					break;
+				case '3':
+					$SQL1.=", RrMatchTieBreaker=$r->Score1";
+					$SQL2.=", RrMatchTieBreaker=$r->Score2";
+					break;
+				case '5':
+					if($EV->MatchMode) {
+						$SQL1.=", RrMatchTieBreaker=".($set1-$set2);
+						$SQL2.=", RrMatchTieBreaker=".($set2-$set1);
+					} else {
+						$SQL1.=", RrMatchTieBreaker=".($r->Score1-$r->Score2);
+						$SQL2.=", RrMatchTieBreaker=".($r->Score2-$r->Score1);
+					}
+					break;
+			}
+			switch($EV->TieSystem2) {
+				case '0':
+					$SQL1.=", RrMatchTieBreaker2=0";
+					$SQL2.=", RrMatchTieBreaker2=0";
+					break;
+				case '1':
+					$SQL1.=", RrMatchTieBreaker2=$numWins1";
+					$SQL2.=", RrMatchTieBreaker2=$numWins2";
+					break;
+				case '2':
+					if(isset($set1)) {
+						$SQL1.=", RrMatchTieBreaker2=$set1";
+						$SQL2.=", RrMatchTieBreaker2=$set2";
+					}
+					break;
+				case '3':
+					$SQL1.=", RrMatchTieBreaker2=$r->Score1";
+					$SQL2.=", RrMatchTieBreaker2=$r->Score2";
+					break;
+				case '5':
+					if($EV->MatchMode) {
+						$SQL1.=", RrMatchTieBreaker2=".($set1-$set2);
+						$SQL2.=", RrMatchTieBreaker2=".($set2-$set1);
+					} else {
+						$SQL1.=", RrMatchTieBreaker2=".($r->Score1-$r->Score2);
+						$SQL2.=", RrMatchTieBreaker2=".($r->Score2-$r->Score1);
+					}
+					break;
 			}
 		}
 	}
@@ -746,146 +807,26 @@ function setWinner($m1, $EV, $ScoreField, $Totals=true) {
  *
  */
 function calculateGroupRank($Event, $TourId=0) {
-	if(!$TourId) {
-		$TourId=$_SESSION['TourId'];
-	}
-	// creates the group rank
-	$q=safe_r_sql("select RrMatchAthlete, RrMatchSubTeam, sum(RrMatchRoundPoints) as Points, sum(RrMatchTieBreaker) as TieBreaker
-		from RoundRobinMatches
-		where RrMatchTournament=$TourId and RrMatchTeam=$Event->Team and RrMatchEvent='$Event->Event' and RrMatchLevel=$Event->Level and RrMatchGroup=$Event->Group
-		group by RrMatchAthlete, RrMatchSubTeam
-		order by Points desc, TieBreaker desc");
-	$rank=0;
-	$i=0;
-	$oldStatus='';
-	$Update=false;
-	while($r=safe_fetch($q)) {
-		if($rank or $r->Points) {
-			$i++;
-		}
-		if($oldStatus!="{$r->Points}-{$r->TieBreaker}") {
-			$rank+=$i;
-			$i=0;
-		}
-		$oldStatus="{$r->Points}-{$r->TieBreaker}";
-		safe_w_sql("update RoundRobinParticipants set RrPartPoints=$r->Points, RrPartTieBreaker=$r->TieBreaker, RrPartGroupRank=$rank, RrPartGroupRankBefSO=$rank where RrPartTournament=$TourId and RrPartTeam=$Event->Team and RrPartEvent='$Event->Event' and RrPartLevel=$Event->Level and RrPartGroup=$Event->Group and RrPartParticipant=$r->RrMatchAthlete and RrPartSubTeam=$r->RrMatchSubTeam");
-		if(safe_w_affected_rows()) {
-			$Update=true;
-			safe_w_sql("update RoundRobinParticipants set RrPartDateTime=now() where RrPartTournament=$TourId and RrPartTeam=$Event->Team and RrPartEvent='$Event->Event' and RrPartLevel=$Event->Level and RrPartGroup=$Event->Group and RrPartParticipant=$r->RrMatchAthlete and RrPartSubTeam=$r->RrMatchSubTeam");
-		}
-	}
-	// check Group SO/CT status
-	if($Update) {
-		// reset level rank
-		safe_w_sql("update RoundRobinParticipants 
-			set RrPartDateTime=now(), RrPartLevelTiesForSO=0, RrPartLevelTiesForCT=0, RrPartLevelRank=0, RrPartLevelRankBefSO=0, RrPartLevelTieBreak='', RrPartLevelTbClosest=0, RrPartLevelTbDecoded=''
-			where RrPartTournament=$TourId and RrPartTeam=$Event->Team and RrPartEvent='$Event->Event' and RrPartLevel=$Event->Level");
-		// reset group SO status
-		safe_w_sql("update RoundRobinParticipants 
-			set RrPartDateTime=now(), RrPartGroupTiesForSO=0, RrPartGroupTiesForCT=0 
-			where RrPartTournament=$TourId and RrPartTeam=$Event->Team and RrPartEvent='$Event->Event' and RrPartLevel=$Event->Level and RrPartGroup=$Event->Group");
-		// select how many same rank we have in this group...
-		$q=safe_r_sql("select RrPartGroupRankBefSO, count(*) as NumTied, NumQualified
-			from RoundRobinParticipants
-			left join (
-			    select count(*) as NumQualified, 1 as selector
-			    from RoundRobinParticipants
-				where RrPartTournament=$TourId and RrPartTeam=$Event->Team and RrPartEvent='$Event->Event' and RrPartSourceLevel=$Event->Level and RrPartSourceGroup=$Event->Group
-				group by RrPartTournament, RrPartTeam, RrPartEvent, RrPartSourceLevel, RrPartSourceGroup
-			    ) sqy on selector=1
-			where NumQualified>=RrPartGroupRankBefSO and RrPartTournament=$TourId and RrPartTeam=$Event->Team and RrPartEvent='$Event->Event' and RrPartLevel=$Event->Level and RrPartGroup=$Event->Group
-			group by RrPartGroupRankBefSO
-			having count(*)>1");
-		while($r=safe_fetch($q)) {
-			if($r->RrPartGroupRankBefSO+$r->NumTied-1 > $r->NumQualified) {
-				// Shoot Off
-				safe_w_sql("update RoundRobinParticipants 
-					set RrPartDateTime=now(), RrPartGroupTiesForSO=$r->NumTied
-					where RrPartGroupRankBefSO=$r->RrPartGroupRankBefSO and RrPartTournament=$TourId and RrPartTeam=$Event->Team and RrPartEvent='$Event->Event' and RrPartLevel=$Event->Level and RrPartGroup=$Event->Group
-					");
-			} else {
-				// Coin Toss
-				safe_w_sql("update RoundRobinParticipants 
-					set RrPartDateTime=now(), RrPartGroupTiesForCT=$r->NumTied
-					where RrPartGroupRankBefSO=$r->RrPartGroupRankBefSO and RrPartTournament=$TourId and RrPartTeam=$Event->Team and RrPartEvent='$Event->Event' and RrPartLevel=$Event->Level and RrPartGroup=$Event->Group
-					");
-			}
-		}
-	}
+	$options=[
+		'tournament' => ($TourId ?: $_SESSION['TourId']),
+		'team' => $Event->Team,
+		'event' => $Event->Event,
+		'level' => $Event->Level,
+		'group' => $Event->Group,
+	];
+
+	Obj_RankFactory::create('Robin', $options)->calculateGroup();
 }
 
-function calculateLevelRank($Team, $Event, $Level) {
-	// realculates the level rank!
-	safe_w_sql("update RoundRobinParticipants
-		set RrPartLevelRank=0, RrPartLevelRankBefSO=0
-		where RrPartLevel=$Level and RrPartTournament={$_SESSION['TourId']} and RrPartTeam=$Team and RrPartEvent=".StrSafe_DB($Event)."");
-	$q=safe_r_SQL("select RrPartParticipant, RrPartSubTeam, RrPartPoints, RrPartTieBreaker, RrPartTournament, RrPartTeam, RrPartEvent, RrPartLevel, RrPartGroup, RrPartDestItem
-		from RoundRobinParticipants
-	    inner join RoundRobinLevel on RrLevTournament=RrPartTournament and RrLevEvent=RrPartEvent and RrLevTeam=RrPartTeam and RrLevLevel=RrPartLevel
-		left join (
-		    select RrPartParticipant as sqyPart, RrPartSubTeam as sqySub 
-			from RoundRobinParticipants
-		    where RrPartSourceLevel=$Level and RrPartSourceGroup!=0 and RrPartTournament={$_SESSION['TourId']} and RrPartTeam=$Team and RrPartEvent=".StrSafe_DB($Event)."
-		    ) sqy on sqyPart=RrPartParticipant and sqySub=RrPartSubTeam
-		where RrPartLevel=$Level and sqyPart IS NULL and RrPartTournament={$_SESSION['TourId']} and RrPartTeam=$Team and RrPartEvent=".StrSafe_DB($Event)."
-		order by if(RrLevBestRankMode=0, RrPartPoints, 0) desc, RrPartTieBreaker desc");
-	$curRank=0;
-	$i=0;
-	$oldPoints=0;
-	$oldTieBreaker=0;
-	$Update=false;
-	while($r=safe_fetch($q)) {
-		$i++; // this will always increase as it takes track of the evolution
-		if($oldPoints!=$r->RrPartPoints or $oldTieBreaker!=$r->RrPartTieBreaker) {
-			$curRank=$i;
-			$oldPoints=$r->RrPartPoints;
-			$oldTieBreaker=$r->RrPartTieBreaker;
-		}
-		safe_w_SQL("update RoundRobinParticipants
-						set RrPartLevelRankBefSO=$curRank
-						where RrPartTournament={$_SESSION['TourId']} and RrPartTeam=$Team and RrPartEvent=".StrSafe_DB($Event)." and RrPartLevel=$Level and RrPartGroup=$r->RrPartGroup and RrPartParticipant=$r->RrPartParticipant and RrPartSubTeam=$r->RrPartSubTeam");
-		if(safe_w_affected_rows()) {
-			$Update=true;
-			safe_w_SQL("update RoundRobinParticipants
-						set RrPartDateTime=now(), RrPartLevelRank=$curRank
-						where RrPartTournament={$_SESSION['TourId']} and RrPartTeam=$Team and RrPartEvent=".StrSafe_DB($Event)." and RrPartLevel=$Level and RrPartGroup=$r->RrPartGroup and RrPartParticipant=$r->RrPartParticipant and RrPartSubTeam=$r->RrPartSubTeam");
-		}
-	}
+function calculateLevelRank($Team, $Event, $Level, $TourId=0) {
+	$options=[
+		'tournament' => ($TourId ?: $_SESSION['TourId']),
+		'team' => $Team,
+		'event' => $Event,
+		'level' => $Level,
+	];
 
-	// check the LEVEL SO/CT status
-	if($Update) {
-		safe_w_sql("update RoundRobinParticipants 
-			set RrPartDateTime=now(), RrPartLevelTiesForSO=0, RrPartLevelTiesForCT=0
-			where RrPartTournament={$_SESSION['TourId']} and RrPartTeam=$Team and RrPartEvent='$Event' and RrPartLevel=$Level");
-
-		// select how many same rank we have in this group...
-		$q=safe_r_sql("select RrPartLevelRankBefSO, count(*) as NumTied, NumQualified
-			from RoundRobinParticipants
-			left join (
-			    select count(*) as NumQualified, 1 as selector
-			    from RoundRobinParticipants
-				where RrPartTournament={$_SESSION['TourId']} and RrPartTeam=$Team and RrPartEvent='$Event' and RrPartSourceLevel=$Level and RrPartSourceGroup=0 and RrPartLevelRankBefSO=0
-				group by RrPartTournament, RrPartTeam, RrPartEvent, RrPartSourceLevel, RrPartSourceGroup
-			    ) sqy on selector=1
-			where NumQualified>=RrPartLevelRankBefSO and RrPartTournament={$_SESSION['TourId']} and RrPartTeam=$Team and RrPartEvent='$Event' and RrPartLevel=$Level and RrPartLevelRankBefSO>0
-			group by RrPartLevelRankBefSO
-			having count(*)>1");
-		while($r=safe_fetch($q)) {
-			if($r->RrPartLevelRankBefSO+$r->NumTied-1 > $r->NumQualified) {
-				// Shoot Off
-				safe_w_sql("update RoundRobinParticipants 
-					set RrPartDateTime=now(), RrPartLevelTiesForSO=$r->NumTied
-					where RrPartLevelRankBefSO=$r->RrPartLevelRankBefSO and RrPartTournament={$_SESSION['TourId']} and RrPartTeam=$Team and RrPartEvent='$Event' and RrPartLevel=$Level
-					");
-			} else {
-				// Coin Toss
-				safe_w_sql("update RoundRobinParticipants 
-					set RrPartDateTime=now(), RrPartLevelTiesForCT=$r->NumTied
-					where RrPartLevelRankBefSO=$r->RrPartLevelRankBefSO and RrPartTournament={$_SESSION['TourId']} and RrPartTeam=$Team and RrPartEvent='$Event' and RrPartLevel=$Level
-					");
-			}
-		}
-	}
+	Obj_RankFactory::create('Robin', $options)->calculateLevel();
 }
 
 function RobinResetSO($Team, $Event, $Level, $Group) {
@@ -925,7 +866,7 @@ function RobinResetSO($Team, $Event, $Level, $Group) {
 	}
 }
 
-function RobinUpdateArrowString($MatchNo, $Event, $Team, $Level, $Group, $Round, $ArrowString, $ArrowStart, $ArrowEnd, $Closest=0, $CompId=0) {
+function RobinUpdateArrowString($MatchNo, $Event, $Team, $Level, $Group, $Round, $ArrowString, $ArrowStart, $ArrowEnd, $CompId=0, $Closest=-1) {
 	global $CFG;
 	if(empty($CompId) && !empty($_SESSION['TourId'])) {
 		$CompId = $_SESSION['TourId'];
@@ -958,11 +899,11 @@ function RobinUpdateArrowString($MatchNo, $Event, $Team, $Level, $Group, $Round,
 
 		if($Offset==0) {
 			$tmpArrowString = substr($tmpArrowString, 0, $maxArrows);
-		} elseif($Closest) {
+		} elseif($Closest>0) {
 			// must first remove the closest and tie from the other match
 			$OppMatchno=($MatchNo%2 ? $MatchNo-1 : $MatchNo+1);
 			safe_w_sql("update RoundRobinMatches 
-				SET RrMatchTbClosest=0, RrMatchTie=0, RrMatchTbDecoded=replace(RrMatchTbDecoded, '+','') 
+				SET RrMatchTbClosest=0, RrMatchTie=0, RrMatchWinLose=0, RrMatchTbDecoded=replace(RrMatchTbDecoded, '+','') 
                 where $MainFilter and RrMatchTie!=2 AND RrMatchMatchNo=$OppMatchno");
 		}
 
@@ -977,18 +918,19 @@ function RobinUpdateArrowString($MatchNo, $Event, $Team, $Level, $Group, $Round,
 					$decoded[]=ValutaArrowString($k);
 				}
 			}
-			$TbDecoded=", RrMatchTbDecoded=".StrSafe_DB(implode(',', $decoded).($Closest?'+':''));
+			$TbDecoded=", RrMatchTbDecoded=".StrSafe_DB(implode(',', $decoded).($Closest>0 ? '+' : ''));
 		}
 
 		if($Offset) {
 			$query="UPDATE RoundRobinMatches
 				SET
 				RrMatchTiebreak='$tmpArrowString',
-				RrMatchTbClosest=".intval($Closest).",
+				".($Closest!=-1 ? "RrMatchTbClosest=".intval($Closest)."," : '')."
 				RrMatchDateTime=RrMatchDateTime
 				$TbDecoded
 				WHERE $MainFilter and RrMatchTie!=2 AND RrMatchMatchNo=$MatchNo";
 		} else {
+
 			$query="UPDATE RoundRobinMatches
 				SET RrMatchArrowstring='$tmpArrowString',
 				RrMatchDateTime=RrMatchDateTime
@@ -1037,11 +979,12 @@ function RobinMatchTotal($MatchNo, $Event, $Team, $Level, $Group, $Round, $CompI
 	$MainFilter="RrMatchTournament=$CompId and RrMatchEvent='$Event' and RrMatchTeam=$Team and RrMatchLevel=$Level and RrMatchGroup=$Group and RrMatchRound=$Round";
 
 	$Select = "SELECT 
-       		EvCode, RrLevMatchMode, EvMatchArrowsNo,
+       		EvCode, RrLevMatchMode, EvMatchArrowsNo, RrLevCheckGolds, RrLevCheckXNines, EvGoldsChars, EvXNineChars,
 	      	MatchNo, Score, SetScore, Tie, ArString, TbString, TbClosest, Athlete,
        		OppMatchNo, OppScore, OppSetScore, OppTie, OppArString, OppTbString, OppTbClosest, OppAthlete,
 			greatest(M1DateTime, M2DateTime) AS DateTime,
-       		RrLevArrows as arrows, RrLevSO as so, RrLevEnds as ends, RrLevEnds+1 as winAt, RrLevTieAllowed, RrLevWinPoints, RrLevTiePoints, RrLevTieBreakSystem
+       		RrLevArrows as arrows, RrLevSO as so, RrLevEnds as ends, RrLevEnds+1 as winAt, 
+            RrLevTieAllowed, RrLevWinPoints, RrLevTiePoints, RrLevTieBreakSystem, RrLevTieBreakSystem2
 		FROM (
 		    select RrMatchEvent, RrMatchTeam, RrMatchTournament,
 		           RrMatchDateTime as M1DateTime, RrMatchAthlete as Athlete, RrMatchMatchNo as MatchNo, RrMatchScore as Score, RrMatchSetScore as SetScore, RrMatchTie as Tie, coalesce(RrMatchArrowstring,'') as ArString, coalesce(RrMatchTiebreak) as TbString, coalesce(RrMatchTbClosest,0) as TbClosest
@@ -1062,26 +1005,31 @@ function RobinMatchTotal($MatchNo, $Event, $Team, $Level, $Group, $Round, $CompI
 	$AthRoundPoints=0;
 	$OppRoundPoints=0;
 	$AthTieBreaker=0;
+	$AthTieBreaker2=0;
 	$OppTieBreaker=0;
+	$OppTieBreaker2=0;
 	$Rs=safe_r_sql($Select);
 	if (safe_num_rows($Rs)==1) {
 		$MyRow=safe_fetch($Rs);
 		$TotArrows=$MyRow->ends*$MyRow->arrows;
 		$Winner=-1;
+        $WinnerByTie=0;
 
 		// set winner... of Ties
 		if($MyRow->Tie) {
 			$Winner=$MyRow->MatchNo;
 			$MatchFinished=true;
 			$AthRoundPoints=$MyRow->RrLevWinPoints;
+            $WinnerByTie=1;
 		} elseif ($MyRow->OppTie) {
 			$Winner=$MyRow->OppMatchNo;
 			$MatchFinished=true;
 			$OppRoundPoints=$MyRow->RrLevWinPoints;
+            $WinnerByTie=1;
 		}
 
-		$Score=ValutaArrowString(substr($MyRow->ArString, 0, $TotArrows));
-		$OppScore=ValutaArrowString(substr($MyRow->OppArString, 0, $TotArrows));
+		list($Score, $Golds, $XNines)=ValutaArrowStringGX(substr($MyRow->ArString, 0, $TotArrows), $MyRow->EvGoldsChars, $MyRow->EvXNineChars);
+		list($OppScore,$OppGolds, $OppXNines)=ValutaArrowStringGX(substr($MyRow->OppArString, 0, $TotArrows), $MyRow->EvGoldsChars, $MyRow->EvXNineChars);
 		$SetAth=0;
 		$SetOpp=0;
 		$SetPointsAth=array();
@@ -1123,11 +1071,19 @@ function RobinMatchTotal($MatchNo, $Event, $Team, $Level, $Group, $Round, $CompI
 						}
 					}
 					if($Proceed) {
-						if($Score>$OppScore) {
+						if($Score>$OppScore
+                            or ($Score==$OppScore and $MyRow->RrLevCheckGolds and $Golds>$OppGolds)
+                            or ($Score==$OppScore and $MyRow->RrLevCheckGolds and $MyRow->RrLevCheckXNines and $Golds==$OppGolds and $XNines>$OppXNines)
+                            or ($Score==$OppScore and !$MyRow->RrLevCheckGolds and $MyRow->RrLevCheckXNines and $XNines>$OppXNines)
+                            ) {
 							$Winner=$MyRow->MatchNo;
 							$MatchFinished=true;
 							$AthRoundPoints=$MyRow->RrLevWinPoints;
-						} elseif($Score<$OppScore) {
+						} elseif($Score<$OppScore
+                            or ($Score==$OppScore and $MyRow->RrLevCheckGolds and $Golds<$OppGolds)
+                            or ($Score==$OppScore and $MyRow->RrLevCheckGolds and $MyRow->RrLevCheckXNines and $Golds==$OppGolds and $XNines<$OppXNines)
+                            or ($Score==$OppScore and !$MyRow->RrLevCheckGolds and $MyRow->RrLevCheckXNines and $XNines<$OppXNines)
+                            ) {
 							$Winner=$MyRow->OppMatchNo;
 							$MatchFinished=true;
 							$OppRoundPoints=$MyRow->RrLevWinPoints;
@@ -1136,16 +1092,18 @@ function RobinMatchTotal($MatchNo, $Event, $Team, $Level, $Group, $Round, $CompI
 							$AthRoundPoints=$MyRow->RrLevTiePoints;
 							$OppRoundPoints=$MyRow->RrLevTiePoints;
 							$MatchFinished=true;
-						} else {
+                        } else {
 							if( strlen(str_replace(' ', '', $MyRow->TbString))!=0
 								and (strlen(str_replace(' ', '', $MyRow->TbString)) % $MyRow->so) == 0
 								and strlen(str_replace(' ', '', $MyRow->TbString))==strlen(str_replace(' ', '', $MyRow->OppTbString))
 							) {
 								// Verifico le stringhe CASE INSENSITIVE - in questo momento me ne frego degli "*"
-								list($AthTbValue, $AthWeight, $AthStars, $AthNumX, $AthArrows) = ValutaArrowStringSO($MyRow->TbString);
-								list($OppTbValue, $OppWeight, $OppStars, $OppNumX, $OppArrows) = ValutaArrowStringSO($MyRow->OppTbString);
+                                $XChar=($MyRow->RrLevCheckGolds ? $MyRow->EvGoldsChars : ($MyRow->RrLevCheckXNines ? $MyRow->EvXNineChars : null));
+								list($AthTbValue, $AthWeight, $AthStars, $AthNumX, $AthArrows) = ValutaArrowStringSO($MyRow->TbString, $XChar, $XChar?'A':null);
+								list($OppTbValue, $OppWeight, $OppStars, $OppNumX, $OppArrows) = ValutaArrowStringSO($MyRow->OppTbString, $XChar, $XChar?'A':null);
 
 								$MatchFinished=true;
+                                $WinnerByTie=1;
 
 								if($MyRow->TbClosest) {
 									// Athlete 1 has at a closest to center
@@ -1209,13 +1167,13 @@ function RobinMatchTotal($MatchNo, $Event, $Team, $Level, $Group, $Round, $CompI
 				SET RrMatchSetScore=0,
 				    RrMatchSetPointsByEnd='',
 				    RrMatchWinnerSet=0,
-					RrMatchTie=" . (($Score==$OppScore and $Winner==$MyRow->MatchNo) ? '1' : '0');
+					RrMatchTie=" . (($Score==$OppScore and $WinnerByTie and $Winner==$MyRow->MatchNo) ? '1' : '0');
 
 			$query2="UPDATE RoundRobinMatches
 				SET RrMatchSetScore=0,
 				    RrMatchSetPointsByEnd='',
 				    RrMatchWinnerSet=0,
-					RrMatchTie=" . (($Score==$OppScore and $Winner==$MyRow->OppMatchNo) ? '1' : '0');
+					RrMatchTie=" . (($Score==$OppScore and $WinnerByTie and $Winner==$MyRow->OppMatchNo) ? '1' : '0');
 		} else {
 			//Sistema a Set
 			$AthSpBe=array();
@@ -1284,9 +1242,9 @@ function RobinMatchTotal($MatchNo, $Event, $Team, $Level, $Group, $Round, $CompI
 				and strlen(trim($MyRow->TbString))==strlen(trim($MyRow->OppTbString))
 			) {
 				// Verifico le stringhe CASE INSENSITIVE - in questo momento me ne frego degli "*"
-				list($AthTbValue, $AthWeight, $AthStars, $AthNumX, $AthArrows) = ValutaArrowStringSO($MyRow->TbString);
-				list($OppTbValue, $OppWeight, $OppStars, $OppNumX, $OppArrows) = ValutaArrowStringSO($MyRow->OppTbString);
-
+                $XChar=($MyRow->RrLevCheckGolds ? $MyRow->EvGoldsChars : ($MyRow->RrLevCheckXNines ? $MyRow->EvXNineChars : null));
+                list($AthTbValue, $AthWeight, $AthStars, $AthNumX, $AthArrows) = ValutaArrowStringSO($MyRow->TbString, $XChar, $XChar?'A':null);
+                list($OppTbValue, $OppWeight, $OppStars, $OppNumX, $OppArrows) = ValutaArrowStringSO($MyRow->OppTbString, $XChar, $XChar?'A':null);
 
 				if($MyRow->TbClosest) {
 					// Athlete 1 has at least one arrow set as closest to center
@@ -1394,10 +1352,33 @@ function RobinMatchTotal($MatchNo, $Event, $Team, $Level, $Group, $Round, $CompI
 					$OppTieBreaker=($MyRow->RrLevMatchMode ? ($SetOpp-$SetAth) : ($OppScore-$Score));
 					break;
 			}
+			switch($MyRow->RrLevTieBreakSystem2) {
+				case '1':
+					foreach($SetPointsAth as $k => $v) {
+						if($v>$SetPointsOpp[$k]) {
+							$AthTieBreaker2++;
+						} elseif($v<$SetPointsOpp[$k]) {
+							$OppTieBreaker2++;
+						}
+					}
+					break;
+				case '2':
+					$AthTieBreaker2=$SetAth;
+					$OppTieBreaker2=$SetOpp;
+					break;
+				case '3':
+					$AthTieBreaker2=$Score;
+					$OppTieBreaker2=$OppScore;
+					break;
+				case '5':
+					$AthTieBreaker2=($MyRow->RrLevMatchMode ? ($SetAth-$SetOpp) : ($Score-$OppScore));
+					$OppTieBreaker2=($MyRow->RrLevMatchMode ? ($SetOpp-$SetAth) : ($OppScore-$Score));
+					break;
+			}
 		}
 
-		$query1.=", RrMatchRoundPoints=$AthRoundPoints, RrMatchTieBreaker=$AthTieBreaker, RrMatchDateTime=RrMatchDateTime, RrMatchWinLose=" . ($Winner==$MyRow->MatchNo ? '1' : '0') . ", RrMatchScore=$Score, RrMatchSetPoints=" . StrSafe_DB(implode('|', $SetPointsAth));
-		$query2.=", RrMatchRoundPoints=$OppRoundPoints, RrMatchTieBreaker=$OppTieBreaker, RrMatchDateTime=RrMatchDateTime, RrMatchWinLose=" . ($Winner==$MyRow->OppMatchNo ? '1' : '0') . ", RrMatchScore=$OppScore, RrMatchSetPoints=" . StrSafe_DB(implode('|', $SetPointsOpp));
+		$query1.=", RrMatchRoundPoints=$AthRoundPoints, RrMatchTieBreaker=$AthTieBreaker, RrMatchTieBreaker2=$AthTieBreaker2, RrMatchDateTime=RrMatchDateTime, RrMatchWinLose=" . ($Winner==$MyRow->MatchNo ? '1' : '0') . ", RrMatchScore=$Score, RrMatchGolds=$Golds, RrMatchXNines=$XNines, RrMatchSetPoints=" . StrSafe_DB(implode('|', $SetPointsAth));
+		$query2.=", RrMatchRoundPoints=$OppRoundPoints, RrMatchTieBreaker=$OppTieBreaker, RrMatchTieBreaker2=$OppTieBreaker2, RrMatchDateTime=RrMatchDateTime, RrMatchWinLose=" . ($Winner==$MyRow->OppMatchNo ? '1' : '0') . ", RrMatchScore=$OppScore, RrMatchGolds=$OppGolds, RrMatchXNines=$OppXNines, RrMatchSetPoints=" . StrSafe_DB(implode('|', $SetPointsOpp));
 
 		safe_w_sql($query1." WHERE $MainFilter AND RrMatchMatchNo={$MyRow->MatchNo}");
 		$MatchUpdated = ($MatchUpdated or safe_w_affected_rows());
@@ -1416,10 +1397,10 @@ function RobinMatchTotal($MatchNo, $Event, $Team, $Level, $Group, $Round, $CompI
 			}
 		}
 
-		// if(!isset($_REQUEST['Changed']) or $_REQUEST['Changed']) {
-		// 	// this should avoid launching ODF events if nothing changed
-		// 	runJack("FinArrUpdate", $CompId, array("Event"=>$Event ,"Team"=>$Team,"MatchNo"=>$MatchNo ,"TourId"=>$CompId));
-		// }
+		 if(!isset($_REQUEST['Changed']) or $_REQUEST['Changed']) {
+		 	// this should avoid launching ODF events if nothing changed
+		 	runJack("FinArrUpdate", $CompId, array("Event"=>$Event ,"Team"=>$Team,"MatchNo"=>$MatchNo+100*$Round+10000*$Group+1000000*$Level ,"TourId"=>$CompId));
+		 }
 
 	}
 	return $MatchFinished;

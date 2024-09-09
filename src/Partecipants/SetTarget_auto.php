@@ -17,8 +17,16 @@
 	$MaxSession=count($sessions);
 
 	if(!empty($_REQUEST["Erase"]) && isset($_REQUEST["Session"]) && $_REQUEST["Session"]>=1 && $_REQUEST['Session']<=$MaxSession) {
-		$Where="EnTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND QuSession=" . StrSafe_DB($_REQUEST['Session'])
-			. ((isset($_REQUEST["Event"]) and preg_match("/^[0-9A-Z%_]+$/i",$_REQUEST["Event"])) ? " AND CONCAT(TRIM(EnDivision),TRIM(EnClass)) LIKE " . StrSafe_DB($_REQUEST['Event']) : "");
+		$Where="EnTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND QuSession=" . StrSafe_DB($_REQUEST['Session']);
+        if(isset($_REQUEST["Event"]) and preg_match("/^[0-9A-Z%_]+$/i",$_REQUEST["Event"])) {
+	        $Where.=" AND CONCAT(TRIM(EnDivision),TRIM(EnClass)) LIKE " . StrSafe_DB($_REQUEST['Event']);
+        }
+        if(isset($_REQUEST['TgtFrom'])) {
+	        $Where.=" AND QuTarget>= " . intval($_REQUEST['TgtFrom']);
+        }
+        if(isset($_REQUEST['TgtTo'])) {
+	        $Where.=" AND QuTarget<= " . intval($_REQUEST['TgtTo']);
+        }
 		safe_w_sql("update Entries inner join Qualifications on EnId=QuId
 			set EnTimestamp='".date('Y-m-d H:i:s')."'
 			where QuTargetNo!='' and $Where");

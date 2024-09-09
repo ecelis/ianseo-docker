@@ -103,9 +103,10 @@ foreach($_REQUEST['confirm'] as $Matchno => $Start) {
 
 		}
 	}
+    runJack("FinConfirmEnd", $_SESSION['TourId'], array("Event"=>$Event ,"Team"=>$Team,"MatchNo"=>min($m), "Side"=>($Matchno%2), "TourId"=>$_SESSION['TourId']));
 }
 
-runJack("FinConfirmEnd", $_SESSION['TourId'], array("Event"=>$Event ,"Team"=>$Team,"MatchNo"=>min($m) ,"TourId"=>$_SESSION['TourId']));
+
 
 header('Content-Type: text/xml');
 echo '<response error="'.$Error.'" start="'.$Starter.'" winner="'.$Winner.'">';

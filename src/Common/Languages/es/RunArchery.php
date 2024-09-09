@@ -1,0 +1,36 @@
+<?php
+$lang['ArrowsShot']='Flechas tiradas';
+$lang['CallTime']='Tiempo para llamada {$a}';
+$lang['CallTimeToRoom']='Cámara de llamadas para {$a}';
+$lang['CompetitionRounds']='Series';
+$lang['DelayBetweenStarts']='Retrasos entre salidas';
+$lang['DetailedRank']='Clasificación por clase';
+$lang['EntryIsIn']='Compitiendo';
+$lang['Final1']='Final A';
+$lang['Final2']='Final B';
+$lang['FinalRank']='Clasificación Final';
+$lang['FinalTime']='Tiempo Final';
+$lang['FinishTime']='Tiempo Final';
+$lang['GroupedStart']='Salida conjunta';
+$lang['Hits']='Impactos';
+$lang['ImportArrows']='Importar Flechas';
+$lang['ImportLoops']='Importar Vueltas';
+$lang['Lap']='Vuelta';
+$lang['LapNum']='Vuelta $a';
+$lang['Laps']='Vueltas';
+$lang['LapTime']='Tiempo de la vuelta';
+$lang['LoopToDo']='Vueltas para completar';
+$lang['MoveToNextPhase']='Mover a la siguiente fase';
+$lang['OfficialPracticeForEvents']='Prácticas oficiales en el campo de tiro de la competición';
+$lang['ParticipantList']='Participantes ordenados por hora de salida';
+$lang['PhaseName-0']='Calificación';
+$lang['PhaseName-1']='Finales';
+$lang['PhaseName-2']='Semifinales';
+$lang['QualifiedFinal']='Clasificado para las Finales';
+$lang['QualifiedSemi']='Clasificado para Semifinales';
+$lang['ResultRunArchery']='Resultados Carrera-Arco';
+$lang['ResultsIndividual']='Resultados Individuales';
+$lang['ResultsTeam']='Resultados por Equipos';
+$lang['TimeSheetImportedSuccess']='¡La hoja de tiempos se ha importado correctamente! La página se volverá a cargar para actualizar la hoja importada: ¡por favor compruebelo con cuidado!';
+$lang['TotalTime']='Tiempo Total';
+?>

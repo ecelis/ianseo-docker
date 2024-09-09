@@ -164,7 +164,7 @@ if (safe_num_rows($rs)>0) {
 
 			$r=0;
 			if ($myRow->matchMode==1) {
-				$finished=isFinished($myRow,$points4win,$max);
+				$finished=isFinished($myRow,$points4win[$myRow->event],$max);
 			} elseif($myRow->tie1==2 || $myRow->tie2==2) {
 				$finished = 1;
 			} elseif(strlen(trim($myRow->arrowString1))==$arrow4Match[$myRow->event] && strlen(trim($myRow->arrowString2))==$arrow4Match[$myRow->event]) {

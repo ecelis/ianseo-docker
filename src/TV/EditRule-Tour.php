@@ -507,20 +507,32 @@ echo '</table>
 	</td></tr>';
 
 // defaults for structures
-echo '<tr>
-	<th nowrap="nowrap" class="Right">'.get_text('TVCss3MainContent','Tournament').' <input type="button" value="reset" onclick="document.getElementById(\'R-Main[content]\').value=\''.$MainDefaults['content'].'\'"></th>
+echo '<tr ref="'.$MainDefaults['content'].'">
+	<th nowrap="nowrap"><div style="display:flex">
+        <div class="CssResetButton '.($MainDefaults['content']==$RMain['content'] ? 'CssResetDisabled' : '').'" onclick="SetDefaults(this)">Default</div>
+	    <div style="flex:1 0 auto;text-align: right">'.get_text('TVCss3MainContent','Tournament').'
+	    <i class="fa fa-pencil-alt ml-1" onclick="editCss(this)"></i></div>
+    </div></th>
 	<td></td>
 	<td width="100%"><input type="text"  id="R-Main[content]" name="R-Main[content]" value="'.$RMain['content'].'"></td>
 	</tr>';
 
-echo '<tr>
-	<th nowrap="nowrap" class="Right">'.get_text('TVCss3Title','Tournament').' <input type="button" value="reset" onclick="document.getElementById(\'R-Main[title]\').value=\''.$MainDefaults['title'].'\'"></th>
+echo '<tr ref="'.$MainDefaults['title'].'">
+	<th nowrap="nowrap"><div style="display:flex">
+        <div class="CssResetButton '.($MainDefaults['title']==$RMain['title'] ? 'CssResetDisabled' : '').'" onclick="SetDefaults(this)">Default</div>
+        <div style="flex:1 0 auto;text-align: right">'.get_text('TVCss3Title','Tournament').'
+	    <i class="fa fa-pencil-alt ml-1" onclick="editCss(this)"></i></div>
+	</div></th>
 	<td style="'.preg_replace('/\bwidth:[^;]+/sim', '', $RMain['title']).'">'.get_text('TVCss3Title','Tournament').'</td>
 	<td width="100%"><input type="text" id="R-Main[title]" name="R-Main[title]" value="'.$RMain['title'].'"></td>
 	</tr>';
 
-echo '<tr>
-	<th nowrap="nowrap" class="Right">'.get_text('TVCss3Headers','Tournament').' <input type="button" value="reset" onclick="document.getElementById(\'R-Main[Headers]\').value=\''.$MainDefaults['Headers'].'\'"></th>
+echo '<tr ref="'.$MainDefaults['Headers'].'">
+	<th nowrap="nowrap"><div style="display:flex">
+        <div class="CssResetButton '.($MainDefaults['Headers']==$RMain['Headers'] ? 'CssResetDisabled' : '').'" onclick="SetDefaults(this)">Default</div>
+	    <div style="flex:1 0 auto;text-align: right">'.get_text('TVCss3Headers','Tournament').'
+	    <i class="fa fa-pencil-alt ml-1" onclick="editCss(this)"></i></div>
+	    </div></th>
 	<td style="'.preg_replace('/\bwidth:[^;]+/sim', '', $RMain['Headers']).'">'.get_text('TVCss3Headers','Tournament').'</td>
 	<td width="100%"><input type="text" id="R-Main[Headers]" name="R-Main[Headers]" value="'.$RMain['Headers'].'"></td>
 	</tr>';

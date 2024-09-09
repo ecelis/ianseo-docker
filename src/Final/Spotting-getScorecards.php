@@ -341,7 +341,7 @@ if(isset($Section['meta']['elimType']) and $Section['meta']['elimType']==3 and $
 		<option value="A">'.get_text('MoveWinner2PoolA','Tournament').'</option>
 		<option value="B">'.get_text('MoveWinner2PoolB','Tournament').'</option></select>';
 } else {
-	$JSON['move2next']='<input type="button" id="moveWinner" onclick="moveToNextPhase()" value="'.get_text('MoveWinner2NextPhase','Tournament').'">';
+	$JSON['move2next']='<input type="button" '.($Match['scoreConfirmed'] ? '' : 'disabled="disabled"').' id="moveWinner" onclick="moveToNextPhase()" value="'.get_text('MoveWinner2NextPhase','Tournament').'">';
 }
 
 JsonOut($JSON);

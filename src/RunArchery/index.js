@@ -170,12 +170,12 @@ function createBody(data, lap) {
 
             if(this.EditStart==1) {
                 // first lap, can change the starting time
-                TimeStart='<input type="time" step=".001" class="num-7sch" name="startTime" value="'+this.TimeStart+'" onchange="updateField(this)">';
+                TimeStart='<input type="time" step=".001" class="num-7sch" name="startTime" value="'+this.TimeStart+'" onblur="updateField(this)">';
             } else {
                 TimeStart=this.TimeStart;
             }
 
-            body+='<tr ref="'+this.EnId+'" lap="1"'+(this.Irm>5 ? ' class="disabled"' : '')+'>' +
+            body+='<tr ref="'+this.EnId+'" lap="1" bib="'+this.RarBib+'"'+(this.Irm>5 ? ' class="disabled"' : '')+'>' +
                 '<th rowspan="'+NumRows+'">'+IrmSelect.replace(new RegExp('(value="'+this.Irm+'")'), "$1 selected='selected'")+'</th>' +
                 '<td rowspan="'+NumRows+'">'+this.CoCode+'</td>' +
                 '<td rowspan="'+NumRows+'">'+this.CoName+'</td>' +
@@ -201,14 +201,14 @@ function createBody(data, lap) {
                 }
                 if(data.isTeam==0 && this.LapNum==entry.NumLaps) {
                     // last lap has no arrows
-                    body+= '<tr ref="'+entry.EnId+'" lap="'+this.LapNum+'"'+(entry.Irm>5 ? ' class="disabled"' : '')+'>' +
+                    body+= '<tr ref="'+entry.EnId+'" lap="'+this.LapNum+'" bib="'+this.RarBib+'"'+(entry.Irm>5 ? ' class="disabled"' : '')+'>' +
                         '<td>'+this.LapNum+'</td>' +
                         '<th>'+this.Bib+'</th>' +
                         '<td><input type="text" class="num-11ch" name="lapTime" value="'+this.LapTime+'" onchange="updateField(this)"'+(lap!=this.LapNum ? ' disabled="disabled"' : '')+'></td>' +
                         '<td colspan="6"></td>' +
                         '</tr>';
                 } else {
-                    body+= '<tr ref="'+entry.EnId+'" lap="'+this.LapNum+'"'+(entry.Irm>5 ? ' class="disabled"' : '')+'>' +
+                    body+= '<tr ref="'+entry.EnId+'" lap="'+this.LapNum+'" bib="'+this.RarBib+'"'+(entry.Irm>5 ? ' class="disabled"' : '')+'>' +
                         '<td>'+this.LapNum+'</td>' +
                         '<th>'+this.Bib+'</th>' +
                         '<td><input type="text" class="num-11ch" name="lapTime" value="'+this.LapTime+'" onchange="updateField(this)"'+(lap!=this.LapNum ? ' disabled="disabled"' : '')+'></td>' +
@@ -253,12 +253,12 @@ function createBody(data, lap) {
 
             if(this.EditStart==1) {
                 // first lap, can change the starting time
-                TimeStart='<input type="time" step=".001" class="num-7sch" name="startTime" value="'+this.TimeStart+'" onchange="updateField(this)">';
+                TimeStart='<input type="time" step=".001" class="num-7sch" name="startTime" value="'+this.TimeStart+'" onblur="updateField(this)">';
             } else {
                 TimeStart=this.TimeStart;
             }
 
-            body+='<tr ref="'+this.EnId+'" lap="1"'+(this.Irm>5 ? ' class="disabled"' : '')+'>' +
+            body+='<tr ref="'+this.EnId+'" lap="1" bib="'+this.RarBib+'"'+(this.Irm>5 ? ' class="disabled"' : '')+'>' +
                 '<th rowspan="'+NumRows+'">'+this.Bib+'</th>' +
                 '<th rowspan="'+NumRows+'">'+IrmSelect.replace(new RegExp('(value="'+this.Irm+'")'), "$1 selected='selected' orgValue='"+this.Irm+"'")+'</th>' +
                 '<td rowspan="'+NumRows+'">'+this.FamName+'</td>' +
@@ -288,13 +288,13 @@ function createBody(data, lap) {
                 }
                 if(data.isTeam==0 && this.LapNum==entry.NumLaps) {
                     // last lap has no arrows
-                    body+= '<tr ref="'+entry.EnId+'" lap="'+this.LapNum+'"'+(entry.Irm>5 ? ' class="disabled"' : '')+'>' +
+                    body+= '<tr ref="'+entry.EnId+'" lap="'+this.LapNum+'" bib="'+this.RarBib+'"'+(entry.Irm>5 ? ' class="disabled"' : '')+'>' +
                         '<td>'+this.LapNum+'</td>' +
                         '<td><input type="text" class="num-11ch" name="lapTime" value="'+this.LapTime+'" onchange="updateField(this)"'+(lap!=this.LapNum ? ' disabled="disabled"' : '')+'></td>' +
                         '<td colspan="6"></td>' +
                         '</tr>';
                 } else {
-                    body+= '<tr ref="'+entry.EnId+'" lap="'+this.LapNum+'"'+(entry.Irm>5 ? ' class="disabled"' : '')+'>' +
+                    body+= '<tr ref="'+entry.EnId+'" lap="'+this.LapNum+'" bib="'+this.RarBib+'"'+(entry.Irm>5 ? ' class="disabled"' : '')+'>' +
                         '<td>'+this.LapNum+'</td>' +
                         '<td><input type="text" class="num-11ch" name="lapTime" value="'+this.LapTime+'" onchange="updateField(this)"'+(lap!=this.LapNum ? ' disabled="disabled"' : '')+'></td>' +
                         '<td><input type="number" step="1" class="num-5ch" name="arrows" value="'+this.LapArShot+'" min="0" onchange="updateField(this)"'+(lap==0 || lap==this.LapNum ? '' : ' disabled="disabled"')+'>/'+entry.MaxArs2Shoot+'</td>' +
@@ -424,7 +424,7 @@ function importTimes() {
 function updateIrm(obj) {
     $.confirm({
         title:'',
-        content:msgUpdateIrmDisclaimer+'fdfdfd',
+        content:msgUpdateIrmDisclaimer,
         columnClass:'large',
         useBootstrap: false,
         buttons:{
@@ -445,6 +445,13 @@ function updateIrm(obj) {
     });
 }
 function updateField(obj) {
+    if((obj.type=='date' || obj.type=='time')) {
+        if(obj.defaultValue==obj.value) {
+            return;
+        } else {
+            obj.defaultValue=obj.value;
+        }
+    }
     let row=$(obj).closest('tr');
     let event=$('#event').val();
     let phase=$('#phase').val();
@@ -485,4 +492,87 @@ function updateField(obj) {
 
         }
     });
+}
+
+function importLoops() {
+    $.alert({
+        content:'<div class="w-100" style="max-height:10em;overflow:hidden"><table class="w-100">' +
+            '<tr>' +
+            '<th>Bib</th>' +
+            '<th>Loops</th>' +
+            '</tr>' +
+            '<tr>' +
+            '<td><input type="text" class="w-100" id="ImportLoopBib"></td>' +
+            '<td><input type="text" class="w-100" id="ImportLoopDone" onblur="doImportLoop()"></td>' +
+            '</tr>' +
+            '<tbody id="ImportLoopBody"></tbody>' +
+            '</table></div>',
+        title:'',
+        columnClass:'large',
+        useBootstrap: false,
+    })
+}
+
+function importArrows() {
+    $.alert({
+        content:'<div class="w-100" style="max-height:10em;overflow:hidden"><table class="w-100">' +
+            '<tr>' +
+            '<th>Bib</th>' +
+//            '<th>Lap</th>' +
+            '<th>Hits</th>' +
+            '<th>Arrows</th>' +
+            '</tr>' +
+            '<tr>' +
+            '<td><input type="text" class="w-100" id="ImportArrowBib"></td>' +
+//            '<td><input type="text" class="w-100" id="ImportArrowLap"></td>' +
+            '<td><input type="text" class="w-100" id="ImportArrowHits"></td>' +
+            '<td><input type="text" class="w-100" id="ImportArrowShot" onblur="doImportArrow()"></td>' +
+            '</tr>' +
+            '<tbody id="ImportArrowBody"></tbody>' +
+            '</table></div>',
+        title:'',
+        columnClass:'large',
+        useBootstrap: false,
+    })
+}
+
+function doImportLoop() {
+    let done=false;
+    $('[bib="'+$('#ImportLoopBib').val()+'"] [name="loopsdone"]').each(function() {
+        if(this.value==0 && !done) {
+            this.value=$('#ImportLoopDone').val();
+            $(this).trigger('change');
+            done=true;
+        }
+    });
+    $('#ImportLoopBody').prepend('<tr>' +
+        '<td>'+$('#ImportLoopBib').val()+'</td>' +
+        '<td>'+$('#ImportLoopDone').val()+'</td>' +
+        '</tr>');
+    $('#ImportLoopBib').val('');
+    $('#ImportLoopDone').val('');
+    $('#ImportLoopBib').focus();
+}
+
+function doImportArrow() {
+    let done=false;
+    $('[bib="'+$('#ImportArrowBib').val()+'"]').each(function() {
+        if($(this).find('[name="arrows"]').val()==0 && !done) {
+            $(this).find('[name="arrows"]').val($('#ImportArrowShot').val());
+            $(this).find('[name="arrows"]').trigger('change');
+            $(this).find('[name="hits"]').val($('#ImportArrowHits').val());
+            $(this).find('[name="hits"]').trigger('change');
+            done=true;
+        }
+    });
+    $('#ImportArrowBody').prepend('<tr>' +
+        '<td>'+$('#ImportArrowBib').val()+'</td>' +
+        '<td>'+$('#ImportArrowHits').val()+'</td>' +
+        '<td>'+$('#ImportArrowShot').val()+'</td>' +
+        '</tr>');
+
+    $('#ImportArrowBib').val('');
+    $('#ImportArrowHits').val('');
+    $('#ImportArrowShot').val('');
+    $('#ImportArrowBib').focus();
 }

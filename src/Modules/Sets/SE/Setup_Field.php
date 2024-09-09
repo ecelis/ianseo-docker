@@ -16,37 +16,7 @@ CreateStandardClasses($TourId, $SubRule, 'FIELD'); // $SubRule force to 1 (ALL C
 switch($TourType) {
     case 10:    // WA HF 24+24
     case 12:    // WA HF 12+12
-        CreateDistanceNew($TourId, $TourType, '_U13_', array(array('Omärkt-Vit', 0), array('Märkt-Vit', 0)));
-        CreateDistanceNew($TourId, $TourType, 'R_',    array(array('Omärkt-Röd', 0), array('Märkt-Röd', 0)));
-        CreateDistanceNew($TourId, $TourType, 'RU16_', array(array('Omärkt-Svt', 0), array('Märkt-Svt', 0)));
-        CreateDistanceNew($TourId, $TourType, 'RU21_', array(array('Omärkt-Röd', 0), array('Märkt-Röd', 0)));
-        CreateDistanceNew($TourId, $TourType, 'R21_',  array(array('Omärkt-Blå', 0), array('Märkt-Blå', 0)));
-        CreateDistanceNew($TourId, $TourType, 'R50_',  array(array('Omärkt-Blå', 0), array('Märkt-Blå', 0)));
-        CreateDistanceNew($TourId, $TourType, 'R60_',  array(array('Omärkt-Blå', 0), array('Märkt-Blå', 0)));
-        CreateDistanceNew($TourId, $TourType, 'B_',    array(array('Omärkt-Blå', 0), array('Märkt-Blå', 0)));
-        CreateDistanceNew($TourId, $TourType, 'BU16_', array(array('Omärkt-SvV', 0), array('Märkt-SvV', 0)));
-        CreateDistanceNew($TourId, $TourType, 'BU21_', array(array('Omärkt-Blå', 0), array('Märkt-Blå', 0)));
-        CreateDistanceNew($TourId, $TourType, 'B21_',  array(array('Omärkt-Svt', 0), array('Märkt-Svt', 0)));
-        CreateDistanceNew($TourId, $TourType, 'B50_',  array(array('Omärkt-Svt', 0), array('Märkt-Svt', 0)));
-        CreateDistanceNew($TourId, $TourType, 'B60_',  array(array('Omärkt-Svt', 0), array('Märkt-Svt', 0)));
-        CreateDistanceNew($TourId, $TourType, 'C_',    array(array('Omärkt-Röd', 0), array('Märkt-Röd', 0)));
-        CreateDistanceNew($TourId, $TourType, 'CU16_', array(array('Omärkt-Svt', 0), array('Märkt-Svt', 0)));
-        CreateDistanceNew($TourId, $TourType, 'CU21_', array(array('Omärkt-Röd', 0), array('Märkt-Röd', 0)));
-        CreateDistanceNew($TourId, $TourType, 'C21_',  array(array('Omärkt-Blå', 0), array('Märkt-Blå', 0)));
-        CreateDistanceNew($TourId, $TourType, 'C50_',  array(array('Omärkt-Röd', 0), array('Märkt-Röd', 0)));
-        CreateDistanceNew($TourId, $TourType, 'C60_',  array(array('Omärkt-Blå', 0), array('Märkt-Blå', 0)));
-        CreateDistanceNew($TourId, $TourType, 'L_',    array(array('Omärkt-Svt', 0), array('Märkt-Svt', 0)));
-        CreateDistanceNew($TourId, $TourType, 'LU16_', array(array('Omärkt-SvV', 0), array('Märkt-SvV', 0)));
-        CreateDistanceNew($TourId, $TourType, 'LU21_', array(array('Omärkt-Svt', 0), array('Märkt-Svt', 0)));
-        CreateDistanceNew($TourId, $TourType, 'L21_',  array(array('Omärkt-SvV', 0), array('Märkt-SvV', 0)));
-        CreateDistanceNew($TourId, $TourType, 'L50_',  array(array('Omärkt-SvV', 0), array('Märkt-SvV', 0)));
-        CreateDistanceNew($TourId, $TourType, 'L60_',  array(array('Omärkt-SvV', 0), array('Märkt-SvV', 0)));
-        CreateDistanceNew($TourId, $TourType, 'T_',    array(array('Omärkt-Svt', 0), array('Märkt-Svt', 0)));
-        CreateDistanceNew($TourId, $TourType, 'TU16_', array(array('Omärkt-SvV', 0), array('Märkt-SvV', 0)));
-        CreateDistanceNew($TourId, $TourType, 'TU21_', array(array('Omärkt-Svt', 0), array('Märkt-Svt', 0)));
-        CreateDistanceNew($TourId, $TourType, 'T21_',  array(array('Omärkt-SvV', 0), array('Märkt-SvV', 0)));
-        CreateDistanceNew($TourId, $TourType, 'T50_',  array(array('Omärkt-SvV', 0), array('Märkt-SvV', 0)));
-        CreateDistanceNew($TourId, $TourType, 'T60_',  array(array('Omärkt-SvV', 0), array('Märkt-SvV', 0)));
+        CreateDistanceNew($TourId, $TourType, '%', array(array('Omärkt', 0), array('Märkt', 0)));
         break;
 }
 

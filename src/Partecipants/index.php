@@ -215,12 +215,11 @@
 
 	$Rows=GetRows(null,$OrderBy,$AllTargets);
 
+	$IncludeJquery = true;
 	$JS_SCRIPT=array(
 		phpVars2js(array(
 			'StrAreYouSure'=>get_text('MsgAreYouSure')
 		)),
-		//'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/jQuery/jquery-3.2.1.min.js"></script>',
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
 		'<script type="text/javascript" src="Fun_index_edit.js"></script>',
 		'<script type="text/javascript">

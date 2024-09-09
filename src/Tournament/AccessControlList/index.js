@@ -16,7 +16,7 @@ function createList(JsonData) {
                 '<img src="'+RootDir+'Common/Images/ACL2.png" style="height: 12px; margin: 7px 2px 5px ;" onclick="changeAll('+i+',\'2\')">'+
             '</td>' +
             '<td class="aclIP" onclick="copyDetails(\''+item.Ip+'\',\''+item.Name+'\')">'+item.Ip+'</td>' +
-            '<td onclick="copyDetails(\''+item.Ip+'\',\''+item.Name+'\')">'+item.Name+'</td>';
+            '<td onclick="copyDetails(\''+item.Ip+'\',\''+item.Value+'\')">'+item.Name+'</td>';
         for(var j=0; j<optNo; j++) {
             if(item.Opt[j]===undefined) {
                 item.Opt[j] = 0

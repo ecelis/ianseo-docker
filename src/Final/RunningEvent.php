@@ -5,15 +5,16 @@
 	require_once('Common/Fun_FormatText.inc.php');
 	require_once('Qualification/Fun_Qualification.local.inc.php');
 
-	if(isset($_REQUEST['Event']) && preg_match("/^[A-Z0-9]+_[0,1]_[1,2,3]$/i", $_REQUEST['Event']))
-	{
+	if(isset($_REQUEST['Event']) && preg_match("/^[A-Z0-9]+_[0,1]_[1,2,3]$/i", $_REQUEST['Event'])) {
 		list($tmpEvent,$tmpTeam,$tmpEventType) = explode('_', $_REQUEST['Event']);
 		$MyQuery = "UPDATE Events "
 			. "SET EvRunning=IF(EvRunning!=" . $tmpEventType . "," . $tmpEventType . ",0) "
 			. "WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvCode=" . StrSafe_DB($tmpEvent) . " AND EvTeamEvent=" . StrSafe_DB($tmpTeam);
 		safe_w_sql($MyQuery);
-		if($tmpTeam)
-			MakeTeamsAbs(null,null,null);
+        $q=safe_r_sql("select ToElabTeam!=127 as MakeTeams from Tournament where ToId={$_SESSION['TourId']}");
+        if($r=safe_fetch($q) and $r->MakeTeams and $tmpTeam) {
+            MakeTeamsAbs(null, null, null);
+        }
 	}
 
 	$JS_SCRIPT=array(

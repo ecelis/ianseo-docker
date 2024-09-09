@@ -1,6 +1,7 @@
 <?php
 $lang['AutoUpdate']='Update Otomatis';
 $lang['BarRecord']='Tampilkan Batang Rekor Rata2';
+$lang['BrokenRecords']='Rekor terpecahkan';
 $lang['ByClub']='berdasarkan Negara/Klub';
 $lang['ByEvent']='berdasarkan Event';
 $lang['ByName']='berdasarkan Nama';
@@ -76,6 +77,7 @@ $lang['Record-WR-avg']='Rekor Dunia Rata2';
 $lang['Record-WR-WA']='Rekor Dunia';
 $lang['Record-WR-WA-avg']='Rekor Dunia Rata2';
 $lang['RR_Score']='Skor RR';
+$lang['StandingRecords']='Rekor bertahan';
 $lang['Teams']='Tim';
 $lang['TypeName']='Tulis nama yang ingin anda cari';
 $lang['ViewIndividualResults']='Tampilkan Hasil Individual';

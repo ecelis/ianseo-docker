@@ -84,6 +84,8 @@ if($ConfirmMatch) {
 				and $r2->ShootOffShot % $Params->so == 0) {
 			// updates the confirmation of the match
 			safe_w_sql("update {$Table}Finals set {$TabPrefix}Status=1, {$TabPrefix}Confirmed=1, {$TabPrefix}DateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " where {$TabPrefix}Tournament=$TourId and {$TabPrefix}Event='$EvCode' and {$TabPrefix}MatchNo in ($MatchL, $MatchR)");
+			updateOdfTiming('C', $TourId, $EvCode, $EvType, $MatchL);
+
 			$JSON['Error']=false;
 
             if ($EvType) {
@@ -92,7 +94,8 @@ if($ConfirmMatch) {
                 move2NextPhase(null, $EvCode, $MatchL, $TourId, true, '', true);
             }
 
-			runJack("FinConfirmEnd", $TourId, array("Event" => $EvCode, "Team" => $EvType, "MatchNo" => $MatchL, "TourId" => $TourId));
+			runJack("FinConfirmEnd", $TourId, array("Event" => $EvCode, "Team" => $EvType, "MatchNo" => $MatchL, "Side"=>0, "TourId" => $TourId));
+            runJack("FinConfirmEnd", $TourId, array("Event" => $EvCode, "Team" => $EvType, "MatchNo" => $MatchL, "Side"=>1, "TourId" => $TourId));
 			runJack("MatchFinished", $TourId, array("Event" => $EvCode, "Team" => $EvType, "MatchNo" => $MatchL, "TourId" => $TourId));
 		}
 	}
@@ -143,7 +146,8 @@ if($ConfirmEnd) {
 		}
 
 		$JSON['Error']=false;
-		runJack("FinConfirmEnd", $TourId, array("Event"=>$EvCode , "Team"=>$EvType, "MatchNo"=>$MatchL, "TourId"=>$TourId));
+		runJack("FinConfirmEnd", $TourId, array("Event"=>$EvCode , "Team"=>$EvType, "MatchNo"=>$MatchL, "Side"=> 0, "TourId"=>$TourId));
+        runJack("FinConfirmEnd", $TourId, array("Event"=>$EvCode , "Team"=>$EvType, "MatchNo"=>$MatchL, "Side"=> 1, "TourId"=>$TourId));
 	}
 }
 

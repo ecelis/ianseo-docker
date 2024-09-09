@@ -132,7 +132,6 @@ $lang['SpecialUpdate']='"Tesztelő" telepítést használasz. <br/>Csak kiválas
 $lang['Start Ianseo']='IANSEO inditása!';
 $lang['Status']='Státusz';
 $lang['stdValue']='Érték';
-$lang['Suboptimal']='Bár a php.ini fájl nem az optimális adatokat tartalmazza, az <br/>IANSEO legtöbb funkciója megfelelően kell működjön.<bd/> Javasoljuk, hogy állítsd be az optimális paramétereket.';
 $lang['System value']='Rendszer által megadott érték';
 $lang['UpdatePrepared']='A telepítésed hamarosan automatikusan frissítésre kerül. Ne felejts el biztonsági mentést készíteni valamennyi versenyedről, mielőtt a frissítést megkezded. A frissítés hosszabb ideig is eltarthat az internet kapcsolatod sebességétől és a frissítendő elemek számától függően. <br/>Ne felejtsd el, hogy a "Moduls/Custom" mappa kivételével valamennyi nem eredeti fájl törlésre kerül!<br/>';
 $lang['Updating']='Az Ianseo helyi példánya frissítésre kerül';

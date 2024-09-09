@@ -25,6 +25,12 @@ switch($_REQUEST['act']) {
         safe_w_sql("update Qualifications set QuIrmType=5 where QuId=$EnId");
         safe_w_sql("update Individuals set IndIrmType=5 where IndId=$EnId");
         break;
+    case 'dnfnr':
+        $JSON['class']='Irm-7';
+        $JSON['btn']=get_text('CmdUnset', 'Tournament', 'DNF');
+        safe_w_sql("update Qualifications set QuIrmType=7 where QuId=$EnId");
+        safe_w_sql("update Individuals set IndIrmType=7 where IndId=$EnId");
+        break;
     case 'dns':
         $JSON['class']='Irm-10';
         $JSON['btn']=get_text('CmdUnset', 'Tournament', 'DNS');

@@ -25,8 +25,10 @@ if(strlen($_REQUEST['closest'])) {
 }
 
 $JSON['error']=0;
-
-EvaluateMatch($Event, $Team, $MatchL, $_SESSION['TourId'], false);
+$q= safe_r_SQL("SELECT CONCAT(({$Pre}Arrowstring),({$Pre}Tiebreak)) as arrNo from ".($Team ? 'Team' : '')."Finals WHERE trim({$Pre}Tiebreak)!='' AND {$Pre}Tournament={$_SESSION['TourId']} and {$Pre}Event='{$Event}' and {$Pre}Matchno=".intval($_REQUEST['closest']));
+if($r=safe_fetch($q)) {
+    EvaluateMatch($Event, $Team, intval($_REQUEST['closest']), $_SESSION['TourId'], false, '', strlen(trim($r->arrNo))-1,strlen(trim($r->arrNo))-1);
+}
 
 // we need to send back the arrow value, the set total, the winner, etc
 $options=array();
@@ -62,6 +64,7 @@ $obj=getEventArrowsParams($Event, getPhase($MatchL), $Team);
 $JSON['ShootOff']=($Match['tiebreak'] or $Match['oppTiebreak']);
 
 $JSON['winner']=$Match['winner'] ? 'L' : ($Match['oppWinner'] ? 'R' : '');
+$JSON['finished']=($Match['winner'] or $Match['oppWinner']);
 
 $JSON['newSOPossible'] = (
 	!$JSON['winner'] AND

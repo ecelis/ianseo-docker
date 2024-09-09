@@ -45,13 +45,13 @@ foreach($Modules as $Event => $values) {
 			if(isset($v['extraparams']) && is_array($v['extraparams'])) {
 				foreach($v['extraparams'] as $kX=>$vX) {
 					if(is_array($vX)) {
-						$extraParams .= "$kX => (";
+						$extraParams .= ($Event=='HandShake' ? '<a target="_blank" href="'.$CFG->ROOT_DIR.'Api/JSON/UnregisterPushService.php?CompCode='.$_SESSION["TourCode"].'&ClientId='.$kX.'">'.$kX.'</a>' : $kX) ." => (";
 						foreach($vX as $kX2=>$vX2) {
 							$extraParams .= "$kX2: $vX2, ";
 						}
 						$extraParams = substr($extraParams,0,-2) . ")<br>";
 					} else {
-						$extraParams .= "$kX => $vX<br>";
+                        $extraParams .= ($k=='HandShake' ? '<a target="_blank" href="'.$CFG->ROOT_DIR.'Api/JSON/UnregisterPushService.php?CompCode='.$_SESSION["TourCode"].'&ClientId='.$kX.'">'.$kX.'</a>' : $kX) . " => $vX<br>";
 					}
 				}
 			}

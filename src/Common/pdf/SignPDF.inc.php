@@ -20,6 +20,7 @@
 		protected $ThirdCellSize=0;
 
 		public function init($First, $Second='', $Third='', $QrCode='') {
+            $this->setAutoPageBreak(false);
 			$this->First=$First;
 			$this->Second=$Second;
 			$this->Third=nl2br(trim($Third));

@@ -21,6 +21,7 @@ class Obj_Target
 	protected $CenterX=0;
 	protected $CenterY=0;
 	protected $ArrowPos=array();
+	protected $LancasterDot=false;
 
 	public $Diameter=0;
 	public $TargetRadius=0;
@@ -99,6 +100,7 @@ class Obj_Target
 		// get Event and target
 		$this->TourId=$TourId ? $TourId : $_SESSION['TourId'];
 		$this->TargetData=GetMaxScores($Event, $Match, $Team, $this->TourId);
+		$this->LancasterDot=$this->TargetData['HasDot'];
 
 		// calculate the ratio between the face global size and the actual face size
 		$this->Expand=$this->TargetData['FullSize']/$this->TargetData['MaxSize'];
@@ -143,9 +145,13 @@ class Obj_Target
 
 	public function setTarget() {
 		$Tgt=array();
-		foreach($this->TargetData['Arrows'] as $Circle) {
+		$offsetY=0;
+		foreach($this->TargetData['Arrows'] as $let => $Circle) {
 			if($Circle['size']>0) {
-				$Tgt[$Circle['size']]='<circle cx="'.$this->CenterX.'" cy="'.$this->CenterY.'" r="'.round($this->Expand*$Circle['size']*5, 2).'" stroke="#'.$Circle['lineColor'].'" stroke-width="1" fill="#'.$Circle['fillColor'].'" />';
+				if($this->LancasterDot and $let=='N') {
+					$offsetY=$this->CenterY*0.275;
+				}
+				$Tgt[$Circle['size']]='<circle cx="'.$this->CenterX.'" cy="'.($this->CenterY+$offsetY).'" r="'.round($this->Expand*$Circle['size']*5, 2).'" stroke="#'.$Circle['lineColor'].'" stroke-width="1" fill="#'.$Circle['fillColor'].'" />';
 			}
 		}
 		krsort($Tgt);
@@ -201,17 +207,19 @@ class Obj_Target
 		if($Arrows) {
 			// draws the arrows
 			foreach($Arrows as $ArId => $ar) {
-				if($JudgesView) {
-					// for the judges view (Final/Viewer/) the arrow radius is parametric and assigned as 1/80 of the visualized target radius
-					$newArRadius = $this->TargetData['TargetRadius']/65;
-					// distance is from center of target to edge of arrow, so X and Y must be recalculate
-					$R1=$ar['D']+$ar['R'];
-					$R2=$ar['D']+$newArRadius;
-					$ar['X']=$ar['X']*$R2/$R1;
-					$ar['Y']=$ar['Y']*$R2/$R1;
-					$ar['R']=$newArRadius;
+				if(isset($ar['X'])) {
+					if($JudgesView) {
+						// for the judges view (Final/Viewer/) the arrow radius is parametric and assigned as 1/80 of the visualized target radius
+						$newArRadius = $this->TargetData['TargetRadius']/65;
+						// distance is from center of target to edge of arrow, so X and Y must be recalculate
+						$R1=$ar['D']+$ar['R'];
+						$R2=$ar['D']+$newArRadius;
+						$ar['X']=$ar['X']*$R2/$R1;
+						$ar['Y']=$ar['Y']*$R2/$R1;
+						$ar['R']=$newArRadius;
+					}
+					$tmp.='<circle class="svgArrow" id="'.$ArId.'" cx="'.round(($this->Ratio*$this->Expand*$ar['X'])+$this->CenterX, 2).'" cy="'.round($this->CenterY+($this->Ratio*$this->Expand*$ar['Y']), 2).'" r="'.($this->Ratio*$this->Expand*$ar['R']).'" fill="url(#gradArrow)" />';
 				}
-				$tmp.='<circle class="svgArrow" id="'.$ArId.'" cx="'.round(($this->Ratio*$this->Expand*$ar['X'])+$this->CenterX, 2).'" cy="'.round($this->CenterY+($this->Ratio*$this->Expand*$ar['Y']), 2).'" r="'.($this->Ratio*$this->Expand*$ar['R']).'" fill="url(#gradArrow)" />';
 			}
 
 			if($JudgesView and !empty($ar) and $DrawSighter) {

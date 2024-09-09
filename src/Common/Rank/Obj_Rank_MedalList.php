@@ -146,7 +146,14 @@ class Obj_Rank_MedalList extends Obj_Rank
 						left join ExtraData on EdId=EnId and EdType='Z'
 						where EnTournament={$tourId} AND DivAthlete AND ClAthlete) Entry ON IndId=EnId AND IndTournament=EnTournament
 					LEFT JOIN Qualifications ON EnId=QuId
-					LEFT JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament
+					LEFT JOIN Countries ON CoId=
+                        case EvTeamCreationMode 
+                            when 0 then EnCountry
+                            when 1 then EnCountry2
+                            when 2 then EnCountry3
+                            else EnCountry
+                        end
+                        AND EnTournament=CoTournament
 					LEFT JOIN FinSchedule ON EvCode=FSEvent AND EvTeamEvent=FSTeamEvent AND EvTournament=FSTournament AND FSMatchNo=0
 					left join OdfTranslations nm on nm.OdfTrTournament=ToId and nm.OdfTrInternal='TRANSLATE' and nm.OdfTrLanguage='ENG' and nm.OdfTrType='EVENT' and nm.OdfTrIanseo=concat(EvTeamEvent,EvCode)
 					left join OdfTranslations br on br.OdfTrTournament=ToId and br.OdfTrInternal='MATCH' and br.OdfTrLanguage='ENG' and br.OdfTrType='CODE' and br.OdfTrIanseo=if(IndRankFinal=3,'0_2','0_0')
@@ -336,8 +343,8 @@ class Obj_Rank_MedalList extends Obj_Rank
 					$this->data['events'][$evKey][$medal][]=array(
 						'countryCode'=>$row->CoCode,
 						'countryName'=>$row->CoName,
+                        'subTeam'=> $row->TeSubTeam,
 						'qualScore'=>$row->QuScore,
-						'countryOdfName'=>rtrim($row->OdfCode,'-').$row->CoCode.str_pad($row->TeSubTeam, 2, '0', STR_PAD_LEFT),
 						'athletes'=>$athletes
 					);
 				}

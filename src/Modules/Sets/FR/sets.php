@@ -2,8 +2,7 @@
 require_once('Common/Fun_Modules.php');
 $version='2017-11-23 18:13:00';
 
-//$AllowedTypes=array(1,2,3,4,5,6,7,8,9,10,11,12,13,18);
-$AllowedTypes=array(3, 6, 7, 8);
+$AllowedTypes=array(3, 6, 7, 8, 50);
 
 $SetType['FR']['descr']=get_text('Setup-FR', 'Install');
 $SetType['FR']['noc'] = 'FRA';
@@ -15,20 +14,32 @@ foreach($AllowedTypes as $val) {
 }
 
 // BUILD ONE PER TIME... When finished we can group
-// 18m have championships
-$SetType['FR']['rules']["6"][0]='SetAllClass';
-$SetType['FR']['rules']["6"][1]='SetFRChampionshipSen';
-$SetType['FR']['rules']["6"][2]='SetFRChampionshipJun';
+// 70m round have several championship and "styles"
+$SetType['FR']['rules']["3"]["12"]='SetFRTAE-Valides';
+$SetType['FR']['rules']["3"]["13"]='SetFRTAE-Para';
+//$SetType['FR']['rules']["3"]["0"]='SetAllClass';
+$SetType['FR']['rules']["3"]["2"]='SetFRChampionshipJun';
+$SetType['FR']['rules']["3"]["14"]='SetFRChampJunTeams';
+$SetType['FR']['rules']["3"]["10"]='SetFRCoupeFrance';
+$SetType['FR']['rules']["3"]["9"]='SetFRTAE';
+$SetType['FR']['rules']["3"]["1"]='SetFRChampsTNJ';
+$SetType['FR']['rules']["3"]["8"]='SetFRFinDRD2';
+$SetType['FR']['rules']["3"]["15"]='SetFRFinalsD2';
+$SetType['FR']['rules']["3"]["11"]='SetFRD12023';
 
-// 70m round have several championship
-$SetType['FR']['rules']["3"]["0"]='SetAllClass'; // done
-$SetType['FR']['rules']["3"]["1"]='SetFRChampsTNJ'; // done
-$SetType['FR']['rules']["3"]["2"]='SetFRChampionshipJun'; // done
-//$SetType['FR']['rules']["3"][3]='SetFRChampsScratchR'; // deprecated
-//$SetType['FR']['rules']["3"][4]='SetFRChampsScratchC'; // deprecated
-//$SetType['FR']['rules']["3"][5]='SetFRChampsVet'; // deprecated
-$SetType['FR']['rules']["3"]["9"]='SetFRTAE'; // done
-$SetType['FR']['rules']["3"]["10"]='SetFRCoupeFrance'; // done
-$SetType['FR']['rules']["3"]["6"]='SetFRChampsD1DNAP'; // done
-//$SetType['FR']['rules']["3"][7]='SetFRChampsFederal'; // deprecated
-$SetType['FR']['rules']["3"]["8"]='SetFRFinDRD2'; // done
+// 18m have championships
+$SetType['FR']['rules']["6"][0]='SetFrSelectif';
+$SetType['FR']['rules']["6"][3]='SetFrSelectifPara';
+$SetType['FR']['rules']["6"][2]='SetFRChampionshipJun';
+$SetType['FR']['rules']["6"][1]='SetFRChampionshipSen';
+
+// 25m and 25+18 have no championships
+$SetType['FR']['rules']["7"][0]='SetFrSelectif';
+$SetType['FR']['rules']["7"][3]='SetFrSelectifPara';
+
+$SetType['FR']['rules']["8"][0]='SetFrSelectif';
+$SetType['FR']['rules']["8"][3]='SetFrSelectifPara';
+
+// Beursault
+$SetType['FR']['rules']["50"][0]='SetFrBouquet';
+$SetType['FR']['rules']["50"][1]='SetFrBeursault';

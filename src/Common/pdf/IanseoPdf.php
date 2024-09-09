@@ -9,21 +9,23 @@ define('EURO', chr(128));
 //error_reporting(E_ALL);
 
 class IanseoPdf extends TCPDF {
+
 	const sideMargin=10;
 	const topMargin=22;
 	const bottomMargin=10;
 	const footerImageH=10;
 
-	var $savedTopMargin, $savedSideMargin, $savedBottomMargin;
+    var $ProgramVersion, $ProgramBuild, $ProgramRelease, $ToPrintChars;
+	var $savedTopMargin, $savedSideMargin, $savedBottomMargin, $lBorder;
 	var $TextOutline = 0;	// per scrivere solo il contorno del font
 							// 0= fill (normal)
 							// 1= outline
 							// 2= fill+outline
 	var $TextOutlineWidth = 2; // spessore della riga di contorno
 
-	var $Titolo;
+	var $Titolo, $FirstLang, $SecondLang, $ReverseNameFunction;
 	var $ColorDocument;
-	var $Code, $Name, $Oc, $Where, $WhenF, $WhenT, $prnGolds, $prnXNine, $goldsChars ,$xNineChars, $IsOris;
+	var $Code, $Name, $Oc, $Where, $WhenF, $WhenT, $prnGolds, $prnXNine, $goldsChars ,$xNineChars, $IsOris, $Title;
 	var $imgR = false, $imgL = false, $imgB = false;
 	var $Judge, $Dos, $Resp, $Jury;
 	var $ShowAwards=false;
@@ -32,7 +34,7 @@ class IanseoPdf extends TCPDF {
 	var $ShowStaff=true;
 	var $StaffCategories=array();
 
-	var $PageSize='A4', $FontStd='helvetica', $FontFix='courier', $FontSymbol='zapfdingbats', $Currency='';
+	var $PageSize='A4', $FontStd='helvetica', $FontStd2='helvetica', $FontFix='courier', $FontFix2='courier', $FontSymbol='zapfdingbats', $Currency='';
 	var $docUpdate;
 
 	// patch
@@ -48,6 +50,7 @@ class IanseoPdf extends TCPDF {
 	var $CoinToss='';
 	var $ShotOffShort='';
 	var $ShotOff='';
+    var $TotalShort='';
 	var $LegendStatus='';
 	var $Partecipation='';
 	var $IndQual='';
@@ -57,6 +60,8 @@ class IanseoPdf extends TCPDF {
 	var $MixedTeamFinEvent='';
 	var $Yes='';
 	var $No='';
+    var $NotAwarded='';
+    var $NumberThousandsSeparator=",", $NumberDecimalSeparator=".";
 	var $PrintFooterSerialNumber=true;
 	var $angle=0;
 	var $BarcodeHeader=0;
@@ -66,10 +71,11 @@ class IanseoPdf extends TCPDF {
 	var $Version='';
 
 	var $ToPaths=array('ToLeft' => '', 'ToRight' => '', 'ToBottom' => '');
+    var $LocalRule='',  $LocalType=0, $LocalSubRule='';
+
 
 	function __construct($DocTitolo, $Portrait=true, $Headers='', $StaffVisibility=true) {
 		global $CFG;
-		$this->ShowStaff = $StaffVisibility;
 		$isOnline=false;
 		if($Headers and is_file($Headers)) {
 			$isOnline=true;
@@ -77,9 +83,13 @@ class IanseoPdf extends TCPDF {
 		} elseif(CheckTourSession()) {
 			require_once('Common/OrisFunctions.php');
 			$tmp=getPdfHeader(false);
+            if($tmp->LocalRule!='IT') {
+                $StaffVisibility=false;
+            }
 		} else {
 			CD_redirect($CFG->ROOT_DIR);
 		}
+        $this->ShowStaff = $StaffVisibility;
 
 		foreach($tmp as $k => $v) $this->{$k}=$v;
 		if(!defined('ProgramVersion')) define('ProgramVersion', $tmp->ProgramVersion);

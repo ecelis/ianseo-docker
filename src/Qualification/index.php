@@ -16,16 +16,13 @@
 	CheckTourSession(true);
     checkACL(AclQualification, AclReadWrite);
 
-
+	$IncludeJquery = true;
 	$JS_SCRIPT=array(
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Qualification/Fun_AJAX_index.js"></script>',
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Qualification/Fun_JS.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>',
 		'<script type="text/javascript" src="./index.js"></script>',
-		'<link href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css" media="screen" rel="stylesheet" type="text/css" />',
 		'<link href="./index.css" media="screen" rel="stylesheet" type="text/css" />',
 		phpVars2js(array(
 			'CmdPostUpdate'=>get_text('CmdPostUpdate'),
@@ -37,8 +34,10 @@
 			'MsgBackFromHome' => get_text('BackFromHome', 'Tournament'),
 			'MsgSetDSQ' => get_text('Set-DSQ', 'Tournament'),
             'MsgUnsetDSQ' => get_text('Unset-DSQ', 'Tournament'),
-            'TxtIrmDns' => get_text('DNS', 'Tournament'),
-            'TxtIrmDnf' => get_text('DNF', 'Tournament'),
+            'TxtIrmTitle' => get_text('IrmStatus', 'Tournament'),
+            'TxtIrmDns' => get_text('IRM-10', 'Tournament'),
+            'TxtIrmDnf' => get_text('IRM-5', 'Tournament'),
+            'TxtIrmDnfNoRank' => get_text('IRM-7', 'Tournament'),
             'TxtIrmUnset' => get_text('CmdUnset', 'Tournament', ''),
             'TxtCancel' => get_text('CmdCancel'),
 		)),

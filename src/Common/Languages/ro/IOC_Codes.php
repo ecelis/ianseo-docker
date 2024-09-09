@@ -184,7 +184,6 @@ $lang['TOG']='Togo';
 $lang['TPE']='Taipei-ul chinezesc';
 $lang['TRI']='Trinidad si Tobago';
 $lang['TUN']='Tunisia';
-$lang['TUR']='Turcia';
 $lang['TUV']='Tuvalu';
 $lang['UAE']='Emiratele Arabe Unite';
 $lang['UGA']='Uganda';

@@ -33,8 +33,8 @@
 //Faccio il ridimensionamento
 			if($scala<1)
 			{
-				$new_width = $width * $scala;
-				$new_height = $height * $scala;
+				$new_width = intval($width * $scala);
+				$new_height = intval($height * $scala);
 				$new_image = imagecreatetruecolor($new_width, $new_height);
 				imagecopyresampled($new_image, $im, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
 				$im=$new_image;

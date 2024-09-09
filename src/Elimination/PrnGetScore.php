@@ -2,8 +2,7 @@
 require_once(dirname(dirname(__FILE__)) . '/config.php');
 require_once('Common/pdf/LabelPDF.inc.php');
 require_once('Common/Fun_Sessions.inc.php');
-
-$Indices=array('bis','ter','quat', 'quin', 'sex', 'sept', 'oct');
+require_once('Common/Lib/CommonLib.php');
 
 if(CheckTourSession()) {
     checkACL(AclEliminations, AclReadOnly);
@@ -48,7 +47,7 @@ if(CheckTourSession()) {
 				$NumTarget = (($NumTarget-1) % ($NumEnd)) + 1;
 			}
 			if($MyRow->TargetNo and $NumTarget!=intval($MyRow->TargetNo)) {
-				$TargetToPrint = $NumTarget . '-' . $Indices[ceil(intval($MyRow->TargetNo)/($NumEnd))-2];
+				$TargetToPrint = CheckBisTargets($MyRow->TargetNo, $NumEnd);
 			}
 
 			if($CurrentTarget != $MyRow->Session . $MyRow->TargetNo) {

@@ -269,7 +269,7 @@
 			$q .= "	LEFT JOIN Flags ON FlIocCode='FITA' and FlCode=CoCode and FlTournament=ToId
 				left join DistanceInformation on EnTournament=DiTournament and DiSession=1 and DiDistance=1 and DiType='Q'
 				left join (
-					select DiSession as FdiSession, group_concat(concat_ws('|', DiDistance, DiEnds, DiArrows) order by DiDistance separator ',') as FdiDetails
+					select DiSession as FdiSession, group_concat(concat_ws('|', DiDistance, DiEnds, DiArrows, DiScoringEnds, DiScoringOffset) order by DiDistance separator ',') as FdiDetails
 					from DistanceInformation
 					where DiTournament={$this->tournament} and DiType='Q'
 					group by DiSession
@@ -280,7 +280,7 @@
 			if(!empty($this->opts['runningDist']) && $this->opts['runningDist']>0)
 				$q .= "OrderScore DESC, OrderGold DESC, OrderXnine DESC, FirstName, Name ";
 			else
-				$q .= "{$MyRank} ASC, FirstName, Name ";
+				$q .= "{$MyRank}=0, {$MyRank} ASC, FirstName, Name ";
 
 			//print $q.'<br>';
 
@@ -344,6 +344,8 @@
 							$FullDistInfo['dist_' . $t[0]]=[
 								'ends'=>$t[1],
 								'arr'=>$t[2],
+								'toShoot'=>($t[3]??0),
+								'offset'=>($t[4]??0),
 							];
 						}
 

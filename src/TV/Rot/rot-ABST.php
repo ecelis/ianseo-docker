@@ -92,25 +92,27 @@ function rotAbst($TVsettings, $RULE) {
 		$NumRecords=0;
 		$Final=(max($data['meta']['arrowsShot'])==$data['meta']['maxArrows']);
 		foreach($data['records'] as $r) {
-			$RecTot[$r->RtRecCode]['tot']=$r->RtRecMaxScore-$r->RtRecTotal;
-			$RecTot[$r->RtRecCode]['gap']=$r->TrGaps;
-			$RecTot[$r->RtRecCode]['area']=$r->ReArBitLevel;
-			$RecTot[$r->RtRecCode]['claim']=$r->ReArMaCode;
-			if($r->TrGaps and !$Final) {
-				$RecTitle.='<div class="piccolo" style="color:#'.$r->TrColor.'">'.($Final ? $r->TrHeader : get_text('RecordAverage', 'Records', $r->TrHeader)).'</div>';
-			}
-			$RecCut=max($RecCut, $RecTot[$r->RtRecCode]['tot']);
-			$rec=round($r->RtRecTotal*max($data['meta']['arrowsShot'])/$data['meta']['maxArrows'],1);
-			if($r->TrBars) {
-				$NumRecords++;
-				$ExtraCSS.=".Rec_{$r->RtRecCode} {background-color:#{$r->TrColor}; color:white;".($r->TrFontFile ? 'font-family:'.$r->RtRecCode.';' : '')."}";
-				$tmp='<div class="QualRow Rec_'. $r->RtRecCode.'">
+			if($r->TrBars or $r->TrGaps) {
+				$RecTot[$r->RtRecCode]['tot']=$r->RtRecMaxScore-$r->RtRecTotal;
+				$RecTot[$r->RtRecCode]['gap']=$r->TrGaps;
+				$RecTot[$r->RtRecCode]['area']=$r->ReArBitLevel;
+				$RecTot[$r->RtRecCode]['claim']=$r->ReArMaCode;
+				if($r->TrGaps and !$Final) {
+					$RecTitle.='<div class="piccolo" style="color:#'.$r->TrColor.'">'.($Final ? $r->TrHeader : get_text('RecordAverage', 'Records', $r->TrHeader)).'</div>';
+				}
+				$RecCut=max($RecCut, $RecTot[$r->RtRecCode]['tot']);
+				$rec=round($r->RtRecTotal*max($data['meta']['arrowsShot'])/$data['meta']['maxArrows'],1);
+				if($r->TrBars) {
+					$NumRecords++;
+					$ExtraCSS.=".Rec_{$r->RtRecCode} {background-color:#{$r->TrColor}; color:white;".($r->TrFontFile ? 'font-family:'.$r->RtRecCode.';' : '')."}";
+					$tmp='<div class="QualRow Rec_'. $r->RtRecCode.'">
 						<div class="Record">'.get_text('RecordAverage', 'Records', $r->TrHeader).'</div>
 					<div class="Score">' . ($data['meta']['running'] ? number_format($rec/$data['meta']['maxArrows'], 3, '.', '') : number_format($rec, $Final ? 0 : 1, '.', '')) . '</div>
 					'.($View10s ?  '<div class="Gold">&nbsp;</div>' : '').'
 					'.($ViewX9s ? '<div class="XNine">&nbsp;</div>' : '').'
 					</div>';
-				$RecordCut["$rec"][]=$tmp;
+					$RecordCut["$rec"][]=$tmp;
+				}
 			}
 		}
 
@@ -265,8 +267,16 @@ function rotAbstSettings($Settings) {
 	// if(!isset($RMain[''])) $RMain['']='';
 
 	foreach($PageDefaults as $key => $Value) {
-		$ret.= '<tr>
-			<th nowrap="nowrap" class="Right">'.get_text('TVCss3'.$key,'Tournament').' <input type="button" value="reset" onclick="document.getElementById(\'P-Main['.$key.']\').value=\''.$Value.'\'"></th>
+        $ret.= '<tr ref="'.$Value.'">
+			<th nowrap="nowrap">
+			    <div class="d-flex">
+                    <div class="CssResetButton '.($Value==$RMain[$key] ? 'CssResetDisabled' : '').'" onclick="SetDefaults(this)">Default</div>
+                    <div class="CssTitle">
+                        '.get_text('TVCss3'.$key,'Tournament').'
+                        <i class="fa fa-pencil-alt ml-1" onclick="editCss(this)"></i>
+                    </div>
+                </div>
+            </th>
 			<td width="100%"><input type="text" name="P-Main['.$key.']" id="P-Main['.$key.']" value="'.$RMain[$key].'"></td>
 			</tr>';
 	}

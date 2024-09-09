@@ -50,18 +50,17 @@ if($_POST) {
 	$isCompleteResultBook = true;
 
 	$pdf = new OrisBracketPDF('', 'Complete Result Book');
-	$pdf->SetAutoPageBreak(true,OrisPDF::bottomMargin);
+    $pdf->SetAutoPageBreak(true,OrisPDF::bottomMargin+$pdf->extraBottomMargin);
 
+    // Medallists
+    if(!empty($_POST['MEDLST'])) {
+        $pdf->SetAutoPageBreak(true,OrisPDF::bottomMargin);
+        include 'OrisMedalList.php';
+    }
 
 	// Medal standing
 	if(!empty($_POST['MEDSTD'])) {
 		include 'OrisMedalStanding.php';
-	}
-
-	// Medallists
-	if(!empty($_POST['MEDLST'])) {
-		$pdf->SetAutoPageBreak(true,OrisPDF::bottomMargin);
-		include 'OrisMedalList.php';
 	}
 
 	// List by Countries
@@ -136,30 +135,63 @@ if($_POST) {
 		include 'Qualification/OrisTeam.php';
 	}
 
+    if(!empty($_POST['FinalInd'])) {
+        $EventRequested=array();
+        foreach($_POST['FinalInd'] as $Event) $EventRequested[]=substr($Event,2);
+        $PdfData = getBracketsIndividual($EventRequested, true, false, false, true, false);
+        include(PdfChunkLoader('OrisScoreIndividual.inc.php'));
+    }
+
+    if(!empty($_POST['FinalTeam'])) {
+        $EventRequested=array();
+        foreach($_POST['FinalTeam'] as $Event) $EventRequested[]=substr($Event,2);
+        $PdfData = getBracketsTeams($EventRequested, true, false, false, true, false, null, true);
+        include(PdfChunkLoader('OrisScoreTeam.inc.php'));
+
+        $PdfData=getTeamsComponentsLog($EventRequested);
+        include(PdfChunkLoader('OrisComponentLogTeam.inc.php'));
+    }
+
+    // Standing and broken records
+
+    if(!empty($_POST['RECSTD'])) {
+        $q = safe_r_sql("SELECT count(*) as Involved FROM TourRecords WHERE TrTournament={$_SESSION['TourId']}");
+        if ($r = safe_fetch($q) and $r->Involved) {
+            include('Partecipants/OrisStatRecStanding.php');
+        }
+    }
+    if(!empty($_POST['RECBRK'])) {
+        $q = safe_r_sql("SELECT count(*) as Involved FROM RecBroken WHERE RecBroTournament={$_SESSION['TourId']}");
+        if ($r = safe_fetch($q) and $r->Involved) {
+            include('Partecipants/OrisStatRecBroken.php');
+        }
+    }
+    if(!empty($_POST['STF'])) {
+        $q = safe_r_sql("SELECT count(*) as Involved FROM TournamentInvolved WHERE TiTournament={$_SESSION['TourId']}");
+        if ($r = safe_fetch($q) and $r->Involved) {
+            include('Tournament/OrisStaffField.php');
+        }
+    }
+
 	// Ranking by Category, Teams (local rules apply)
 	if(!empty($_POST['TC'])) {
 		include 'Qualification/PrnTeam.php';
 	}
-
+    $pdf->endPage();
 	$pdf->startPageGroup();
 	// add a new page for TOC
 
 	$pdf->setPrintFooter(false);
 	$pdf->SetDataHeader(array(), array());
-	$pdf->setEvent('Summary');
+	$pdf->setEvent('Complete Results Booklet');
 	$pdf->setComment('');
-	$pdf->setOrisCode('', 'Summary');
+    $pdf->setOrisCode('SUMMARY', 'Complete Results Booklet');
 	$pdf->setPhase('');
 
 	$pdf->addTOCPage();
 
-	if($_SESSION['ISORIS']) {
-		$pdf->setY(40);
-	}
 	// write the TOC title
 	$pdf->SetFont('times', 'B', 16);
-	// $pdf->MultiCell(0, 0, 'Index', 0, 'C', 0, 1, '', '', true, 0);
-	// 			$pdf->Ln();
 
 	// disable existing columns
 	$pdf->resetColumns();
@@ -467,9 +499,14 @@ if($outputIndFin or $outputTeamFin) {
 <!-- medal -->
 			<tr class="Divider"><th colspan="4"></th></tr>
 			<tr>
-				<td colspan="2" class="Bold Center"><input type="checkbox" name="MEDSTD" id="MEDSTD">&nbsp;<?php print get_text('MedalStanding'); ?></td>
-				<td colspan="2" class="Bold Center"><input type="checkbox" name="MEDLST" id="MEDLST">&nbsp;<?php print get_text('MedalList'); ?></td>
+				<td colspan="2" class="Bold Center"><input type="checkbox" name="MEDSTD" id="MEDSTD"><?php print get_text('MedalStanding'); ?></td>
+				<td colspan="2" class="Bold Center"><input type="checkbox" name="MEDLST" id="MEDLST"><?php print get_text('MedalList'); ?></td>
 			</tr>
+            <tr class="OrisShow tit_MedBook">
+                <td class="Bold Center"><input type="checkbox" name="RECSTD"><?php print get_text('StatRecordsStanding','Tournament'); ?></td>
+                <td colspan="2" class="Bold Center"><input type="checkbox" name="STF"><?php print get_text('StaffOnField','Tournament'); ?></td>
+                <td class="Bold Center"><input type="checkbox" name="RECBRK"><?php print get_text('StatRecordsBroken','Tournament'); ?></td>
+            </tr>
 
 			<tr class="Divider"><th colspan="4"></th></tr>
 			<tr><td class="Left" id="idStatus" colspan="4">&nbsp;</td></tr>

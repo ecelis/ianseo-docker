@@ -87,7 +87,7 @@ function safe_w_con($error=false) {
 		$msg='';
 
 		if(php_uname('s')=='Windows NT') {
-			$msg='<div><b style="color:red">If MYSQL did not start in control panel, you can try repairing database <a href="./RepairXAMPP.php">clicking here</a></b></div>';
+			$msg='<div><b style="color:red">If MYSQL did not start in control panel, you can try repairing database <a href="'.$CFG->ROOT_DIR.'RepairXAMPP.php">clicking here</a></b></div>';
 		}
 
 		if($error) {
@@ -191,11 +191,23 @@ function safe_r_SQL($SQL, $use=false, $force=false) {
 		$GLOBALS['safe_SQL']['r_querries'][]=$a[0];
 	}
 	if(!$READ_CON) $READ_CON=safe_r_con();
-	if($use) {
-		$a=mysqli_query($READ_CON, $SQL, MYSQLI_USE_RESULT ) or $force or safe_error('Error ' . mysqli_errno($READ_CON) . ': ' . mysqli_error($READ_CON));
-	} else {
-		$a=mysqli_query($READ_CON, $SQL) or $force or safe_error('Error ' . mysqli_errno($READ_CON) . ': ' . mysqli_error($READ_CON));
-	}
+    try {
+        if($use) {
+            $a=mysqli_query($READ_CON, $SQL, MYSQLI_USE_RESULT ) or $force or safe_error('Error ' . mysqli_errno($READ_CON) . ': ' . mysqli_error($READ_CON));
+        } else {
+            $a=mysqli_query($READ_CON, $SQL) or $force or safe_error('Error ' . mysqli_errno($READ_CON) . ': ' . mysqli_error($READ_CON));
+        }
+    } catch(mysqli_sql_exception $e) {
+        if($force) {
+            return false;
+        }
+        safe_error('Error ' . mysqli_errno($READ_CON) . ': ' . mysqli_error($READ_CON));
+    } catch(Exception $e) {
+        if($force) {
+            return false;
+        }
+        safe_error('Error ' . mysqli_errno($READ_CON) . ': ' . mysqli_error($READ_CON));
+    }
 	Return $a;
 }
 function safe_fetch($r) {
@@ -205,7 +217,7 @@ function safe_fetch_assoc($r) {
 	Return mysqli_fetch_assoc($r);
 }
 function safe_data_seek($r, $num=0) {
-	mysqli_data_seek($r, $num);
+	mysqli_data_seek($r, max(0, $num));
 }
 function safe_num_rows($r) {
 	Return mysqli_num_rows($r);
@@ -247,6 +259,12 @@ global $ERROR_REPORT;
 		echo "</pre>";
 	}
 	exit;
+}
+
+function safe_close() {
+    global $READ_CON, $WRIT_CON;
+    if($READ_CON) mysqli_close($READ_CON);
+    if($WRIT_CON) mysqli_close($WRIT_CON);
 }
 
 function deb_rec($key,$var,$lev=0) {

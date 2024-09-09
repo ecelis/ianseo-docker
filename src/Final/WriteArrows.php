@@ -14,6 +14,7 @@ require_once('Common/Fun_Sessions.inc.php');
 
 $JS_SCRIPT=array(
 	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Final/WriteArrows.js"></script>',
+	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
 	phpVars2js(array(
 		'CmdPostUpdate'=>get_text('CmdPostUpdate'),
 		'PostUpdating'=>get_text('PostUpdating'),
@@ -30,11 +31,15 @@ $PAGE_TITLE=get_text('Finals', 'Tournament');
 
 $Events=array();
 $Phases=array();
-$q=safe_r_sql("select EvCode, EvFinalFirstPhase, EvTeamEvent from Events where EvTournament={$_SESSION['TourId']} order by EvTeamEvent, EvProgr");
+$q=safe_r_sql("select e1.EvCode, e1.EvFinalFirstPhase, e1.EvTeamEvent, coalesce(e2.EvNumQualified/2,0) as EvSecondaryStartPhase
+    from Events e1
+    left join Events e2 on e2.EvTournament=e1.EvTournament and e2.EvTeamEvent=e1.EvTeamEvent and e2.EvCodeParent=e1.EvCode and e2.EvCodeParentWinnerBranch=1
+    where e1.EvTournament={$_SESSION['TourId']} and e1.EvElimType!=5
+    order by e1.EvTeamEvent, e1.EvProgr");
 while($r=safe_fetch($q)) {
 	$Events[$r->EvTeamEvent][$r->EvCode]='<input type="checkbox" class="EventCheck" name="'.$r->EvTeamEvent.'" value="'.$r->EvCode.'">'.$r->EvCode;
 	if($r->EvFinalFirstPhase and empty($Phases[$r->EvTeamEvent][$r->EvFinalFirstPhase])) {
-		for($n=valueFirstPhase($r->EvFinalFirstPhase); $n>=0; $n/=2) {
+		for($n=valueFirstPhase($r->EvFinalFirstPhase); $n>=$r->EvSecondaryStartPhase; $n/=2) {
 			$Phases[$r->EvTeamEvent][$n]='<input type="checkbox" class="PhaseCheck" name="'.$r->EvTeamEvent.'" value="'.valueFirstPhase($n).'">'.get_text(namePhase($r->EvFinalFirstPhase,$n).'_Phase');
 			if($n==0) break; // escape from this zoo :D
 			if($n==1) $n=0; // makes the gold medal match ;)
@@ -71,7 +76,7 @@ include('Common/Templates/head.php');
 	<td class="Center">
 		<select name="x_Schedule" id="x_Schedule"></select>
 	</td>
-	<td class="Center" nowrap="nowrap"><?php echo (empty($Events[0]) ? '' : get_text('Individual').': '.implode(str_repeat('&nbsp;',2), $Events[0])); ?></td>
+	<td class="Center"><?php echo (empty($Events[0]) ? '' : get_text('Individual').': '.implode(str_repeat('&nbsp;',2), $Events[0])); ?></td>
 	<td class="Center" nowrap="nowrap"><?php echo (empty($Phases[0]) ? '' : implode(str_repeat('&nbsp;',2), $Phases[0])); ?></td>
 	<td class="Center" rowspan="2"><input type="text" name="x_Volee" id="x_Volee" size="3" maxlength="3" ></td>
 	<td class="Center" rowspan="2"><input type="text" name="x_Arrows" id="x_Arrows" size="3" maxlength="3" ></td>

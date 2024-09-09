@@ -35,7 +35,14 @@ if (IsBlocked(BIT_BLOCK_TOURDATA)) {
 }
 
 // Aggiungo la nuova riga
-$Insert = "INSERT INTO Events SET 
+$q=safe_r_sql("select ToGoldsChars,ToGolds,ToXNineChars,ToXNine from Tournament where ToId={$_SESSION['TourId']}");
+$r=safe_fetch($q);
+$Insert = "INSERT INTO Events 
+    SET 
+    EvGoldsChars='$r->ToGoldsChars',
+    EvGolds='$r->ToGolds',
+    EvXNineChars='$r->ToXNineChars',
+    EvXNine='$r->ToXNine',
 	EvCode=" . StrSafe_DB($_REQUEST['New_EvCode']) . ",
 	EvIsPara=" . (empty($_REQUEST['New_EvIsPara']) ? 0 : 1) . ",
 	EvTeamEvent=0,

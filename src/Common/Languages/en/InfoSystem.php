@@ -1,6 +1,7 @@
 <?php
 $lang['AutoUpdate']='Auto update';
 $lang['BarRecord']='Show Average Record Bar';
+$lang['BrokenRecords']='Broken Records';
 $lang['ByClub']='By country/club';
 $lang['ByEvent']='By Event';
 $lang['ByName']='By name';
@@ -76,6 +77,7 @@ $lang['Record-WR-avg']='World Record Avg';
 $lang['Record-WR-WA']='World Record';
 $lang['Record-WR-WA-avg']='World Record Avg';
 $lang['RR_Score']='RR Score';
+$lang['StandingRecords']='Standing Records';
 $lang['Teams']='Teams';
 $lang['TypeName']='Type the name you\'re looking for';
 $lang['ViewIndividualResults']='View Individual Results';

@@ -14,11 +14,6 @@ $(function() {
 	if(CalcFinT==0) {
 		$("#doCalcFinTeam").hide();
 	}
-
-	if(CalcFinR==0) {
-		$("#doCalcFinRobin").hide();
-	}
-
 });
 
 function LiteAction(obj) {

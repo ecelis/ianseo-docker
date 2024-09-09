@@ -42,32 +42,31 @@ $JS_SCRIPT = array(
         'TitCountry' => get_text('Country'),
     )),
     '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Tournament/Fun_JS.js"></script>',
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
     '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Tournament/Fun_AJAX_ManStaffField.js"></script>',
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>',
-	'<link href="'.$CFG->ROOT_DIR.'Common/css/font-awesome.css" rel="stylesheet" type="text/css">',
-	'<link href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css" rel="stylesheet" type="text/css">',
-    );
-
+);
+$IncludeFA = true;
+$IncludeJquery = true;
 $PAGE_TITLE=get_text('StaffOnField','Tournament');
 
 include('Common/Templates/head.php');
 if($CanEdit) {
 	echo '<table class="Tabella">
-		<tr><th class="Title" colspan="8">' . get_text('StaffOnField', 'Tournament') . '</th></tr>
-		<tr class="Divider"><td colspan="8"></td></tr>
+		<tr><th class="Title" colspan="9">' . get_text('StaffOnField', 'Tournament') . '</th></tr>
+		<tr class="Divider"><td colspan="9"></td></tr>
 		<tr>
-            <th style="width:5%">' . get_text('Code', 'Tournament') . '</th>
-            <th style="width:25%">' . get_text('FamilyName', 'Tournament') . '</th>
-            <th style="width:25%">' . get_text('GivenName', 'Tournament') . '</th>
-            <th style="width:5%">' . get_text('Sex', 'Tournament') . '</th>
-            <th style="width:5%">' . get_text('CountryCode') . '</th>
-            <th style="width:10%">' . get_text('Country') . '</th>
-            <th style="width:15%">' . get_text('Type', 'Tournament') . '</th>
-            <th style="width:10%"></th>
+            <th class="w-5">' . get_text('Code', 'Tournament') . '</th>
+            <th class="w-5">' . get_text('LocalCode', 'Tournament') . '</th>
+            <th class="w-25">' . get_text('FamilyName', 'Tournament') . '</th>
+            <th class="w-25">' . get_text('GivenName', 'Tournament') . '</th>
+            <th class="w-5"">' . get_text('Sex', 'Tournament') . '</th>
+            <th class="w-5">' . get_text('CountryCode') . '</th>
+            <th class="w-10">' . get_text('Country') . '</th>
+            <th class="w-10">' . get_text('Type', 'Tournament') . '</th>
+            <th class="w-10"></th>
 		</tr>
 		<tr ref="new">
             <td class="Center"><input type="text" style="width: 95%" id="new_Matr" maxlength="9" onchange="FindFieldStaff(this)"></td>
+            <td class="Center"><input type="text" style="width: 95%" id="new_LocalCode" maxlength="32"></td>
             <td class="Center"><input type="text" style="width: 97%" id="new_FamilyName" maxlength="64"></td>
             <td class="Center"><input type="text" style="width: 97%" id="new_GivenName" maxlength="64"></td>
             <td class="Center"><select style="width: 95%" id="new_Gender">' . $Genders . '</select></td>
@@ -85,17 +84,18 @@ if($CanEdit) {
 }
 
 echo '<table class="Tabella">
-	<tr><th class="Title" colspan="8">'.get_text('PersonList','Tournament').'</th></tr>
-	<tr class="Divider"><td colspan="8"></td></tr>
+	<tr><th class="Title" colspan="9">'.get_text('PersonList','Tournament').'</th></tr>
+	<tr class="Divider"><td colspan="9"></td></tr>
 	<tr>
-        <th style="width:5%">' . get_text('Code', 'Tournament') . '</th>
-        <th style="width:25%">' . get_text('FamilyName', 'Tournament') . '</th>
-        <th style="width:25%">' . get_text('GivenName', 'Tournament') . '</th>
-        <th style="width:5%">' . get_text('Sex', 'Tournament') . '</th>
-        <th style="width:5%">' . get_text('CountryCode') . '</th>
-        <th style="width:10%">' . get_text('Country') . '</th>
-        <th style="width:15%">' . get_text('Type', 'Tournament') . '</th>
-        <th style="width:10%"></th>
+        <th class="w-5">' . get_text('Code', 'Tournament') . '</th>
+        <th class="w-5">' . get_text('LocalCode', 'Tournament') . '</th>
+        <th class="w-25">' . get_text('FamilyName', 'Tournament') . '</th>
+        <th class="w-25">' . get_text('GivenName', 'Tournament') . '</th>
+        <th class="w-5"">' . get_text('Sex', 'Tournament') . '</th>
+        <th class="w-5">' . get_text('CountryCode') . '</th>
+        <th class="w-10">' . get_text('Country') . '</th>
+        <th class="w-10">' . get_text('Type', 'Tournament') . '</th>
+        <th class="w-10"></th>
 	</tr>
 	<tbody id="FieldStaff"></tbody>
 	</table>';

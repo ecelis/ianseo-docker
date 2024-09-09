@@ -6,8 +6,8 @@ checkACL(AclCompetition, AclReadWrite);
 require_once('Common/Lib/CommonLib.php');
 require_once('Common/Fun_Phases.inc.php');
 
+$IncludeJquery = true;
 $JS_SCRIPT=array(
-    '<script type="text/javascript" src="../../Common/js/jquery-3.2.1.min.js"></script>',
     '<script type="text/javascript" src="./ManTarget.js"></script>',
     );
 if (!empty($_REQUEST['Command'])) {

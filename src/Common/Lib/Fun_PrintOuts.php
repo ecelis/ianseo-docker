@@ -5,12 +5,14 @@ function CleanEvents($Events, $Field) {
 	if (is_array($Events)) {
 		$tmp=array();
 		foreach ($Events as $ev) {
-			@list($e, $p)=@explode('@', $ev);
-			if(!in_array($e, $tmp) and preg_match('/^[0-9A-Z-]+$/i',$e)) $tmp[]="'$e'";
+			$e=explode('@', $ev);
+			if(!in_array($e[0], $tmp) and preg_match('/^[0-9A-Z-]+$/i',$e[0])) {
+				$tmp[]=$e[0];
+			}
 		}
 		if ($tmp) {
 			sort($tmp);
-			$ret.= " AND $Field in (" . implode(", ",$tmp) . ") ";
+			$ret.= " AND $Field in (" . implode(", ", StrSafe_DB($tmp)) . ") ";
 		}
 
 		return $ret;

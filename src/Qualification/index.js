@@ -20,7 +20,7 @@ function IrmSet(obj) {
 				action: function () {
 					$.getJSON('index-action.php?act=dns&id='+$(obj).closest('tr').attr('id').substr(4), function(data) {
 						if(data.error==0) {
-							$(obj).closest('tr').removeClass('Irm-0 Irm-5 Irm-10 Irm-15 Irm-20').addClass(data.class);
+							$(obj).closest('tr').removeClass('Irm-0 Irm-5 Irm-7 Irm-10 Irm-15 Irm-20').addClass(data.class);
 							$(obj).html(data.btn);
 							$(obj).attr('ref', 10);
 							$('.'+data.class+' input').prop('disabled', true);
@@ -34,9 +34,23 @@ function IrmSet(obj) {
 				action: function () {
 					$.getJSON('index-action.php?act=dnf&id='+$(obj).closest('tr').attr('id').substr(4), function(data) {
 						if(data.error==0) {
-							$(obj).closest('tr').removeClass('Irm-0 Irm-5 Irm-10 Irm-15 Irm-20').addClass(data.class);
+							$(obj).closest('tr').removeClass('Irm-0 Irm-5 Irm-7 Irm-10 Irm-15 Irm-20').addClass(data.class);
 							$(obj).html(data.btn);
 							$(obj).attr('ref', 5);
+							$('.'+data.class+' input').prop('disabled', true);
+						}
+					});
+				}
+			},
+			dnfNR: {
+				text: TxtIrmDnfNoRank,
+				btnClass: 'btn-green', // class for the button
+				action: function () {
+					$.getJSON('index-action.php?act=dnfnr&id='+$(obj).closest('tr').attr('id').substr(4), function(data) {
+						if(data.error==0) {
+							$(obj).closest('tr').removeClass('Irm-0 Irm-5 Irm-7 Irm-10 Irm-15 Irm-20').addClass(data.class);
+							$(obj).html(data.btn);
+							$(obj).attr('ref', 7);
 							$('.'+data.class+' input').prop('disabled', true);
 						}
 					});
@@ -55,7 +69,7 @@ function IrmSet(obj) {
 				action: function () {
 					$.getJSON('index-action.php?act=unset&id='+$(obj).closest('tr').attr('id').substr(4), function(data) {
 						if(data.error==0) {
-							$(obj).closest('tr').removeClass('Irm-0 Irm-5 Irm-10 Irm-15 Irm-20').addClass(data.class);
+							$(obj).closest('tr').removeClass('Irm-0 Irm-5 Irm-7 Irm-10 Irm-15 Irm-20').addClass(data.class);
 							$(obj).html(data.btn);
 							$(obj).attr('ref', 0);
 							$('.'+data.class+' input').prop('disabled', false);
@@ -69,7 +83,8 @@ function IrmSet(obj) {
 		content:'',
 		boxWidth: '50%',
 		useBootstrap: false,
-		title:'',
+		title:TxtIrmTitle,
+		type: 'red',
 		buttons: buttons,
 		escapeKey: true,
 		backgroundDismiss: true,

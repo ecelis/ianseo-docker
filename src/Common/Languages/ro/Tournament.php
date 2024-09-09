@@ -2,7 +2,6 @@
 $lang['5Before']='Cu 5 min. in urma';
 $lang['Accomodation']='Cazare';
 $lang['Area_1*']='Terenul de competitie cand poarta FITA Bib';
-$lang['BackFromHome']='Este competitor';
 $lang['Badge1PerPage']='1 Ecuson pe pagina';
 $lang['Badge2PerPage']='2 Ecusoane pe pagina';
 $lang['Badge4PerPage']='4 Ecusoane pe pagina';

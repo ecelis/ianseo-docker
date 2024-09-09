@@ -1,0 +1,4 @@
+.CssResetButton {padding:0.1rem 0.3rem;font-size:0.7rem;background-color: crimson;color:white;margin-right:0.5em;}
+.CssResetDisabled {opacity: 0.3}
+.d-flex {display:flex;}
+.CssTitle {flex:1 0 auto;text-align: right;}

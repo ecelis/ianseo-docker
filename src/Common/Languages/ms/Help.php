@@ -1,5 +1,4 @@
 <?php
-$lang['AutoImportSettings']='<b> Hanya untuk Pengguna Pakar </b> <br> Mengubah tingkah laku lalai akan menghasilkan hasil yang tidak tepat. <br> Penting untuk mengira semula semua peringkat yang telah disiapkan sebagai "manual" SEBELUM mengirim ke ianseo.net atau hasil percetakan dan secara umum sebelum setiap pengedaran dalam bentuk apa pun.';
 $lang['ChangeComponents']='<p>Untuk meneruskan perubahan, hapus atlet yang tidak ada dalam pasukan lagi untuk mengaktifkan pilihan yang mungkin.</p>&#9654&nbsp;Skor termasuk dalam jumlah pusingan kelayakan pasukan<br>&#9655&nbsp;Markah tidak termasuk dalam jumlah pusingan kelayakan pasukan';
 $lang['GetBarcodeSeparator']='Selepas mencetak helaian rujukan kodbar, baca kodbar«JARAK» untuk mengaktifkan item pembaca yang betul.';
 $lang['HomePage']='Ini adalah halaman di mana anda boleh memilih atau mencipta kejohanan.';

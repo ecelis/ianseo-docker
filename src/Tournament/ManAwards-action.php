@@ -38,29 +38,43 @@ switch($Action) {
 	    $JSON['src']= $CFG->ROOT_DIR . 'Common/Images/Enabled' . $new. '.png';
 
         if($Field=='SecondLanguage') {
+            $LangFields=[
+                'Aw-Intro-%s'=>['t'=>'Award-Intro', 'p'=>'$a'],
+                'Aw-Award-%s-1'=>['t'=>'Award-MedalGiver', 'p'=>'$a'],
+                'Aw-Award-%s-2'=>['t'=>'Award-PlaqueGiver', 'p'=>'$a'],
+                'Aw-Special-%s'=>['t'=>'Award-Special', 'p'=>'$a'],
+                'Aw-Giver-%s'=>['t'=>'Award-PremiumGiver', 'p'=>['$a[0]','$a[1]']],
+                'Aw-Giving-%s'=>['t'=>'Award-PremiumGiving', 'p'=>['$a[0]','$a[1]']],
+                'Aw-Med1-%s'=>['t'=>'Medal-1', 'p'=>'$a'],
+                'Aw-Med2-%s'=>['t'=>'Medal-2', 'p'=>'$a'],
+                'Aw-Med3-%s'=>['t'=>'Medal-3', 'p'=>'$a'],
+                'Aw-Med4-%s'=>['t'=>'Medal-4', 'p'=>'$a'],
+                'Aw-representing-%s'=>['t'=>'Award-representing', 'p'=>'$a'],
+                'Aw-Anthem-%s'=>['t'=>'Award-Anthem', 'p'=>''],
+                'Aw-Anthem-TPE-%s'=>['t'=>'Award-Anthem-TPE', 'p'=>''],
+                'Aw-Applause-%s'=>['t'=>'Award-Applause', 'p'=>''],
+            ];
             $tmp=getModuleParameter('Awards', 'SecondLanguageCode');
             $tmp2=getModuleParameter('Awards', 'FirstLanguageCode');
             $UseLang=($_SESSION['TourPrintLang'] ? $_SESSION['TourPrintLang'] : SelectLanguage());
             if(empty($tmp2) or $tmp2!=$UseLang) {
                 $tmp2=$UseLang;
                 setModuleParameter('Awards', 'FirstLanguageCode', $UseLang);
-                setModuleParameter('Awards', 'Aw-Intro-1', get_text('Award-Intro', 'IOC_Codes', '$a', '', '', $UseLang));
-                // 		setModuleParameter('Awards', 'Aw-Medal-1', get_text('Award-MedalGiver', 'IOC_Codes', '$a', '', '', $UseLang));
-                // 		setModuleParameter('Awards', 'Aw-Plaque-1', get_text('Award-PlaqueGiver', 'IOC_Codes', '$a', '', '', $UseLang));
-                setModuleParameter('Awards', 'Aw-Award-1-1', get_text('Award-MedalGiver', 'IOC_Codes', '$a', '', '', $UseLang));
-                setModuleParameter('Awards', 'Aw-Award-1-2', get_text('Award-PlaqueGiver', 'IOC_Codes', '$a', '', '', $UseLang));
-                setModuleParameter('Awards', 'Aw-Special-1', get_text('Award-Special', 'IOC_Codes', '$a', '', '', $UseLang));
-                setModuleParameter('Awards', 'Aw-Giver-1', get_text('Award-PremiumGiver', 'IOC_Codes', array('$a[0]','$a[1]'), '', '', $UseLang));
-                setModuleParameter('Awards', 'Aw-Giving-1', get_text('Award-PremiumGiving', 'IOC_Codes', array('$a[0]','$a[1]'), '', '', $UseLang));
-                for($n=1; $n<5; $n++) {
-                    setModuleParameter('Awards', 'Aw-Med'.$n.'-1', get_text('Medal-'.$n, 'IOC_Codes', '', '', '', $UseLang));
+                foreach($LangFields as $k=>$v) {
+                    $key=sprintf($k, '1');
+                    $val=setModuleParameter('Awards', $key, get_text($v['t'], 'IOC_Codes', $v['p'], '', '', $UseLang));
+                    $JSON['rows'][]=['id'=>$key, 'val'=>$val];
                 }
-                setModuleParameter('Awards', 'Aw-representing-1', get_text('Award-representing', 'IOC_Codes', '$a', '', '', $UseLang));
-                setModuleParameter('Awards', 'Aw-Anthem-1', get_text('Award-Anthem', 'IOC_Codes', '', '', '', $UseLang));
-                setModuleParameter('Awards', 'Aw-Applause-1', get_text('Award-Applause', 'IOC_Codes', '', '', '', $UseLang));
             }
-            $JSON['rows'][]=['id'=>'FirstLanguageCode', 'val'=>($UseLang ? $UseLang : '---')];
-            $JSON['rows'][]=['id'=>'SecondLanguageCode', 'val'=>($tmp ? $tmp : '---')];
+            if($tmp and $tmp!=$tmp2) {
+                foreach($LangFields as $k=>$v) {
+                    $key=sprintf($k, '2');
+                    $val=setModuleParameter('Awards', $key, get_text($v['t'], 'IOC_Codes', $v['p'], '', '', $tmp));
+                    $JSON['rows'][]=['id'=>$key, 'val'=>$val];
+                }
+            }
+            $JSON['rows'][]=['id'=>'FirstLanguageCode', 'val'=>($UseLang ?: '---')];
+            $JSON['rows'][]=['id'=>'SecondLanguageCode', 'val'=>($tmp ?: '---')];
             $JSON['showSecondLanguage']=$new;
         }
         $JSON['error']=0;
@@ -198,11 +212,11 @@ if (isset($_REQUEST['Command'])) {
 					$ev=getModuleParameter('Awards','Aw-CustomEvent-1-'. $Num);
 					if(empty($ev)) {
 						$UseLang=($_SESSION['TourPrintLang'] ? $_SESSION['TourPrintLang'] : SelectLanguage());
-						setModuleParameter('Awards','Aw-CustomEvent-1-'. $Num, get_text('LonginesEvent', 'Awards', '$a', '', '', $UseLang));
-						setModuleParameter('Awards','Aw-CustomPrize-1-'. $Num, get_text('LonginePresentation', 'Awards', '$a', '', '', $UseLang));
+						setModuleParameter('Awards','Aw-CustomEvent-1-'. $Num, get_text('PrecisionPrizeEvent', 'Awards', '$a', '', '', $UseLang));
+						setModuleParameter('Awards','Aw-CustomPrize-1-'. $Num, get_text('PrecPrizePresentation', 'Awards', '$a', '', '', $UseLang));
 						if($tmp=getModuleParameter('Awards', 'SecondLanguageCode')) {
-							setModuleParameter('Awards','Aw-CustomEvent-2-'. $Num, get_text('LonginesEvent', 'Awards', '$a', '', '', $tmp));
-							setModuleParameter('Awards','Aw-CustomPrize-2-'. $Num, get_text('LonginePresentation', 'Awards', '$a', '', '', $tmp));
+							setModuleParameter('Awards','Aw-CustomEvent-2-'. $Num, get_text('PrecisionPrizeEvent', 'Awards', '$a', '', '', $tmp));
+							setModuleParameter('Awards','Aw-CustomPrize-2-'. $Num, get_text('PrecPrizePresentation', 'Awards', '$a', '', '', $tmp));
 						}
 					}
 				}

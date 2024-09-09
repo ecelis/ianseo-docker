@@ -1,6 +1,7 @@
 <?php
 $lang['AutoUpdate']='עדכון אוטומטי';
 $lang['BarRecord']='הצג סרגל שיא ממוצע';
+$lang['BrokenRecords']='שיאים שנשברו';
 $lang['ByClub']='לפי מועדון';
 $lang['ByEvent']='לפי אירוע';
 $lang['ByName']='לפי שם';

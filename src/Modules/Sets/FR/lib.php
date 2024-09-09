@@ -12,25 +12,57 @@ $tourCollation = '';
 $tourDetIocCode = 'FRA';
 if(empty($SubRule)) $SubRule='1';
 
-function CreateStandardDivisions($TourId, $Type='FR') {
+function CreateStandardDivisions($TourId, $TourType, $SubRule) {
+    $isTAE=in_array($TourType, [1,2,3,4, 50]);
+    $IsIndoor=in_array($TourType, [6,7,8]);
+    $isTAENorm=($TourType==3 and $SubRule==13);
+    $isTAEPara=(($TourType==3 and $SubRule==14) or ($TourType==6 and $SubRule==4) or ($TourType==7 and $SubRule==4) or ($TourType==8 and $SubRule==4));
+    $HasOfficials=(($TourType==3 and in_array($SubRule, [2, 3, 9, 10, 11, 15, 16])) or ($TourType==6 and in_array($SubRule, [2, 3])));
 	$i=1;
-	if($Type!='3D') CreateDivision($TourId, $i++, 'CL', 'Arc Classique', 1, 'R', 'R');
-	CreateDivision($TourId, $i++, 'CO', 'Arc à Poulies', 1, 'C', 'C');
-	if($Type=='FIELD') {
-		CreateDivision($TourId, $i++, 'BB', 'Arc Nu', 1, 'B', 'B');
-	} elseif($Type=='3D') {
-		CreateDivision($TourId, $i++, 'BB', 'Arc Nu');
-		CreateDivision($TourId, $i++, 'AD', 'Arc Droit');
-		CreateDivision($TourId, $i++, 'AC', 'Arc Chasse');
-		CreateDivision($TourId, $i++, 'TL', 'Traditionnel');
+    CreateDivision($TourId, $i++, 'CL', 'Arc Classique', 1, 'R', 'R');
+    if(!in_array($SubRule, [15, 16])) {
+        // Finales D2 and Championnats de france Jeunes par Equipes do not have Compounds, Recurve only
+        CreateDivision($TourId, $i++, 'CO', 'Arc à Poulies', 1, 'C', 'C');
+    }
+	if($isTAE or $IsIndoor) {
+        if($isTAENorm or $IsIndoor or $isTAEPara or ($TourType==3 and $SubRule==11) or $TourType==50) {
+            CreateDivision($TourId, $i++, 'BB', 'Arc Nu', 1, 'B', 'B');
+        }
+        if($TourType==50) {
+            // Beursault
+            CreateDivision($TourId, $i++, 'AD', 'Arc Droit', 1, '', '');
+        }
+        if($isTAEPara) {
+            CreateDivision($TourId, $i++, 'OPCL', 'Open Arc Classique', 1, '', '', 1);
+            CreateDivision($TourId, $i++, 'OPCO', 'Open Arc à Poulies', 1, '', '', 1);
+            CreateDivision($TourId, $i++, 'FECL', 'Fédéral Classique', 1, '', '', 1);
+            CreateDivision($TourId, $i++, 'FECO', 'Fédéral Arc à Poulies', 1, '', '', 1);
+            CreateDivision($TourId, $i++, 'HV1', 'HV1', 1, '', '', 1);
+            CreateDivision($TourId, $i++, 'HV2', 'HV23', 1, '', '', 1);
+            CreateDivision($TourId, $i++, 'W1', 'W1', 1, 'W1', 'W1', 1);
+            CreateDivision($TourId, $i++, 'CHCL', 'Challenge Arc Classique', 1, '', '', 1);
+            CreateDivision($TourId, $i++, 'CHCO', 'Challenge Arc à Poulies', 1, '', '', 1);
+            CreateDivision($TourId, $i++, 'CRCL', 'Critérium Arc CLassique', 1, '', '', 1);
+            CreateDivision($TourId, $i++, 'CRCO', 'Critérium Arc à Poulies', 1, '', '', 1);
+            CreateDivision($TourId, $i++, 'HLCL', 'HV Libre Arc Classique', 1, '', '', 1);
+            CreateDivision($TourId, $i++, 'HLCO', 'HV Libre Arc à Poulies', 1, '', '', 1);
+            CreateDivision($TourId, $i++, 'SU1', 'Support 1 Arc Classique', 1, '', '', 1);
+            CreateDivision($TourId, $i++, 'SU2', 'Support 2 Arc Classique', 1, '', '', 1);
+        }
 	}
+    if($HasOfficials) {
+        CreateDivision($TourId, $i++, 'OF', 'Officiels', 0, '', '');
+    }
 }
 
 function CreateStandardClasses($TourId, $TourType, $SubRule) {
+    $NextYearClass=intval(substr($_SESSION['TourRealWhenFrom'], 5,2))>=9 ? -1 : 0;
 	$SubYouth=array(1,2,3);
-	$SubJuniors=array(1,2,3,4,5,6,7,9,10,11);
-	$SubAdults=array(1,4,5,6,7,9,10,11);
-	$SubFederal=array(8,11);
+	$SubJuniors=array(1,2,3,9,10,12);
+	$SubAdults=array(1,9,10,11,12);
+    $isTAESel=($TourType==3 and in_array($SubRule, [13,14]));
+    $isTAEPara=(($TourType==3 and $SubRule==14) or ($TourType==6 and $SubRule==4));
+    $HasOfficials=(($TourType==3 and in_array($SubRule, [2, 3, 9, 10, 11, 15, 16])) or ($TourType==6 and in_array($SubRule, [2, 3])));
 	$i=1;
 	switch($TourType) {
 		case '6': // INDOORS 18
@@ -38,678 +70,1291 @@ function CreateStandardClasses($TourId, $TourType, $SubRule) {
 		case '8': // INDOORS 25+18
 			switch($SubRule) {
 				case '1':
+				case '4':
 					// All classes...
-					CreateClass($TourId, $i++,  1, 10, 1, 'U11F', 'U11F,U13F', 'U11 Femme', '1', 'CL', '', '');
-					CreateClass($TourId, $i++,  1, 10, 0, 'U11H', 'U11H,U13H', 'U11 Homme', '1', 'CL', '', '');
-					CreateClass($TourId, $i++, 11, 12, 1, 'U13F', 'U13F,U15F', 'U13 Femme', '1', 'CL', '', '');
-					CreateClass($TourId, $i++, 11, 12, 0, 'U13H', 'U13H,U15H', 'U13 Homme', '1', 'CL', '', '');
-					CreateClass($TourId, $i++, 13, 14, 1, 'U15F', 'U15F,U18F', 'U15 Femme', '1', 'BB,CL', '', '');
-					CreateClass($TourId, $i++, 13, 14, 0, 'U15H', 'U15H,U18H', 'U15 Homme', '1', 'BB,CL', '', '');
-					CreateClass($TourId, $i++, 15, 17, 1, 'U18F', 'U18F,U21F,S1F,SF', 'U18 Femme', '1', '', 'U18W', 'U18W');
-					CreateClass($TourId, $i++, 15, 17, 0, 'U18H', 'U18H,U21H,S1H,SH', 'U18 Homme', '1', '', 'U18M', 'U18M');
-					CreateClass($TourId, $i++, 18, 20, 1, 'U21F', 'U21F,S1F,SF', 'U21 Femme', '1', '', 'U21W', 'U21W');
-					CreateClass($TourId, $i++, 18, 20, 0, 'U21H', 'U21H,S1H,SH', 'U21 Homme', '1', '', 'U21M', 'U21M');
-					CreateClass($TourId, $i++, 21, 100, 1, 'SF', 'SF', 'Senior Femme', '1', 'BB', 'W', 'W');
-					CreateClass($TourId, $i++, 21, 100, 0, 'SH', 'SH', 'Senior Homme', '1', 'BB', 'M', 'M');
-					CreateClass($TourId, $i++, 21, 39, 1, 'S1F', 'S1F', 'Senior 1 Femme', '1', 'CO,CL', 'W', 'W');
-					CreateClass($TourId, $i++, 21, 39, 0, 'S1H', 'S1H', 'Senior 1 Homme', '1', 'CO,CL', 'M', 'M');
-					CreateClass($TourId, $i++, 40, 59, 1, 'S2F', 'S2F,S1F', 'Senior 2 Femme', '1', 'CO,CL', '', '');
-					CreateClass($TourId, $i++, 40, 59, 0, 'S2H', 'S2H,S1H', 'Senior 2 Homme', '1', 'CO,CL', '', '');
-					CreateClass($TourId, $i++, 60,100, 1, 'S3F', 'S3F,S2F,S1F', 'Senior 3 Femme', '1', 'CO,CL', '50W', '50W');
-					CreateClass($TourId, $i++, 60,100, 0, 'S3H', 'S3H,S2H,S1H', 'Senior 3 Homme', '1', 'CO,CL', '50M', '50M');
+                    if($TourType==6) {
+                        CreateClass($TourId, $i++,  1, 10, 1, 'U11F', 'U11F,U13F', 'U11 Femme', '1', 'CL', '', '');
+                        CreateClass($TourId, $i++,  1, 10, 0, 'U11H', 'U11H,U13H', 'U11 Homme', '1', 'CL', '', '');
+                    }
+					CreateClass($TourId, $i++, 11+$NextYearClass, 12, 1, 'U13F', 'U13F,U15F', 'U13 Femme', '1', 'CL', '', '');
+					CreateClass($TourId, $i++, 11+$NextYearClass, 12, 0, 'U13H', 'U13H,U15H', 'U13 Homme', '1', 'CL', '', '');
+					CreateClass($TourId, $i++, 13+$NextYearClass, 14, 1, 'U15F', 'U15F,U18F', 'U15 Femme', '1', 'BB,CL,CO', '', '');
+					CreateClass($TourId, $i++, 13+$NextYearClass, 14, 0, 'U15H', 'U15H,U18H', 'U15 Homme', '1', 'BB,CL,CO', '', '');
+					CreateClass($TourId, $i++, 15+$NextYearClass, 17, 1, 'U18F', 'U18F,U21F,S1F', 'U18 Femme', '1', 'BB,CL,CO'.($isTAEPara?',OPCL,FECL,OPCO,FECO,W1,CHCL,CRCL,CHCO,CRCO,HV1,HV2,HLCL,HLCO,SU1,SU2':''), 'U18W', 'U18W');
+					CreateClass($TourId, $i++, 15+$NextYearClass, 17, 0, 'U18H', 'U18H,U21H,S1H', 'U18 Homme', '1', 'BB,CL,CO'.($isTAEPara?',OPCL,FECL,OPCO,FECO,W1,CHCL,CRCL,CHCO,CRCO,HV1,HV2,HLCL,HLCO,SU1,SU2':''), 'U18M', 'U18M');
+					CreateClass($TourId, $i++, 18+$NextYearClass, 20, 1, 'U21F', 'U21F,S1F', 'U21 Femme', '1', 'BB,CL,CO'.($isTAEPara?',OPCL,FECL,OPCO,FECO,W1,CHCL,CRCL,CHCO,CRCO,HV1,HV2,HLCL,HLCO,SU1,SU2':''), 'U21W', 'U21W');
+					CreateClass($TourId, $i++, 18+$NextYearClass, 20, 0, 'U21H', 'U21H,S1H', 'U21 Homme', '1', 'BB,CL,CO'.($isTAEPara?',OPCL,FECL,OPCO,FECO,W1,CHCL,CRCL,CHCO,CRCO,HV1,HV2,HLCL,HLCO,SU1,SU2':''), 'U21M', 'U21M');
+					CreateClass($TourId, $i++, 21+$NextYearClass, 39, 1, 'S1F', 'S1F', 'Senior 1 Femme', '1', 'BB,CO,CL'.($isTAEPara?',OPCL,FECL,OPCO,FECO,W1,CHCL,CRCL,CHCO,CRCO,HV1,HV2,HLCL,HLCO,SU1,SU2':''), 'W', 'W');
+					CreateClass($TourId, $i++, 21+$NextYearClass, 39, 0, 'S1H', 'S1H', 'Senior 1 Homme', '1', 'BB,CO,CL'.($isTAEPara?',OPCL,FECL,OPCO,FECO,W1,CHCL,CRCL,CHCO,CRCO,HV1,HV2,HLCL,HLCO,SU1,SU2':''), 'M', 'M');
+					CreateClass($TourId, $i++, 40+$NextYearClass, 59, 1, 'S2F', 'S2F,S1F', 'Senior 2 Femme', '1', 'BB,CO,CL'.($isTAEPara?',OPCL,FECL,OPCO,FECO,W1,CHCL,CRCL,CHCO,CRCO,HV1,HV2,HLCL,HLCO,SU1,SU2':''), '', '');
+					CreateClass($TourId, $i++, 40+$NextYearClass, 59, 0, 'S2H', 'S2H,S1H', 'Senior 2 Homme', '1', 'BB,CO,CL'.($isTAEPara?',OPCL,FECL,OPCO,FECO,W1,CHCL,CRCL,CHCO,CRCO,HV1,HV2,HLCL,HLCO,SU1,SU2':''), '', '');
+					CreateClass($TourId, $i++, 60+$NextYearClass,100, 1, 'S3F', 'S3F,S2F,S1F', 'Senior 3 Femme', '1', 'BB,CO,CL'.($isTAEPara?',OPCL,FECL,OPCO,FECO,W1,CHCL,CRCL,CHCO,CRCO,HV1,HV2,HLCL,HLCO,SU1,SU2':''), '50W', '50W');
+					CreateClass($TourId, $i++, 60+$NextYearClass,100, 0, 'S3H', 'S3H,S2H,S1H', 'Senior 3 Homme', '1', 'BB,CO,CL'.($isTAEPara?',OPCL,FECL,OPCO,FECO,W1,CHCL,CRCL,CHCO,CRCO,HV1,HV2,HLCL,HLCO,SU1,SU2':''), '50M', '50M');
 					break;
 				case '2':
-					// Championships Adults...
-					CreateClass($TourId, $i++, 18, 20, 1, 'U21F', 'U21F,S1F', 'U21 Femme', '1', '', 'U21W', 'U21W');
-					CreateClass($TourId, $i++, 18, 20, 0, 'U21H', 'U21H,S1H', 'U21 Homme', '1', '', 'U21M', 'U21M');
-					CreateClass($TourId, $i++, 21, 39, 1, 'S1F', 'S1F', 'Senior 1 Femme', '1', '', 'M', 'W');
-					CreateClass($TourId, $i++, 21, 39, 0, 'S1H', 'S1H', 'Senior 1 Homme', '1', '', 'W', 'M');
-					CreateClass($TourId, $i++, 40, 59, 1, 'S2F', 'S2F,S1F', 'Senior 2 Femme', '1', '', '', '');
-					CreateClass($TourId, $i++, 40, 59, 0, 'S2H', 'S2H,S1H', 'Senior 2 Homme', '1', '', '', '');
-					CreateClass($TourId, $i++, 60,100, 1, 'S3F', 'S3F,S2F,S1F', 'Senior 3 Femme', '1', '', '50W', '50W');
-					CreateClass($TourId, $i++, 60,100, 0, 'S3H', 'S3H,S2H,S1H', 'Senior 3 Homme', '1', '', '50M', '50M');
-					break;
+					// Championships Adults and Elite...
+					CreateClass($TourId, $i++, 18+$NextYearClass, 20, 1, 'U21F', 'U21F,S1F', 'U21 Femme', '1', 'BB', 'U21W', 'U21W');
+					CreateClass($TourId, $i++, 18+$NextYearClass, 20, 0, 'U21H', 'U21H,S1H', 'U21 Homme', '1', 'BB', 'U21M', 'U21M');
+					CreateClass($TourId, $i++, 21+$NextYearClass, 39, 1, 'S1F', 'S1F', 'Senior 1 Femme', '1', 'BB,CL,CO', 'M', 'W');
+					CreateClass($TourId, $i++, 21+$NextYearClass, 39, 0, 'S1H', 'S1H', 'Senior 1 Homme', '1', 'BB,CL,CO', 'W', 'M');
+					CreateClass($TourId, $i++, 40+$NextYearClass, 59, 1, 'S2F', 'S2F,S1F', 'Senior 2 Femme', '1', 'BB,CL,CO', '', '');
+					CreateClass($TourId, $i++, 40+$NextYearClass, 59, 0, 'S2H', 'S2H,S1H', 'Senior 2 Homme', '1', 'BB,CL,CO', '', '');
+					CreateClass($TourId, $i++, 60+$NextYearClass,100, 1, 'S3F', 'S3F,S2F,S1F', 'Senior 3 Femme', '1', 'BB,CL,CO', '50W', '50W');
+					CreateClass($TourId, $i++, 60+$NextYearClass,100, 0, 'S3H', 'S3H,S2H,S1H', 'Senior 3 Homme', '1', 'BB,CL,CO', '50M', '50M');
+
+                    CreateSubClass($TourId, '1','A','Adulte');
+                    CreateSubClass($TourId, '2','E','Elite');
+                    break;
 				case '3':
 					// Championships Youth...
-					CreateClass($TourId, $i++, 11, 12, 1, 'U13F', 'U13F,U15F', 'U13 Femme', '1', 'CL', '', '');
-					CreateClass($TourId, $i++, 11, 12, 0, 'U13H', 'U13H,U15H', 'U13 Homme', '1', 'CL', '', '');
-					CreateClass($TourId, $i++, 13, 14, 1, 'U15F', 'U15F,U18F', 'U15 Femme', '1', 'BB,CL', '', '');
-					CreateClass($TourId, $i++, 13, 14, 0, 'U15H', 'U15H,U18H', 'U15 Homme', '1', 'BB,CL', '', '');
-					CreateClass($TourId, $i++, 15, 17, 1, 'U18F', 'U18F,U21F,1F', 'U18 Femme', '1', '', 'U18W', 'U18W');
-					CreateClass($TourId, $i++, 15, 17, 0, 'U18H', 'U18H,U21H,1H', 'U18 Homme', '1', '', 'U18M', 'U18M');
-					CreateClass($TourId, $i++, 18, 20, 1, 'U21F', 'U21F,1F', 'U21 Femme', '1', '', 'U21W', 'U21W');
-					CreateClass($TourId, $i++, 18, 20, 0, 'U21H', 'U21H,1H', 'U21 Homme', '1', '', 'U21M', 'U21M');
+					CreateClass($TourId, $i++, 11+$NextYearClass, 12, 1, 'U13F', 'U13F,U15F', 'U13 Femme', '1', 'CL', '', '');
+					CreateClass($TourId, $i++, 11+$NextYearClass, 12, 0, 'U13H', 'U13H,U15H', 'U13 Homme', '1', 'CL', '', '');
+					CreateClass($TourId, $i++, 13+$NextYearClass, 14, 1, 'U15F', 'U15F,U18F', 'U15 Femme', '1', 'BB,CL', '', '');
+					CreateClass($TourId, $i++, 13+$NextYearClass, 14, 0, 'U15H', 'U15H,U18H', 'U15 Homme', '1', 'BB,CL', '', '');
+					CreateClass($TourId, $i++, 15+$NextYearClass, 17, 1, 'U18F', 'U18F,U21F', 'U18 Femme', '1', 'BB,CL,CO', 'U18W', 'U18W');
+					CreateClass($TourId, $i++, 15+$NextYearClass, 17, 0, 'U18H', 'U18H,U21H', 'U18 Homme', '1', 'BB,CL,CO', 'U18M', 'U18M');
+					CreateClass($TourId, $i++, 18+$NextYearClass, 20, 1, 'U21F', 'U21F,1F', 'U21 Femme', '1', 'CL,CO', 'U21W', 'U21W');
+					CreateClass($TourId, $i++, 18+$NextYearClass, 20, 0, 'U21H', 'U21H,1H', 'U21 Homme', '1', 'CL,CO', 'U21M', 'U21M');
 					break;
 			}
 			break;
+		case '50': // Beursault
+            CreateClass($TourId, $i++, 11+$NextYearClass, 12, 1, 'U13F', 'U13F,U15F', 'U13 Femme', '1', '', '', '');
+            CreateClass($TourId, $i++, 11+$NextYearClass, 12, 0, 'U13H', 'U13H,U15H', 'U13 Homme', '1', '', '', '');
+            CreateClass($TourId, $i++, 13+$NextYearClass, 14, 1, 'U15F', 'U15F,U18F', 'U15 Femme', '1', '', '', '');
+            CreateClass($TourId, $i++, 13+$NextYearClass, 14, 0, 'U15H', 'U15H,U18H', 'U15 Homme', '1', '', '', '');
+            CreateClass($TourId, $i++, 15+$NextYearClass, 17, 1, 'U18F', 'U18F,U21F,S1F', 'U18 Femme', '1', '', '', '');
+            CreateClass($TourId, $i++, 15+$NextYearClass, 17, 0, 'U18H', 'U18H,U21H,S1H', 'U18 Homme', '1', '', '', '');
+            CreateClass($TourId, $i++, 18+$NextYearClass, 20, 1, 'U21F', 'U21F,S1F', 'U21 Femme', '1', '', '', '');
+            CreateClass($TourId, $i++, 18+$NextYearClass, 20, 0, 'U21H', 'U21H,S1H', 'U21 Homme', '1', '', '', '');
+            CreateClass($TourId, $i++, 21+$NextYearClass, 39, 1, 'S1F', 'S1F', 'Senior 1 Femme', '1', '', '', '');
+            CreateClass($TourId, $i++, 21+$NextYearClass, 39, 0, 'S1H', 'S1H', 'Senior 1 Homme', '1', '', '', '');
+            CreateClass($TourId, $i++, 40+$NextYearClass, 59, 1, 'S2F', 'S2F,S1F', 'Senior 2 Femme', '1', '', '', '');
+            CreateClass($TourId, $i++, 40+$NextYearClass, 59, 0, 'S2H', 'S2H,S1H', 'Senior 2 Homme', '1', '', '', '');
+            CreateClass($TourId, $i++, 60+$NextYearClass,100, 1, 'S3F', 'S3F,S2F,S1F', 'Senior 3 Femme', '1', '', '', '');
+            CreateClass($TourId, $i++, 60+$NextYearClass,100, 0, 'S3H', 'S3H,S2H,S1H', 'Senior 3 Homme', '1', '', '', '');
+			break;
 		case '3': // 72 arrows round
-			// we create all classes anyway
-			if(in_array($SubRule, $SubYouth)) {
-				CreateClass($TourId, $i++,  1, 10, 1, 'U11F', 'U11F,U13F', 'U11 Femme', '1', 'CL', '', '');
-				CreateClass($TourId, $i++,  1, 10, 0, 'U11H', 'U11H,U13H', 'U11 Homme', '1', 'CL', '', '');
-				CreateClass($TourId, $i++, 11, 12, 1, 'U13F', 'U13F,U15F', 'U13 Femme', '1', 'CL', '', '');
-				CreateClass($TourId, $i++, 11, 12, 0, 'U13H', 'U13H,U15H', 'U13 Homme', '1', 'CL', '', '');
-				CreateClass($TourId, $i++, 13, 14, 1, 'U15F', 'U15F,U18F', 'U15 Femme', '1', 'CL', '', '');
-				CreateClass($TourId, $i++, 13, 14, 0, 'U15H', 'U15H,U18H', 'U15 Homme', '1', 'CL', '', '');
-			}
-			if(in_array($SubRule, $SubJuniors)) {
-				CreateClass($TourId, $i++, 15, 17, 1, 'U18F', 'U18F,U21F,S1F', 'U18 Femme', '1', 'CL,CO', 'U18W', 'U18W');
-				CreateClass($TourId, $i++, 15, 17, 0, 'U18H', 'U18H,U21H,S1H', 'U18 Homme', '1', 'CL,CO', 'U18M', 'U18M');
-				CreateClass($TourId, $i++, 18, 20, 1, 'U21F', 'U21F,S1F', 'U21 Femme', '1', 'CL,CO', 'U21W', 'U21W');
-				CreateClass($TourId, $i++, 18, 20, 0, 'U21H', 'U21H,S1H', 'U21 Homme', '1', 'CL,CO', 'U21M', 'U21M');
-			}
-			if(in_array($SubRule, $SubAdults)) {
-				CreateClass($TourId, $i++, 21, 39, 1, 'S1F', 'S1F', 'Senior 1 Femme', '1', 'CL,CO', 'W', 'W');
-				CreateClass($TourId, $i++, 21, 39, 0, 'S1H', 'S1H', 'Senior 1 Homme', '1', 'CL,CO', 'M', 'M');
-				CreateClass($TourId, $i++, 40, 59, 1, 'S2F', 'S2F,S1F', 'Senior 2 Femme', '1', 'CL,CO', '', '');
-				CreateClass($TourId, $i++, 40, 59, 0, 'S2H', 'S2H,S1H', 'Senior 2 Homme', '1', 'CL,CO', '', '');
-				CreateClass($TourId, $i++, 60,100, 1, 'S3F', 'S3F,S2F,S1F', 'Senior 3 Femme', '1', 'CL,CO', '50W', '50W');
-				CreateClass($TourId, $i++, 60,100, 0, 'S3H', 'S3H,S2H,S1H', 'Senior 3 Homme', '1', 'CL,CO', '50M', '50M');
-			}
-
-			if(in_array($SubRule, $SubFederal)) {
-				// Ex Federal joined together with international 72 arrows
-				CreateClass($TourId, $i++, 18, 20, 1, 'JW', 'JW,1W', 'U21 Femme', '1', 'CL,CO', 'U21W', 'U21W');
-				CreateClass($TourId, $i++, 18, 20, 0, 'JM', 'JM,1M', 'U21 Homme', '1', 'CL,CO', 'U21M', 'U21M');
-				CreateClass($TourId, $i++, 21, 39, 1, '1W', '1W', 'Senior 1 Femme', '1', 'CL,CO', 'W', 'W');
-				CreateClass($TourId, $i++, 21, 39, 0, '1M', '1M', 'Senior 1 Homme', '1', 'CL,CO', 'M', 'M');
-				CreateClass($TourId, $i++, 40, 59, 1, '2W', '2W,1W', 'Senior 2 Femme', '1', 'CL,CO', '', '');
-				CreateClass($TourId, $i++, 40, 59, 0, '2M', '2M,1M', 'Senior 2 Homme', '1', 'CL,CO', '', '');
-				CreateClass($TourId, $i++, 60,100, 1, '3W', '3W,2W,1W', 'Senior 3 Femme', '1', 'CL,CO', '50W', '50W');
-				CreateClass($TourId, $i++, 60,100, 0, '3M', '3M,2M,1M', 'Senior 3 Homme', '1', 'CL,CO', '50M', '50M');
-			}
+            switch($SubRule) {
+                case 2: // TNJ Tournoi National Jeune
+                case 3: // Championnat de France Jeune
+                case 15: // Championnat de France Jeune Equipes
+                    CreateClass($TourId, $i++, 11+$NextYearClass, 12, 1, 'U13F', 'U13F,U15F', 'U13 Femmes', '1', 'CL', '', '');
+                    CreateClass($TourId, $i++, 11+$NextYearClass, 12, 0, 'U13H', 'U13H,U15H', 'U13 Hommes', '1', 'CL', '', '');
+                    CreateClass($TourId, $i++, 13+$NextYearClass, 14, 1, 'U15F', 'U15F,U18F', 'U15 Femmes', '1', 'CL', '', '');
+                    CreateClass($TourId, $i++, 13+$NextYearClass, 14, 0, 'U15H', 'U15H,U18H', 'U15 Hommes', '1', 'CL', '', '');
+                    CreateClass($TourId, $i++, 15+$NextYearClass, 17, 1, 'U18F', 'U18F,U21F,S1F', 'U18 Femmes', '1', 'CL,CO', 'U18W', 'U18W');
+                    CreateClass($TourId, $i++, 15+$NextYearClass, 17, 0, 'U18H', 'U18H,U21H,S1H', 'U18 Hommes', '1', 'CL,CO', 'U18M', 'U18M');
+                    CreateClass($TourId, $i++, 18+$NextYearClass, 20, 1, 'U21F', 'U21F,S1F', 'U21 Femmes', '1', 'CL,CO', 'U21W', 'U21W');
+                    CreateClass($TourId, $i++, 18+$NextYearClass, 20, 0, 'U21H', 'U21H,S1H', 'U21 Hommes', '1', 'CL,CO', 'U21M', 'U21M');
+                    break;
+                case 9: // Finales DR
+                case 10: // Championnats France Elite
+                case 16: // Finales D2
+                    CreateClass($TourId, $i++, 15+$NextYearClass, 17, 1, 'U18F', 'U18F,U21F,S1F', 'U18 Femmes', '1', 'CL,CO', 'U18W', 'U18W');
+                    CreateClass($TourId, $i++, 15+$NextYearClass, 17, 0, 'U18H', 'U18H,U21H,S1H', 'U18 Hommes', '1', 'CL,CO', 'U18M', 'U18M');
+                    CreateClass($TourId, $i++, 18+$NextYearClass, 20, 1, 'U21F', 'U21F,S1F', 'U21 Femmes', '1', 'CL,CO', 'U21W', 'U21W');
+                    CreateClass($TourId, $i++, 18+$NextYearClass, 20, 0, 'U21H', 'U21H,S1H', 'U21 Hommes', '1', 'CL,CO', 'U21M', 'U21M');
+                    CreateClass($TourId, $i++, 21+$NextYearClass, 39, 1, 'S1F', 'S1F', 'Senior 1 Femmes', '1', 'CL,CO', 'W', 'W');
+                    CreateClass($TourId, $i++, 21+$NextYearClass, 39, 0, 'S1H', 'S1H', 'Senior 1 Hommes', '1', 'CL,CO', 'M', 'M');
+                    CreateClass($TourId, $i++, 40+$NextYearClass, 59, 1, 'S2F', 'S2F,S1F', 'Senior 2 Femmes', '1', 'CL,CO', '', '');
+                    CreateClass($TourId, $i++, 40+$NextYearClass, 59, 0, 'S2H', 'S2H,S1H', 'Senior 2 Hommes', '1', 'CL,CO', '', '');
+                    CreateClass($TourId, $i++, 60+$NextYearClass,127, 1, 'S3F', 'S3F,S2F,S1F', 'Senior 3 Femmes', '1', 'CL,CO', '50W', '50W');
+                    CreateClass($TourId, $i++, 60+$NextYearClass,127, 0, 'S3H', 'S3H,S2H,S1H', 'Senior 3 Hommes', '1', 'CL,CO', '50M', '50M');
+                    break;
+                case 11: // Championnat de France Adulte
+                    CreateClass($TourId, $i++, 21+$NextYearClass, 39, 1, 'S1F', 'S1F', 'Senior 1 Femmes', '1', 'CL,CO', 'W', 'W');
+                    CreateClass($TourId, $i++, 21+$NextYearClass, 39, 0, 'S1H', 'S1H', 'Senior 1 Hommes', '1', 'CL,CO', 'M', 'M');
+                    CreateClass($TourId, $i++, 40+$NextYearClass, 59, 1, 'S2F', 'S2F,S1F', 'Senior 2 Femmes', '1', 'CL,CO', '', '');
+                    CreateClass($TourId, $i++, 40+$NextYearClass, 59, 0, 'S2H', 'S2H,S1H', 'Senior 2 Hommes', '1', 'CL,CO', '', '');
+                    CreateClass($TourId, $i++, 60+$NextYearClass,127, 1, 'S3F', 'S3F,S2F,S1F', 'Senior 3 Femmes', '1', 'CL,CO', '50W', '50W');
+                    CreateClass($TourId, $i++, 60+$NextYearClass,127, 0, 'S3H', 'S3H,S2H,S1H', 'Senior 3 Hommes', '1', 'CL,CO', '50M', '50M');
+                    CreateClass($TourId, $i++, 21+$NextYearClass, 39, 1, 'S1W', 'S1W', 'Senior 1 Femmes National', '1', 'CL,CO,BB', '', '');
+                    CreateClass($TourId, $i++, 21+$NextYearClass, 39, 0, 'S1M', 'S1M', 'Senior 1 Hommes National', '1', 'CL,CO,BB', '', '');
+                    CreateClass($TourId, $i++, 40+$NextYearClass, 59, 1, 'S2W', 'S2W,S1W', 'Senior 2 Femmes National', '1', 'CL,CO,BB', '', '');
+                    CreateClass($TourId, $i++, 40+$NextYearClass, 59, 0, 'S2M', 'S2M,S1M', 'Senior 2 Hommes National', '1', 'CL,CO,BB', '', '');
+                    CreateClass($TourId, $i++, 60+$NextYearClass,127, 1, 'S3W', 'S3W,S2W,S1W', 'Senior 3 Femmes National', '1', 'CL,CO,BB', '', '');
+                    CreateClass($TourId, $i++, 60+$NextYearClass,127, 0, 'S3M', 'S3M,S2M,S1M', 'Senior 3 Hommes National', '1', 'CL,CO,BB', '', '');
+                    break;
+                case 13:
+                case 14:
+                    CreateClass($TourId, $i++,  1, 10, 1, 'U11F', 'U11F,U13F', 'U11 Femmes', '1', 'CL', '', '');
+                    CreateClass($TourId, $i++,  1, 10, 0, 'U11H', 'U11H,U13H', 'U11 Hommes', '1', 'CL', '', '');
+                    CreateClass($TourId, $i++, 11+$NextYearClass, 12, 1, 'U13F', 'U13F,U15F', 'U13 Femmes', '1', 'CL'.($isTAEPara?',HV1,HV2,W1':''), '', '');
+                    CreateClass($TourId, $i++, 11+$NextYearClass, 12, 0, 'U13H', 'U13H,U15H', 'U13 Hommes', '1', 'CL'.($isTAEPara?',HV1,HV2,W1':''), '', '');
+                    CreateClass($TourId, $i++, 13+$NextYearClass, 14, 1, 'U15F', 'U15F,U18F', 'U15 Femmes', '1', 'CL'.($isTAEPara?',HV1,HV2,W1':''), '', '');
+                    CreateClass($TourId, $i++, 13+$NextYearClass, 14, 0, 'U15H', 'U15H,U18H', 'U15 Hommes', '1', 'CL'.($isTAEPara?',HV1,HV2,W1':''), '', '');
+                    CreateClass($TourId, $i++, 15+$NextYearClass, 17, 1, 'U18F', 'U18F,U21F,S1F', 'U18 Femmes', '1', 'CL,CO'.(($isTAEPara)?',HV1,HV2,W1':''), 'U18W', 'U18W');
+                    CreateClass($TourId, $i++, 15+$NextYearClass, 17, 0, 'U18H', 'U18H,U21H,S1H', 'U18 Hommes', '1', 'CL,CO'.($isTAEPara?',HV1,HV2,W1':''), 'U18M', 'U18M');
+                    CreateClass($TourId, $i++, 18+$NextYearClass, 20, 1, 'U21F', 'U21F,S1F', 'U21 Femmes', '1', 'CL,CO'.($isTAEPara?',FECL,FECO,OPCL,OPCO,HV1,HV2,W1':''), 'U21W', 'U21W');
+                    CreateClass($TourId, $i++, 18+$NextYearClass, 20, 0, 'U21H', 'U21H,S1H', 'U21 Hommes', '1', 'CL,CO'.($isTAEPara?',FECL,FECO,OPCL,OPCO,HV1,HV2,W1':''), 'U21M', 'U21M');
+                    CreateClass($TourId, $i++, 21+$NextYearClass, 39, 1, 'S1F', 'S1F', 'Senior 1 Femmes', '1', 'CL,CO'.($isTAEPara?',FECL,FECO,OPCL,OPCO,HV1,HV2,W1':''), 'W', 'W');
+                    CreateClass($TourId, $i++, 21+$NextYearClass, 39, 0, 'S1H', 'S1H', 'Senior 1 Hommes', '1', 'CL,CO'.($isTAEPara?',FECL,FECO,OPCL,OPCO,HV1,HV2,W1':''), 'M', 'M');
+                    CreateClass($TourId, $i++, 40+$NextYearClass, 59, 1, 'S2F', 'S2F,S1F', 'Senior 2 Femmes', '1', 'CL,CO'.($isTAEPara?',FECL,FECO,OPCL,OPCO,HV1,HV2,W1':''), '', '');
+                    CreateClass($TourId, $i++, 40+$NextYearClass, 59, 0, 'S2H', 'S2H,S1H', 'Senior 2 Hommes', '1', 'CL,CO'.($isTAEPara?',FECL,FECO,OPCL,OPCO,HV1,HV2,W1':''), '', '');
+                    CreateClass($TourId, $i++, 60+$NextYearClass,127, 1, 'S3F', 'S3F,S2F,S1F', 'Senior 3 Femmes', '1', 'CL,CO'.($isTAEPara?',FECL,FECO,OPCL,OPCO,HV1,HV2,W1':''), '50W', '50W');
+                    CreateClass($TourId, $i++, 60+$NextYearClass,127, 0, 'S3H', 'S3H,S2H,S1H', 'Senior 3 Hommes', '1', 'CL,CO'.($isTAEPara?',FECL,FECO,OPCL,OPCO,HV1,HV2,W1':''), '50M', '50M');
+                    CreateClass($TourId, $i++, 1,127, -1, 'DEC', 'DEC', 'Découverte', '1', 'CL', '', '');
+                    CreateClass($TourId, $i++, 1,127, -1, 'DEB', 'DEB', 'Débutant', '1', 'CL', '', '');
+                    CreateClass($TourId, $i++, 11+$NextYearClass, 12, 1, 'U13W', 'U13W,U15W', 'U13 Femmes National', '1', 'CL,CO'.($isTAEPara?',CHCL,CHCO,CRCL,CRCO,HLCL,HLCO,W1,OPCL,OPCO,FECL,FECO,SU1,SU2':''), '', '');
+                    CreateClass($TourId, $i++, 11+$NextYearClass, 12, 0, 'U13M', 'U13M,U15M', 'U13 Hommes National', '1', 'CL,CO'.($isTAEPara?',CHCL,CHCO,CRCL,CRCO,HLCL,HLCO,W1,OPCL,OPCO,FECL,FECO,SU1,SU2':''), '', '');
+                    CreateClass($TourId, $i++, 13+$NextYearClass, 14, 1, 'U15W', 'U15W,U18W', 'U15 Femmes National', '1', 'CL,CO,BB'.($isTAEPara?',CHCL,CHCO,CRCL,CRCO,HLCL,HLCO,W1,OPCL,OPCO,FECL,FECO,SU1,SU2':''), '', '');
+                    CreateClass($TourId, $i++, 13+$NextYearClass, 14, 0, 'U15M', 'U15M,U18M', 'U15 Hommes National', '1', 'CL,CO,BB'.($isTAEPara?',CHCL,CHCO,CRCL,CRCO,HLCL,HLCO,W1,OPCL,OPCO,FECL,FECO,SU1,SU2':''), '', '');
+                    CreateClass($TourId, $i++, 15+$NextYearClass, 17, 1, 'U18W', 'U18W,U21W,S1W', 'U18 Femmes National', '1', 'CL,CO,BB'.($isTAEPara?',CHCL,CHCO,CRCL,CRCO,HLCL,HLCO,W1,OPCL,OPCO,FECL,FECO,SU1,SU2':''), '', '');
+                    CreateClass($TourId, $i++, 15+$NextYearClass, 17, 0, 'U18M', 'U18M,U21M,S1M', 'U18 Hommes National', '1', 'CL,CO,BB'.($isTAEPara?',CHCL,CHCO,CRCL,CRCO,HLCL,HLCO,W1,OPCL,OPCO,FECL,FECO,SU1,SU2':''), '', '');
+                    CreateClass($TourId, $i++, 18+$NextYearClass, 20, 1, 'U21W', 'U21W,S1W', 'U21 Femmes National', '1', 'CL,CO,BB'.($isTAEPara?',OPCL,OPCO,FECL,FECO,CHCL,CHCO,CRCL,CRCO,HLCL,HLCO,W1,SU1,SU2':''), '', '');
+                    CreateClass($TourId, $i++, 18+$NextYearClass, 20, 0, 'U21M', 'U21M,S1M', 'U21 Hommes National', '1', 'CL,CO,BB'.($isTAEPara?',OPCL,OPCO,FECL,FECO,CHCL,CHCO,CRCL,CRCO,HLCL,HLCO,W1,SU1,SU2':''), '', '');
+                    CreateClass($TourId, $i++, 21+$NextYearClass, 39, 1, 'S1W', 'S1W', 'Senior 1 Femmes National', '1', 'CL,CO,BB'.($isTAEPara?',OPCL,OPCO,FECL,FECO,CHCL,CHCO,CRCL,CRCO,HLCL,HLCO,W1,SU1,SU2':''), '', '');
+                    CreateClass($TourId, $i++, 21+$NextYearClass, 39, 0, 'S1M', 'S1M', 'Senior 1 Hommes National', '1', 'CL,CO,BB'.($isTAEPara?',OPCL,OPCO,FECL,FECO,CHCL,CHCO,CRCL,CRCO,HLCL,HLCO,W1,SU1,SU2':''), '', '');
+                    CreateClass($TourId, $i++, 40+$NextYearClass, 59, 1, 'S2W', 'S2W,S1W', 'Senior 2 Femmes National', '1', 'CL,CO,BB'.($isTAEPara?',OPCL,OPCO,FECL,FECO,CHCL,CHCO,CRCL,CRCO,HLCL,HLCO,W1,SU1,SU2':''), '', '');
+                    CreateClass($TourId, $i++, 40+$NextYearClass, 59, 0, 'S2M', 'S2M,S1M', 'Senior 2 Hommes National', '1', 'CL,CO,BB'.($isTAEPara?',OPCL,OPCO,FECL,FECO,CHCL,CHCO,CRCL,CRCO,HLCL,HLCO,W1,SU1,SU2':''), '', '');
+                    CreateClass($TourId, $i++, 60+$NextYearClass,127, 1, 'S3W', 'S3W,S2W,S1W', 'Senior 3 Femmes National', '1', 'CL,CO,BB'.($isTAEPara?',OPCL,OPCO,FECL,FECO,CHCL,CHCO,CRCL,CRCO,HLCL,HLCO,W1,SU1,SU2':''), '', '');
+                    CreateClass($TourId, $i++, 60+$NextYearClass,127, 0, 'S3M', 'S3M,S2M,S1M', 'Senior 3 Hommes National', '1', 'CL,CO,BB'.($isTAEPara?',OPCL,OPCO,FECL,FECO,CHCL,CHCO,CRCL,CRCO,HLCL,HLCO,W1,SU1,SU2':''), '', '');
+                break;
+            }
 			break;
 	}
+    if($HasOfficials) {
+        CreateClass($TourId, $i++, 1,127, -1, 'EN', 'EN', 'Entraîneur', '0', 'OF', '', '');
+        CreateClass($TourId, $i++, 1,127, -1, 'ENP', 'ENP', 'Entraîneur de Pôle', '0', 'OF', '', '');
+        CreateClass($TourId, $i++, 1,127, -1, 'CT', 'CT', 'Cadre Technique FFTA', '0', 'OF', '', '');
+        CreateClass($TourId, $i++, 1,127, -1, 'PR', 'PR', 'Presse', '0', 'OF', '', '');
+        CreateClass($TourId, $i++, 1,127, -1, 'VIP', 'VIP', 'VIP', '0', 'OF', '', '');
+    }
 }
 
 function CreateStandardEvents($TourId, $TourType, $SubRule, $Outdoor=false) {
-	//$TargetR=($Outdoor?5:2);
-	//$TargetC=($Outdoor?9:4);
-	//$TargetSizeR=($Outdoor ? 122 : 40);
-	//$TargetSizeC=($Outdoor ? 80 : 40);
-	//$DistanceR=($Outdoor ? 70 : 18);
-	//$DistanceRcm=($Outdoor ? 60 : 18);
-	//$DistanceC=($Outdoor ? 50 : 18);
-
 	$i=1;
 	switch($TourType) {
-		case 6: // INDOOR 18m
-			$TargetR=2;
-			$TargetC=4;
-			$Distance=18;
-			$TargetSize4=40;
-			$TargetSize6=60;
-
-			// NEVER as Team
-			switch($SubRule) {
-				case '2': // Championships Adults
-					CreateEvent($TourId, $i++, 0, 0,  8, $TargetR, 5, 3, 1, 5, 3, 1, '1FCL', 'Classique Senior 1 Femme', 1, 240, 240, 0, 0, 'RW', 'RW', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, '1HCL', 'Classique Senior 1 Homme', 1, 240, 240, 0, 0, 'RM', 'RM', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  2, $TargetR, 5, 3, 1, 5, 3, 1, '2FCL', 'Classique Senior 2 Femme', 1, 240, 240, 0, 0, '', '', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  8, $TargetR, 5, 3, 1, 5, 3, 1, '2HCL', 'Classique Senior 2 Homme', 1, 240, 240, 0, 0, '', '', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  4, $TargetR, 5, 3, 1, 5, 3, 1, '3FCL', 'Classique Senior 3 Femme', 1, 240, 240, 0, 0, 'R50W', 'R50W', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  8, $TargetR, 5, 3, 1, 5, 3, 1, '3HCL', 'Classique Senior 3 Homme', 1, 240, 240, 0, 0, 'R50M', 'R50M', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  8, $TargetC, 5, 3, 1, 5, 3, 1, '1FCO', 'Poulies Senior 1 Femme', 0, 240, 240, 0, 0, 'CW', 'CW', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0, 16, $TargetC, 5, 3, 1, 5, 3, 1, '1HCO', 'Poulies Senior 1 Homme', 0, 240, 240, 0, 0, 'CM', 'CM', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  2, $TargetC, 5, 3, 1, 5, 3, 1, '2FCO', 'Poulies Senior 2 Femme', 0, 240, 240, 0, 0, '', '', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  4, $TargetC, 5, 3, 1, 5, 3, 1, '2HCO', 'Poulies Senior 2 Homme', 0, 240, 240, 0, 0, '', '', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  2, $TargetC, 5, 3, 1, 5, 3, 1, '3FCO', 'Poulies Senior 3 Femme', 0, 240, 240, 0, 0, 'C50W', 'C50W', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  4, $TargetC, 5, 3, 1, 5, 3, 1, '3HCO', 'Poulies Senior 3 Homme', 0, 240, 240, 0, 0, 'C50M', 'C50M', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  4, $TargetR, 5, 3, 1, 5, 3, 1, 'AFBB', 'Arc Nu Scratch Femme', 1, 240, 240, 0, 0, '', '', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  8, $TargetR, 5, 3, 1, 5, 3, 1, 'AHBB', 'Arc Nu Scratch Homme', 1, 240, 240, 0, 0, '', '', $TargetSize4, $Distance);
-					break;
-				case '3': // Championships YOUTH
-					CreateEvent($TourId, $i++, 0, 0,  4, $TargetR, 5, 3, 1, 5, 3, 1, 'U13FCL', 'Classique U13 Femme', 1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', $TargetSize6, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  8, $TargetR, 5, 3, 1, 5, 3, 1, 'U13HCL', 'Classique U13 Homme', 1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', $TargetSize6, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  8, $TargetR, 5, 3, 1, 5, 3, 1, 'U15FCL', 'Classique U15 Femme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', $TargetSize6, $Distance);
-					CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'U15HCL', 'Classique U15 Homme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', $TargetSize6, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  8, $TargetR, 5, 3, 1, 5, 3, 1, 'U18FCL', 'Classique U18 Femme',    1, 240, MATCH_SEP_MEDALS, 0, 0, 'RU18W', 'RU18W', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'U18HCL', 'Classique U18 Homme',    1, 240, MATCH_SEP_MEDALS, 0, 0, 'RU18M', 'RU18M', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  8, $TargetR, 5, 3, 1, 5, 3, 1, 'U21FCL', 'Classique U21 Femme',   1, 240, MATCH_SEP_MEDALS, 0, 0, 'RU21W', 'RU21W', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  8, $TargetR, 5, 3, 1, 5, 3, 1, 'U21HCL', 'Classique U21 Homme',   1, 240, MATCH_SEP_MEDALS, 0, 0, 'RU21M', 'RU21M', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  2, $TargetC, 5, 3, 1, 5, 3, 1, 'U18FCO', 'Poulies U18 Femme',      0, 240, MATCH_SEP_MEDALS, 0, 0, 'CU18W', 'CU18W', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  4, $TargetC, 5, 3, 1, 5, 3, 1, 'U18HCO', 'Poulies U18 Homme',      0, 240, MATCH_SEP_MEDALS, 0, 0, 'CU18M', 'CU18M', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  2, $TargetC, 5, 3, 1, 5, 3, 1, 'U21FCO', 'Poulies U21 Femme',     0, 240, MATCH_SEP_MEDALS, 0, 0, 'CU21W', 'CU21W', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  4, $TargetC, 5, 3, 1, 5, 3, 1, 'U21HCO', 'Poulies U21 Homme',     0, 240, MATCH_SEP_MEDALS, 0, 0, 'CU21M', 'CU21M', $TargetSize4, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  2, $TargetR, 5, 3, 1, 5, 3, 1, 'YFBB', 'Arc Nu Jeune Femme',       1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', $TargetSize6, $Distance);
-					CreateEvent($TourId, $i++, 0, 0,  4, $TargetR, 5, 3, 1, 5, 3, 1, 'YHBB', 'Arc Nu Jeune Homme',       1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', $TargetSize6, $Distance);
-					break;
-			}
-			break;
 		case 3: // Outdoor championships
 			switch($SubRule) {
+				case 15: // Championnat France Equipe
+                    CreateEvent($TourId, $i++, 1, 0, 8, 5, 4, 6, 3, 4, 6, 3, 'U15M', 'U15 Mixte',   1, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 40);
+                    CreateEvent($TourId, $i++, 1, 0, 2, 5, 4, 6, 3, 4, 6, 3, 'U15M2', 'U15 Mixte (5-8)',   1, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 40, 'U15M', '0', '0', 5);
+                    CreateEvent($TourId, $i++, 1, 0, 4, 5, 4, 6, 3, 4, 6, 3, 'U15M3', 'U15 Mixte (9-12)',   1, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 40, 'U15M', '0', '0', 9);
+                    CreateEvent($TourId, $i++, 1, 0, 2, 5, 4, 6, 3, 4, 6, 3, 'U15M4', 'U15 Mixte (13-16)',   1, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 40, 'U15M3', '0', '0', 13);
+                    CreateEvent($TourId, $i++, 1, 0, 8, 5, 4, 6, 3, 4, 6, 3, 'U21F', 'U21 Femme',    1, 0, MATCH_ALL_SEP, 0, 0, '', '', 122, 60);
+                    CreateEvent($TourId, $i++, 1, 0, 2, 5, 4, 6, 3, 4, 6, 3, 'U21F2', 'U21 Femme (5-8)',    1, 0, MATCH_ALL_SEP, 0, 0, '', '', 122, 60, 'U21F', '0', '0', 5);
+                    CreateEvent($TourId, $i++, 1, 0, 4, 5, 4, 6, 3, 4, 6, 3, 'U21F3', 'U21 Femme (9-12)',    1, 0, MATCH_ALL_SEP, 0, 0, '', '', 122, 60, 'U21F', '0', '0', 9);
+                    CreateEvent($TourId, $i++, 1, 0, 2, 5, 4, 6, 3, 4, 6, 3, 'U21F4', 'U21 Femme (13-16)',    1, 0, MATCH_ALL_SEP, 0, 0, '', '', 122, 60, 'U21F3', '0', '0', 13);
+                    CreateEvent($TourId, $i++, 1, 0, 8, 5, 4, 6, 3, 4, 6, 3, 'U21H', 'U21 Homme',    1, 0, MATCH_ALL_SEP, 0, 0, '', '', 122, 60);
+                    CreateEvent($TourId, $i++, 1, 0, 2, 5, 4, 6, 3, 4, 6, 3, 'U21H2', 'U21 Homme (5-8)',    1, 0, MATCH_ALL_SEP, 0, 0, '', '', 122, 60, 'U21H', '0', '0', 5);
+                    CreateEvent($TourId, $i++, 1, 0, 4, 5, 4, 6, 3, 4, 6, 3, 'U21H3', 'U21 Homme (9-12)',    1, 0, MATCH_ALL_SEP, 0, 0, '', '', 122, 60, 'U21H', '0', '0', 9);
+                    CreateEvent($TourId, $i++, 1, 0, 2, 5, 4, 6, 3, 4, 6, 3, 'U21H4', 'U21 Homme (13-16)',    1, 0, MATCH_ALL_SEP, 0, 0, '', '', 122, 60, 'U21H3', '0', '0', 13);
+                    break;
 				case 2: // TNJ
 					// Individuals
-					CreateEvent($TourId, $i++, 0, 0, 14, 5, 5, 3, 1, 5, 3, 1, 'U13FCL', 'Classique U13 Femme', 1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 30);
-					CreateEvent($TourId, $i++, 0, 0, 14, 5, 5, 3, 1, 5, 3, 1, 'U13HCL', 'Classique U13 Homme', 1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 30);
-					CreateEvent($TourId, $i++, 0, 0, 14, 5, 5, 3, 1, 5, 3, 1, 'U15FCL', 'Classique U15 Femme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 40);
-					CreateEvent($TourId, $i++, 0, 0, 14, 5, 5, 3, 1, 5, 3, 1, 'U15HCL', 'Classique U15 Homme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 40);
-					CreateEvent($TourId, $i++, 0, 0, 14, 5, 5, 3, 1, 5, 3, 1, 'U18FCL', 'Classique U18 Femme',    1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 60);
-					CreateEvent($TourId, $i++, 0, 0, 14, 5, 5, 3, 1, 5, 3, 1, 'U18HCL', 'Classique U18 Homme',    1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 60);
-					CreateEvent($TourId, $i++, 0, 0, 14, 5, 5, 3, 1, 5, 3, 1, 'U21FCL', 'Classique U21 Femme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 14, 5, 5, 3, 1, 5, 3, 1, 'U21HCL', 'Classique U21 Homme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 14, 9, 5, 3, 1, 5, 3, 1, 'YFCO', 'Poulies Jeune Femme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0, 14, 9, 5, 3, 1, 5, 3, 1, 'YHCO', 'Poulies Jeune Homme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U13FCL2', 'Classique U13 Femme (5-8)', 1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 30, 'U13FCL', '0', '0', 5);
-					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U13HCL2', 'Classique U13 Homme (5-8)', 1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 30, 'U13HCL', '0', '0', 5);
-					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U15FCL2', 'Classique U15 Femme (5-8)',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 40, 'U15FCL', '0', '0', 5);
-					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U15HCL2', 'Classique U15 Homme (5-8)',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 40, 'U15HCL', '0', '0', 5);
-					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U18FCL2', 'Classique U18 Femme (5-8)',    1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 60, 'U18FCL', '0', '0', 5);
-					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U18HCL2', 'Classique U18 Homme (5-8)',    1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 60, 'U18HCL', '0', '0', 5);
-					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U21FCL2', 'Classique U21 Femme (5-8)',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70, 'U21FCL', '0', '0', 5);
-					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U21HCL2', 'Classique U21 Homme (5-8)',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70, 'U21HCL', '0', '0', 5);
-					CreateEvent($TourId, $i++, 0, 0,  2, 9, 5, 3, 1, 5, 3, 1, 'YFCO2', 'Poulies Jeune Femme (5-8)',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50, 'YFCO', '0', '0', 5);
-					CreateEvent($TourId, $i++, 0, 0,  2, 9, 5, 3, 1, 5, 3, 1, 'YHCO2', 'Poulies Jeune Homme (5-8)',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50, 'YHCO', '0', '0', 5);
-					CreateEvent($TourId, $i++, 0, 0,  4, 5, 5, 3, 1, 5, 3, 1, 'U13FCL3', 'Classique U13 Femme (9-12)', 1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 30, 'U13FCL', '0', '0', 9);
-					CreateEvent($TourId, $i++, 0, 0,  4, 5, 5, 3, 1, 5, 3, 1, 'U13HCL3', 'Classique U13 Homme (9-12)', 1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 30, 'U13HCL', '0', '0', 9);
-					CreateEvent($TourId, $i++, 0, 0,  4, 5, 5, 3, 1, 5, 3, 1, 'U15FCL3', 'Classique U15 Femme (9-12)',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 40, 'U15FCL', '0', '0', 9);
-					CreateEvent($TourId, $i++, 0, 0,  4, 5, 5, 3, 1, 5, 3, 1, 'U15HCL3', 'Classique U15 Homme (9-12)',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 40, 'U15HCL', '0', '0', 9);
-					CreateEvent($TourId, $i++, 0, 0,  4, 5, 5, 3, 1, 5, 3, 1, 'U18FCL3', 'Classique U18 Femme (9-12)',    1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 60, 'U18FCL', '0', '0', 9);
-					CreateEvent($TourId, $i++, 0, 0,  4, 5, 5, 3, 1, 5, 3, 1, 'U18HCL3', 'Classique U18 Homme (9-12)',    1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 60, 'U18HCL', '0', '0', 9);
-					CreateEvent($TourId, $i++, 0, 0,  4, 5, 5, 3, 1, 5, 3, 1, 'U21FCL3', 'Classique U21 Femme (9-12)',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70, 'U21FCL', '0', '0', 9);
-					CreateEvent($TourId, $i++, 0, 0,  4, 5, 5, 3, 1, 5, 3, 1, 'U21HCL3', 'Classique U21 Homme (9-12)',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70, 'U21HCL', '0', '0', 9);
-					CreateEvent($TourId, $i++, 0, 0,  4, 9, 5, 3, 1, 5, 3, 1, 'YFCO3', 'Poulies Jeune Femme (9-12)',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50, 'YFCO', '0', '0', 9);
-					CreateEvent($TourId, $i++, 0, 0,  4, 9, 5, 3, 1, 5, 3, 1, 'YHCO3', 'Poulies Jeune Homme (9-12)',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50, 'YHCO', '0', '0', 9);
-					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U13FCL4', 'Classique U13 Femme (13-16)', 1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 30, 'U13FCL3', '0', '0', 13);
-					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U13HCL4', 'Classique U13 Homme (13-16)', 1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 30, 'U13HCL3', '0', '0', 13);
-					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U15FCL4', 'Classique U15 Femme (13-16)',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 40, 'U15FCL3', '0', '0', 13);
-					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U15HCL4', 'Classique U15 Homme (13-16)',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 40, 'U15HCL3', '0', '0', 13);
-					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U18FCL4', 'Classique U18 Femme (13-16)',    1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 60, 'U18FCL3', '0', '0', 13);
-					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U18HCL4', 'Classique U18 Homme (13-16)',    1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 60, 'U18HCL3', '0', '0', 13);
-					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U21FCL4', 'Classique U21 Femme (13-16)',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70, 'U21FCL3', '0', '0', 13);
-					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U21HCL4', 'Classique U21 Homme (13-16)',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70, 'U21HCL3', '0', '0', 13);
-					CreateEvent($TourId, $i++, 0, 0,  2, 9, 5, 3, 1, 5, 3, 1, 'YFCO4', 'Poulies Jeune Femme (13-16)',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50, 'YFCO3', '0', '0', 13);
-					CreateEvent($TourId, $i++, 0, 0,  2, 9, 5, 3, 1, 5, 3, 1, 'YHCO4', 'Poulies Jeune Homme (13-16)',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50, 'YHCO3', '0', '0', 13);
-
+					CreateEvent($TourId, $i++, 0, 0, 7, 5, 5, 3, 1, 5, 3, 1, 'U13FCL', 'U13 Femme Arc Classique', 1, 0, MATCH_NO_SEP, 0, 0, '', '',  80, 30);
+					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U13FCL2', 'U13 Femme Arc Classique (5-8)', 1, 0, MATCH_NO_SEP, 0, 0, '', '',  80, 30, 'U13FCL', '0', '0', 5);
+                    CreateEvent($TourId, $i++, 0, 0, 7, 5, 5, 3, 1, 5, 3, 1, 'U13HCL', 'U13 Homme Arc Classique', 1, 0, MATCH_NO_SEP, 0, 0, '', '',  80, 30);
+					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U13HCL2', 'U13 Homme Arc Classique (5-8)', 1, 0, MATCH_NO_SEP, 0, 0, '', '',  80, 30, 'U13HCL', '0', '0', 5);
+					CreateEvent($TourId, $i++, 0, 0, 14, 5, 5, 3, 1, 5, 3, 1, 'U15FCL', 'U15 Femme Arc Classique',   1, 0, MATCH_SEP_GOLD, 0, 0, '', '',  80, 40);
+					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U15FCL2', 'U15 Femme Arc Classique (5-8)',   1, 0, MATCH_NO_SEP, 0, 0, '', '',  80, 40, 'U15FCL', '0', '0', 5);
+					CreateEvent($TourId, $i++, 0, 0,  4, 5, 5, 3, 1, 5, 3, 1, 'U15FCL3', 'U15 Femme Arc Classique (9-12)',   1, 0, MATCH_NO_SEP, 0, 0, '', '',  80, 40, 'U15FCL', '0', '0', 9);
+					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U15FCL4', 'U15 Femme Arc Classique (13-16)',   1, 0, MATCH_NO_SEP, 0, 0, '', '',  80, 40, 'U15FCL3', '0', '0', 13);
+					CreateEvent($TourId, $i++, 0, 0, 14, 5, 5, 3, 1, 5, 3, 1, 'U15HCL', 'U15 Homme Arc Classique',   1, 0, MATCH_SEP_GOLD, 0, 0, '', '',  80, 40);
+					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U15HCL2', 'U15 Homme Arc Classique (5-8)',   1, 0, MATCH_NO_SEP, 0, 0, '', '',  80, 40, 'U15HCL', '0', '0', 5);
+					CreateEvent($TourId, $i++, 0, 0,  4, 5, 5, 3, 1, 5, 3, 1, 'U15HCL3', 'U15 Homme Arc Classique (9-12)',   1, 0, MATCH_NO_SEP, 0, 0, '', '',  80, 40, 'U15HCL', '0', '0', 9);
+					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U15HCL4', 'U15 Homme Arc Classique (13-16)',   1, 0, MATCH_NO_SEP, 0, 0, '', '',  80, 40, 'U15HCL3', '0', '0', 13);
+					CreateEvent($TourId, $i++, 0, 0, 14, 5, 5, 3, 1, 5, 3, 1, 'U18FCL', 'U18 Femme Arc Classique',    1, 0, MATCH_SEP_GOLD, 0, 0, '', '', 122, 60);
+					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U18FCL2', 'U18 Femme Arc Classique (5-8)',    1, 0, MATCH_NO_SEP, 0, 0, '', '', 122, 60, 'U18FCL', '0', '0', 5);
+					CreateEvent($TourId, $i++, 0, 0,  4, 5, 5, 3, 1, 5, 3, 1, 'U18FCL3', 'U18 Femme Arc Classique (9-12)',    1, 0, MATCH_NO_SEP, 0, 0, '', '', 122, 60, 'U18FCL', '0', '0', 9);
+					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U18FCL4', 'U18 Femme Arc Classique (13-16)',    1, 0, MATCH_NO_SEP, 0, 0, '', '', 122, 60, 'U18FCL3', '0', '0', 13);
+					CreateEvent($TourId, $i++, 0, 0, 14, 5, 5, 3, 1, 5, 3, 1, 'U18HCL', 'U18 Homme Arc Classique',    1, 0, MATCH_SEP_GOLD, 0, 0, '', '', 122, 60);
+					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U18HCL2', 'U18 Homme Arc Classique (5-8)',    1, 0, MATCH_NO_SEP, 0, 0, '', '', 122, 60, 'U18HCL', '0', '0', 5);
+					CreateEvent($TourId, $i++, 0, 0,  4, 5, 5, 3, 1, 5, 3, 1, 'U18HCL3', 'U18 Homme Arc Classique (9-12)',    1, 0, MATCH_NO_SEP, 0, 0, '', '', 122, 60, 'U18HCL', '0', '0', 9);
+					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U18HCL4', 'U18 Homme Arc Classique (13-16)',    1, 0, MATCH_NO_SEP, 0, 0, '', '', 122, 60, 'U18HCL3', '0', '0', 13);
+					CreateEvent($TourId, $i++, 0, 0, 7, 5, 5, 3, 1, 5, 3, 1, 'U21FCL', 'U21 Femme Arc Classique',   1, 0, MATCH_SEP_GOLD, 0, 0, '', '', 122, 70);
+					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U21FCL2', 'U21 Femme Arc Classique (5-8)',   1, 0, MATCH_NO_SEP, 0, 0, '', '', 122, 70, 'U21FCL', '0', '0', 5);
+					CreateEvent($TourId, $i++, 0, 0, 14, 5, 5, 3, 1, 5, 3, 1, 'U21HCL', 'U21 Homme Arc Classique',   1, 0, MATCH_SEP_GOLD, 0, 0, '', '', 122, 70);
+					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U21HCL2', 'U21 Homme Arc Classique (5-8)',   1, 0, MATCH_NO_SEP, 0, 0, '', '', 122, 70, 'U21HCL', '0', '0', 5);
+					CreateEvent($TourId, $i++, 0, 0,  4, 5, 5, 3, 1, 5, 3, 1, 'U21HCL3', 'U21 Homme Arc Classique (9-12)',   1, 0, MATCH_NO_SEP, 0, 0, '', '', 122, 70, 'U21HCL', '0', '0', 9);
+					CreateEvent($TourId, $i++, 0, 0,  2, 5, 5, 3, 1, 5, 3, 1, 'U21HCL4', 'U21 Homme Arc Classique (13-16)',   1, 0, MATCH_NO_SEP, 0, 0, '', '', 122, 70, 'U21HCL3', '0', '0', 13);
+					CreateEvent($TourId, $i++, 0, 0, 7, 9, 5, 3, 1, 5, 3, 1, 'U21FCO', 'U21 Femme Arc à Poulies',     0, 0, MATCH_SEP_GOLD, 0, 0, '', '',  80, 50);
+					CreateEvent($TourId, $i++, 0, 0,  2, 9, 5, 3, 1, 5, 3, 1, 'U21FCO2', 'U21 Femme Arc à Poulies (5-8)',     0, 0, MATCH_NO_SEP, 0, 0, '', '',  80, 50, 'YFCO', '0', '0', 5);
+					CreateEvent($TourId, $i++, 0, 0, 7, 9, 5, 3, 1, 5, 3, 1, 'U21HCO', 'U21 Homme Arc à Poulies',     0, 0, MATCH_SEP_GOLD, 0, 0, '', '',  80, 50);
+					CreateEvent($TourId, $i++, 0, 0,  2, 9, 5, 3, 1, 5, 3, 1, 'U21HCO2', 'U21 Homme Arc à Poulies (5-8)',     0, 0, MATCH_NO_SEP, 0, 0, '', '',  80, 50, 'YHCO', '0', '0', 5);
 					// Team
 					$i=1;
-					CreateEvent($TourId, $i++, 1, 1,  2, 5, 4, 4, 2, 4, 4, 2, 'DMCU21', 'Double Mixte Classique Juniors',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70);
-					CreateEvent($TourId, $i++, 1, 1,  2, 5, 4, 4, 2, 4, 4, 2, 'DMCU18', 'Double Mixte Classique Cadets',   1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 60);
-					CreateEvent($TourId, $i++, 1, 1,  2, 9, 4, 4, 2, 4, 4, 2, 'DMPY', 'Double Mixte Poulies Jeunes',    0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50);
+					CreateEvent($TourId, $i++, 1, 1,  4, 5, 4, 4, 2, 4, 4, 2, 'DMCLU21', 'Double Mixte U21 Arc Classique',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70);
+					CreateEvent($TourId, $i++, 1, 1,  4, 5, 4, 4, 2, 4, 4, 2, 'DMCLU18', 'Double Mixte U18 Arc Classique',   1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 60);
+					CreateEvent($TourId, $i++, 1, 1,  4, 9, 4, 4, 2, 4, 4, 2, 'DMCOU21', 'Double Mixte U21 Arc à Poulies',    0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50);
 					// always second team!
 					safe_w_sql("update Events set EvTeamCreationMode=2 where EvTeamEvent=1 and EvTournament=$TourId");
 					break;
 				case 3: // Championships Youth
-					CreateEvent($TourId, $i++, 0, 0,  4, 5, 5, 3, 1, 5, 3, 1, 'U13FCL', 'Classique U13 Femme', 1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 30);
-					CreateEvent($TourId, $i++, 0, 0,  8, 5, 5, 3, 1, 5, 3, 1, 'U13HCL', 'Classique U13 Homme', 1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 30);
-					CreateEvent($TourId, $i++, 0, 0,  8, 5, 5, 3, 1, 5, 3, 1, 'U15FCL', 'Classique U15 Femme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 40);
-					CreateEvent($TourId, $i++, 0, 0, 16, 5, 5, 3, 1, 5, 3, 1, 'U15HCL', 'Classique U15 Homme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 40);
-					CreateEvent($TourId, $i++, 0, 0,  8, 5, 5, 3, 1, 5, 3, 1, 'U18FCL', 'Classique U18 Femme',    1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 60);
-					CreateEvent($TourId, $i++, 0, 0, 16, 5, 5, 3, 1, 5, 3, 1, 'U18HCL', 'Classique U18 Homme',    1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 60);
-					CreateEvent($TourId, $i++, 0, 0,  8, 5, 5, 3, 1, 5, 3, 1, 'U21FCL', 'Classique U21 Femme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 16, 5, 5, 3, 1, 5, 3, 1, 'U21HCL', 'Classique U21 Homme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0,  2, 9, 5, 3, 1, 5, 3, 1, 'U18FCO', 'Poulies U18 Femme',      0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0,  4, 9, 5, 3, 1, 5, 3, 1, 'U18HCO', 'Poulies U18 Homme',      0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0,  2, 9, 5, 3, 1, 5, 3, 1, 'U21FCO', 'Poulies U21 Femme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0,  4, 9, 5, 3, 1, 5, 3, 1, 'U21HCO', 'Poulies U21 Homme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
+                    $Options=[
+                        'EvFinalFirstPhase' => 0,
+                        'EvNumQualified'=>0,
+                        'EvFinalTargetType'=>0,
+                        'EvTargetSize'=>40,
+                        'EvDistance'=>0,
+                        'EvFinalAthTarget'=>MATCH_SEP_FROM_2,
+                        'EvMatchMode'=>0,
+                        'EvMatchArrowsNo'=>0,
+                        'EvElimEnds'=>5,
+                        'EvElimArrows'=>3,
+                        'EvElimSO'=>1,
+                        'EvFinEnds'=>5,
+                        'EvFinArrows'=>3,
+                        'EvFinSO'=>1,
+                        'EvRecCategory'=>'',
+                        'EvWaCategory'=>'',
+                    ];
+                    $Events=[
+                        'U13FCL'=>['U13 Femme Arc Classique', 7, 5, 80, 30, 1],
+                        'U13HCL'=>['U13 Homme Arc Classique', 14, 5, 80, 30, 1],
+                        'U15FCL'=>['U15 Femme Arc Classique', 14, 5, 80, 40, 1],
+                        'U15HCL'=>['U15 Homme Arc Classique', 14, 5, 80, 40, 1],
+                        'U18FCL'=>['U18 Femme Arc Classique', 14, 5, 122, 60, 1],
+                        'U18HCL'=>['U18 Homme Arc Classique', 14, 5, 122, 60, 1],
+                        'U21FCL'=>['U21 Femme Arc Classique', 7, 5, 122, 70, 1],
+                        'U21HCL'=>['U21 Homme Arc Classique', 14, 5, 122, 70, 1],
+                        'U21FCO'=>['U21 Femme Arc à Poulies', 4, 9, 80, 50, 0],
+                        'U21HCO'=>['U21 Homme Arc à Poulies', 7, 9, 80, 50, 0],
+                        'DMJ'=>['Double Mixte Jeunes', 8, 5, 122, 60, 0],
+                    ];
 
-					// MIXED TEAMS and Teams
-					$i=1;
-					CreateEvent($TourId, $i++, 1, 1,  4, 5, 4, 4, 2, 4, 4, 2, 'DMJ', 'Double Mixte Jeunes',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 60);
-					CreateEvent($TourId, $i++, 1, 0,  8, 5, 4, 6, 2, 4, 6, 2, 'CJH', 'U18/U21 Hommes',   1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 60);
-					CreateEvent($TourId, $i++, 1, 0,  8, 5, 4, 6, 2, 4, 6, 2, 'CJF', 'U18/U21 Filles',    1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 60);
-					CreateEvent($TourId, $i++, 1, 0,  8, 5, 4, 6, 2, 4, 6, 2, 'BM',  'U13/U15',     1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 30);
-
-					// drop out after 1/8
-					CreateEvent($TourId, $i++, 1, 0,  4, 5, 4, 6, 2, 4, 6, 2, 'CJH3', 'U18/U21 Hommes (9-12)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 60,'CJH', '0', '0', '9');
-					CreateEvent($TourId, $i++, 1, 0,  4, 5, 4, 6, 2, 4, 6, 2, 'CJF3', 'U18/U21 Filles (9-12)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 60,'CJF', '0', '0', '9');
-					CreateEvent($TourId, $i++, 1, 0,  4, 5, 4, 6, 2, 4, 6, 2, 'BM3',  'U13/U15 (9-12)',     1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 30,'BM', '0', '0', '9');
-
-					// drop out after 1/4
-					CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 2, 4, 6, 2, 'CJH2', 'U18/U21 Hommes (5-8)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 60,'CJH', '0', '0', '5');
-					CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 2, 4, 6, 2, 'CJF2', 'U18/U21 Filles (5-8)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 60,'CJF', '0', '0', '5');
-					CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 2, 4, 6, 2, 'BM2',  'U13/U15 (5-8)',     1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 30,'BM', '0', '0', '5');
-
-					// drop out after 1/4 of losers 1/8
-					CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 2, 4, 6, 2, 'CJH4', 'U18/U21 Hommes (13-16)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 60,'CJH3', '0', '0', '13');
-					CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 2, 4, 6, 2, 'CJF4', 'U18/U21 Filles (13-16)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 60,'CJF3', '0', '0', '13');
-					CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 2, 4, 6, 2, 'BM4',  'U13/U15 (13-16)',     1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 30,'BM3', '0', '0', '13');
+                    foreach($Events as $EvCode=>$EvName) {
+                        $Options['EvFinalFirstPhase']=$EvName[1];
+                        $Options['EvNumQualified']=$EvName[1]*2;
+                        $Options['EvFinalTargetType']=$EvName[2];
+                        $Options['EvTargetSize']=$EvName[3];
+                        $Options['EvDistance']=$EvName[4];
+                        $Options['EvMatchMode']=$EvName[5];
+                        if($EvCode=='DMJ') {
+                            $Options['EvTeamEvent']=1;
+                            $Options['EvMixedTeam']=1;
+                            $Options['EvMaxTeamPerson']=2;
+                            $Options['EvElimEnds']=4;
+                            $Options['EvElimArrows']=4;
+                            $Options['EvElimSO']=2;
+                            $Options['EvFinEnds']=4;
+                            $Options['EvFinArrows']=4;
+                            $Options['EvFinSO']=2;
+                        }
+                        CreateEventNew($TourId, $EvCode, $EvName[0], $i++, $Options);
+                    }
 					break;
-				case 4: // Championships Scratch Recurve
-					CreateEvent($TourId, $i++, 0, 0, 16, 5, 5, 3, 1, 5, 3, 1, 'FCL', 'Classique Scratch Femme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 24, 5, 5, 3, 1, 5, 3, 1, 'HCL', 'Classique Scratch Homme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
+				case 9: // Finales des DR
+                    // Only Teams with losers brackets, start with Compound Women
+                    CreateEvent($TourId, $i++, 1, 0,  8, 9, 4, 6, 3, 4, 6, 3, 'DRCF', 'Equipes DR Poulies Femme',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50);
+                    CreateEvent($TourId, $i++, 1, 0,  2, 9, 4, 6, 3, 4, 6, 3, 'CF05', 'Equipes DR Poulies Femme (5-8)',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50, 'DRCF', '0', '0', 5);
+                    CreateEvent($TourId, $i++, 1, 0,  4, 9, 4, 6, 3, 4, 6, 3, 'CF09', 'Equipes DR Poulies Femme (9-12)',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50, 'DRCF', '0', '0', 9);
+                    CreateEvent($TourId, $i++, 1, 0,  2, 9, 4, 6, 3, 4, 6, 3, 'CF13', 'Equipes DR Poulies Femme (13-16)',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50, 'CF09', '0', '0', 13);
+
+                    // Compound Men
+                    CreateEvent($TourId, $i++, 1, 0,  12, 9, 4, 6, 3, 4, 6, 3, 'DRCH', 'Equipes DR Poulies Homme',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50);
+                    CreateEvent($TourId, $i++, 1, 0,  2, 9, 4, 6, 3, 4, 6, 3, 'CH05', 'Equipes DR Poulies Homme (5-8)',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50, 'DRCH', '0', '0', 5);
+                    CreateEvent($TourId, $i++, 1, 0,  4, 9, 4, 6, 3, 4, 6, 3, 'CH09', 'Equipes DR Poulies Homme (9-12)',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50, 'DRCH', '0', '0', 9);
+                    CreateEvent($TourId, $i++, 1, 0,  2, 9, 4, 6, 3, 4, 6, 3, 'CH13', 'Equipes DR Poulies Homme (13-16)',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50, 'CH09', '0', '0', 13);
+                    CreateEvent($TourId, $i++, 1, 0,  8, 9, 4, 6, 3, 4, 6, 3, 'CH17', 'Equipes DR Poulies Homme (17-20)',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50, 'DRCH', '0', '8', 17);
+                    CreateEvent($TourId, $i++, 1, 0,  2, 9, 4, 6, 3, 4, 6, 3, 'CH21', 'Equipes DR Poulies Homme (21-24)',   0, 0, MATCH_ALL_SEP, 0, 0, '', '',   80, 50, 'CH17', '0', '0', 21);
+
+                    // Recurve Women
+                    CreateEvent($TourId, $i++, 1, 0,  12, 5, 4, 6, 3, 4, 6, 3, 'DRRF', 'Equipes DR Classique Femme',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70);
+                    CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'RF05', 'Equipes DR Classique Femme (5-8)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'DRRF', '0', '0', 5);
+                    CreateEvent($TourId, $i++, 1, 0,  4, 5, 4, 6, 3, 4, 6, 3, 'RF09', 'Equipes DR Classique Femme (9-12)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'DRRF', '0', '0', 9);
+                    CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'RF13', 'Equipes DR Classique Femme (13-16)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'RF09', '0', '0', 13);
+                    CreateEvent($TourId, $i++, 1, 0,  8, 5, 4, 6, 3, 4, 6, 3, 'RF17', 'Equipes DR Classique Femme (17-20)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'DRRF', '0', '8', 17);
+                    CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'RF21', 'Equipes DR Classique Femme (21-24)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'RF17', '0', '0', 21);
+
+                    // Recurve Men
+                    CreateEvent($TourId, $i++, 1, 0,  12, 5, 4, 6, 3, 4, 6, 3, 'DRRH', 'Equipes DR Classique Homme',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70);
+                    CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'RH05', 'Equipes DR Classique Homme (5-8)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'DRRH', '0', '0', 5);
+                    CreateEvent($TourId, $i++, 1, 0,  4, 5, 4, 6, 3, 4, 6, 3, 'RH09', 'Equipes DR Classique Homme (9-12)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'DRRH', '0', '0', 9);
+                    CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'RH13', 'Equipes DR Classique Homme (13-16)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'RH09', '0', '0', 13);
+                    CreateEvent($TourId, $i++, 1, 0,  8, 5, 4, 6, 3, 4, 6, 3, 'RH17', 'Equipes DR Classique Homme (17-20)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'DRRH', '0', '8', 17);
+                    CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'RH21', 'Equipes DR Classique Homme (21-24)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'RH17', '0', '0', 21);
+                    break;
+				case 16: // Finales D2
+                    // Only Teams with losers brackets, start with Recurve Women
+                    CreateEvent($TourId, $i++, 1, 0,  8, 5, 4, 6, 3, 4, 6, 3, 'D2F', 'Equipes D2 Femme',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70);
+                    CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'DF05', 'Equipes D2 Femme (5-8)',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'D2F', '0', '0', 5);
+                    CreateEvent($TourId, $i++, 1, 0,  4, 5, 4, 6, 3, 4, 6, 3, 'DF09', 'Equipes D2 Femme (9-12)',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'D2F', '0', '0', 9);
+                    CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'DF13', 'Equipes D2 Femme (13-16)',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'DF09', '0', '0', 13);
+
+                    // Recruve Men
+                    CreateEvent($TourId, $i++, 1, 0,  8, 5, 4, 6, 3, 4, 6, 3, 'D2H', 'Equipes D2 Homme',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70);
+                    CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'DH05', 'Equipes D2 Homme (5-8)',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'D2H', '0', '0', 5);
+                    CreateEvent($TourId, $i++, 1, 0,  4, 5, 4, 6, 3, 4, 6, 3, 'DH09', 'Equipes D2 Homme (9-12)',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'D2H', '0', '0', 9);
+                    CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'DH13', 'Equipes D2 Homme (13-16)',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'DH09', '0', '0', 13);
+                    break;
+				case 10: // Championnats France Elite
+					CreateEvent($TourId, $i++, 0, 0, 16, 5, 5, 3, 1, 5, 3, 1, 'EFCL', 'Elite Femme Arc Classique',   1, 0, MATCH_SEP_FROM_4, 0, 0, '', '', 122, 70);
+					CreateEvent($TourId, $i++, 0, 0, 16, 5, 5, 3, 1, 5, 3, 1, 'EHCL', 'Elite Homme Arc Classique',   1, 0, MATCH_SEP_FROM_4, 0, 0, '', '', 122, 70);
+					CreateEvent($TourId, $i++, 0, 0,  8, 9, 5, 3, 1, 5, 3, 1, 'EFCO', 'Elite Femme Arc à Poulies',   0, 0, MATCH_SEP_FROM_4, 0, 0, '', '',  80, 50);
+					CreateEvent($TourId, $i++, 0, 0, 16, 9, 5, 3, 1, 5, 3, 1, 'EHCO', 'Elite Homme Arc à Poulies',   0, 0, MATCH_SEP_FROM_4, 0, 0, '', '',  80, 50);
 
 					// MIXED TEAMS
 					$i=1;
-					CreateEvent($TourId, $i++, 1, 1,  4, 5, 4, 4, 2, 4, 4, 2, 'DMCL', 'Double Mixte Classique',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70);
-					break;
-				case 5: // Championships Scratch Compound
-					CreateEvent($TourId, $i++, 0, 0,  16, 9, 5, 3, 1, 5, 3, 1, 'FCO', 'Poulies Scratch Femme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0,  24, 9, 5, 3, 1, 5, 3, 1, 'HCO', 'Poulies Scratch Homme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
+					CreateEvent($TourId, $i++, 1, 1,  8, 5, 4, 4, 2, 4, 4, 2, 'DMCL', 'Double Mixte Classique',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70);
+					CreateEvent($TourId, $i++, 1, 1,  8, 9, 4, 4, 2, 4, 4, 2, 'DMCO', 'Double Mixte Poulie',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50);
+                    break;
+				case 11: // Championnat de France Adulte
+                    $Options=[
+                        'EvFinalFirstPhase' => 2,
+                        'EvNumQualified'=>4,
+                        'EvFinalTargetType'=>0,
+                        'EvTargetSize'=>40,
+                        'EvDistance'=>0,
+                        'EvFinalAthTarget'=>MATCH_SEP_FROM_2,
+                        'EvMatchMode'=>0,
+                        'EvMatchArrowsNo'=>0,
+                        'EvElimEnds'=>5,
+                        'EvElimArrows'=>3,
+                        'EvElimSO'=>1,
+                        'EvFinEnds'=>5,
+                        'EvFinArrows'=>3,
+                        'EvFinSO'=>1,
+                        'EvRecCategory'=>'',
+                        'EvWaCategory'=>'',
+                    ];
+                    $Events=[
+                        'S1FCL'=>['Senior 1 Femme Arc Classique', 8, 5, 122, 70, 1],
+                        'S1HCL'=>['Senior 1 Homme Arc Classique', 8, 5, 122, 70, 1],
+                        'S2FCL'=>['Senior 2 Femme Arc Classique', 8, 5, 122, 70, 1],
+                        'S2HCL'=>['Senior 2 Homme Arc Classique', 8, 5, 122, 70, 1],
+                        'S3FCL'=>['Senior 3 Femme Arc Classique', 4, 5, 122, 60, 1],
+                        'S3HCL'=>['Senior 3 Homme Arc Classique', 8, 5, 122, 60, 1],
+                        'S1FCO'=>['Senior 1 Femme Arc à Poulies', 4, 9, 80, 50, 0],
+                        'S1HCO'=>['Senior 1 Homme Arc à Poulies', 8, 9, 80, 50, 0],
+                        'S2FCO'=>['Senior 2 Femme Arc à Poulies', 4, 9, 80, 50, 0],
+                        'S2HCO'=>['Senior 2 Homme Arc à Poulies', 8, 9, 80, 50, 0],
+                        'S3FCO'=>['Senior 3 Femme Arc à Poulies', 4, 9, 80, 50, 0],
+                        'S3HCO'=>['Senior 3 Homme Arc à Poulies', 8, 9, 80, 50, 0],
+                        'NS1FCL'=>['Senior 1 Femme Arc Classique National', 0, 5, 122, 50, 1],
+                        'NS1HCL'=>['Senior 1 Homme Arc Classique National', 0, 5, 122, 50, 1],
+                        'NS2FCL'=>['Senior 2 Femme Arc Classique National', 0, 5, 122, 50, 1],
+                        'NS2HCL'=>['Senior 2 Homme Arc Classique National', 0, 5, 122, 50, 1],
+                        'NS3FCL'=>['Senior 3 Femme Arc Classique National', 0, 5, 122, 50, 1],
+                        'NS3HCL'=>['Senior 3 Homme Arc Classique National', 0, 5, 122, 50, 1],
+                        'NS1FCO'=>['Senior 1 Femme Arc à Poulies National', 0, 5, 122, 50, 0],
+                        'NS1HCO'=>['Senior 1 Homme Arc à Poulies National', 0, 5, 122, 50, 0],
+                        'NS2FCO'=>['Senior 2 Femme Arc à Poulies National', 0, 5, 122, 50, 0],
+                        'NS2HCO'=>['Senior 2 Homme Arc à Poulies National', 0, 5, 122, 50, 0],
+                        'NS3FCO'=>['Senior 3 Femme Arc à Poulies National', 0, 5, 122, 50, 0],
+                        'NS3HCO'=>['Senior 3 Homme Arc à Poulies National', 0, 5, 122, 50, 0],
+                        'NFBB'=>['Femme Arc Nu National', 0, 5, 122, 50, 0],
+                        'NHBB'=>['Homme Arc Nu National', 0, 5, 122, 50, 0],
+                    ];
 
-					// MIXED TEAMS
-					$i=1;
-					CreateEvent($TourId, $i++, 1, 1,  4, 9, 4, 4, 2, 4, 4, 2, 'DMCO', 'Double Mixte Poulie',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50);
+                    foreach($Events as $EvCode=>$EvName) {
+                        $Options['EvFinalFirstPhase']=$EvName[1];
+                        $Options['EvNumQualified']=$EvName[1]*2;
+                        $Options['EvFinalTargetType']=$EvName[2];
+                        $Options['EvTargetSize']=$EvName[3];
+                        $Options['EvDistance']=$EvName[4];
+                        $Options['EvMatchMode']=$EvName[5];
+                        CreateEventNew($TourId, $EvCode, $EvName[0], $i++, $Options);
+                    }
 					break;
-				case 6: // Championships Veterans
-					CreateEvent($TourId, $i++, 0, 0,  8, 5, 5, 3, 1, 5, 3, 1, 'VFCL', 'Classique Vétéran Femme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 16, 5, 5, 3, 1, 5, 3, 1, 'VHCL', 'Classique Vétéran Homme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0,  8, 5, 5, 3, 1, 5, 3, 1, 'WFCL', 'Classique Super Vétéran Femme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0,  8, 5, 5, 3, 1, 5, 3, 1, 'WHCL', 'Classique Super Vétéran Homme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0,  8, 9, 5, 3, 1, 5, 3, 1, 'VFCO', 'Poulies Vétéran Femme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0, 16, 9, 5, 3, 1, 5, 3, 1, 'VHCO', 'Poulies Vétéran Homme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0,  4, 9, 5, 3, 1, 5, 3, 1, 'WFCO', 'Poulies Super Vétéran Femme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0,  8, 9, 5, 3, 1, 5, 3, 1, 'WHCO', 'Poulies Super Vétéran Homme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					break;
-				case 7: // D1/DNAP
-					// 2019: we have 4 individual events and 1 match event for each of the 4 categories, sort of round robin
-					CreateEvent($TourId, $i++, 0, 0, 64, 5, 5, 3, 1, 5, 3, 1, 'FCL1', 'Classique Femme 1',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 64, 5, 5, 3, 1, 5, 3, 1, 'FCL2', 'Classique Femme 2',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 64, 5, 5, 3, 1, 5, 3, 1, 'FCL3', 'Classique Femme 3',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 64, 5, 5, 3, 1, 5, 3, 1, 'FCL4', 'Classique Femme 4',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 64, 5, 5, 3, 1, 5, 3, 1, 'HCL1', 'Classique Homme 1',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 64, 5, 5, 3, 1, 5, 3, 1, 'HCL2', 'Classique Homme 2',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 64, 5, 5, 3, 1, 5, 3, 1, 'HCL3', 'Classique Homme 3',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 64, 5, 5, 3, 1, 5, 3, 1, 'HCL4', 'Classique Homme 4',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 64, 9, 5, 3, 1, 5, 3, 1, 'FCO1', 'Poulies Femme 1',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0, 64, 9, 5, 3, 1, 5, 3, 1, 'FCO2', 'Poulies Femme 2',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0, 64, 9, 5, 3, 1, 5, 3, 1, 'FCO3', 'Poulies Femme 3',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0, 64, 9, 5, 3, 1, 5, 3, 1, 'FCO4', 'Poulies Femme 4',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0, 64, 9, 5, 3, 1, 5, 3, 1, 'HCO1', 'Poulies Homme 1',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0, 64, 9, 5, 3, 1, 5, 3, 1, 'HCO2', 'Poulies Homme 2',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0, 64, 9, 5, 3, 1, 5, 3, 1, 'HCO3', 'Poulies Homme 3',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0, 64, 9, 5, 3, 1, 5, 3, 1, 'HCO4', 'Poulies Homme 4',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0, 0, 5, 5, 3, 1, 5, 3, 1, 'FCL', 'Classique Femme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 0, 5, 5, 3, 1, 5, 3, 1, 'HCL', 'Classique Homme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 0, 9, 5, 3, 1, 5, 3, 1, 'FCO', 'Poulies Femme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0, 0, 9, 5, 3, 1, 5, 3, 1, 'HCO', 'Poulies Homme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					// teams... Team matches
-					$i=1;
-					CreateEvent($TourId, $i++, 1, 0, 64, 5, 4, 6, 3, 4, 6, 3, 'FCL', 'Equipe Classique Femme',   1, 240, MATCH_ALL_SEP, 0, 0, '', '', 122, 70, '', '', '16');
-					CreateEvent($TourId, $i++, 1, 0, 64, 5, 4, 6, 3, 4, 6, 3, 'HCL', 'Equipe Classique Homme',   1, 240, MATCH_ALL_SEP, 0, 0, '', '', 122, 70, '', '', '16');
-					CreateEvent($TourId, $i++, 1, 0, 64, 9, 4, 6, 3, 4, 6, 3, 'FCO', 'Equipe Poulies Femme',     0, 240, MATCH_ALL_SEP, 0, 0, '', '',  80, 50, '', '', '8');
-					CreateEvent($TourId, $i++, 1, 0, 64, 9, 4, 6, 3, 4, 6, 3, 'HCO', 'Equipe Poulies Homme',     0, 240, MATCH_ALL_SEP, 0, 0, '', '',  80, 50, '', '', '16');
-					break;
-				case 8: // Fédéral
-					// NO EVENTS!!!
-					break;
-				case 9: // DR/D2
-					CreateEvent($TourId, $i++, 1, 0,  12, 5, 4, 6, 3, 4, 6, 3, 'DRRF', 'Equipes DR Classique Femme',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70);
-					CreateEvent($TourId, $i++, 1, 0,  12, 5, 4, 6, 3, 4, 6, 3, 'DRRH', 'Equipes DR Classique Homme',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70);
-					CreateEvent($TourId, $i++, 1, 0,  12, 9, 4, 6, 3, 4, 6, 3, 'DRCF', 'Equipes DR Poulies Femme',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 1, 0,  12, 9, 4, 6, 3, 4, 6, 3, 'DRCH', 'Equipes DR Poulies Homme',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 1, 0,  8, 5, 4, 6, 3, 4, 6, 3, 'D2F', 'Equipes D2 Femme',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70);
-					CreateEvent($TourId, $i++, 1, 0,  8, 5, 4, 6, 3, 4, 6, 3, 'D2H', 'Equipes D2 Homme',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70);
+                case 12: // D1/DNAP 2023 formula!
+                    $i=1;
+                    // start with FCL
+                    $Options=[
+                        'EvTeamEvent' => 1,
+                        'EvNumQualified'=>16,
+                        'EvFirstQualified'=>1,
+                        'EvFinalTargetType'=>5,
+                        'EvTargetSize'=>122,
+                        'EvDistance'=>70,
+                        'EvElimType'=>5,
+                        'EvElim1'=>2,
+                        'EvMatchMode'=>1,
+                        'EvElimEnds'=>4,
+                        'EvElimArrows'=>6,
+                        'EvElimSO'=>3,
+                        'EvFinEnds'=>4,
+                        'EvFinArrows'=>6,
+                        'EvFinSO'=>3,
+                        'EvRecCategory'=>'RW',
+                        'EvWaCategory'=>'RW',
+                        'EvTourRules'=>'SetFRD12023',
+                        'EvGolds' => '10+X',
+                        'EvXNine' => 'X',
+                        'EvGoldsChars' => 'KL',
+                        'EvXNineChars' => 'K',
+                        'EvArrowPenalty' => 0,
+                        'EvLoopPenalty' => 0,
 
-					// losers of 1/12 brackets 1st round (all byes in 1/8 so go directly to 1/4 but need to be stated as 1/8 to work)
-					CreateEvent($TourId, $i++, 1, 0,  8, 5, 4, 6, 3, 4, 6, 3, 'RF17', 'Equipes DR Classique Femme (17-20)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'DRRF', '0', '8', 17);
-					CreateEvent($TourId, $i++, 1, 0,  8, 5, 4, 6, 3, 4, 6, 3, 'RH17', 'Equipes DR Classique Homme (17-20)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'DRRH', '0', '8', 17);
-					CreateEvent($TourId, $i++, 1, 0,  8, 9, 4, 6, 3, 4, 6, 3, 'CF17', 'Equipes DR Poulies Femme (17-20)',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50, 'DRCF', '0', '8', 17);
-					CreateEvent($TourId, $i++, 1, 0,  8, 9, 4, 6, 3, 4, 6, 3, 'CH17', 'Equipes DR Poulies Homme (17-20)',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50, 'DRCH', '0', '8', 17);
+                    ];
+                    CreateEventNew($TourId, 'FCL', 'Equipe Arc Classique Femme', 1, $Options);
+                    $Options['EvRecCategory']='RM';
+                    $Options['EvWaCategory']='RM';
+                    CreateEventNew($TourId, 'HCL', 'Equipe Arc Classique Homme', 2, $Options);
+                    $Options['EvMatchMode']=0;
+                    $Options['EvDistance']=50;
+                    $Options['EvFinalTargetType']=9;
+                    $Options['EvRecCategory']='CM';
+                    $Options['EvWaCategory']='CM';
+                    CreateEventNew($TourId, 'HCO', 'Equipe Arc à Poulies Homme', 4, $Options);
+                    $Options['EvRecCategory']='CW';
+                    $Options['EvWaCategory']='CW';
+                    $Options['EvNumQualified']=8;
+                    $Options['EvElim1']=4;
+                    CreateEventNew($TourId, 'FCO', 'Equipe Arc à Poulies Femme', 3, $Options);
 
-					// losers of 1/12 brackets 2nd round
-					CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'RF21', 'Equipes DR Classique Femme (21-24)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'RF17', '0', '0', 21);
-					CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'RH21', 'Equipes DR Classique Homme (21-24)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'RH17', '0', '0', 21);
-					CreateEvent($TourId, $i++, 1, 0,  2, 9, 4, 6, 3, 4, 6, 3, 'CF21', 'Equipes DR Poulies Femme (21-24)',   0, 0, MATCH_ALL_SEP, 0, 0, '', '',   80, 50, 'CF17', '0', '0', 21);
-					CreateEvent($TourId, $i++, 1, 0,  2, 9, 4, 6, 3, 4, 6, 3, 'CH21', 'Equipes DR Poulies Homme (21-24)',   0, 0, MATCH_ALL_SEP, 0, 0, '', '',   80, 50, 'CH17', '0', '0', 21);
+                    // create all what is needed for round robin!
+                    require_once('Modules/RoundRobin/Lib.php');
+                    safe_w_sql("delete from RoundRobinGrids where RrGridTournament=$TourId");
+                    safe_w_sql("delete from RoundRobinGroup where RrGrTournament=$TourId");
+                    safe_w_sql("delete from RoundRobinLevel where RrLevTournament=$TourId");
+                    safe_w_sql("delete from RoundRobinMatches where RrMatchTournament=$TourId");
+                    safe_w_sql("delete from RoundRobinParticipants where RrPartTournament=$TourId");
+                    $SQL="insert into RoundRobinLevel set RrLevTournament=$TourId, RrLevTeam=1, RrLevEvent='%s',
+							RrLevLevel=%s, RrLevMatchMode=%s, RrLevBestRankMode=0, RrLevName='%s', RrLevGroups=1, RrLevGroupArchers=%s,
+							RrLevArrows=6, RrLevEnds=4, RrLevSO=3, RrLevTieAllowed=0, RrLevWinPoints=1, RrLevTiePoints=0, RrLevTieBreakSystem=%s, RrLevTieBreakSystem2=%s";
+                    foreach(['FCL'=>[16,2,1,5,2],'HCL'=>[16,2,1,5,2],'HCO'=>[16,2,0,3,0],'FCO'=>[8,4,0,3,0]] as $Event=>$Items) {
 
-					// losers of 1/8 brackets of main stream
-					CreateEvent($TourId, $i++, 1, 0,  4, 5, 4, 6, 3, 4, 6, 3, 'RF09', 'Equipes DR Classique Femme (9-12)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'DRRF', '0', '0', 9);
-					CreateEvent($TourId, $i++, 1, 0,  4, 5, 4, 6, 3, 4, 6, 3, 'RH09', 'Equipes DR Classique Homme (9-12)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'DRRH', '0', '0', 9);
-					CreateEvent($TourId, $i++, 1, 0,  4, 9, 4, 6, 3, 4, 6, 3, 'CF09', 'Equipes DR Poulies Femme (9-12)',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50, 'DRCF', '0', '0', 9);
-					CreateEvent($TourId, $i++, 1, 0,  4, 9, 4, 6, 3, 4, 6, 3, 'CH09', 'Equipes DR Poulies Homme (9-12)',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50, 'DRCH', '0', '0', 9);
-					CreateEvent($TourId, $i++, 1, 0,  4, 5, 4, 6, 3, 4, 6, 3, 'DF09', 'Equipes D2 Femme (9-12)',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'D2F', '0', '0', 9);
-					CreateEvent($TourId, $i++, 1, 0,  4, 5, 4, 6, 3, 4, 6, 3, 'DH09', 'Equipes D2 Homme (9-12)',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'D2H', '0', '0', 9);
+                        for($i=1;$i<=$Items[1];$i++) {
+                            // Levels
+                            safe_w_sql(sprintf($SQL, $Event, $i, $Items[2], $i%2 ? 'Aller'.($i>2?'-2':'') : 'Retour'.($i>2?'-2':''), $Items[0], $Items[3], $Items[4]));
+                            createRound(1, $Event, $i);
 
-					// losers of 1/4 brackets of main stream
-					CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'RF05', 'Equipes DR Classique Femme (5-8)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'DRRF', '0', '0', 5);
-					CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'RH05', 'Equipes DR Classique Homme (5-8)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'DRRH', '0', '0', 5);
-					CreateEvent($TourId, $i++, 1, 0,  2, 9, 4, 6, 3, 4, 6, 3, 'CF05', 'Equipes DR Poulies Femme (5-8)',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50, 'DRCF', '0', '0', 5);
-					CreateEvent($TourId, $i++, 1, 0,  2, 9, 4, 6, 3, 4, 6, 3, 'CH05', 'Equipes DR Poulies Homme (5-8)',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50, 'DRCH', '0', '0', 5);
-					CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'DF05', 'Equipes D2 Femme (5-8)',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'D2F', '0', '0', 5);
-					CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'DH05', 'Equipes D2 Homme (5-8)',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'D2H', '0', '0', 5);
+                            // Participants selection update
+                            safe_w_SQL("update RoundRobinParticipants set RrPartSourceLevel=".($i-1).", RrPartSourceGroup=".($i==1 ? 0 : 1).", RrPartSourceRank=RrPartDestItem
+								where RrPartTournament=$TourId and RrPartTeam=1 and  RrPartEvent='$Event' and RrPartLevel=$i and RrPartGroup=1");
+                        }
 
-					// losers of 1/4 brackets of 1/8 losers (go for 13-16 position)
-					CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'RF13', 'Equipes DR Classique Femme (13-16)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'RF09', '0', '0', 13);
-					CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'RH13', 'Equipes DR Classique Homme (13-16)', 1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'RH09', '0', '0', 13);
-					CreateEvent($TourId, $i++, 1, 0,  2, 9, 4, 6, 3, 4, 6, 3, 'CF13', 'Equipes DR Poulies Femme (13-16)',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50, 'CF09', '0', '0', 13);
-					CreateEvent($TourId, $i++, 1, 0,  2, 9, 4, 6, 3, 4, 6, 3, 'CH13', 'Equipes DR Poulies Homme (13-16)',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50, 'CH09', '0', '0', 13);
-					CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'DF13', 'Equipes D2 Femme (13-16)',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'DF09', '0', '0', 13);
-					CreateEvent($TourId, $i++, 1, 0,  2, 5, 4, 6, 3, 4, 6, 3, 'DH13', 'Equipes D2 Homme (13-16)',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70, 'DH09', '0', '0', 13);
-					break;
-				case 10: // Champs French
-					// Championships Scratch Recurve
-					CreateEvent($TourId, $i++, 0, 0, 16, 5, 5, 3, 1, 5, 3, 1, 'FCL', 'Classique Scratch Femme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 24, 5, 5, 3, 1, 5, 3, 1, 'HCL', 'Classique Scratch Homme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					// Championships Scratch Compound
-					CreateEvent($TourId, $i++, 0, 0,  16, 9, 5, 3, 1, 5, 3, 1, 'FCO', 'Poulies Scratch Femme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0,  24, 9, 5, 3, 1, 5, 3, 1, 'HCO', 'Poulies Scratch Homme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
+                        // Participants Brackets
+                        $sqlPart=array();
+                        for($n=1;$n<=4;$n++) {
+                            $sqlPart[]="($TourId, 1, '$Event', 0, 0, $n, ".($i-1).", 1, $n)";
+                        }
+                        safe_w_SQL("insert ignore into RoundRobinParticipants (RrPartTournament, RrPartTeam, RrPartEvent, RrPartLevel, RrPartGroup, RrPartDestItem, RrPartSourceLevel, RrPartSourceGroup, RrPartSourceRank)
+							values ".implode(', ', $sqlPart));
+                    }
 
-					// MIXED TEAMS
-					$i=1;
-					CreateEvent($TourId, $i++, 1, 1,  4, 5, 4, 4, 2, 4, 4, 2, 'DMCL', 'Double Mixte Classique',  1, 0, MATCH_ALL_SEP, 0, 0, '', '',  122, 70);
-					CreateEvent($TourId, $i++, 1, 1,  4, 9, 4, 4, 2, 4, 4, 2, 'DMCO', 'Double Mixte Poulie',  0, 0, MATCH_ALL_SEP, 0, 0, '', '',  80, 50);
-					break;
-				case 11:
-					// Coupe de France
-					CreateEvent($TourId, $i++, 0, 0, 16, 5, 5, 3, 1, 5, 3, 1, 'U21HCL', 'Classique U21 Homme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0,  8, 5, 5, 3, 1, 5, 3, 1, 'U21FCL', 'Classique U21 Femme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0,  8, 5, 5, 3, 1, 5, 3, 1, '1FCL', 'Classique Senior 1 Femme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 16, 5, 5, 3, 1, 5, 3, 1, '1HCL', 'Classique Senior 1 Homme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0,  8, 5, 5, 3, 1, 5, 3, 1, '2FCL', 'Classique Senior 2 Femme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0, 16, 5, 5, 3, 1, 5, 3, 1, '2HCL', 'Classique Senior 2 Homme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 70);
-					CreateEvent($TourId, $i++, 0, 0,  8, 5, 5, 3, 1, 5, 3, 1, '3FCL', 'Classique Senior 3 Femme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 60);
-					CreateEvent($TourId, $i++, 0, 0,  8, 5, 5, 3, 1, 5, 3, 1, '3HCL', 'Classique Senior 3 Homme',   1, 240, MATCH_SEP_MEDALS, 0, 0, '', '', 122, 60);
-					CreateEvent($TourId, $i++, 0, 0,  8, 9, 5, 3, 1, 5, 3, 1, 'U21FCO', 'Poulies U21 Femme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0, 16, 9, 5, 3, 1, 5, 3, 1, 'U21HCO', 'Poulies U21 Homme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0,  8, 9, 5, 3, 1, 5, 3, 1, '1FCO', 'Poulies Senior 1 Femme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0, 16, 9, 5, 3, 1, 5, 3, 1, '1HCO', 'Poulies Senior 1 Homme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0,  8, 9, 5, 3, 1, 5, 3, 1, '2FCO', 'Poulies Senior 2 Femme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0, 16, 9, 5, 3, 1, 5, 3, 1, '2HCO', 'Poulies Senior 2 Homme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0,  4, 9, 5, 3, 1, 5, 3, 1, '3FCO', 'Poulies Senior 3 Femme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					CreateEvent($TourId, $i++, 0, 0,  8, 9, 5, 3, 1, 5, 3, 1, '3HCO', 'Poulies Senior 3 Homme',     0, 240, MATCH_SEP_MEDALS, 0, 0, '', '',  80, 50);
-					break;
+                    // adjust Groups
+                    safe_w_sql("update RoundRobinGroup set RrGrTargetArchers=0 where RrGrTournament=$TourId");
+
+                    // creates all the grids and matches
+                    break;
+                case 13: // TAE Selectif
+                case 14: // TAE Para
+                    $isTAESel=($TourType==3 and in_array($SubRule, [13,14]));
+                    $isTAEPara=($TourType==3 and $SubRule==14);
+                    $Options=[
+                        'EvFinalFirstPhase' => 0,
+                        'EvFinalTargetType'=>0,
+                        'EvRecCategory'=>'',
+                        'EvWaCategory'=>'',
+                        'EvMedals'=>1,
+                        'EvIsPara' => 0,
+                    ];
+                    // CL and CO have all their classes as events
+
+                    $i=1;
+                    $EventsInt=[
+                        'U11FCL'=>['U11 Femme Arc Classique', 0, 5, 80, 20],
+                        'U11HCL'=>['U11 Homme Arc Classique', 0, 5, 80, 20],
+                        'U13FCL'=>['U13 Femme Arc Classique', 0, 5, 80, 30],
+                        'U13HCL'=>['U13 Homme Arc Classique', 0, 5, 80, 30],
+                        'U15FCL'=>['U15 Femme Arc Classique', 0, 5, 80, 40],
+                        'U15HCL'=>['U15 Homme Arc Classique', 0, 5, 80, 40],
+                        'U18FCL'=>['U18 Femme Arc Classique', 0, 5, 122, 60],
+                        'U18HCL'=>['U18 Homme Arc Classique', 0, 5, 122, 60],
+                        'U21FCL'=>['U21 Femme Arc Classique', 0, 5, 122, 70],
+                        'U21HCL'=>['U21 Homme Arc Classique', 0, 5, 122, 70],
+                        'S1FCL'=>['S1 Femme Arc Classique', 0, 5, 122, 70],
+                        'S1HCL'=>['S1 Homme Arc Classique', 0, 5, 122, 70],
+                        'S2FCL'=>['S2 Femme Arc Classique', 0, 5, 122, 70],
+                        'S2HCL'=>['S2 Homme Arc Classique', 0, 5, 122, 70],
+                        'S3FCL'=>['S3 Femme Arc Classique', 0, 5, 122, 60],
+                        'S3HCL'=>['S3 Homme Arc Classique', 0, 5, 122, 60],
+                        'U18FCO'=>['U18 Femme Arc à Poulies', 0, 9, 80, 50],
+                        'U18HCO'=>['U18 Homme Arc à Poulies', 0, 9, 80, 50],
+                        'U21FCO'=>['U21 Femme Arc à Poulies', 0, 9, 80, 50],
+                        'U21HCO'=>['U21 Homme Arc à Poulies', 0, 9, 80, 50],
+                        'S1FCO'=>['S1 Femme Arc à Poulies', 0, 9, 80, 50],
+                        'S1HCO'=>['S1 Homme Arc à Poulies', 0, 9, 80, 50],
+                        'S2FCO'=>['S2 Femme Arc à Poulies', 0, 9, 80, 50],
+                        'S2HCO'=>['S2 Homme Arc à Poulies', 0, 9, 80, 50],
+                        'S3FCO'=>['S3 Femme Arc à Poulies', 0, 9, 80, 50],
+                        'S3HCO'=>['S3 Homme Arc à Poulies', 0, 9, 80, 50],
+                    ];
+                    $EventsNat=[
+                        'NU13FCL'=>['U13 Femme Arc Classique National', 0, 5, 80, 20],
+                        'NU13HCL'=>['U13 Homme Arc Classique National', 0, 5, 80, 20],
+                        'NU15FCL'=>['U15 Femme Arc Classique National', 0, 5, 80, 30],
+                        'NU15HCL'=>['U15 Homme Arc Classique National', 0, 5, 80, 30],
+                        'NU18FCL'=>['U18 Femme Arc Classique National', 0, 5, 122, 50],
+                        'NU18HCL'=>['U18 Homme Arc Classique National', 0, 5, 122, 50],
+                        'NU21FCL'=>['U21 Femme Arc Classique National', 0, 5, 122, 50],
+                        'NU21HCL'=>['U21 Homme Arc Classique National', 0, 5, 122, 50],
+                        'NS1FCL'=>['S1 Femme Arc Classique National', 0, 5, 122, 50],
+                        'NS1HCL'=>['S1 Homme Arc Classique National', 0, 5, 122, 50],
+                        'NS2FCL'=>['S2 Femme Arc Classique National', 0, 5, 122, 50],
+                        'NS2HCL'=>['S2 Homme Arc Classique National', 0, 5, 122, 50],
+                        'NS3FCL'=>['S3 Femme Arc Classique National', 0, 5, 122, 50],
+                        'NS3HCL'=>['S3 Homme Arc Classique National', 0, 5, 122, 50],
+                        'NU15FCO'=>['U15 Femme Arc à Poulies National', 0, 5, 80, 30],
+                        'NU15HCO'=>['U15 Homme Arc à Poulies National', 0, 5, 80, 30],
+                        'NU18FCO'=>['U18 Femme Arc à Poulies National', 0, 5, 122, 50],
+                        'NU18HCO'=>['U18 Homme Arc à Poulies National', 0, 5, 122, 50],
+                        'NU21FCO'=>['U21 Femme Arc à Poulies National', 0, 5, 122, 50],
+                        'NU21HCO'=>['U21 Homme Arc à Poulies National', 0, 5, 122, 50],
+                        'NS1FCO'=>['S1 Femme Arc à Poulies National', 0, 5, 122, 50],
+                        'NS1HCO'=>['S1 Homme Arc à Poulies National', 0, 5, 122, 50],
+                        'NS2FCO'=>['S2 Femme Arc à Poulies National', 0, 5, 122, 50],
+                        'NS2HCO'=>['S2 Homme Arc à Poulies National', 0, 5, 122, 50],
+                        'NS3FCO'=>['S3 Femme Arc à Poulies National', 0, 5, 122, 50],
+                        'NS3HCO'=>['S3 Homme Arc à Poulies National', 0, 5, 122, 50],
+                        'NU18FBB'=>['U18 Femme Arc Nu National', 0, 5, 80, 30],
+                        'NU18HBB'=>['U18 Homme Arc Nu National', 0, 5, 80, 30],
+                        'NSFBB'=>['Scratch Femme Arc Nu National', 0, 5, 122, 50],
+                        'NSHBB'=>['Scratch Homme Arc Nu National', 0, 5, 122, 50],
+                        'NDEC'=>['Découverte', 0, 5, 122, 30],
+                        'NDEB'=>['Débutant', 0, 5, 122, 30],
+                    ];
+
+                    if($SubRule==14) {
+                        // Para
+                        $EventsInt['OPFCL']=['Open Femme Arc Classique', 1, 5, 122, 70];
+                        $EventsInt['OPHCL']=['Open Homme Arc Classique', 1, 5, 122, 70];
+                        $EventsInt['OPFCO']=['Open Femme Arc à Poulies', 1, 9, 80, 50];
+                        $EventsInt['OPHCO']=['Open Homme Arc à Poulies', 1, 9, 80, 50];
+                        $EventsInt['FEFCL']=['Fédéral Femme Arc Classique', 1, 5, 122, 70];
+                        $EventsInt['FEHCL']=['Fédéral Homme Arc Classique', 1, 5, 122, 70];
+                        $EventsInt['FEFCO']=['Fédéral Femme Arc à Poulies', 1, 9, 80, 50];
+                        $EventsInt['FEHCO']=['Fédéral Homme Arc à Poulies', 1, 9, 80, 50];
+                        $EventsInt['HV1']=['HV1', 1, 5, 80, 30];
+                        $EventsInt['HV2']=['HV2-3', 1, 5, 80, 30];
+                        $EventsInt['W1']=['W1', 1, 5, 80, 50];
+
+                        $EventsNat['NOPFCL']=['Open Femme Arc Classique National', 1, 5, 122, 50];
+                        $EventsNat['NOPHCL']=['Open Homme Arc Classique National', 1, 5, 122, 50];
+                        $EventsNat['NOPFCO']=['Open Femme Arc à Poulies National', 1, 9, 122, 50];
+                        $EventsNat['NOPHCO']=['Open Homme Arc à Poulies National', 1, 9, 122, 50];
+                        $EventsNat['NFEFCL']=['Fédéral Femme Arc Classique National', 1, 5, 122, 50];
+                        $EventsNat['NFEHCL']=['Fédéral Homme Arc Classique National', 1, 5, 122, 50];
+                        $EventsNat['NFEFCO']=['Fédéral Femme Arc à Poulies National', 1, 9, 122, 50];
+                        $EventsNat['NFEHCO']=['Fédéral Homme Arc à Poulies National', 1, 9, 122, 50];
+                        $EventsNat['NCHFCL']=['Challenge Femme Arc Classique National', 1, 5, 80, 20];
+                        $EventsNat['NCHHCL']=['Challenge Homme Arc Classique National', 1, 5, 80, 20];
+                        $EventsNat['NCHCO']=['Challenge Arc à Poulies National', 1, 5, 80, 20];
+                        $EventsNat['NCRFCL']=['Critérium Femme Arc Classique National', 1, 5, 80, 15];
+                        $EventsNat['NCRHCL']=['Critérium Homme Arc Classique National', 1, 5, 80, 15];
+                        $EventsNat['NCRCO']=['Critérium Arc à Poulies National', 1, 5, 80, 20];
+                        $EventsNat['NHLCL']=['HV Libre Arc Classique National', 1, 5, 80, 30];
+                        $EventsNat['NHLCO']=['HV Libre Arc à Poulies National', 1, 5, 80, 30];
+                        $EventsNat['NW1']=['W1 National', 1, 5, 122, 50];
+                        $EventsNat['NOPFEJ']=['Open et Fédéral Jeune National', 1, 5, 80, 30];
+                        $EventsNat['NSU1']=['Support 1 Arc Classique National', 1, 5, 80, 20];
+                        $EventsNat['NSU2']=['Support 2 Arc Classique National', 1, 5, 80, 20];
+                    }
+
+                    foreach($EventsInt as $EvCode=>$EvName) {
+                        $Options['EvIsPara']=$EvName[1];
+                        $Options['EvFinalTargetType']=$EvName[2];
+                        $Options['EvTargetSize']=$EvName[3];
+                        $Options['EvDistance']=$EvName[4];
+                        CreateEventNew($TourId, $EvCode, $EvName[0], $i++, $Options);
+                    }
+                    foreach($EventsNat as $EvCode=>$EvName) {
+                        $Options['EvIsPara']=$EvName[1];
+                        $Options['EvFinalTargetType']=$EvName[2];
+                        $Options['EvTargetSize']=$EvName[3];
+                        $Options['EvDistance']=$EvName[4];
+                        CreateEventNew($TourId, $EvCode, $EvName[0], $i++, $Options);
+                    }
+
+                    safe_w_SQL("update Events set EvMatchMode=1 where (EvEventName like '%Classique%' or EvEventName like '%Arc Nu%') and EvTournament={$_SESSION['TourId']}");
+                    break;
 			}
 			break;
+        case 6: // INDOOR 18m
+            $TargetR=2;
+            $TargetC=4;
+            $Distance=18;
+            $TargetSize4=40;
+            $TargetSize6=60;
+
+            // NEVER as Team
+            switch($SubRule) {
+                case '1': // Selectif
+                case '4': // Selectif + Para
+                    $Options=[
+                        'EvFinalFirstPhase' => 2,
+                        'EvNumQualified'=>4,
+                        'EvFinalTargetType'=>0,
+                        'EvTargetSize'=>40,
+                        'EvDistance'=>0,
+                        'EvFinalAthTarget'=>MATCH_SEP_MEDALS,
+                        'EvMatchMode'=>0,
+                        'EvMatchArrowsNo'=>0,
+                        'EvElimEnds'=>5,
+                        'EvElimArrows'=>3,
+                        'EvElimSO'=>1,
+                        'EvFinEnds'=>5,
+                        'EvFinArrows'=>3,
+                        'EvFinSO'=>1,
+                        'EvRecCategory'=>'',
+                        'EvWaCategory'=>'',
+                    ];
+                    $Events=[
+                        'U18FBB'=>['U18 Femme Arc Nu', 0, 2, $TargetSize6, $Distance, 1, 0],
+                        'U18HBB'=>['U18 Homme Arc Nu', 0, 2, $TargetSize6, $Distance, 1, 0],
+                        'U15FCL'=>['U13-U15 Femme Arc Classique', 0, 2, $TargetSize6, $Distance, 1, 0],
+                        'U15HCL'=>['U13-U15 Homme Arc Classique', 0, 2, $TargetSize6, $Distance, 1, 0],
+                        'U15FCO'=>['U13-U15 Femme Arc à Poulies', 0, 4, $TargetSize4, $Distance, 0, 0],
+                        'U15HCO'=>['U13-U15 Homme Arc à Poulies', 0, 4, $TargetSize4, $Distance, 0, 0],
+                        'SFBB'=>['Senior Femme Arc Nu', 0, 2, $TargetSize4, $Distance, 1, 0],
+                        'SHBB'=>['Senior Homme Arc Nu', 0, 2, $TargetSize4, $Distance, 1, 0],
+                        'SFCL'=>['Senior Femme Arc Classique', 0, 2, $TargetSize4, $Distance, 1, 0],
+                        'SHCL'=>['Senior Homme Arc Classique', 0, 2, $TargetSize4, $Distance, 1, 0],
+                        'SFCO'=>['Senior Femme Arc à Poulies', 0, 4, $TargetSize4, $Distance, 0, 0],
+                        'SHCO'=>['Senior Homme Arc à Poulies', 0, 4, $TargetSize4, $Distance, 0, 0],
+                    ];
+                    if($SubRule==4) {
+                        // Para Events
+                        $Events['U18FBB'] = ['U18 Femme Arc Nu', 0, 2, $TargetSize6, $Distance, 1, 1];
+                        $Events['U18HBB'] = ['U18 Homme Arc Nu', 0, 2, $TargetSize6, $Distance, 1, 1];
+                        $Events['U15FCL'] = ['U13-U15 Femme Arc Classique', 0, 2, $TargetSize6, $Distance, 1, 1];
+                        $Events['U15HCL'] = ['U13-U15 Homme Arc Classique', 0, 2, $TargetSize6, $Distance, 1, 1];
+                        $Events['U15FCO'] = ['U13-U15 Femme Arc à Poulies', 0, 4, $TargetSize4, $Distance, 0, 1];
+                        $Events['U15HCO'] = ['U13-U15 Homme Arc à Poulies', 0, 4, $TargetSize4, $Distance, 0, 1];
+                        $Events['SFBB'] = ['Senior Femme Arc Nu', 0, 2, $TargetSize4, $Distance, 1, 1];
+                        $Events['SHBB'] = ['Senior Homme Arc Nu', 0, 2, $TargetSize4, $Distance, 1, 1];
+                        $Events['SFCL'] = ['Senior Femme Arc Classique', 0, 2, $TargetSize4, $Distance, 1, 1];
+                        $Events['SHCL'] = ['Senior Homme Arc Classique', 0, 2, $TargetSize4, $Distance, 1, 1];
+                        $Events['SFCO'] = ['Senior Femme Arc à Poulies', 0, 4, $TargetSize4, $Distance, 0, 1];
+                        $Events['SHCO'] = ['Senior Homme Arc à Poulies', 0, 4, $TargetSize4, $Distance, 0, 1];
+                    }
+
+                    foreach($Events as $EvCode=>$EvName) {
+                        $Options['EvFinalFirstPhase']=$EvName[1];
+                        $Options['EvNumQualified']=$EvName[1]*2;
+                        $Options['EvFinalTargetType']=$EvName[2];
+                        $Options['EvTargetSize']=$EvName[3];
+                        $Options['EvDistance']=$EvName[4];
+                        $Options['EvMatchMode']=$EvName[5];
+                        $Options['EvIsPara']=$EvName[6];
+                        CreateEventNew($TourId, $EvCode, $EvName[0], $i++, $Options);
+                    }
+                    break;
+                case '2': // Championships Adults and Elite
+                    $Options=[
+                        'EvFinalFirstPhase' => 2,
+                        'EvNumQualified'=>4,
+                        'EvFinalTargetType'=>0,
+                        'EvTargetSize'=>40,
+                        'EvDistance'=>0,
+                        'EvFinalAthTarget'=>MATCH_SEP_FROM_2,
+                        'EvMatchMode'=>0,
+                        'EvMatchArrowsNo'=>0,
+                        'EvElimEnds'=>5,
+                        'EvElimArrows'=>3,
+                        'EvElimSO'=>1,
+                        'EvFinEnds'=>5,
+                        'EvFinArrows'=>3,
+                        'EvFinSO'=>1,
+                        'EvRecCategory'=>'',
+                        'EvWaCategory'=>'',
+                    ];
+                    $Events=[
+                        'EFBB'=>['Elite Femme Arc Nu', 2, 2, 40, 18, 1],
+                        'EHBB'=>['Elite Homme Arc Nu', 4, 2, 40, 18, 1],
+                        'EFCL'=>['Elite Femme Arc Classique', 8, 2, 40, 18, 1],
+                        'EHCL'=>['Elite Homme Arc Classique', 8, 2, 40, 18, 1],
+                        'EFCO'=>['Elite Femme Arc à Poulies', 4, 4, 40, 18, 0],
+                        'EHCO'=>['Elite Homme Arc à Poulies', 8, 4, 40, 18, 0],
+                        'SFBB'=>['Femme Arc Nu', 4, 2, 40, 18, 1],
+                        'SHBB'=>['Homme Arc Nu', 8, 2, 40, 18, 1],
+                        'S1FCL'=>['Senior 1 Femme Arc Classique', 8, 2, 40, 18, 1],
+                        'S1HCL'=>['Senior 1 Homme Arc Classique', 16, 2, 40, 18, 1],
+                        'S1FCO'=>['Senior 1 Femme Arc à Poulies', 4, 4, 40, 18, 0],
+                        'S1HCO'=>['Senior 1 Homme Arc à Poulies', 8, 4, 40, 18, 0],
+                        'S2FCL'=>['Senior 2 Femme Arc Classique', 8, 2, 40, 18, 1],
+                        'S2HCL'=>['Senior 2 Homme Arc Classique', 16, 2, 40, 18, 1],
+                        'S2FCO'=>['Senior 2 Femme Arc à Poulies', 4, 4, 40, 18, 0],
+                        'S2HCO'=>['Senior 2 Homme Arc à Poulies', 8, 4, 40, 18, 0],
+                        'S3FCL'=>['Senior 3 Femme Arc Classique', 4, 2, 40, 18, 1],
+                        'S3HCL'=>['Senior 3 Homme Arc Classique', 16, 2, 40, 18, 1],
+                        'S3FCO'=>['Senior 3 Femme Arc à Poulies', 4, 4, 40, 18, 0],
+                        'S3HCO'=>['Senior 3 Homme Arc à Poulies', 8, 4, 40, 18, 0],
+                    ];
+
+                    foreach($Events as $EvCode=>$EvName) {
+                        $Options['EvFinalFirstPhase']=$EvName[1];
+                        $Options['EvNumQualified']=$EvName[1]*2;
+                        $Options['EvFinalTargetType']=$EvName[2];
+                        $Options['EvTargetSize']=$EvName[3];
+                        $Options['EvDistance']=$EvName[4];
+                        $Options['EvMatchMode']=$EvName[5];
+                        $Options['EvFinalAthTarget']=($EvCode[0]=='E' ? MATCH_SEP_FROM_2 : MATCH_SEP_MEDALS);
+                        CreateEventNew($TourId, $EvCode, $EvName[0], $i++, $Options);
+                    }
+                    break;
+                case '3': // Championships YOUTH
+                    CreateEvent($TourId, $i++, 0, 0,  2, $TargetR, 5, 3, 1, 5, 3, 1, 'U18FBB', 'U18 Femme Arc Nu',       1, FINAL_NO_ELIM, MATCH_SEP_FROM_2, 0, 0, '', '', $TargetSize6, $Distance);
+                    CreateEvent($TourId, $i++, 0, 0,  4, $TargetR, 5, 3, 1, 5, 3, 1, 'U18HBB', 'U18 Homme Arc Nu',       1, FINAL_NO_ELIM, MATCH_SEP_FROM_2, 0, 0, '', '', $TargetSize6, $Distance);
+                    CreateEvent($TourId, $i++, 0, 0,  8, $TargetR, 5, 3, 1, 5, 3, 1, 'U13FCL', 'U13 Femme Arc Classique', 1, FINAL_NO_ELIM, MATCH_SEP_FROM_2, 0, 0, '', '', $TargetSize6, $Distance);
+                    CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'U13HCL', 'U13 Homme Arc Classique', 1, FINAL_NO_ELIM, MATCH_SEP_FROM_2, 0, 0, '', '', $TargetSize6, $Distance);
+                    CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'U15FCL', 'U15 Femme Arc Classique',   1, FINAL_NO_ELIM, MATCH_SEP_FROM_2, 0, 0, '', '', $TargetSize6, $Distance);
+                    CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'U15HCL', 'U15 Homme Arc Classique',   1, FINAL_NO_ELIM, MATCH_SEP_FROM_2, 0, 0, '', '', $TargetSize6, $Distance);
+                    CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'U18FCL', 'U18 Femme Arc Classique',    1, FINAL_NO_ELIM, MATCH_SEP_FROM_2, 0, 0, 'RU18W', 'RU18W', $TargetSize4, $Distance);
+                    CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'U18HCL', 'U18 Homme Arc Classique',    1, FINAL_NO_ELIM, MATCH_SEP_FROM_2, 0, 0, 'RU18M', 'RU18M', $TargetSize4, $Distance);
+                    CreateEvent($TourId, $i++, 0, 0,  8, $TargetR, 5, 3, 1, 5, 3, 1, 'U21FCL', 'U21 Femme Arc Classique',   1, FINAL_NO_ELIM, MATCH_SEP_FROM_2, 0, 0, 'RU21W', 'RU21W', $TargetSize4, $Distance);
+                    CreateEvent($TourId, $i++, 0, 0, 16, $TargetR, 5, 3, 1, 5, 3, 1, 'U21HCL', 'U21 Homme Arc Classique',   1, FINAL_NO_ELIM, MATCH_SEP_FROM_2, 0, 0, 'RU21M', 'RU21M', $TargetSize4, $Distance);
+                    CreateEvent($TourId, $i++, 0, 0,  4, $TargetC, 5, 3, 1, 5, 3, 1, 'U21FCO', 'U18-U21 Femme Arc à Poulies',     0, FINAL_NO_ELIM, MATCH_SEP_FROM_2, 0, 0, 'CU21W', 'CU21W', $TargetSize4, $Distance);
+                    CreateEvent($TourId, $i++, 0, 0,  8, $TargetC, 5, 3, 1, 5, 3, 1, 'U21HCO', 'U18-U21 Homme Arc à Poulies',     0, FINAL_NO_ELIM, MATCH_SEP_FROM_2, 0, 0, 'CU21M', 'CU21M', $TargetSize4, $Distance);
+                    break;
+            }
+            break;
+        case 7: // INDOOR 25m
+        case 8: // INDOOR 25m + 18 (eventually matches at 18m)
+            $Distance=25;
+            $TargetSize4=60;
+            $TargetSize6=80;
+            if($TourType==8) {
+                $Distance=18;
+                $TargetSize4=40;
+                $TargetSize6=60;
+            }
+            // NEVER as Team
+            switch($SubRule) {
+                case '1': // Selectif
+                case '4': // Selectif + Para
+                    $Options=[
+                        'EvFinalFirstPhase' => 2,
+                        'EvNumQualified'=>4,
+                        'EvFinalTargetType'=>0,
+                        'EvTargetSize'=>40,
+                        'EvDistance'=>0,
+                        'EvFinalAthTarget'=>MATCH_SEP_MEDALS,
+                        'EvMatchMode'=>0,
+                        'EvMatchArrowsNo'=>0,
+                        'EvElimEnds'=>5,
+                        'EvElimArrows'=>3,
+                        'EvElimSO'=>1,
+                        'EvFinEnds'=>5,
+                        'EvFinArrows'=>3,
+                        'EvFinSO'=>1,
+                        'EvRecCategory'=>'',
+                        'EvWaCategory'=>'',
+                    ];
+                    $Events=[
+                        'U18FBB'=>['U18 Femme Arc Nu', 0, 2, $TargetSize6, $Distance, 1],
+                        'U18HBB'=>['U18 Homme Arc Nu', 0, 2, $TargetSize6, $Distance, 1],
+                        'U15FCL'=>['U13-U15 Femme Arc Classique', 0, 2, $TargetSize6, $Distance, 1],
+                        'U15HCL'=>['U13-U15 Homme Arc Classique', 0, 2, $TargetSize6, $Distance, 1],
+                        'U15FCO'=>['U13-U15 Femme Arc à Poulies', 0, 4, $TargetSize4, $Distance, 0],
+                        'U15HCO'=>['U13-U15 Homme Arc à Poulies', 0, 4, $TargetSize4, $Distance, 0],
+                        'SFBB'=>['Senior Femme Arc Nu', 0, 2, $TargetSize4, $Distance, 1],
+                        'SHBB'=>['Senior Homme Arc Nu', 0, 2, $TargetSize4, $Distance, 1],
+                        'SFCL'=>['Senior Femme Arc Classique', 0, 2, $TargetSize4, $Distance, 1],
+                        'SHCL'=>['Senior Homme Arc Classique', 0, 2, $TargetSize4, $Distance, 1],
+                        'SFCO'=>['Senior Femme Arc à Poulies', 0, 4, $TargetSize4, $Distance, 0],
+                        'SHCO'=>['Senior Homme Arc à Poulies', 0, 4, $TargetSize4, $Distance, 0],
+                    ];
+
+                    foreach($Events as $EvCode=>$EvName) {
+                        $Options['EvFinalFirstPhase']=$EvName[1];
+                        $Options['EvNumQualified']=$EvName[1]*2;
+                        $Options['EvFinalTargetType']=$EvName[2];
+                        $Options['EvTargetSize']=$EvName[3];
+                        $Options['EvDistance']=$EvName[4];
+                        $Options['EvMatchMode']=$EvName[5];
+                        CreateEventNew($TourId, $EvCode, $EvName[0], $i++, $Options);
+                    }
+                    break;
+            }
+            break;
+        case 50: // INDOOR 25m + 18 (eventually matches at 18m)
+            // NEVER as Team
+            $Options=[
+                'EvFinalFirstPhase' => 0,
+                'EvNumQualified'=>0,
+                'EvFinalTargetType'=>$SubRule==1 ? 28 : 27,
+                'EvTargetSize'=>45,
+                'EvDistance'=>50,
+            ];
+            $Events=[
+                'U13FCL'=>['U13 Femme Arc Classique', 30],
+                'U13HCL'=>['U13 Homme Arc Classique', 30],
+                'U15FCL'=>['U15 Femme Arc Classique', 30],
+                'U15HCL'=>['U15 Homme Arc Classique', 30],
+                'U15FBB'=>['U13-U15 Femme Arc Nu', 30],
+                'U15HBB'=>['U13-U15 Homme Arc Nu', 30],
+                'U15FAD'=>['U13-U15 Femme Arc Droit', 30],
+                'U15HAD'=>['U13-U15 Homme Arc Droit', 30],
+                'U15FCO'=>['U13-U15 Femme Arc à Poulies', 30],
+                'U15HCO'=>['U13-U15 Homme Arc à Poulies', 30],
+                'U18FCL'=>['U18 Femme Arc Classique', 50],
+                'U18HCL'=>['U18 Homme Arc Classique', 50],
+                'U18FCO'=>['U18 Femme Arc à Poulies', 50],
+                'U18HCO'=>['U18 Homme Arc à Poulies', 50],
+                'U21FCL'=>['U18 Femme Arc Classique', 50],
+                'U21HCL'=>['U18 Homme Arc Classique', 50],
+                'U21FCO'=>['U18 Femme Arc à Poulies', 50],
+                'U21HCO'=>['U18 Homme Arc à Poulies', 50],
+                'US1FCL'=>['U18 Femme Arc Classique', 50],
+                'US1HCL'=>['U18 Homme Arc Classique', 50],
+                'US1FCO'=>['U18 Femme Arc à Poulies', 50],
+                'US1HCO'=>['U18 Homme Arc à Poulies', 50],
+                'US2FCL'=>['U18 Femme Arc Classique', 50],
+                'US2HCL'=>['U18 Homme Arc Classique', 50],
+                'US2FCO'=>['U18 Femme Arc à Poulies', 50],
+                'US2HCO'=>['U18 Homme Arc à Poulies', 50],
+                'US3FCL'=>['U18 Femme Arc Classique', 50],
+                'US3HCL'=>['U18 Homme Arc Classique', 50],
+                'US3FCO'=>['U18 Femme Arc à Poulies', 50],
+                'US3HCO'=>['U18 Homme Arc à Poulies', 50],
+                'SFBB'=>['Senior Femme Arc Nu', 50],
+                'SHBB'=>['Senior Homme Arc Nu', 50],
+                'SFAD'=>['Senior Femme Arc Droit', 50],
+                'SHAD'=>['Senior Homme Arc Droit', 50],
+            ];
+
+            foreach($Events as $EvCode=>$EvName) {
+                $Options['EvDistance']=$EvName[1];
+                CreateEventNew($TourId, $EvCode, $EvName[0], $i++, $Options);
+            }
+            break;
 	}
 }
 
 function InsertStandardEvents($TourId, $TourType, $SubRule) {
 	switch($TourType) {
+        case 3:
+            switch($SubRule) {
+                case 15: // TNJ
+                    $Events['U15M']=['CL'=>['U13F','U13H', 'U15F','U15H']];
+                    $Events['U21F']=['CL'=>['U21F', 'U18F']];
+                    $Events['U21H']=['CL'=>['U21H', 'U18H']];
+
+                    foreach($Events as $EvCode => $Divs) {
+                        foreach($Divs as $Div=>$Classes) {
+                            foreach($Classes as $Class) {
+                                InsertClassEvent($TourId, 1, 3, $EvCode, $Div,$Class);
+                            }
+                        }
+                    }
+                    break;
+                case 2: // TNJ
+                    $EventsInd['U13FCL']=['CL'=>['U13F']];
+                    $EventsInd['U13HCL']=['CL'=>['U13H']];
+                    $EventsInd['U15FCL']=['CL'=>['U15F']];
+                    $EventsInd['U15HCL']=['CL'=>['U15H']];
+                    $EventsInd['U18FCL']=['CL'=>['U18F']];
+                    $EventsInd['U18HCL']=['CL'=>['U18H']];
+                    $EventsInd['U21FCL']=['CL'=>['U21F']];
+                    $EventsInd['U21HCL']=['CL'=>['U21H']];
+                    $EventsInd['U21FCO']=['CO'=>['U15F','U18F','U21F']];
+                    $EventsInd['U21HCO']=['CO'=>['U15H','U18H','U21H']];
+
+                    $EventsMxTeam['DMCLU21']=['CL'=>[['U21F'],['U21H']]];
+                    $EventsMxTeam['DMCLU18']=['CL'=>[['U18F'],['U18H']]];
+                    $EventsMxTeam['DMCOU21']=['CO'=>[['U15F','U18F','U21F'],['U15H','U18H','U21H']]];
+
+                    foreach($EventsInd as $EvCode => $Divs) {
+                        foreach($Divs as $Div=>$Classes) {
+                            foreach($Classes as $Class) {
+                                InsertClassEvent($TourId, 0, 1, $EvCode, $Div,$Class);
+                            }
+                        }
+                    }
+
+                    foreach($EventsMxTeam as $EvCode => $Divs) {
+                        foreach($Divs as $Div=>$Classes) {
+                            foreach($Classes as $Num => $Class) {
+                                foreach($Class as $Cl) {
+                                    InsertClassEvent($TourId, $Num+1, 1, $EvCode, $Div,$Cl);
+                                }
+                            }
+                        }
+                    }
+
+                    break;
+                case 3: // Championship Youth
+                    InsertClassEvent($TourId, 0, 1, 'U13HCL', 'CL','U13H');
+                    InsertClassEvent($TourId, 0, 1, 'U13FCL', 'CL','U13F');
+                    InsertClassEvent($TourId, 0, 1, 'U15HCL', 'CL','U15H');
+                    InsertClassEvent($TourId, 0, 1, 'U15FCL', 'CL','U15F');
+                    InsertClassEvent($TourId, 0, 1, 'U18HCL', 'CL','U18H');
+                    InsertClassEvent($TourId, 0, 1, 'U18FCL', 'CL','U18F');
+                    InsertClassEvent($TourId, 0, 1, 'U21HCL', 'CL','U21H');
+                    InsertClassEvent($TourId, 0, 1, 'U21FCL', 'CL','U21F');
+                    InsertClassEvent($TourId, 0, 1, 'U21HCO', 'CO','U18H');
+                    InsertClassEvent($TourId, 0, 1, 'U21FCO', 'CO','U18F');
+                    InsertClassEvent($TourId, 0, 1, 'U21HCO', 'CO','U21H');
+                    InsertClassEvent($TourId, 0, 1, 'U21FCO', 'CO','U21F');
+                    // Mixed Team
+                    InsertClassEvent($TourId, 1, 1, 'DMJ', 'CL','U18F');
+                    InsertClassEvent($TourId, 1, 1, 'DMJ', 'CL','U21F');
+                    InsertClassEvent($TourId, 2, 1, 'DMJ', 'CL','U18H');
+                    InsertClassEvent($TourId, 2, 1, 'DMJ', 'CL','U21H');
+                    // Teams
+//					InsertClassEvent($TourId, 1, 3, 'CJH', 'CL','U21H');
+//					InsertClassEvent($TourId, 1, 3, 'CJH', 'CL','U18H');
+//					InsertClassEvent($TourId, 1, 3, 'CJF', 'CL','U21F');
+//					InsertClassEvent($TourId, 1, 3, 'CJF', 'CL','U18F');
+//					InsertClassEvent($TourId, 1, 3, 'BM', 'CL','U13F');
+//					InsertClassEvent($TourId, 1, 3, 'BM', 'CL','U13H');
+//					InsertClassEvent($TourId, 1, 3, 'BM', 'CL','U15F');
+//					InsertClassEvent($TourId, 1, 3, 'BM', 'CL','U15H');
+                    break;
+                case 9: // Finales des DR
+                    $Events=[
+                        'DRCF'=>['CO'=>['U18F','U21F','S1F','S2F','S3F']],
+                        'DRCH'=>['CO'=>['U18H','U21H','S1H','S2H','S3H']],
+                        'DRRF'=>['CL'=>['U18F','U21F','S1F','S2F','S3F']],
+                        'DRRH'=>['CL'=>['U18H','U21H','S1H','S2H','S3H']],
+                    ];
+                    foreach($Events as $EvCode => $Divs) {
+                        foreach($Divs as $Div=>$Classes) {
+                            foreach($Classes as $Class) {
+                                InsertClassEvent($TourId, 1, 3, $EvCode, $Div,$Class);
+                            }
+                        }
+                    }
+                    break;
+                case 16: // Finales DR 2
+                    $Events['D2F']=['CL'=>['U18F','U21F','S1F','S2F','S3F']];
+                    $Events['D2H']=['CL'=>['U18H','U21H','S1H','S2H','S3H']];
+
+                    foreach($Events as $EvCode => $Divs) {
+                        foreach($Divs as $Div=>$Classes) {
+                            foreach($Classes as $Class) {
+                                InsertClassEvent($TourId, 1, 3, $EvCode, $Div,$Class);
+                            }
+                        }
+                    }
+                    break;
+                case 10: // Championnat de France Elite
+                    $EventsInd['EFCL']=['CL'=>['U18F','U21F','S1F','S2F','S3F']];
+                    $EventsInd['EHCL']=['CL'=>['U18H','U21H','S1H','S2H','S3H']];
+                    $EventsInd['EFCO']=['CO'=>['U18F','U21F','S1F','S2F','S3F']];
+                    $EventsInd['EHCO']=['CO'=>['U18H','U21H','S1H','S2H','S3H']];
+
+                    $EventsMxTeam['DMCL']=['CL'=>[['U18F','U21F','S1F','S2F','S3F'],['U18H','U21H','S1H','S2H','S3H']]];
+                    $EventsMxTeam['DMCO']=['CO'=>[['U18F','U21F','S1F','S2F','S3F'],['U18H','U21H','S1H','S2H','S3H']]];
+
+                    foreach($EventsInd as $EvCode => $Divs) {
+                        foreach($Divs as $Div=>$Classes) {
+                            foreach($Classes as $Class) {
+                                InsertClassEvent($TourId, 0, 1, $EvCode, $Div,$Class);
+                            }
+                        }
+                    }
+
+                    foreach($EventsMxTeam as $EvCode => $Divs) {
+                        foreach($Divs as $Div=>$Classes) {
+                            foreach($Classes as $Num => $Class) {
+                                foreach($Class as $Cl) {
+                                    InsertClassEvent($TourId, $Num+1, 1, $EvCode, $Div,$Cl);
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case 11: // Championnat de France Adulte
+                    $Events=[
+                        'S1FCL'=>['CL'=>['S1F']],
+                        'S1HCL'=>['CL'=>['S1H']],
+                        'S2FCL'=>['CL'=>['S2F']],
+                        'S2HCL'=>['CL'=>['S2H']],
+                        'S3FCL'=>['CL'=>['S3F']],
+                        'S3HCL'=>['CL'=>['S3H']],
+                        'S1FCO'=>['CO'=>['S1F']],
+                        'S1HCO'=>['CO'=>['S1H']],
+                        'S2FCO'=>['CO'=>['S2F']],
+                        'S2HCO'=>['CO'=>['S2H']],
+                        'S3FCO'=>['CO'=>['S3F']],
+                        'S3HCO'=>['CO'=>['S3H']],
+                        'NS1FCL'=>['CL'=>['S1W']],
+                        'NS1HCL'=>['CL'=>['S1M']],
+                        'NS2FCL'=>['CL'=>['S2W']],
+                        'NS2HCL'=>['CL'=>['S2M']],
+                        'NS3FCL'=>['CL'=>['S3W']],
+                        'NS3HCL'=>['CL'=>['S3M']],
+                        'NS1FCO'=>['CO'=>['S1W']],
+                        'NS1HCO'=>['CO'=>['S1M']],
+                        'NS2FCO'=>['CO'=>['S2W']],
+                        'NS2HCO'=>['CO'=>['S2M']],
+                        'NS3FCO'=>['CO'=>['S3W']],
+                        'NS3HCO'=>['CO'=>['S3M']],
+                        'NFBB'=>['BB'=> ['S1W','S2W','S3W']],
+                        'NHBB'=>['BB'=> ['S1M','S2M','S3M']],
+                    ];
+
+                    foreach($Events as $EvCode => $Divs) {
+                        foreach($Divs as $Div=>$Classes) {
+                            foreach($Classes as $Class) {
+                                InsertClassEvent($TourId, 0, 1, $EvCode, $Div,$Class);
+                            }
+                        }
+                    }
+                    break;
+                case 12: // D1/DNAP... team events selection are as usual, indivudal no
+                    InsertClassEvent($TourId, 1, 3, 'FCL', 'CL','U18F');
+                    InsertClassEvent($TourId, 1, 3, 'FCL', 'CL','U21F');
+                    InsertClassEvent($TourId, 1, 3, 'FCL', 'CL','S1F');
+                    InsertClassEvent($TourId, 1, 3, 'FCL', 'CL','S2F');
+                    InsertClassEvent($TourId, 1, 3, 'FCL', 'CL','S3F');
+                    InsertClassEvent($TourId, 1, 3, 'HCL', 'CL','U18H');
+                    InsertClassEvent($TourId, 1, 3, 'HCL', 'CL','U21H');
+                    InsertClassEvent($TourId, 1, 3, 'HCL', 'CL','S1H');
+                    InsertClassEvent($TourId, 1, 3, 'HCL', 'CL','S2H');
+                    InsertClassEvent($TourId, 1, 3, 'HCL', 'CL','S3H');
+                    InsertClassEvent($TourId, 1, 3, 'FCO', 'CO','U18F');
+                    InsertClassEvent($TourId, 1, 3, 'FCO', 'CO','U21F');
+                    InsertClassEvent($TourId, 1, 3, 'FCO', 'CO','S1F');
+                    InsertClassEvent($TourId, 1, 3, 'FCO', 'CO','S2F');
+                    InsertClassEvent($TourId, 1, 3, 'FCO', 'CO','S3F');
+                    InsertClassEvent($TourId, 1, 3, 'HCO', 'CO','U18H');
+                    InsertClassEvent($TourId, 1, 3, 'HCO', 'CO','U21H');
+                    InsertClassEvent($TourId, 1, 3, 'HCO', 'CO','S1H');
+                    InsertClassEvent($TourId, 1, 3, 'HCO', 'CO','S2H');
+                    InsertClassEvent($TourId, 1, 3, 'HCO', 'CO','S3H');
+                    break;
+                case 13: // TAE-Selectif
+                case 14: // TAE-Para
+                    // International
+                    $Events=[
+                        'U11FCL'=>['CL'=>['U11F']],
+                        'U11HCL'=>['CL'=>['U11H']],
+                        'U13FCL'=>['CL'=>['U13F']],
+                        'U13HCL'=>['CL'=>['U13H']],
+                        'U15FCL'=>['CL'=>['U15F']],
+                        'U15HCL'=>['CL'=>['U15H']],
+                        'U18FCL'=>['CL'=>['U18F']],
+                        'U18HCL'=>['CL'=>['U18H']],
+                        'U21FCL'=>['CL'=>['U21F']],
+                        'U21HCL'=>['CL'=>['U21H']],
+                        'S1FCL'=>['CL'=>['S1F']],
+                        'S1HCL'=>['CL'=>['S1H']],
+                        'S2FCL'=>['CL'=>['S2F']],
+                        'S2HCL'=>['CL'=>['S2H']],
+                        'S3FCL'=>['CL'=>['S3F']],
+                        'S3HCL'=>['CL'=>['S3H']],
+                        'U18FCO'=>['CO'=>['U18F']],
+                        'U18HCO'=>['CO'=>['U18H']],
+                        'U21FCO'=>['CO'=>['U21F']],
+                        'U21HCO'=>['CO'=>['U21H']],
+                        'S1FCO'=>['CO'=>['S1F']],
+                        'S1HCO'=>['CO'=>['S1H']],
+                        'S2FCO'=>['CO'=>['S2F']],
+                        'S2HCO'=>['CO'=>['S2H']],
+                        'S3FCO'=>['CO'=>['S3F']],
+                        'S3HCO'=>['CO'=>['S3H']],
+                        'NU13FCL'=>['CL'=>['U13W']],
+                        'NU13HCL'=>['CL'=>['U13M']],
+                        'NU15FCL'=>['CL'=>['U15W']],
+                        'NU15HCL'=>['CL'=>['U15M']],
+                        'NU18FCL'=>['CL'=>['U18W']],
+                        'NU18HCL'=>['CL'=>['U18M']],
+                        'NU21FCL'=>['CL'=>['U21W']],
+                        'NU21HCL'=>['CL'=>['U21M']],
+                        'NS1FCL'=>['CL'=>['S1W']],
+                        'NS1HCL'=>['CL'=>['S1M']],
+                        'NS2FCL'=>['CL'=>['S2W']],
+                        'NS2HCL'=>['CL'=>['S2M']],
+                        'NS3FCL'=>['CL'=>['S3W']],
+                        'NS3HCL'=>['CL'=>['S3M']],
+                        'NU15FCO'=>['CO'=>['U13W','U15W']],
+                        'NU15HCO'=>['CO'=>['U13M','U15M']],
+                        'NU18FCO'=>['CO'=>['U18W']],
+                        'NU18HCO'=>['CO'=>['U18M']],
+                        'NU21FCO'=>['CO'=>['U21W']],
+                        'NU21HCO'=>['CO'=>['U21M']],
+                        'NS1FCO'=>['CO'=>['S1W']],
+                        'NS1HCO'=>['CO'=>['S1M']],
+                        'NS2FCO'=>['CO'=>['S2W']],
+                        'NS2HCO'=>['CO'=>['S2M']],
+                        'NS3FCO'=>['CO'=>['S3W']],
+                        'NS3HCO'=>['CO'=>['S3M']],
+                        'NU18FBB'=>['BB'=>['U15W','U18W']],
+                        'NU18HBB'=>['BB'=>['U15M','U18M']],
+                        'NSFBB'=>['BB'=>['U21W','S1W','S2W','S3W']],
+                        'NSHBB'=>['BB'=>['U21M','S1M','S2M','S3M']],
+                        'NDEC'=>['CL'=>['DEC']],
+                        'NDEB'=>['CL'=>['DEB']],
+                    ];
+
+                    if($SubRule==14) {
+                        // Para
+                        $Events['OPFCL']=['OPCL'=>['U21F','S1F','S2F','S3F']];
+                        $Events['OPHCL']=['OPCL'=>['U21H','S1H','S2H','S3H']];
+                        $Events['OPFCO']=['OPCO'=>['U21F','S1F','S2F','S3F']];
+                        $Events['OPHCO']=['OPCO'=>['U21H','S1H','S2H','S3H']];
+                        $Events['FEFCL']=['FECL'=>['U21F','S1F','S2F','S3F']];
+                        $Events['FEHCL']=['FECL'=>['U21H','S1H','S2H','S3H']];
+                        $Events['FEFCO']=['FECO'=>['U21F','S1F','S2F','S3F']];
+                        $Events['FEHCO']=['FECO'=>['U21H','S1H','S2H','S3H']];
+                        $Events['HV1']=['HV1'=>['U13F','U15F','U18F','U21F','S1F','S2F','S3F','U13H','U15H','U18H','U21H','S1H','S2H','S3H']];
+                        $Events['HV2']=['HV2'=>['U13F','U15F','U18F','U21F','S1F','S2F','S3F','U13H','U15H','U18H','U21H','S1H','S2H','S3H']];
+                        $Events['W1']=['W1'=>['U13F','U15F','U18F','U21F','S1F','S2F','S3F','U13H','U15H','U18H','U21H','S1H','S2H','S3H']];
+
+                        $Events['NOPFCL']=['OPCL'=>['U21W','S1W','S2W','S3W']];
+                        $Events['NOPHCL']=['OPCL'=>['U21M','S1M','S2M','S3M']];
+                        $Events['NOPFCO']=['OPCO'=>['U21W','S1W','S2W','S3W']];
+                        $Events['NOPHCO']=['OPCO'=>['U21M','S1M','S2M','S3M']];
+                        $Events['NFEFCL']=['FECL'=>['U21W','S1W','S2W','S3W']];
+                        $Events['NFEHCL']=['FECL'=>['U21M','S1M','S2M','S3M']];
+                        $Events['NFEFCO']=['FECO'=>['U21W','S1W','S2W','S3W']];
+                        $Events['NFEHCO']=['FECO'=>['U21M','S1M','S2M','S3M']];
+                        $Events['NCHFCL']=['CHCL'=>['U13W','U15W','U18W','U21W','S1W','S2W','S3W']];
+                        $Events['NCHHCL']=['CHCL'=>['U13M','U15M','U18M','U21M','S1M','S2M','S3M']];
+                        $Events['NCHCO']=['CHCL'=>['U13W','U15W','U18W','U21W','S1W','S2W','S3W','U13M','U15M','U18M','U21M','S1M','S2M','S3M']];
+                        $Events['NCRFCL']=['CRCL'=>['U13W','U15W','U18W','U21W','S1W','S2W','S3W']];
+                        $Events['NCRHCL']=['CRCL'=>['U13M','U15M','U18M','U21M','S1M','S2M','S3M']];
+                        $Events['NCRCO']=['CHCO'=>['U13W','U15W','U18W','U21W','S1W','S2W','S3W','U13M','U15M','U18M','U21M','S1M','S2M','S3M']];
+                        $Events['NHLCL']=['HLCL'=>['U13W','U15W','U18W','U21W','S1W','S2W','S3W','U13M','U15M','U18M','U21M','S1M','S2M','S3M']];
+                        $Events['NHLCO']=['HLCO'=>['U13W','U15W','U18W','U21W','S1W','S2W','S3W','U13M','U15M','U18M','U21M','S1M','S2M','S3M']];
+                        $Events['NW1']=['W1'=>['U13W','U15W','U18W','U21W','S1W','S2W','S3W','U13M','U15M','U18M','U21M','S1M','S2M','S3M']];
+                        $Events['NOPFEJ']=['OPCL'=>['U13W','U15W','U18W','U13M','U15M','U18M'],
+                            'OPCO'=>['U13W','U15W','U18W','U13M','U15M','U18M'],
+                            'FECL'=>['U13W','U15W','U18W','U13M','U15M','U18M'],
+                            'FECO'=>['U13W','U15W','U18W','U13M','U15M','U18M'],
+                        ];
+                        $Events['NSU1']=['SU1'=>['U13W','U15W','U18W','U21W','S1W','S2W','S3W','U13M','U15M','U18M','U21M','S1M','S2M','S3M']];
+                        $Events['NSU2']=['SU2'=>['U13W','U15W','U18W','U21W','S1W','S2W','S3W','U13M','U15M','U18M','U21M','S1M','S2M','S3M']];
+                    }
+
+                    // inserts all the events!!!
+                    foreach($Events as $EvCode => $Divs) {
+                        foreach($Divs as $Div=>$Classes) {
+                            foreach($Classes as $Class) {
+                                InsertClassEvent($TourId, 0, 1, $EvCode, $Div,$Class);
+                            }
+                        }
+                    }
+                    break;
+            }
+            break;
 		case 6:
 			switch($SubRule) {
 				case '2':
-					InsertClassEvent($TourId, 0, 1,'1HCL', 'CL', 'S1H');
-					InsertClassEvent($TourId, 0, 1,'1FCL', 'CL', 'S1F');
-					InsertClassEvent($TourId, 0, 1,'2HCL', 'CL', 'S2H');
-					InsertClassEvent($TourId, 0, 1,'2FCL', 'CL', 'S2F');
-					InsertClassEvent($TourId, 0, 1,'3HCL', 'CL', 'S3H');
-					InsertClassEvent($TourId, 0, 1,'3FCL', 'CL', 'S3F');
-					InsertClassEvent($TourId, 0, 1,'1HCO', 'CO', 'S1H');
-					InsertClassEvent($TourId, 0, 1,'1FCO', 'CO', 'S1F');
-					InsertClassEvent($TourId, 0, 1,'2HCO', 'CO', 'S2H');
-					InsertClassEvent($TourId, 0, 1,'2FCO', 'CO', 'S2F');
-					InsertClassEvent($TourId, 0, 1,'3HCO', 'CO', 'S3H');
-					InsertClassEvent($TourId, 0, 1,'3FCO', 'CO', 'S3F');
-					InsertClassEvent($TourId, 0, 1,'AHBB', 'BB', 'S1H');
-					InsertClassEvent($TourId, 0, 1,'AFBB', 'BB', 'S1F');
-					InsertClassEvent($TourId, 0, 1,'AHBB', 'BB', 'S2H');
-					InsertClassEvent($TourId, 0, 1,'AFBB', 'BB', 'S2F');
-					InsertClassEvent($TourId, 0, 1,'AHBB', 'BB', 'S3H');
-					InsertClassEvent($TourId, 0, 1,'AFBB', 'BB', 'S3F');
+                    $Events=[
+                        'EFBB'=>['BB'=>['SC'=>'E','CL'=>['U21F','S1F','S2F','S3F']]],
+                        'EHBB'=>['BB'=>['SC'=>'E','CL'=>['U21H','S1H','S2H','S3H']]],
+                        'EFCL'=>['CL'=>['SC'=>'E','CL'=>['S1F','S2F','S3F']]],
+                        'EHCL'=>['CL'=>['SC'=>'E','CL'=>['S1H','S2H','S3H']]],
+                        'EFCO'=>['CO'=>['SC'=>'E','CL'=>['S1F','S2F','S3F']]],
+                        'EHCO'=>['CO'=>['SC'=>'E','CL'=>['S1H','S2H','S3H']]],
+                        'SFBB'=>['BB'=>['SC'=>'E','CL'=>['U21F','S1F','S2F','S3F']]],
+                        'SHBB'=>['BB'=>['SC'=>'E','CL'=>['U21H','S1H','S2H','S3H']]],
+                        'S1FCL'=>['CL'=>['SC'=>'A','CL'=>['S1F']]],
+                        'S1HCL'=>['CL'=>['SC'=>'A','CL'=>['S1H']]],
+                        'S1FCO'=>['CO'=>['SC'=>'A','CL'=>['S1F']]],
+                        'S1HCO'=>['CO'=>['SC'=>'A','CL'=>['S1H']]],
+                        'S2FCL'=>['CL'=>['SC'=>'A','CL'=>['S2F']]],
+                        'S2HCL'=>['CL'=>['SC'=>'A','CL'=>['S2H']]],
+                        'S2FCO'=>['CO'=>['SC'=>'A','CL'=>['S2F']]],
+                        'S2HCO'=>['CO'=>['SC'=>'A','CL'=>['S2H']]],
+                        'S3FCL'=>['CL'=>['SC'=>'A','CL'=>['S3F']]],
+                        'S3HCL'=>['CL'=>['SC'=>'A','CL'=>['S3H']]],
+                        'S3FCO'=>['CO'=>['SC'=>'A','CL'=>['S3F']]],
+                        'S3HCO'=>['CO'=>['SC'=>'A','CL'=>['S3H']]],
+                    ];
+                    foreach($Events as $EvCode => $Divs) {
+                        foreach($Divs as $Div=>$Classes) {
+                            foreach($Classes['CL'] as $Class) {
+                                InsertClassEvent($TourId, 0, 1, $EvCode, $Div, $Class, $Classes['SC']);
+                            }
+                        }
+                    }
 					break;
 				case '3': // Championships YOUTH
-					$TargetSizeB=60;
-					InsertClassEvent($TourId, 0, 1, 'U21HCL', 'CL','U21H');
-					InsertClassEvent($TourId, 0, 1, 'U21FCL', 'CL','U21F');
-					InsertClassEvent($TourId, 0, 1, 'U18HCL', 'CL','U18H');
-					InsertClassEvent($TourId, 0, 1, 'U18FCL', 'CL','U18F');
-					InsertClassEvent($TourId, 0, 1, 'U15HCL', 'CL','U15H');
-					InsertClassEvent($TourId, 0, 1, 'U15FCL', 'CL','U15F');
-					InsertClassEvent($TourId, 0, 1, 'U13HCL', 'CL','U13H');
-					InsertClassEvent($TourId, 0, 1, 'U13FCL', 'CL','U13F');
-					InsertClassEvent($TourId, 0, 1, 'U21HCO', 'CO','U21H');
-					InsertClassEvent($TourId, 0, 1, 'U21FCO', 'CO','U21F');
-					InsertClassEvent($TourId, 0, 1, 'U18HCO', 'CO','U18H');
-					InsertClassEvent($TourId, 0, 1, 'U18FCO', 'CO','U18F');
-					InsertClassEvent($TourId, 0, 1, 'YHBB', 'BB','U21H');
-					InsertClassEvent($TourId, 0, 1, 'YFBB', 'BB','U21F');
-					InsertClassEvent($TourId, 0, 1, 'YHBB', 'BB','U18H');
-					InsertClassEvent($TourId, 0, 1, 'YFBB', 'BB','U18F');
-					InsertClassEvent($TourId, 0, 1, 'YHBB', 'BB','U15H');
-					InsertClassEvent($TourId, 0, 1, 'YFBB', 'BB','U15F');
+                    $Events['U18FBB']=['BB'=>['U15F','U18F']];
+                    $Events['U18HBB']=['BB'=>['U15H','U18H']];
+                    $Events['U13FCL']=['CL'=>['U13F']];
+                    $Events['U13HCL']=['CL'=>['U13H']];
+                    $Events['U15FCL']=['CL'=>['U15F']];
+                    $Events['U15HCL']=['CL'=>['U15H']];
+                    $Events['U18FCL']=['CL'=>['U18F']];
+                    $Events['U18HCL']=['CL'=>['U18H']];
+                    $Events['U21FCL']=['CL'=>['U21F']];
+                    $Events['U21HCL']=['CL'=>['U21H']];
+                    $Events['U21FCO']=['CO'=>['U21F', 'U18F']];
+                    $Events['U21HCO']=['CO'=>['U21H', 'U18H']];
+
+                    foreach($Events as $EvCode => $Divs) {
+                        foreach($Divs as $Div=>$Classes) {
+                            foreach($Classes as $Class) {
+                                InsertClassEvent($TourId, 0, 1, $EvCode, $Div,$Class);
+                            }
+                        }
+                    }
 					break;
 			}
 			break;
-		case 3:
+		case 7:
 			switch($SubRule) {
-				case 2: // TNJ
-					InsertClassEvent($TourId, 0, 1, 'U21HCL', 'CL','U21H');
-					InsertClassEvent($TourId, 0, 1, 'U21FCL', 'CL','U21F');
-					InsertClassEvent($TourId, 0, 1, 'U18HCL', 'CL','U18H');
-					InsertClassEvent($TourId, 0, 1, 'U18FCL', 'CL','U18F');
-					InsertClassEvent($TourId, 0, 1, 'U15HCL', 'CL','U15H');
-					InsertClassEvent($TourId, 0, 1, 'U15FCL', 'CL','U15F');
-					InsertClassEvent($TourId, 0, 1, 'U13HCL', 'CL','U13H');
-					InsertClassEvent($TourId, 0, 1, 'U13FCL', 'CL','U13F');
-					InsertClassEvent($TourId, 0, 1, 'YHCO', 'CO','U21H');
-					InsertClassEvent($TourId, 0, 1, 'YFCO', 'CO','U21F');
-					InsertClassEvent($TourId, 0, 1, 'YHCO', 'CO','U18H');
-					InsertClassEvent($TourId, 0, 1, 'YFCO', 'CO','U18F');
-					// Mixed Team
-					InsertClassEvent($TourId, 1, 1, 'DMCU21', 'CL','U21F');
-					InsertClassEvent($TourId, 1, 1, 'DMCU18', 'CL','U18F');
-					InsertClassEvent($TourId, 1, 1, 'DMPY', 'CO','U21F');
-					InsertClassEvent($TourId, 1, 1, 'DMPY', 'CO','U18F');
-					InsertClassEvent($TourId, 2, 1, 'DMCU21', 'CL','U21H');
-					InsertClassEvent($TourId, 2, 1, 'DMCU18', 'CL','U18H');
-					InsertClassEvent($TourId, 2, 1, 'DMPY', 'CO','U21H');
-					InsertClassEvent($TourId, 2, 1, 'DMPY', 'CO','U18H');
-					break;
-				case 3: // Championship Youth
-					InsertClassEvent($TourId, 0, 1, 'U21HCL', 'CL','U21H');
-					InsertClassEvent($TourId, 0, 1, 'U21FCL', 'CL','U21F');
-					InsertClassEvent($TourId, 0, 1, 'U18HCL', 'CL','U18H');
-					InsertClassEvent($TourId, 0, 1, 'U18FCL', 'CL','U18F');
-					InsertClassEvent($TourId, 0, 1, 'U15HCL', 'CL','U15H');
-					InsertClassEvent($TourId, 0, 1, 'U15FCL', 'CL','U15F');
-					InsertClassEvent($TourId, 0, 1, 'U13HCL', 'CL','U13H');
-					InsertClassEvent($TourId, 0, 1, 'U13FCL', 'CL','U13F');
-					InsertClassEvent($TourId, 0, 1, 'U21HCO', 'CO','U21H');
-					InsertClassEvent($TourId, 0, 1, 'U21FCO', 'CO','U21F');
-					InsertClassEvent($TourId, 0, 1, 'U18HCO', 'CO','U18H');
-					InsertClassEvent($TourId, 0, 1, 'U18FCO', 'CO','U18F');
-					// Mixed Team
-					InsertClassEvent($TourId, 1, 1, 'DMJ', 'CL','U21F');
-					InsertClassEvent($TourId, 1, 1, 'DMJ', 'CL','U18F');
-					InsertClassEvent($TourId, 2, 1, 'DMJ', 'CL','U21H');
-					InsertClassEvent($TourId, 2, 1, 'DMJ', 'CL','U18H');
-					// Teams
-					InsertClassEvent($TourId, 1, 3, 'CJH', 'CL','U21H');
-					InsertClassEvent($TourId, 1, 3, 'CJH', 'CL','U18H');
-					InsertClassEvent($TourId, 1, 3, 'CJF', 'CL','U21F');
-					InsertClassEvent($TourId, 1, 3, 'CJF', 'CL','U18F');
-					InsertClassEvent($TourId, 1, 3, 'BM', 'CL','U13F');
-					InsertClassEvent($TourId, 1, 3, 'BM', 'CL','U13H');
-					InsertClassEvent($TourId, 1, 3, 'BM', 'CL','U15F');
-					InsertClassEvent($TourId, 1, 3, 'BM', 'CL','U15H');
-					break;
-				case 4: // deprecated
-					// Championships Scratch Recurve
-					InsertClassEvent($TourId, 0, 1, 'FCL', 'CL','U18F');
-					InsertClassEvent($TourId, 0, 1, 'FCL', 'CL','U21F');
-					InsertClassEvent($TourId, 0, 1, 'FCL', 'CL','SF');
-					InsertClassEvent($TourId, 0, 1, 'FCL', 'CL','VF');
-					InsertClassEvent($TourId, 0, 1, 'FCL', 'CL','WF');
-					InsertClassEvent($TourId, 0, 1, 'HCL', 'CL','U18H');
-					InsertClassEvent($TourId, 0, 1, 'HCL', 'CL','U21H');
-					InsertClassEvent($TourId, 0, 1, 'HCL', 'CL','SH');
-					InsertClassEvent($TourId, 0, 1, 'HCL', 'CL','VH');
-					InsertClassEvent($TourId, 0, 1, 'HCL', 'CL','WH');
-					// Mixed Team
-					InsertClassEvent($TourId, 1, 1, 'DMCL', 'CL','U18F');
-					InsertClassEvent($TourId, 1, 1, 'DMCL', 'CL','U21F');
-					InsertClassEvent($TourId, 1, 1, 'DMCL', 'CL','SF');
-					InsertClassEvent($TourId, 1, 1, 'DMCL', 'CL','VF');
-					InsertClassEvent($TourId, 1, 1, 'DMCL', 'CL','WF');
-					InsertClassEvent($TourId, 2, 1, 'DMCL', 'CL','U18H');
-					InsertClassEvent($TourId, 2, 1, 'DMCL', 'CL','U21H');
-					InsertClassEvent($TourId, 2, 1, 'DMCL', 'CL','SH');
-					InsertClassEvent($TourId, 2, 1, 'DMCL', 'CL','VH');
-					InsertClassEvent($TourId, 2, 1, 'DMCL', 'CL','WH');
-					break;
-				case 5: // deprecated
-					// Championships Scratch Compound
-					InsertClassEvent($TourId, 0, 1, 'FCO', 'CO','U18F');
-					InsertClassEvent($TourId, 0, 1, 'FCO', 'CO','U21F');
-					InsertClassEvent($TourId, 0, 1, 'FCO', 'CO','SF');
-					InsertClassEvent($TourId, 0, 1, 'FCO', 'CO','VF');
-					InsertClassEvent($TourId, 0, 1, 'FCO', 'CO','WF');
-					InsertClassEvent($TourId, 0, 1, 'HCO', 'CO','U18H');
-					InsertClassEvent($TourId, 0, 1, 'HCO', 'CO','U21H');
-					InsertClassEvent($TourId, 0, 1, 'HCO', 'CO','SH');
-					InsertClassEvent($TourId, 0, 1, 'HCO', 'CO','VH');
-					InsertClassEvent($TourId, 0, 1, 'HCO', 'CO','WH');
-					// Mixed Team
-					InsertClassEvent($TourId, 1, 1, 'DMCO', 'CO','U18F');
-					InsertClassEvent($TourId, 1, 1, 'DMCO', 'CO','U21F');
-					InsertClassEvent($TourId, 1, 1, 'DMCO', 'CO','SF');
-					InsertClassEvent($TourId, 1, 1, 'DMCO', 'CO','VF');
-					InsertClassEvent($TourId, 1, 1, 'DMCO', 'CO','WF');
-					InsertClassEvent($TourId, 2, 1, 'DMCO', 'CO','U18H');
-					InsertClassEvent($TourId, 2, 1, 'DMCO', 'CO','U21H');
-					InsertClassEvent($TourId, 2, 1, 'DMCO', 'CO','SH');
-					InsertClassEvent($TourId, 2, 1, 'DMCO', 'CO','VH');
-					InsertClassEvent($TourId, 2, 1, 'DMCO', 'CO','WH');
-					break;
-				case 6: // deprecated
-					// Championship Veteran
-					InsertClassEvent($TourId, 0, 1, 'VFCL', 'CL','VF');
-					InsertClassEvent($TourId, 0, 1, 'VHCL', 'CL','VH');
-					InsertClassEvent($TourId, 0, 1, 'WFCL', 'CL','WF');
-					InsertClassEvent($TourId, 0, 1, 'WHCL', 'CL','WH');
-					InsertClassEvent($TourId, 0, 1, 'VFCO', 'CO','VF');
-					InsertClassEvent($TourId, 0, 1, 'VHCO', 'CO','VH');
-					InsertClassEvent($TourId, 0, 1, 'WFCO', 'CO','WF');
-					InsertClassEvent($TourId, 0, 1, 'WHCO', 'CO','WH');
-					break;
-				case 7: // D1/DNAP... team events selection are as usual, indivudal no
-					InsertClassEvent($TourId, 0, 1, 'FCL', 'CL','U18F');
-					InsertClassEvent($TourId, 0, 1, 'FCL', 'CL','U21F');
-					InsertClassEvent($TourId, 0, 1, 'FCL', 'CL','S1F');
-					InsertClassEvent($TourId, 0, 1, 'FCL', 'CL','S2F');
-					InsertClassEvent($TourId, 0, 1, 'FCL', 'CL','S3F');
-					InsertClassEvent($TourId, 0, 1, 'HCL', 'CL','U18H');
-					InsertClassEvent($TourId, 0, 1, 'HCL', 'CL','U21H');
-					InsertClassEvent($TourId, 0, 1, 'HCL', 'CL','S1H');
-					InsertClassEvent($TourId, 0, 1, 'HCL', 'CL','S2H');
-					InsertClassEvent($TourId, 0, 1, 'HCL', 'CL','S3H');
-					InsertClassEvent($TourId, 0, 1, 'FCO', 'CO','U18F');
-					InsertClassEvent($TourId, 0, 1, 'FCO', 'CO','U21F');
-					InsertClassEvent($TourId, 0, 1, 'FCO', 'CO','S1F');
-					InsertClassEvent($TourId, 0, 1, 'FCO', 'CO','S2F');
-					InsertClassEvent($TourId, 0, 1, 'FCO', 'CO','S3F');
-					InsertClassEvent($TourId, 0, 1, 'HCO', 'CO','U18H');
-					InsertClassEvent($TourId, 0, 1, 'HCO', 'CO','U21H');
-					InsertClassEvent($TourId, 0, 1, 'HCO', 'CO','S1H');
-					InsertClassEvent($TourId, 0, 1, 'HCO', 'CO','S2H');
-					InsertClassEvent($TourId, 0, 1, 'HCO', 'CO','S3H');
-					// Teams
-					InsertClassEvent($TourId, 1, 3, 'FCL', 'CL','U18F');
-					InsertClassEvent($TourId, 1, 3, 'FCL', 'CL','U21F');
-					InsertClassEvent($TourId, 1, 3, 'FCL', 'CL','S1F');
-					InsertClassEvent($TourId, 1, 3, 'FCL', 'CL','S2F');
-					InsertClassEvent($TourId, 1, 3, 'FCL', 'CL','S3F');
-					InsertClassEvent($TourId, 1, 3, 'HCL', 'CL','U18H');
-					InsertClassEvent($TourId, 1, 3, 'HCL', 'CL','U21H');
-					InsertClassEvent($TourId, 1, 3, 'HCL', 'CL','S1H');
-					InsertClassEvent($TourId, 1, 3, 'HCL', 'CL','S2H');
-					InsertClassEvent($TourId, 1, 3, 'HCL', 'CL','S3H');
-					InsertClassEvent($TourId, 1, 3, 'FCO', 'CO','U18F');
-					InsertClassEvent($TourId, 1, 3, 'FCO', 'CO','U21F');
-					InsertClassEvent($TourId, 1, 3, 'FCO', 'CO','S1F');
-					InsertClassEvent($TourId, 1, 3, 'FCO', 'CO','S2F');
-					InsertClassEvent($TourId, 1, 3, 'FCO', 'CO','S3F');
-					InsertClassEvent($TourId, 1, 3, 'HCO', 'CO','U18H');
-					InsertClassEvent($TourId, 1, 3, 'HCO', 'CO','U21H');
-					InsertClassEvent($TourId, 1, 3, 'HCO', 'CO','S1H');
-					InsertClassEvent($TourId, 1, 3, 'HCO', 'CO','S2H');
-					InsertClassEvent($TourId, 1, 3, 'HCO', 'CO','S3H');
-					break;
-				case 8: // deprecated
-					// Fédéral
-					// no events
-					break;
-				case 9: // DR/D2
-					InsertClassEvent($TourId, 1, 3, 'DRRF', 'CL','U18F');
-					InsertClassEvent($TourId, 1, 3, 'DRRF', 'CL','U21F');
-					InsertClassEvent($TourId, 1, 3, 'DRRF', 'CL','SF');
-					InsertClassEvent($TourId, 1, 3, 'DRRF', 'CL','VF');
-					InsertClassEvent($TourId, 1, 3, 'DRRF', 'CL','WF');
-					InsertClassEvent($TourId, 1, 3, 'DRCF', 'CO','U18F');
-					InsertClassEvent($TourId, 1, 3, 'DRCF', 'CO','U21F');
-					InsertClassEvent($TourId, 1, 3, 'DRCF', 'CO','SF');
-					InsertClassEvent($TourId, 1, 3, 'DRCF', 'CO','VF');
-					InsertClassEvent($TourId, 1, 3, 'DRCF', 'CO','WF');
-					InsertClassEvent($TourId, 1, 3, 'D2F', 'CL','U18F');
-					InsertClassEvent($TourId, 1, 3, 'D2F', 'CL','U21F');
-					InsertClassEvent($TourId, 1, 3, 'D2F', 'CL','SF');
-					InsertClassEvent($TourId, 1, 3, 'D2F', 'CL','VF');
-					InsertClassEvent($TourId, 1, 3, 'D2F', 'CL','WF');
-					InsertClassEvent($TourId, 1, 3, 'DRRH', 'CL','U18H');
-					InsertClassEvent($TourId, 1, 3, 'DRRH', 'CL','U21H');
-					InsertClassEvent($TourId, 1, 3, 'DRRH', 'CL','SH');
-					InsertClassEvent($TourId, 1, 3, 'DRRH', 'CL','VH');
-					InsertClassEvent($TourId, 1, 3, 'DRRH', 'CL','WH');
-					InsertClassEvent($TourId, 1, 3, 'DRCH', 'CO','U18H');
-					InsertClassEvent($TourId, 1, 3, 'DRCH', 'CO','U21H');
-					InsertClassEvent($TourId, 1, 3, 'DRCH', 'CO','SH');
-					InsertClassEvent($TourId, 1, 3, 'DRCH', 'CO','VH');
-					InsertClassEvent($TourId, 1, 3, 'DRCH', 'CO','WH');
-					InsertClassEvent($TourId, 1, 3, 'D2H', 'CL','U18H');
-					InsertClassEvent($TourId, 1, 3, 'D2H', 'CL','U21H');
-					InsertClassEvent($TourId, 1, 3, 'D2H', 'CL','SH');
-					InsertClassEvent($TourId, 1, 3, 'D2H', 'CL','VH');
-					InsertClassEvent($TourId, 1, 3, 'D2H', 'CL','WH');
-					break;
-				case 10:
-					// Championships Scratch Recurve
-					InsertClassEvent($TourId, 0, 1, 'FCL', 'CL','U18F');
-					InsertClassEvent($TourId, 0, 1, 'FCL', 'CL','U21F');
-					InsertClassEvent($TourId, 0, 1, 'FCL', 'CL','S1F');
-					InsertClassEvent($TourId, 0, 1, 'FCL', 'CL','S2F');
-					InsertClassEvent($TourId, 0, 1, 'FCL', 'CL','S3F');
-					InsertClassEvent($TourId, 0, 1, 'HCL', 'CL','U18H');
-					InsertClassEvent($TourId, 0, 1, 'HCL', 'CL','U21H');
-					InsertClassEvent($TourId, 0, 1, 'HCL', 'CL','S1H');
-					InsertClassEvent($TourId, 0, 1, 'HCL', 'CL','S2H');
-					InsertClassEvent($TourId, 0, 1, 'HCL', 'CL','S3H');
-					// Championships Scratch Compound
-					InsertClassEvent($TourId, 0, 1, 'FCO', 'CO','U18F');
-					InsertClassEvent($TourId, 0, 1, 'FCO', 'CO','U21F');
-					InsertClassEvent($TourId, 0, 1, 'FCO', 'CO','S1F');
-					InsertClassEvent($TourId, 0, 1, 'FCO', 'CO','S2F');
-					InsertClassEvent($TourId, 0, 1, 'FCO', 'CO','S3F');
-					InsertClassEvent($TourId, 0, 1, 'HCO', 'CO','U18H');
-					InsertClassEvent($TourId, 0, 1, 'HCO', 'CO','U21H');
-					InsertClassEvent($TourId, 0, 1, 'HCO', 'CO','S1H');
-					InsertClassEvent($TourId, 0, 1, 'HCO', 'CO','S2H');
-					InsertClassEvent($TourId, 0, 1, 'HCO', 'CO','S3H');
-					// Mixed Team Recurve
-					InsertClassEvent($TourId, 1, 1, 'DMCL', 'CL','U18F');
-					InsertClassEvent($TourId, 1, 1, 'DMCL', 'CL','U21F');
-					InsertClassEvent($TourId, 1, 1, 'DMCL', 'CL','S1F');
-					InsertClassEvent($TourId, 1, 1, 'DMCL', 'CL','S2F');
-					InsertClassEvent($TourId, 1, 1, 'DMCL', 'CL','S3F');
-					InsertClassEvent($TourId, 2, 1, 'DMCL', 'CL','U18H');
-					InsertClassEvent($TourId, 2, 1, 'DMCL', 'CL','U21H');
-					InsertClassEvent($TourId, 2, 1, 'DMCL', 'CL','S1H');
-					InsertClassEvent($TourId, 2, 1, 'DMCL', 'CL','S2H');
-					InsertClassEvent($TourId, 2, 1, 'DMCL', 'CL','S3H');
-					// Mixed Team Compound
-					InsertClassEvent($TourId, 1, 1, 'DMCO', 'CO','U18F');
-					InsertClassEvent($TourId, 1, 1, 'DMCO', 'CO','U21F');
-					InsertClassEvent($TourId, 1, 1, 'DMCO', 'CO','S1F');
-					InsertClassEvent($TourId, 1, 1, 'DMCO', 'CO','S2F');
-					InsertClassEvent($TourId, 1, 1, 'DMCO', 'CO','S3F');
-					InsertClassEvent($TourId, 2, 1, 'DMCO', 'CO','U18H');
-					InsertClassEvent($TourId, 2, 1, 'DMCO', 'CO','U21H');
-					InsertClassEvent($TourId, 2, 1, 'DMCO', 'CO','S1H');
-					InsertClassEvent($TourId, 2, 1, 'DMCO', 'CO','S2H');
-					InsertClassEvent($TourId, 2, 1, 'DMCO', 'CO','S3H');
-					break;
-				case 11: // Coupe France
-					// Recurve
-					InsertClassEvent($TourId, 0, 1, 'U21FCL', 'CL','U21F');
-					InsertClassEvent($TourId, 0, 1, '1FCL', 'CL','S1F');
-					InsertClassEvent($TourId, 0, 1, '2FCL', 'CL','S2F');
-					InsertClassEvent($TourId, 0, 1, '3FCL', 'CL','S3F');
-					InsertClassEvent($TourId, 0, 1, 'U21HCL', 'CL','U21H');
-					InsertClassEvent($TourId, 0, 1, '1HCL', 'CL','S1H');
-					InsertClassEvent($TourId, 0, 1, '2HCL', 'CL','S2H');
-					InsertClassEvent($TourId, 0, 1, '3HCL', 'CL','S3H');
-					// Compound
-					InsertClassEvent($TourId, 0, 1, 'U21FCO', 'CO','U21F');
-					InsertClassEvent($TourId, 0, 1, '1FCO', 'CO','S1F');
-					InsertClassEvent($TourId, 0, 1, '2FCO', 'CO','S2F');
-					InsertClassEvent($TourId, 0, 1, '3FCO', 'CO','S3F');
-					InsertClassEvent($TourId, 0, 1, 'U21HCO', 'CO','U21H');
-					InsertClassEvent($TourId, 0, 1, '1HCO', 'CO','S1H');
-					InsertClassEvent($TourId, 0, 1, '2HCO', 'CO','S2H');
-					InsertClassEvent($TourId, 0, 1, '3HCO', 'CO','S3H');
+				case '1':
+				case '4':
+                    $Events=[
+                        'U18FBB'=>['BB'=>['U18F']],
+                        'U18HBB'=>['BB'=>['U18H']],
+                        'U15FCL'=>['CL'=>['U13F','U15F']],
+                        'U15HCL'=>['CL'=>['U13H','U15H']],
+                        'U15FCO'=>['CO'=>['U13F','U15F']],
+                        'U15HCO'=>['CO'=>['U13H','U15H']],
+                        'SFBB'=>['BB'=>['U21F','S1F','S2F','S3F']],
+                        'SHBB'=>['BB'=>['U21H','S1H','S2H','S3H']],
+                        'SFCL'=>['CL'=>['U18F','U21F','S1F','S2F','S3F']],
+                        'SHCL'=>['CL'=>['U18H','U21H','S1H','S2H','S3H']],
+                        'SFCO'=>['CO'=>['U18F','U21F','S1F','S2F','S3F']],
+                        'SHCO'=>['CO'=>['U18H','U21H','S1H','S2H','S3H']],
+                    ];
+                    foreach($Events as $EvCode => $Divs) {
+                        foreach($Divs as $Div=>$Classes) {
+                            foreach($Classes as $Class) {
+                                InsertClassEvent($TourId, 0, 1, $EvCode, $Div, $Class);
+                            }
+                        }
+                    }
 					break;
 			}
 			break;
+        case 50:
+            $Events=[
+                'U13FCL'=>['CL'=>['U13F']],
+                'U13HCL'=>['CL'=>['U13H']],
+                'U15FCL'=>['CL'=>['U15F']],
+                'U15HCL'=>['CL'=>['U15H']],
+                'U15FBB'=>['BB'=>['U13F','U15F']],
+                'U15HBB'=>['BB'=>['U13H','U15H']],
+                'U15FAD'=>['AD'=>['U13F','U15F']],
+                'U15HAD'=>['AD'=>['U13H','U15H']],
+                'U15FCO'=>['CO'=>['U13F','U15F']],
+                'U15HCO'=>['CO'=>['U13H','U15H']],
+                'U18FCL'=>['CL'=>['U18F']],
+                'U18HCL'=>['CL'=>['U18H']],
+                'U18FCO'=>['CO'=>['U18F']],
+                'U18HCO'=>['CO'=>['U18H']],
+                'U21FCL'=>['CL'=>['U21F']],
+                'U21HCL'=>['CL'=>['U21H']],
+                'U21FCO'=>['CO'=>['U21F']],
+                'U21HCO'=>['CO'=>['U21H']],
+                'US1FCL'=>['CL'=>['S1F']],
+                'US1HCL'=>['CL'=>['S1H']],
+                'US1FCO'=>['CO'=>['S1F']],
+                'US1HCO'=>['CO'=>['S1H']],
+                'US2FCL'=>['CL'=>['S2F']],
+                'US2HCL'=>['CL'=>['S2H']],
+                'US2FCO'=>['CO'=>['S2F']],
+                'US2HCO'=>['CO'=>['S2H']],
+                'US3FCL'=>['CL'=>['S3F']],
+                'US3HCL'=>['CL'=>['S3H']],
+                'US3FCO'=>['CO'=>['S3F']],
+                'US3HCO'=>['CO'=>['S3H']],
+                'SFBB'=>['BB'=>['U18F','U21F','S1F','S2F','S3F']],
+                'SHBB'=>['BB'=>['U18H','U21H','S1H','S2H','S3H']],
+                'SFAD'=>['AD'=>['U18F','U21F','S1F','S2F','S3F']],
+                'SHAD'=>['AD'=>['U18H','U21H','S1H','S2H','S3H']],
+            ];
+            foreach($Events as $EvCode => $Divs) {
+                foreach($Divs as $Div=>$Classes) {
+                    foreach($Classes as $Class) {
+                        InsertClassEvent($TourId, 0, 1, $EvCode, $Div, $Class);
+                    }
+                }
+            }
+            break;
 	}
 }
 
@@ -735,6 +1380,14 @@ function CreateFinalsInd_FR_3_SetFRChampsD1DNAP($TourId, $StrEv2Delete='') {
  * @param string $StrEv2Delete [optional] SQL-escaped string that goes in the IN () statement
  */
 function CreateFinalsTeam_FR_3_SetFRChampsD1DNAP($TourId, $StrEv2Delete='') {
+	safe_w_sql("INSERT INTO TeamFinals (TfEvent, TfMatchNo, TfTournament, TfDateTime) 
+		SELECT EvCode, GrMatchNo, EvTournament, " . StrSafe_DB(date('Y-m-d H:i:s')) . " 
+		FROM Events 
+		INNER JOIN Grids ON GrMatchNo between 128 and 207
+		WHERE EvTournament=$TourId AND EvTeamEvent='1'".($StrEv2Delete ? " AND EvCode IN ($StrEv2Delete)" : ""));
+}
+
+function CreateFinalsTeam_FR_3_SetFRD12023($TourId, $StrEv2Delete='') {
 	safe_w_sql("INSERT INTO TeamFinals (TfEvent, TfMatchNo, TfTournament, TfDateTime) 
 		SELECT EvCode, GrMatchNo, EvTournament, " . StrSafe_DB(date('Y-m-d H:i:s')) . " 
 		FROM Events 

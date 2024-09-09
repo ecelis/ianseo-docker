@@ -102,8 +102,6 @@ $lang['RaspControl']='Kontrola Raspberry';
 $lang['RaspDevice']='Urządzenie';
 $lang['RasUrl']='Url to serve';
 $lang['StickyAlreadySet']='Serie (sticky ends) są już ustawione w innej sesji!';
-$lang['TVCss3Divider']='Dzielnik';
-$lang['TVCss3Loser']='Modyfikuj przegranego';
 $lang['WAToolbox-MissingParams']='Brak Parametru';
 $lang['WAToolbox-NoCompCode']='Brak Kodu Zawodów (Competition Code)';
 ?>

@@ -16,20 +16,28 @@ if(!empty($_REQUEST['lev'])) {
 	$File=array();
 
 	// Version
-	$File[]="VERSION : \t5.10\t";
+	$File[]="VERSION : \t9.01\t";
 
 	// get the judges
-	$Select="SELECT group_concat(TiCode order by ItJudge, TiName separator '\t') Judges 
+	$Select="SELECT TiCode Judges 
 		FROM TournamentInvolved  
 		inner JOIN InvolvedType ON TiType=ItId 
-		WHERE TiTournament={$_SESSION['TourId']} AND ItJudge<>0
-		group by TiTournament";
-	$Judges='';
+		WHERE TiTournament={$_SESSION['TourId']} AND (ItJudge>0 or ItDos>0)
+		order by ItDos, ItJudge";
+	$JudgesResp='';
+	$Judges=[];
+	$Coaches=[];
 	$q=safe_r_sql($Select);
-	if($r=safe_fetch($q)) {
-		$Judges=$r->Judges;
+	while($r=safe_fetch($q)) {
+        if(empty($JudgesResp)) {
+            $JudgesResp=$r->Judges;
+        } else {
+		    $Judges[]=$r->Judges;
+        }
 	}
-	$File[]="ARBITRES\t{$Judges}";
+	$File[]="RARBITRES\t{$JudgesResp}";
+	$File[]="ARBITRES\t".implode("\t", $Judges);
+	$File[]="ENTRAINEURS\t".implode("\t", $Coaches);
 
 	$Archers=array();
 	$q=safe_r_sql("select * from Tournament where ToId={$_SESSION['TourId']}");
@@ -57,12 +65,22 @@ if(!empty($_REQUEST['lev'])) {
 			$Discipline='3';
 			break;
 		//case 16: inveted... should be 2 more
-		//	$Discipline='E'; // Fédéral
 		//	$Discipline='N'; // Nature
 		//	$Discipline='B'; // Beursault
+        // PARA 18m => I
+        // PARA Exterieur => H
+        // Jeunesse => J
+        // Poussin => P
 		//	break;
 	}
 
+    $Filter='';
+    if($_REQUEST['lev']=='S') {
+        $Filter=" and DivIsPara=0";
+    } elseif($_REQUEST['lev']=='SP') {
+        $Filter=" and DivIsPara=1";
+        $_REQUEST['lev']='S';
+    }
 	$q=safe_r_sql("select EnIocCode, EnCode, ucase(EnFirstName) as EnFirstName, ucase(EnName) as EnName, EnDivision, EnAgeClass, EnClass, EnSex, 
 			ifnull(IndEvent,'-') as IndEvent, EnId, 
 			ucase(CoName) as CoName, CoCode, 
@@ -71,64 +89,81 @@ if(!empty($_REQUEST['lev'])) {
 			IndRank, QuClRank, IndRankFinal 
 		from Qualifications
 		inner join Entries on EnId=QuId
+        inner join Divisions on DivId=EnDivision $Filter
 		inner join Countries on CoId=EnCountry and CoTournament=EnTournament
 		inner join (select TfId, greatest(TfW1, TfW2, TfW3, TfW4, TfW5, TfW6, TfW7, TfW8) as MaxTargetFace from TargetFaces where TfTournament={$_SESSION['TourId']}) TargetFaces on TfId=EnTargetFace
 		inner join (select DiSession, sum(DiEnds*DiArrows) as MaxArrows from DistanceInformation where DiTournament={$_SESSION['TourId']} group by DiSession) DistanceArrows on DiSession=QuSession
 		inner join (select TdClasses, greatest(Td1+0, Td2+0, Td3+0, Td4+0, Td5+0, Td6+0, Td7+0, Td8+0) as MaxDistance from TournamentDistances where TdTournament={$_SESSION['TourId']}) Distances on concat(EnDivision,EnClass) like TdClasses
 		left join Individuals on IndId=EnId
-		where EnTournament={$_SESSION['TourId']}");
+		where EnTournament={$_SESSION['TourId']}
+		order by QuSession");
 	$EnCodes=array();
 	while($r=safe_fetch($q)) {
-		if(empty($EnCodes["{$r->EnCode}-{$r->EnDivision}"])) $EnCodes["{$r->EnCode}-{$r->EnDivision}"]=0;
+        if($r->EnClass[0]=='D') {
+            // Découverte/Débutant do not go in the txt file
+            continue;
+        }
+
+		if(empty($EnCodes["{$r->EnCode}-{$r->EnDivision}"])) {
+            $EnCodes["{$r->EnCode}-{$r->EnDivision}"]=0;
+        }
 		$EnCodes["{$r->EnCode}-{$r->EnDivision}"]++;
 
 		// check the age class
-		switch($r->EnAgeClass[0]) {
-			case 'W':
-				$AgeClass='SV';
-				break;
-			case '1':
-				$AgeClass='S1';
-				break;
-			case '2':
-				$AgeClass='S2';
-				break;
-			case '3':
-				$AgeClass='S3';
-				break;
-			case 'Y':
-				$AgeClass='C';
-				break;
-			case 'S':
-				$AgeClass=substr($r->EnAgeClass, 0 ,2);
-				break;
-			default:
-				$AgeClass=substr($r->EnAgeClass,0,-1);
-		}
+        $AgeClass=substr($r->EnAgeClass,0,-1);
 
-		// check the shooting class
-		switch($r->EnClass[0]) {
-			case 'W':
-				$Class='SV';
-				break;
-			case '1':
-				$Class='S1';
-				break;
-			case '2':
-				$Class='S2';
-				break;
-			case '3':
-				$Class='S3';
-				break;
-			case 'Y':
-				$Class='C';
-				break;
-			case 'S':
-				$Class=substr($r->EnClass, 0 ,2);
-				break;
-			default:
-				$Class=substr($r->EnAgeClass,0,-1);
-		}
+        // check the shooting class
+        $Class=substr($r->EnClass,0,-1);
+
+        // Para stuff
+        switch($r->EnDivision) {
+            case 'OPCL':
+            case 'OPCO':
+            case 'OJCL':
+            case 'OJCO':
+                $r->EnDivision=substr($r->EnDivision, -2);
+                $Class='OP';
+                break;
+            case 'FECL':
+            case 'FECO':
+            case 'FJCL':
+            case 'FJCO':
+                $r->EnDivision=substr($r->EnDivision, -2);
+                $Class='FED';
+                break;
+            case 'W1':
+                $r->EnDivision='1'.($r->EnSex ? 'F' : 'H');
+                $Class='W1';
+                break;
+            case 'HV1':
+                $r->EnDivision='1'.($r->EnSex ? 'F' : 'H');
+                $Class='HV1';
+                break;
+            case 'HV2':
+                $r->EnDivision='2'.($r->EnSex ? 'F' : 'H');
+                $Class='HV2';
+                break;
+            case 'CHCL':
+            case 'CHCO':
+                $r->EnDivision=substr($r->EnDivision, -2);
+                $Class='CHA';
+                break;
+            case 'CRCL':
+            case 'CRCO':
+                $r->EnDivision=substr($r->EnDivision, -2);
+                $Class='CRI';
+                break;
+            case 'HLCL':
+            case 'HLCO':
+                $r->EnDivision=substr($r->EnDivision, -2);
+                $Class='HVL';
+                break;
+            case 'SU1':
+            case 'SU2':
+                $r->EnDivision='CL';
+                $Class=$r->EnDivision;
+                break;
+        }
 
 		$Archers[$r->IndEvent][$r->EnId]=array_fill(0, 51, '');
 		$Archers[$r->IndEvent][$r->EnId][0] = $Discipline;
@@ -150,7 +185,7 @@ if(!empty($_REQUEST['lev'])) {
 		$Archers[$r->IndEvent][$r->EnId][17] = $r->MaxDistance;
 		$Archers[$r->IndEvent][$r->EnId][18] = $r->MaxTargetFace;
 		$Archers[$r->IndEvent][$r->EnId][19] = date('d/m/Y', strtotime($COMP->ToWhenFrom));
-		$Archers[$r->IndEvent][$r->EnId][20] = $COMP->ToWhere;
+		$Archers[$r->IndEvent][$r->EnId][20] = str_replace(["\n","\r"], ' / ', trim($COMP->ToWhere));
 		$Archers[$r->IndEvent][$r->EnId][21] = $r->QuClRank;
 		$Archers[$r->IndEvent][$r->EnId][22] = $r->QuD1Score ? $r->QuD1Score : '';
 		$Archers[$r->IndEvent][$r->EnId][23] = $r->QuD2Score ? $r->QuD2Score : '';
@@ -194,7 +229,7 @@ if(!empty($_REQUEST['lev'])) {
 	$FileToSend=implode("\r\n", $File); // Windows end of line
 
 	header('Content-Type: application/octet-stream');
-	header('Content-Disposition: attachment; filename='.$COMP->ToCode.'.txt');
+	header('Content-Disposition: attachment; filename=A'.$Discipline.$COMP->ToCommitee.'.txt');
 	header('Expires: 0');
 	header('Cache-Control: must-revalidate');
 	header('Pragma: public');
@@ -284,11 +319,14 @@ echo '<tr>
 	<th>'.get_text('TourLevel', 'Tournament').'</th>
 	<td><select onchange="location.href=\'?lev=\'+this.value">
 		<option value="">--</option>
-		<option value="N">National</option>
+		<option value="S">Sélectif</option>
+		<option value="SP">Sélectif Para</option>
 		<option value="R">Régional</option>
 		<option value="D">Départemental</option>
-		<option value="C">Club</option>
-		<option value="I">International</option>
+		<option value="N">National</option>
+		<option value="E">Europe</option>
+		<option value="M">Monde</option>
+		<option value="O">Jeux Olympiques</option>
 		</select></td>
 	</tr>';
 echo '</table>';

@@ -129,23 +129,31 @@
 		 *  Tiro fuori le qualifiche, le posizioni finali e le eliminatorie (se ci sono)
 		 */
 			$q="SELECT EnId,EnCode, EnSex, EnNameOrder, upper(EnIocCode) EnIocCode, EnName AS Name, EnFirstName AS FirstName, upper(EnFirstName) AS FirstNameUpper, CoId, CoCode, CoName, if(CoNameComplete>'', CoNameComplete, CoName) as CoNameComplete,
-					EvCode,EvEventName,EvProgr,EvElimType, ifnull(EdExtra, EnCode) as LocalBib, EnDob,
+					EvCode,EvEventName,EvProgr,EvElimType, ifnull(EdExtra, EnCode) as LocalBib, EnDob, coalesce(StopPhase, 0) as StopPhase,
 					EvFinalPrintHead as PrintHeader, CoMaCode, CoCaCode,
 					EvFinalFirstPhase,	EvNumQualified, EvFirstQualified, EvElim1, 	EvElim2,EvMatchMode, EvMedals, EvCodeParent, 
 					IndRank as QualRank, ".($StraightRank ? "IndRankFinal" : "IF(EvShootOff+EvE1ShootOff+EvE2ShootOff=0, IndRank, IndRankFinal)")." as FinalRank, QuScore AS QualScore, 
 					e1.ElRank AS E1Rank,e1.ElScore AS E1Score,
 					e2.ElRank AS E2Rank,e2.ElScore AS E2Score,
 					IndTimestamp,IndTimestampFinal,
+					QuTieWeightDecoded, QuTieBreak,
 					ifnull(concat(DV2.DvMajVersion, '.', DV2.DvMinVersion) ,concat(DV1.DvMajVersion, '.', DV1.DvMinVersion)) as DocVersion,
 					date_format(ifnull(DV2.DvPrintDateTime, DV1.DvPrintDateTime), '%e %b %Y %H:%i UTC') as DocVersionDate,
 					ifnull(DV2.DvNotes, DV1.DvNotes) as DocNotes, EvOdfCode, EvOdfGender,
 					i1.IrmId as IrmId, i1.IrmType as IrmType, i1.IrmShowRank as ShowRank, i2.IrmId as IrmIdQual, i2.IrmType as IrmTypeQual, i2.IrmShowRank as ShowRankQual, i2.IrmHideDetails as HideDetails
 				FROM Tournament
+				INNER JOIN Events ON EvTeamEvent=0 AND EvTournament=ToId
 				INNER JOIN Entries ON ToId=EnTournament
-				INNER JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament AND EnTournament={$this->tournament}
+				left JOIN Countries ON CoId=
+				    case EvTeamCreationMode 
+				        when 0 then EnCountry
+				        when 1 then EnCountry2
+				        when 2 then EnCountry3
+				        else EnCountry
+                    end
+                    AND EnTournament=CoTournament AND EnTournament={$this->tournament}
 				INNER JOIN Qualifications ON EnId=QuId
-				INNER JOIN Individuals ON EnTournament=IndTournament AND EnId=IndId
-				INNER JOIN Events ON EvCode=IndEvent AND EvTeamEvent=0 AND EvTournament=IndTournament
+				INNER JOIN Individuals ON EvCode=IndEvent AND EnTournament=IndTournament AND EnId=IndId
 				INNER JOIN IrmTypes i1 ON i1.IrmId=IndIrmTypeFinal
 				INNER JOIN IrmTypes i2 ON i2.IrmId=IndIrmType
 				LEFT JOIN DocumentVersions DV1 on EvTournament=DV1.DvTournament AND DV1.DvFile = 'R-IND' and DV1.DvEvent=''
@@ -153,6 +161,7 @@
 				LEFT JOIN Eliminations AS e1 ON IndId=e1.ElId AND IndTournament=e1.ElTournament AND IndEvent=e1.ElEventCode AND e1.ElElimPhase=0
 				LEFT JOIN Eliminations AS e2 ON IndId=e2.ElId AND IndTournament=e2.ElTournament AND IndEvent=e2.ElEventCode AND e2.ElElimPhase=1
 				left join ExtraData on EdId=EnId and EdType='Z'
+				left join (select EvCodeParent as CodeParent, ceil(EvNumQualified/2) as StopPhase from Events where EvTeamEvent=0 and EvTournament={$this->tournament} and EvCodeParentWinnerBranch=1) as e2 on CodeParent=EvCode
 				WHERE
 					EnAthlete=1 AND EnIndFEvent=1 AND EnStatus <= 1  AND (QuScore != 0 OR IndRankFinal != 0) AND ToId = {$this->tournament}
 					{$filter}
@@ -211,6 +220,7 @@
 //							'class' => get_text('Class'),
 //							'ageclass' => get_text('AgeCl'),
 //							'subclass' => get_text('SubCl','Tournament'),
+							'total' => get_text('TotaleScore'),
 							'countryCode' => '',
 							'countryName' => get_text('Country'),
 							'countryIocCode'=>'',
@@ -229,7 +239,7 @@
 						);
 
 						foreach($phases as $k => $v) {
-							if($v<=valueFirstPhase($myRow->EvFinalFirstPhase)) {
+							if($v<=valueFirstPhase($myRow->EvFinalFirstPhase) and (!$myRow->StopPhase or $v>$myRow->StopPhase)) {
 								$fields['finals'][$v]=get_text(namePhase($myRow->EvFinalFirstPhase,$v)  . "_Phase");
 							}
 						}
@@ -266,7 +276,8 @@
 								'medals' => $myRow->EvMedals,
 								'version' => $myRow->DocVersion,
 								'versionDate' => $myRow->DocVersionDate,
-								'versionNotes' => $myRow->DocNotes
+								'versionNotes' => $myRow->DocNotes,
+								'stopPhase' => $myRow->StopPhase,
 								),
 							'items'=>array()
 						);
@@ -311,7 +322,9 @@
 						'countryName' => $myRow->CoName,
 						'countryNameLong' => $myRow->CoNameComplete,
 						'qualScore'=>$myRow->HideDetails ? '' : $myRow->QualScore,
-						'qualRank'=>$myRow->HideDetails ? '' : ($myRow->ShowRankQual ? $myRow->QualRank : $myRow->IrmTypeQual),
+						'qualTie'=>$myRow->QuTieBreak,
+                        'qualDecoded'=>$myRow->QuTieWeightDecoded,
+                        'qualRank'=>$myRow->HideDetails ? '' : ($myRow->ShowRankQual ? $myRow->QualRank : $myRow->IrmTypeQual),
 						'rank'=>$Rank,
 						'preseed'=>(($Saved=SavedInPhase($myRow->EvFinalFirstPhase)) and $myRow->QualRank<=$Saved) ? '1' : '',
 						'irm'=>$myRow->IrmId,

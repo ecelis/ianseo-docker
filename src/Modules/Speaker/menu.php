@@ -25,5 +25,10 @@ if ($on and !defined('hideSpeaker') AND $acl[AclSpeaker] >= AclReadOnly) {
 		$ret['FINT'][] = MENU_DIVIDER;
 		$ret['FINT'][] = get_text('MenuLM_Speaker') . '|' . $CFG->ROOT_DIR.'Modules/Speaker/index.php';
 	}
+
+	if(!empty($_SESSION['MenuRobinOn']) and isset($ret['ROBIN'])) {
+		$ret['ROBIN'][] = MENU_DIVIDER;
+		$ret['ROBIN'][] = get_text('MenuLM_Speaker') . '|' . $CFG->ROOT_DIR.'Modules/Speaker/robin.php';
+	}
 }
 

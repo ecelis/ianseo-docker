@@ -4,7 +4,6 @@
 .Speaker th {border:1px solid white;}
 .Speaker .Title {font-size:100%; background-color:navy; color: white; }
 
-
 .Tabella .name
 {
 	font-weight: bold;
@@ -26,7 +25,7 @@
 .Tabella .big
 {
 	font-weight: bold;
-	font-size: 14px;
+	font-size: 14px!important;
 }
 
 .Tabella .read-row

@@ -54,6 +54,9 @@ if($Side!=-1) {
 }
 
 $JSON['Error']=false;
-EvaluateMatch($EvCode, $EvType, $MatchL, $TourId, false);
+$q= safe_r_SQL("SELECT CONCAT(({$Pre}Arrowstring),({$Pre}Tiebreak)) as arrNo from ".($EvType ? 'Team' : '')."Finals WHERE trim({$Pre}Tiebreak)!='' AND {$Pre}Tournament={$TourId} and {$Pre}Event='{$EvCode}' and {$Pre}Matchno={$MatchClosest}");
+if($r=safe_fetch($q)) {
+    EvaluateMatch($EvCode, $EvType, $MatchClosest, $TourId, false, '', strlen(trim($r->arrNo))-1,strlen(trim($r->arrNo))-1);
+}
 
 SendResult($JSON);

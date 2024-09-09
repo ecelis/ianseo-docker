@@ -25,9 +25,9 @@ while($r=safe_fetch($q)) {
 
 $AvTargets=array();
 $SelTargets='<option value="">---</option>';
-$q=safe_r_sql("select * from Targets order by TarOrder");
+$q=safe_r_sql("select * from Targets order by TarOrder, TarId");
 while($r=safe_fetch($q)) {
-    $AvTargets[$r->TarId]= get_text($r->TarDescr);
+    $AvTargets[]= $r->TarId.'|'.get_text($r->TarDescr);
     $SelTargets.='<option value="'.$r->TarId.'">'.get_text($r->TarDescr).'</option>';
 }
 
@@ -60,6 +60,7 @@ $PAGE_TITLE=get_text('MenuLM_Targets');
 
 $JS_SCRIPT = array(
     '<script type="text/javascript" src="./Fun_AJAX_ManTargets.js"></script>',
+    '<script type="text/javascript" src="../Common/js/Fun_JS.inc.js"></script>',
     phpVars2js(array(
     	'StrConfirm' =>get_text('MsgAreYouSure'),
     	'CannotDelete' =>get_text('CannotDelete','Tournament'),

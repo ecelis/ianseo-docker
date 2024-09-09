@@ -1,4 +1,6 @@
 <?php
+$lang['AllFieldsMandatory']='Tous les champs sont obligatoires';
+$lang['Anomalies']='Anomalies';
 $lang['DirectoryNotWriteable']='Pas d\'écriture possible par le serveur web dans le répetoire $a . Veuillez modifier les permissions afin qu\'il soit inscriptible par tous.';
 $lang['ErrCodeExists']='Le code existe déjà!';
 $lang['ErrCommitteeError']='Code comité ou description invalide';

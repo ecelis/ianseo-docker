@@ -231,11 +231,11 @@ function getStartList($ORIS='', $Event='', $Elim=false, $Filled=false, $isPool=f
 		$Data->Description=get_text('StartlistSession','Tournament');
 	}
 
-	$RsTour=safe_r_sql("SELECT (ToElabTeam!=0) as BisTarget, ToNumEnds AS TtNumEnds, (select max(RankRanking) as IsRanked from Rankings where RankTournament={$_SESSION['TourId']}) as IsRanked
+	$RsTour=safe_r_sql("SELECT (ToCategory&12 != 0) as BisTarget, ToNumEnds AS TtNumEnds, (select max(RankRanking) as IsRanked from Rankings where RankTournament={$_SESSION['TourId']}) as IsRanked
 		FROM Tournament
 		WHERE ToId=" . StrSafe_DB($_SESSION['TourId']));
 	if ($r=safe_fetch($RsTour)) {
-		$Data->BisTarget = $r->BisTarget;
+		$Data->BisTarget = ($r->BisTarget>0);
 		$Data->NumEnd = $r->TtNumEnds;
 		$Data->IsRanked = $r->IsRanked;
 	}
@@ -267,7 +267,7 @@ function getStartList($ORIS='', $Event='', $Elim=false, $Filled=false, $isPool=f
 		}
 	}
 
-	$MyQuery = getStartListQuery($ORIS, $Event, $Elim, $Filled, $isPool, $BySchedule,$Data->BisTarget,$Data->NumEnd);
+	$MyQuery = getStartListQuery($ORIS, $Event, $Elim, $Filled, $isPool, $BySchedule, $Data->BisTarget, $Data->NumEnd);
 
 	//echo $MyQuery;exit;
 	$Rs=safe_r_sql($MyQuery);
@@ -405,7 +405,7 @@ function getRunStartListSession($ORIS='', $Event='', $Type='') {
 		$Data->NumEnd = 0;
 	}
 
-	$RsTour=safe_r_sql("SELECT (ToElabTeam!=0) as BisTarget, ToNumEnds AS TtNumEnds, (select max(RankRanking) as IsRanked from Rankings where RankTournament={$_SESSION['TourId']}) as IsRanked
+	$RsTour=safe_r_sql("SELECT (ToCategory&12!=0) as BisTarget, ToNumEnds AS TtNumEnds, (select max(RankRanking) as IsRanked from Rankings where RankTournament={$_SESSION['TourId']}) as IsRanked
 		FROM Tournament
 		WHERE ToId=" . StrSafe_DB($_SESSION['TourId']));
 	if ($r=safe_fetch($RsTour)) {
@@ -556,7 +556,7 @@ function getRunEntries($ORIS='', $Event='', $Type='') {
 		$Data->NumEnd = 0;
 	}
 
-	$RsTour=safe_r_sql("SELECT (ToElabTeam!=0) as BisTarget, ToNumEnds AS TtNumEnds, (select max(RankRanking) as IsRanked from Rankings where RankTournament={$_SESSION['TourId']}) as IsRanked
+	$RsTour=safe_r_sql("SELECT (ToCategory&12!=0) as BisTarget, ToNumEnds AS TtNumEnds, (select max(RankRanking) as IsRanked from Rankings where RankTournament={$_SESSION['TourId']}) as IsRanked
 		FROM Tournament
 		WHERE ToId=" . StrSafe_DB($_SESSION['TourId']));
 	if ($r=safe_fetch($RsTour)) {
@@ -575,7 +575,11 @@ function getRunEntries($ORIS='', $Event='', $Type='') {
 	$Data->Legend = [];
 	$Data->Timestamp = '';
 	while ($MyRow=safe_fetch($Rs)) {
-		$MyRow->ItemKey= transliterator_transliterate('Any-Latin; Latin-ASCII; [\u0100-\u7fff] remove', $MyRow->ItemKey);
+		if(function_exists('transliterator_transliterate')) {
+			$MyRow->ItemKey= transliterator_transliterate('Any-Latin; Latin-ASCII; [\u0100-\u7fff] remove', $MyRow->ItemKey);
+		} else {
+			$MyRow->ItemKey= iconv('UTF-8','ASCII//TRANSLIT', $MyRow->ItemKey);
+		}
 		if(!empty($MyRow->Legend)) {
 			foreach(explode('|', $MyRow->Legend) as $l) {
 				if(!in_array($l, $Data->Legend)) {
@@ -939,7 +943,7 @@ function getStartListByCountries($ORIS=false, $Athletes=false, $orderByName=fals
 	);
 
 
-	$RsTour=safe_r_sql("SELECT (ToElabTeam!=0) as BisTarget, ToNumEnds AS TtNumEnds, (select max(RankRanking) as IsRanked from Rankings where RankTournament={$_SESSION['TourId']}) as IsRanked
+	$RsTour=safe_r_sql("SELECT (ToCategory&12!=0) as BisTarget, ToNumEnds AS TtNumEnds, (select max(RankRanking) as IsRanked from Rankings where RankTournament={$_SESSION['TourId']}) as IsRanked
 		FROM Tournament
 		WHERE ToId=" . StrSafe_DB($_SESSION['TourId']));
 	if ($r=safe_fetch($RsTour)) {
@@ -1223,7 +1227,7 @@ function getStartListAlphabetical($ORIS='') {
 		'TargetFace' => get_text('TargetType'),
 		);
 
-	$RsTour=safe_r_sql("SELECT (ToElabTeam!=0) as BisTarget, ToNumEnds AS TtNumEnds, (select max(RankRanking) as IsRanked from Rankings where RankTournament={$_SESSION['TourId']}) as IsRanked
+	$RsTour=safe_r_sql("SELECT (ToCategory&12!=0) as BisTarget, ToNumEnds AS TtNumEnds, (select max(RankRanking) as IsRanked from Rankings where RankTournament={$_SESSION['TourId']}) as IsRanked
 		FROM Tournament
 		WHERE ToId=" . StrSafe_DB($_SESSION['TourId']));
 	if ($r=safe_fetch($RsTour)) {
@@ -1313,7 +1317,7 @@ function getStartListCategory($ORIS=false, $orderByTeam=0, $Events=array()) {
 
 	$Data->BisTarget = false;
 	$Data->NumEnd = 0;
-	$RsTour=safe_r_sql("SELECT (ToElabTeam!=0) as BisTarget, ToNumEnds AS TtNumEnds, (select max(RankRanking) as IsRanked from Rankings where RankTournament={$_SESSION['TourId']}) as IsRanked
+	$RsTour=safe_r_sql("SELECT (ToCategory&12!=0) as BisTarget, ToNumEnds AS TtNumEnds, (select max(RankRanking) as IsRanked from Rankings where RankTournament={$_SESSION['TourId']}) as IsRanked
 		FROM Tournament
 		WHERE ToId=" . StrSafe_DB($_SESSION['TourId']));
 	if ($r=safe_fetch($RsTour)) {
@@ -1564,6 +1568,15 @@ function getRobin($options=[], $ORIS=false) {
 	$rank=Obj_RankFactory::create('Robin', $options);
 	$rank->read();
 	$Data->rankData=$rank->getData();
+
+	if(!empty($options['includeTeamRank'])) {
+		if($options['events']??'') {
+			$options['eventsR']=$options['events'];
+		}
+		$rank=Obj_RankFactory::create('FinalTeam',$options);
+		$rank->read();
+		$Data->rankData['TeamsFinalRank']=$rank->getData();
+	}
 
 	return $Data;
 }
@@ -1816,6 +1829,9 @@ function getTeamsComponentsLog($Event = '', $TeamId = 0) {
     $Data->Description=get_text('TeamComponentsLog', 'Tournament');
     $Data->Phase=get_text('TeamComponentsLog', 'Tournament');
     $Data->IndexName=get_text('TeamComponentsLog', 'Tournament');
+    $Data->GenderShortM=get_text('ShortMale', 'Tournament');
+    $Data->GenderShortF=get_text('ShortFemale', 'Tournament');
+
     $options=array();
     if($Event) {
         $options['events'] = $Event;
@@ -2041,8 +2057,10 @@ function getMedalStand($ORIS=false, $TourId=0) {
 						$CountryList[$item['countryCode']]->Name = $item['countryName'];
 						$colTots[$item['countryCode']]=0;
 					}
-					$CountryList[$item['countryCode']]->I[$item['rank']]++;
-					$CountryList[$item['countryCode']]->U[$item['rank']]++;
+                    if(is_numeric($item['rank'])) {
+                        $CountryList[$item['countryCode']]->I[$item['rank']]++;
+                        $CountryList[$item['countryCode']]->U[$item['rank']]++;
+                    }
 
 					$colTots[$item['countryCode']]++;
 					$colRank[$item['countryCode']] = 0;

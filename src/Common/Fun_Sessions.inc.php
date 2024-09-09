@@ -13,15 +13,13 @@ require_once('Common/Fun_Phases.inc.php');
  *
  * @return mixed[]
  */
-function GetSessionsTypes()
-	{
-		return array
-		(
-			'Q'=>get_text('QualRound'),
-			'E'=>get_text('Elimination'),
-			'F'=>get_text('MenuLM_Final Rounds')
-		);
-	}
+function GetSessionsTypes(){
+	return array(
+		'Q'=>get_text('QualRound'),
+		'E'=>get_text('Elimination'),
+		'F'=>get_text('MenuLM_Final Rounds')
+	);
+}
 
 /**
  * GetSessions().

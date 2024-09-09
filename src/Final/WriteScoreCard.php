@@ -48,8 +48,10 @@
 			. '<option value="2">' . get_text('Review') . '</option>' . "\n"
 		. '</select>' . "\n";
 
-
-	$JS_SCRIPT=array(phpVars2js(array(
+	$IncludeJquery = true;
+	$JS_SCRIPT=array(
+		phpVars2js(
+			array(
 	            "WebDir" => $CFG->ROOT_DIR,
                 'TeamEvent' => $TeamEvent,
                 'ElimPool' => $ElimPool,
@@ -57,13 +59,13 @@
 		        'MoveWinner2PoolA' => get_text('MoveWinner2PoolA','Tournament'),
 		        'MoveWinner2PoolB' => get_text('MoveWinner2PoolB','Tournament'),
 		        'Select' => get_text('Select','Tournament'),
-                )),
-			'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
-			'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
-			'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
-			'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Final/Fun_AJAX.js"></script>',
-			'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Final/Fun_AJAX_WriteScoreCard.js"></script>',
-			'<style>.hidden {display:none;}</style>'
+			)
+		),
+		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
+		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
+		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Final/Fun_AJAX.js"></script>',
+		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Final/Fun_AJAX_WriteScoreCard.js"></script>',
+		'<style>.hidden {display:none;}</style>'
 	);
 
 	$PAGE_TITLE=get_text($TeamEvent ? 'TeamFinal':'IndFinal');

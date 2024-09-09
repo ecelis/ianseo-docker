@@ -81,8 +81,7 @@ foreach($_REQUEST['confirm'] as $Matchno => $Start) {
 	}
 
 	$JSON['error']=0;
-
-	runJack("FinConfirmEnd", $_SESSION['TourId'], array("Event"=>$Event , "Team"=>$Team, "MatchNo"=>min($m), "TourId"=>$_SESSION['TourId']));
+	runJack("FinConfirmEnd", $_SESSION['TourId'], array("Event"=>$Event , "Team"=>$Team, "MatchNo"=>min($m), "Side"=>($Matchno%2), "TourId"=>$_SESSION['TourId']));
 }
 
 // put here as a fallback

@@ -1,7 +1,8 @@
 <?php
 
 $pdf->SetDataHeader($PdfData->Header, $PdfData->HeaderWidth);
-$pdf->setPhase('Competition Officials');
+$pdf->setPhase('');
+$pdf->setEvent($PdfData->Description);
 
 $Version='';
 if($PdfData->DocVersion) {

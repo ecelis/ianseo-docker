@@ -7,6 +7,10 @@ require_once('Tournament/Fun_Tournament.local.inc.php');
 require_once('Common/Fun_ScriptsOnNewTour.inc.php');
 require_once('Common/Fun_Various.inc.php');
 
+if(file_exists($CFG->DOCUMENT_PATH.'Api/ISK-NG/config_defines.php')) {
+    include_once($CFG->DOCUMENT_PATH.'Api/ISK-NG/config_defines.php');
+}
+
 checkACL(AclCompetition, AclReadWrite);
 
 if (!isset($_REQUEST['New']) && !CheckTourSession(true)) {
@@ -117,7 +121,7 @@ if (isset($_REQUEST['Command'])) {
                         . StrSafe_DB(sprintf("%04d-%02d-%02d", intval($_REQUEST['xx_ToWhenToYear']), intval($_REQUEST['xx_ToWhenToMonth']), intval($_REQUEST['xx_ToWhenToDay']))) . ","
                         . StrSafe_DB($_REQUEST['xx_ToCurrency']) . ","
                         . StrSafe_DB($_REQUEST['xx_ToPrintLang']) . ","
-                        . StrSafe_DB($_REQUEST['xx_ToPrintChars']) . ","
+                        . StrSafe_DB($_REQUEST['xx_ToPrintChars']??0) . ","
                         . StrSafe_DB(intval($_REQUEST['xx_ToPaperSize'])) . ","
                         . StrSafe_DB(intval($_REQUEST['xx_ToUseHHT'])) . ","
                         . StrSafe_DB(GetParameter('DBUpdate')) . ","
@@ -138,10 +142,10 @@ if (isset($_REQUEST['Command'])) {
                         ToWhere = " . StrSafe_DB(stripslashes($_REQUEST['d_ToWhere'])) . ",
                         ToTimeZone = " . StrSafe_DB(stripslashes($_REQUEST['d_ToTimeZone'])) . ",
                         ToWhenFrom = " . StrSafe_DB(sprintf("%04d-%02d-%02d", intval($_REQUEST['xx_ToWhenFromYear']), intval($_REQUEST['xx_ToWhenFromMonth']), intval($_REQUEST['xx_ToWhenFromDay']))) . ",
-                        ToWhenTo = " . StrSafe_DB(sprintf("%04d-%02d-%02d", intval($_REQUEST['xx_ToWhenToYear']), intval($_REQUEST['xx_ToWhenToMonth']), intval($_REQUEST['xx_ToWhenToDay']))) . " " . ",
-                        ToCurrency = " . StrSafe_DB($_REQUEST['xx_ToCurrency']) . " " . ",
-                        ToPrintLang = " . StrSafe_DB($_REQUEST['xx_ToPrintLang']) . " " . ",
-                        ToPrintChars = " . StrSafe_DB($_REQUEST['xx_ToPrintChars']) . " " . ",
+                        ToWhenTo = " . StrSafe_DB(sprintf("%04d-%02d-%02d", intval($_REQUEST['xx_ToWhenToYear']), intval($_REQUEST['xx_ToWhenToMonth']), intval($_REQUEST['xx_ToWhenToDay']))) .  ",
+                        ToCurrency = " . StrSafe_DB($_REQUEST['xx_ToCurrency']) .  ",
+                        ToPrintLang = " . StrSafe_DB($_REQUEST['xx_ToPrintLang']) .  ",
+                        ToPrintChars = " . StrSafe_DB($_REQUEST['xx_ToPrintChars']??0) . ",
                         ToPrintPaper = " . intval($_REQUEST['xx_ToPaperSize']) . ",
                         ToUseHHT = " . intval($_REQUEST['xx_ToUseHHT']) . ", 
                         ToDbVersion = " .  StrSafe_DB(GetParameter('DBUpdate')) . ", 
@@ -149,11 +153,14 @@ if (isset($_REQUEST['Command'])) {
                         ToLocRule=" . StrSafe_DB($_REQUEST['d_Rule']) . ", 
                         ToIsORIS=" . StrSafe_DB(!empty($_REQUEST['d_ORIS'])) . ", 
                         ToVenue=" . StrSafe_DB(trim($_REQUEST['d_ToVenue'])) . ", 
-                        ToCountry=" . StrSafe_DB(trim($_REQUEST['d_ToCountry'])) . "";
+                        ToCountry=" . StrSafe_DB(trim($_REQUEST['d_ToCountry']));
                     $Rs=safe_w_sql($Insert);
                     $RowId = safe_w_last_id();
                     set_qual_session_flags();
                     $_SESSION['ISORIS']=!empty($_REQUEST['d_ORIS']);
+                    // need those in the class creation engine!
+                    $_SESSION['TourRealWhenFrom']=sprintf("%04d-%02d-%02d", intval($_REQUEST['xx_ToWhenFromYear']), intval($_REQUEST['xx_ToWhenFromMonth']), intval($_REQUEST['xx_ToWhenFromDay']));
+                    $_SESSION['TourRealWhenTo']=sprintf("%04d-%02d-%02d", intval($_REQUEST['xx_ToWhenToYear']), intval($_REQUEST['xx_ToWhenToMonth']), intval($_REQUEST['xx_ToWhenToDay']));
 
 
                     //print $Insert;exit;
@@ -248,17 +255,45 @@ if (isset($_REQUEST['Command'])) {
                                             continue 2;
                                         }
                                         break;
-                                    case ($Module=='ISK-NG' and $Parameter=='LicenseNumber'):
-                                        // MUST have a licence to work
-                                        if(isset($_REQUEST['Module']['ISK']['Mode']) and $_REQUEST['Module']['ISK']['Mode']=='ng-pro' and !trim($Value)) {
-                                            $_REQUEST['Module']['ISK']['Mode']='ng-lite';
-                                            setModuleParameter('ISK', 'mode', 'ng-lite');
-                                            delModuleParameter('ISK-NG', 'LicenseNumber');
-                                            continue 2;
+                                    case ($Module=='ISK-NG'):
+                                        // check the URL has the $CFG->ROOT_DIR appended
+                                        if($Parameter=='ServerUrl') {
+                                            if(substr($Value,-1)!='/') {
+                                                $Value.='/';
+                                            }
+                                            if(substr($Value, 0, 4)!='http') {
+                                                $Value= "http://".$Value;
+                                            }
+                                            if(substr($Value, -1*strlen($CFG->ROOT_DIR))!=$CFG->ROOT_DIR) {
+                                                $result = parse_url($Value);
+                                                $Value= $result['scheme']."://".$result['host'].$CFG->ROOT_DIR;
+                                            }
+                                        } elseif($Parameter=='LicenseNumber') {
+                                            // MUST have a licence to work
+                                            if(isset($_REQUEST['Module']['ISK-NG']['Mode']) and $_REQUEST['Module']['ISK-NG']['Mode']=='ng-pro' and !trim($Value)) {
+                                                $_REQUEST['Module']['ISK-NG']['Mode']='ng-lite';
+                                                setModuleParameter('ISK-NG', 'mode', 'ng-lite');
+                                                delModuleParameter('ISK-NG', 'LicenseNumber');
+                                                continue 2;
+                                            }
                                         }
                                         break;
                                 }
                                 setModuleParameter($Module, $Parameter, $Value);
+                            }
+                        }
+                        if($UseAPI!=($_SESSION['UseApi']??0)) {
+                            // there has been a change in API, so we reset spurious settings
+                            switch($UseAPI) {
+                                case 11:
+                                    resetModuleParameters('ISK-NG', ['ServerUrl', 'ServerUrlPin', 'Grouping']);
+                                    break;
+                                case 12:
+                                    resetModuleParameters('ISK-NG', ['ServerUrl', 'ServerUrlPin', 'LicenseNumber', 'Grouping', 'UsePersonalDevices']);
+                                    break;
+                                case 13:
+                                    resetModuleParameters('ISK-NG', ['SocketIP', 'SocketPort', 'Grouping', 'UsePersonalDevices']);
+                                    break;
                             }
                         }
                         Set_Tournament_Option('UseApi', $UseAPI);
@@ -286,41 +321,46 @@ if (isset($_REQUEST['Command'])) {
     }
 }
 
+// nuova procedura
 
-	// nuova procedura
+$JS_SCRIPT[] = phpVars2js([
+        'TxtSelectLocalRule' => get_text('Setup-Select','Install'),
+        'ToTypes' => SubruleEncode($SetTypes),
+        'isNew' => isset($_REQUEST['New']),
+        'IskResetAlert' => get_text('IskResetAlert','Api'),
+    ]);
+$JS_SCRIPT[] = '<script type="text/javascript" src="Fun_Index.js"></script>';
+$JS_SCRIPT[] = '<style>.TextInput {width:40rem;box-sizing: border-box;}</style>';
 
-    $JS_SCRIPT[] = '<script>var TxtSelectLocalRule = "'.get_text('Setup-Select','Install').'"; var ToTypes = '.json_encode(SubruleEncode($SetTypes)) . ';</script>';
-    $JS_SCRIPT[] = '<script>var isNew='. (isset($_REQUEST['New']) ? 'true':'false').';</script>';
-    $JS_SCRIPT[] = '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.6.0.min.js"></script>';
-	$JS_SCRIPT[] = '<script type="text/javascript" src="Fun_Index.js"></script>';
-	$JS_SCRIPT[] = '<style>.TextInput {width:40rem;box-sizing: border-box;}</style>';
+$PAGE_TITLE=get_text('TourMainInfo', 'Tournament');
+$IncludeJquery = true;
 
-	$PAGE_TITLE=get_text('TourMainInfo', 'Tournament');
+include('Common/Templates/head.php');
 
-	include('Common/Templates/head.php');
-
-	$Rs = null;
-	$MyRow = null;
-	if (!isset($_REQUEST['New'])) {
-        $Select = "SELECT *, 
-		        DATE_FORMAT(ToWhenFrom,'" . get_text('DateFmtDB') . "') AS DtFrom,
-		        DATE_FORMAT(ToWhenTo,'" . get_text('DateFmtDB') . "') AS DtTo, 
-			    DATE_FORMAT(ToWhenFrom,'%d') AS DtFromDay,
-			    DATE_FORMAT(ToWhenFrom,'%m') AS DtFromMonth,
-			    DATE_FORMAT(ToWhenFrom,'%Y') AS DtFromYear, 
-			    DATE_FORMAT(ToWhenTo,'%d') AS DtToDay,
-			    DATE_FORMAT(ToWhenTo,'%m') AS DtToMonth,
-			    DATE_FORMAT(ToWhenTo,'%Y') AS DtToYear, 
-			    ToTypeName AS TtName,
-			    ToNumDist AS TtNumDist
-			FROM Tournament
-			WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " ";
-        $Rs = safe_r_sql($Select);
-        if(safe_num_rows($Rs) == 1) {
-            $MyRow = safe_fetch($Rs);
-            if ($MyRow->ToOptions) $MyRow->ToOptions = unserialize($MyRow->ToOptions);
+$Rs = null;
+$MyRow = null;
+if (!isset($_REQUEST['New'])) {
+    $Select = "SELECT *, 
+            DATE_FORMAT(ToWhenFrom,'" . get_text('DateFmtDB') . "') AS DtFrom,
+            DATE_FORMAT(ToWhenTo,'" . get_text('DateFmtDB') . "') AS DtTo, 
+            DATE_FORMAT(ToWhenFrom,'%d') AS DtFromDay,
+            DATE_FORMAT(ToWhenFrom,'%m') AS DtFromMonth,
+            DATE_FORMAT(ToWhenFrom,'%Y') AS DtFromYear, 
+            DATE_FORMAT(ToWhenTo,'%d') AS DtToDay,
+            DATE_FORMAT(ToWhenTo,'%m') AS DtToMonth,
+            DATE_FORMAT(ToWhenTo,'%Y') AS DtToYear, 
+            ToTypeName AS TtName,
+            ToNumDist AS TtNumDist
+        FROM Tournament
+        WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " ";
+    $Rs = safe_r_sql($Select);
+    if(safe_num_rows($Rs) == 1) {
+        $MyRow = safe_fetch($Rs);
+        if ($MyRow->ToOptions) {
+            $MyRow->ToOptions = unserialize($MyRow->ToOptions);
         }
     }
+}
 ?>
 <form name="Frm" id="Frm" method="post" action="">
 <input type="hidden" name="Command" id="Command" value="SAVE">
@@ -709,10 +749,10 @@ if(file_exists($CFG->DOCUMENT_PATH.'Api/index.php')) {
     }
     if($IskType) {
 
-	    echo '<tr>
+	    echo '<tbody id="ISK-config"><tr>
             <th class="TitleLeft w-15">'.get_text('ISK-EnableScore','Api').'</th>
                 <td>
-                    <select name="Module[ISK][Mode]" onchange="ChangeIskConfig()" id="IskSelect">
+                    <select name="Module[ISK][Mode]" onchange="ChangeIskConfig(this)" id="IskSelect" oldval="'.$ISKMode.'">
                     <option value="">'.get_text('No').'</option>';
 	    foreach($IskType as $val => $option) {
 	        echo '<option value="'.$val.'"'.($ISKMode==$val ? ' selected="selected"' : '').'>'.$option.'</option>';
@@ -721,7 +761,7 @@ if(file_exists($CFG->DOCUMENT_PATH.'Api/index.php')) {
                 </td>
             </tr>';
 
-	    echo '<tr><th></th><td id="IskConfig"></td></tr>';
+	    echo '<tr><th id="ISK-Messages"></th><td id="IskConfig"></td></tr></tbody>';
     }
 }
 
@@ -741,7 +781,7 @@ if (!isset($_REQUEST['New'])) {
 }
 ?>
 <tr><td colspan="2" class="Center">
-<input type="submit" value="<?php print get_text('CmdSave');?>">&nbsp;&nbsp;
+<input type="submit" value="<?php print get_text('CmdSave');?>" onclick="return CheckIskStatus()">&nbsp;&nbsp;
 <input type="reset" value="<?php print get_text('CmdCancel');?>">
 <br><br>
 <?php
@@ -793,15 +833,24 @@ function GetExistingTournamentTypes() {
 		include($val);
 	}
 
-	uasort($SetType, function($a, $b) {
-	    $WA=get_text('Setup-Default', 'Install');
-	    if($a['descr']==$WA) return -1;
-	    if($b['descr']==$WA) return 1;
+    foreach($SetType as $a=>&$b) {
+        $b['ord']=($a=='default'?'WA':$a);
+    }
+    global $UsedLang;
+    $UsedLang=strtoupper(SelectLanguage());
+    uasort($SetType, function($a, $b) {
+        global $UsedLang;
+	    if($a['ord']=='WA') return -1;
+	    if($b['ord']=='WA') return 1;
+	    if($a['ord']=='PAR') return -1;
+	    if($b['ord']=='PAR') return 1;
+	    if($a['ord']==$UsedLang) return -1;
+	    if($b['ord']==$UsedLang) return 1;
 
 	    return strcmp($a['descr'], $b['descr']);
     });
 
-	return $SetType;
+    return $SetType;
 }
 
 function SubruleEncode($SubTypes) {

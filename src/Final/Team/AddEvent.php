@@ -32,9 +32,16 @@
         JsonOut($JSON);
     }
 
+    $q=safe_r_sql("select ToGoldsChars,ToGolds,ToXNineChars,ToXNine from Tournament where ToId={$_SESSION['TourId']}");
+    $r=safe_fetch($q);
+
     $Insert
-        = "INSERT INTO Events (EvCode,EvIsPara,EvTeamEvent,EvTournament,EvEventName,EvProgr,EvShootOff,EvFinalFirstPhase, EvNumQualified, EvFinalTargetType,EvTargetSize,EvDistance,EvMatchMode) "
+        = "INSERT INTO Events (EvGoldsChars, EvGolds, EvXNineChars, EvXNine, EvCode,EvIsPara,EvTeamEvent,EvTournament,EvEventName,EvProgr,EvShootOff,EvFinalFirstPhase, EvNumQualified, EvFinalTargetType,EvTargetSize,EvDistance,EvMatchMode) "
         . "VALUES("
+        . StrSafe_DB($r->ToGoldsChars) . ","
+        . StrSafe_DB($r->ToGolds) . ","
+        . StrSafe_DB($r->ToXNineChars) . ","
+        . StrSafe_DB($r->ToXNine) . ","
         . StrSafe_DB($_REQUEST['New_EvCode']) . ","
         . (empty($_REQUEST['New_EvIsPara']) ? 0 : 1) . ","
         . StrSafe_DB('1') . ","

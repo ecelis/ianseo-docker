@@ -19,8 +19,8 @@ if(!empty($_REQUEST["updateDiv"])) {
     JsonOut($JSON);
 } else if (empty($_REQUEST['DoExport'])) {
     $PAGE_TITLE=get_text('MenuLM_ExportIndoorWorldSeries', 'Common');
+    $IncludeJquery = true;
     $JS_SCRIPT = array(
-        '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
         '<script type="text/javascript" src="./ExportIWS.js"></script>',
         '<link href="./ExportIWS.css" rel="stylesheet" type="text/css">',
     );

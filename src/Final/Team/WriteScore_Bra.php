@@ -62,6 +62,7 @@ foreach ($_REQUEST as $Key => $Value) {
 			} else {
 				if (!is_numeric($Value) or $Value < 0 or $Value > 2) {
 					$JSON['field_error']=1;
+
 					JsonOut($JSON);
 				}
 				$WinLose=min(1, $Value);
@@ -79,6 +80,13 @@ foreach ($_REQUEST as $Key => $Value) {
 					if($r=safe_fetch($q)) {
 						safe_w_SQL("update TeamFinals set TfSetScore=".($r->TfSetScore+1)." where TfTournament={$_SESSION['TourId']} and TfEvent='$ee' and TfMatchNo=$mm");
 					}
+				} else {
+					// set as max ends in case
+					safe_w_sql("update
+						Events
+						inner join TeamFinals on TfTournament=EvTournament and TfEvent=EvCode and TfMatchNo=$mm
+						set TfSetScore=least(TfSetScore, EvFinEnds)
+						where EvMatchMode=1 and EvTournament={$_SESSION['TourId']} and EvCode='$ee' and EvTeamEvent=1");
 				}
 			}
 			break;
@@ -86,7 +94,7 @@ foreach ($_REQUEST as $Key => $Value) {
 		case 't':
 			// if at Sets Check if the set score is compatible with a SO
 			$Continue=false;
-			$SQL="select EvMatchMode, TfScore, TfSetScore, TfTiebreak, TfTbClosest, GrPhase 
+			$SQL="select EvMatchMode, EvFinalTargetType, TfScore, TfSetScore, TfTiebreak, TfTbClosest, GrPhase 
 					from TeamFinals
 					inner join Events on EvTournament=TfTournament and EvCode=TfEvent and EvTeamEvent=1
 					inner join Grids on GrMatchNo=TfMatchNo
@@ -99,9 +107,9 @@ foreach ($_REQUEST as $Key => $Value) {
 				if(($r2->EvMatchMode and $r1->TfSetScore >= $obj->ends and $r2->TfSetScore >= $obj->ends) or (!$r2->EvMatchMode and $r1->TfScore==$r2->TfScore)) {
 					if($Items[1]=='t') {
 						$ArrowNum = $Items[4];
-						$tiebreak = GetLetterFromPrint($Value);
+						$tiebreak = GetLetterFromPrint($Value, 'T', $r1->EvFinalTargetType);
 						$r2->TfTiebreak = str_pad($r2->TfTiebreak, $ArrowNum + 1, ' ', STR_PAD_RIGHT);
-						$r2->TfTiebreak[$ArrowNum] = GetLetterFromPrint($Value);
+						$r2->TfTiebreak[$ArrowNum] = GetLetterFromPrint($Value, 'T', $r1->EvFinalTargetType);
 						safe_w_sql("UPDATE TeamFinals SET TfTiebreak=" . StrSafe_DB($r2->TfTiebreak) . ", TfDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " WHERE TfTournament={$_SESSION['TourId']} AND TfEvent='$ee' AND TfMatchNo=$mm");
 					}
 

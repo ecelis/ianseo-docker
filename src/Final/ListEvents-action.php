@@ -236,9 +236,16 @@ switch($_REQUEST['act']) {
 			JsonOut($JSON);
 		}
 
+        $q=safe_r_sql("select ToGoldsChars,ToGolds,ToXNineChars,ToXNine from Tournament where ToId={$_SESSION['TourId']}");
+        $r=safe_fetch($q);
+
 		$SQL=[
 			"EvTournament={$_SESSION['TourId']}",
 			"EvTeamEvent=$Team",
+			"EvGoldsChars='$r->ToGoldsChars'",
+			"EvGolds='$r->ToGolds'",
+			"EvXNineChars='$r->ToXNineChars'",
+			"EvXNine='$r->ToXNine'",
 		];
 		$EvEventName=$_REQUEST['EvEventName']??'';
 		if(!$EvEventName) {
@@ -374,6 +381,7 @@ function checkRunPhases($Team, $Event) {
 	// as this function is called only on a change, it is safe to (re)create all rows
 	$SemiPools=0;
 	if($SEMI) {
+        // Assign people to semifinals
 		$SemiPools=ceil($SEMI/10);
 		// elements are position => pool
 		if($SemiPools==2) {
@@ -381,35 +389,13 @@ function checkRunPhases($Team, $Event) {
 		} else {
 			$Serpent=[1=>1, 2=>2, 3=>3, 4=>3, 5=>2, 6=>1, 7=>1, 8=>2, 9=>3, 10=>3, 11=>2, 12=>1, 13=>1, 14=>2, 15=>3, 16=>3, 17=>2, 18=>1, 19=>1, 20=>2, 21=>3, 22=>3, 23=>2, 24=>1, 25=>1, 26=>2, 27=>3, 28=>3, 29=>2, 30=>1,];
 		}
-		// selects the already defined items
-		$t=safe_r_sql("select RarPool, RarFromRank from RunArcheryRank where RarTournament={$_SESSION['TourId']} and RarPhase=2 and RarTeam=$Team and RarEvent=".StrSafe_DB($Event));
-		$Done=[];
-		$SQL=[];
-		while($u=safe_fetch($t)) {
-			if(isset($Serpent[$u->RarFromRank])) {
-				if($u->RarPool!=$Serpent[$u->RarFromRank]) {
-					$SQL[]="update RunArcheryRank set RarPool={$u->RarFromRank} where RarTournament={$_SESSION['TourId']} and RarFromRank=$u->RarFromRank and RarPhase=2 and RarTeam=$Team and RarEvent=".StrSafe_DB($Event);
-					$SQL[]="update RunArchery set RaPool={$u->RarFromRank} where RaTournament={$_SESSION['TourId']} and RaFromRank=$u->RarFromRank and RaPhase=2 and RaTeam=$Team and RaEvent=".StrSafe_DB($Event);
-					$Done[]=$u->RarFromRank;
-				}
-			} else {
-				// we need to remove this record
-				$SQL[]="delete from RunArcheryRank where RarTournament={$_SESSION['TourId']} and RarFromRank=$u->RarFromRank and RarPhase=2 and RarTeam=$Team and RarEvent=".StrSafe_DB($Event);
-				$SQL[]="delete from RunArchery where RaTournament={$_SESSION['TourId']} and RaFromRank=$u->RarFromRank and RaPhase=2 and RaTeam=$Team and RaEvent=".StrSafe_DB($Event);
-			}
-		}
-		// run the updates/deletes
-		foreach($SQL as $sql) {
-			safe_w_sql($sql);
-		}
+        // deletes the semi and finals records
+        safe_w_sql("delete from RunArcheryRank where RarTournament={$_SESSION['TourId']} and RarPhase>0 and RarTeam=$Team and RarEvent=".StrSafe_DB($Event));
 		// now creates the missing records...
 		$MaxInt=4294967295;
 		$ValR=[];
 		$ValL=[];
 		foreach($Serpent as $Pos => $Pool) {
-			if(in_array($Pos, $Done)) {
-				continue;
-			}
 			$ValR[]="({$_SESSION['TourId']}, $MaxInt, $Team, ".StrSafe_DB($Event).", 2, $Pool, $Pos)";
 			for($j=1;$j<=$r->EvFinEnds;$j++) {
 				$ValL[]="({$_SESSION['TourId']}, $MaxInt, $Team, ".StrSafe_DB($Event).", 2, $Pool, $Pos, $j)";
@@ -419,6 +405,7 @@ function checkRunPhases($Team, $Event) {
 		safe_w_sql("insert ignore into RunArcheryRank (RarTournament, RarEntry, RarTeam, RarEvent, RarPhase, RarPool, RarFromRank) values ".implode(',', $ValR));
 		safe_w_sql("insert ignore into RunArchery (RaTournament, RaEntry, RaTeam, RaEvent, RaPhase, RaPool, RaFromRank, RaLap) values ".implode(',', $ValL));
 	}
+
 	if($FINS) {
 		// each element is the rankfrom+(100*poolfrom) => pool
 		switch($SemiPools) {
@@ -455,36 +442,13 @@ function checkRunPhases($Team, $Event) {
 			}
 		}
 
-		// selects the already defined items
-		$t=safe_r_sql("select RarPool, RarFromRank, RarFromType from RunArcheryRank where RarTournament={$_SESSION['TourId']} and RarPhase=1 and RarTeam=$Team and RarEvent=".StrSafe_DB($Event));
-		$Done=[];
-		$SQL=[];
-		while($u=safe_fetch($t)) {
-			$k=$u->RarFromRank+($u->RarFromType*100);
-			if(isset($Serpent[$k])) {
-				if($u->RarPool!=$Serpent[$k]) {
-					$SQL[]="update RunArcheryRank set RarPool={$Serpent[$k]} where RarFromRank=$u->RarFromRank and RarFromType=$u->RarFromType and RarPhase=1 and RarTournament={$_SESSION['TourId']} and RarTeam=$Team and RarEvent=".StrSafe_DB($Event);
-					$SQL[]="update RunArchery set RaPool={$Serpent[$k]} where RaFromRank=$u->RarFromRank and RaFromType=$u->RarFromType and RaPhase=1 and RaTournament={$_SESSION['TourId']} and RaTeam=$Team and RaEvent=".StrSafe_DB($Event);
-					$Done[]=$k;
-				}
-			} else {
-				// we need to remove this record
-				$SQL[]="delete from RunArcheryRank where RarFromRank=$u->RarFromRank and RarFromType=$u->RarFromType and RarPhase=1 and RarTournament={$_SESSION['TourId']} and RarTeam=$Team and RarEvent=".StrSafe_DB($Event);
-				$SQL[]="delete from RunArchery where RaFromRank=$u->RarFromRank and RaFromType=$u->RarFromType and RaPhase=1 and RaTournament={$_SESSION['TourId']} and RaTeam=$Team and RaEvent=".StrSafe_DB($Event);
-			}
-		}
-		// run the updates/deletes
-		foreach($SQL as $sql) {
-			safe_w_sql($sql);
-		}
+        // deletes the old settings
+		safe_w_sql("delete from RunArcheryRank where RarTournament={$_SESSION['TourId']} and RarPhase=1 and RarTeam=$Team and RarEvent=".StrSafe_DB($Event));
 		// now creates the missing records...
 		$MaxInt=4294967295;
 		$ValR=[];
 		$ValL=[];
 		foreach($Serpent as $Pos => $Pool) {
-			if(in_array($Pos, $Done)) {
-				continue;
-			}
 			$TruePos=$Pos%100;
 			$Type=intval($Pos/100);
 			$ValR[]="({$_SESSION['TourId']}, $MaxInt, $Team, ".StrSafe_DB($Event).", 1, $Pool, $TruePos, $Type)";

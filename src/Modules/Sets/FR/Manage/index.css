@@ -1,0 +1,15 @@
+#FillRounds {
+    display:flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+#FillRounds tbody th {
+    text-align:right;
+    white-space:nowrap;
+}
+.tgt {width:5ch;}
+.tabContainer {
+    padding:1em;
+}
+.itemOK {background-color: #aaffaa;}
+.itemKO {background-color: #ffaaaa;}

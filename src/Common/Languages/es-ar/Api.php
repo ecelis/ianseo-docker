@@ -77,8 +77,6 @@ $lang['RasIpAddress']='Dirección IP';
 $lang['RasLastSeen']='Ultima conexión';
 $lang['RaspControl']='Control Raspberry';
 $lang['RaspDevice']='Dispositivo';
-$lang['TVCss3Divider']='Divisor';
-$lang['TVCss3Loser']='Modificación de perdedor';
 $lang['WAToolbox-MissingParams']='Parámetro Faltante';
 $lang['WAToolbox-NoCompCode']='Falta Código de Competencia';
 ?>

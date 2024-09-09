@@ -172,7 +172,7 @@
 			}
 
 			$EnFilter  = (empty($this->opts['enid']) ? '' : " AND EnId=" . intval($this->opts['enid'])) ;
-			$EnFilter .= (empty($this->opts['includeAll']) ? ' and (QuHits>0 or QuScore>0 or IndRank != 0)' : '') ;
+			$EnFilter .= (empty($this->opts['includeAll']) ? ' and (QuHits!=0 or QuScore!=0 or IndRank!=0 or IndIrmType!=0)' : '') ;
 			$EnFilter .= (empty($this->opts['coid']) ? '' : " AND EnCountry=" . intval($this->opts['coid'])) ;
 			$EnFilter .= (empty($this->opts['subclass']) ? '' : " AND EnSubclass=" . StrSafe_DB($this->opts['subclass'])) ;
 			$EnFilter .= (empty($this->opts['country']) ? '' : " AND CoCode=" . StrSafe_DB($this->opts['country'])) ;
@@ -244,7 +244,7 @@
 					QuD1Arrowstring,QuD2Arrowstring,QuD3Arrowstring,QuD4Arrowstring,QuD5Arrowstring,QuD6Arrowstring,QuD7Arrowstring,QuD8Arrowstring,
 					QuScore, QuNotes, QuConfirm, IndNotes, (EvShootOff OR EvE1ShootOff OR EvE2ShootOff) as ShootOffSolved,
 					IF(EvRunning=1,IFNULL(ROUND(QuScore/QuHits,3),0),0) as RunningScore,
-					EvCode,EvEventName,EvRunning, EvFinalFirstPhase, EvElim1, EvElim2, EvIsPara,
+					EvCode,EvEventName,EvRunning, EvFinalFirstPhase, EvElim1, EvElim2, EvIsPara, coalesce(OdfTrOdfCode,'') as OdfUnitCode, EvOdfCode,
 					{$tmp} AS Arrows_Shot,
 					coalesce(RrLevGroups*RrLevGroupArchers, IF(EvElim1=0 && EvElim2=0, EvNumQualified ,IF(EvElim1=0,EvElim2,EvElim1))) as QualifiedNo, EvFirstQualified, EvQualPrintHead as PrintHeader,
 					{$MyRank} AS `Rank`, " . (!empty($comparedTo) ? 'IFNULL(IopRank,0)' : '0') . " as OldRank, Qu{$dd}Score AS Score, Qu{$dd}Gold AS Gold,Qu{$dd}Xnine AS XNine, Qu{$dd}Hits AS Hits, 
@@ -268,20 +268,27 @@
 				$q .= "0 AS OrderScore, 0 AS OrderGold, 0 AS OrderXnine, ";
 			}
 
-			$q .= "IndTimestamp,
+			$q .= "IndTimestamp, IndRankFinal, 
 					IF(EvGolds!='',EvGolds,ToGolds) AS GoldLabel, IF(EvXNine!='',EvXNine,ToXNine) AS XNineLabel,
-					ToDouble, DiEnds, DiArrows,
+					ToDouble, DiEnds, DiArrows, ToGoldsChars as QualGoldChars, ToXNineChars as QualXNineChars,
 					ifnull(concat(DV2.DvMajVersion, '.', DV2.DvMinVersion) ,concat(DV1.DvMajVersion, '.', DV1.DvMinVersion)) as DocVersion,
 					date_format(ifnull(DV2.DvPrintDateTime, DV1.DvPrintDateTime), '%e %b %Y %H:%i UTC') as DocVersionDate,
 					ifnull(DV2.DvNotes, DV1.DvNotes) as DocNotes, hasShootOff
 					{$only4zero}
 				FROM Tournament
 				INNER JOIN Entries ON ToId=EnTournament
-				INNER JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament AND EnTournament={$this->tournament}
+				INNER JOIN Individuals ON IndTournament=ToId AND IndId=EnId
+				INNER JOIN Events ON EvCode=IndEvent AND EvTeamEvent=0 AND EvTournament=ToId
+				left JOIN Countries ON CoId=
+				    case EvTeamCreationMode 
+				        when 0 then EnCountry
+				        when 1 then EnCountry2
+				        when 2 then EnCountry3
+				        else EnCountry
+                    end
+                    AND EnTournament=CoTournament AND EnTournament={$this->tournament}
 				INNER JOIN Qualifications ON EnId=QuId
-				INNER JOIN Individuals ON IndTournament=EnTournament AND EnId=IndId
 				INNER JOIN IrmTypes ON IrmId=IndIrmType
-				INNER JOIN Events ON EvCode=IndEvent AND EvTeamEvent=0 AND EvTournament=EnTournament
 				inner join (
 					select max(QuD5Score) as hasShootOff, IndEvent as SOevent 
 					from Qualifications 
@@ -294,10 +301,13 @@
 				left join ExtraData on EdId=EnId and EdType='Z'
 				LEFT JOIN DocumentVersions DV1 on EvTournament=DV1.DvTournament AND DV1.DvFile = 'QUAL-IND' and DV1.DvEvent=''
 				LEFT JOIN DocumentVersions DV2 on EvTournament=DV2.DvTournament AND DV2.DvFile = 'QUAL-IND' and DV2.DvEvent=EvCode
+				LEFT JOIN  (SELECT OdfTrOdfCode, OdfTrIanseo 
+                    FROM OdfTranslations 
+                    WHERE OdfTrTournament={$this->tournament} and OdfTrInternal='QUAL' and OdfTrType='CODE') OdfUnit on OdfTrIanseo='ALL'  
 				LEFT JOIN TournamentDistances ON ToType=TdType AND TdTournament=ToId AND CONCAT(TRIM(EnDivision),TRIM(EnClass)) LIKE TdClasses
 				left join DistanceInformation on EnTournament=DiTournament and DiSession=1 and DiDistance=1 and DiType='Q' 
 				left join (
-					select DiSession as FdiSession, group_concat(concat_ws('|', DiDistance, DiEnds, DiArrows) order by DiDistance separator ',') as FdiDetails
+					select DiSession as FdiSession, group_concat(concat_ws('|', DiDistance, DiEnds, DiArrows, DiScoringEnds, DiScoringOffset) order by DiDistance separator ',') as FdiDetails
 					from DistanceInformation
 					where DiTournament={$this->tournament} and DiType='Q'
 					group by DiSession
@@ -393,8 +403,10 @@
 						foreach(explode(',',$myRow->FdiDetails) as $d) {
 							$t=explode('|', $d);
 							$FullDistInfo['dist_' . $t[0]]=[
-								'ends'=>$t[1],
-								'arr'=>$t[2],
+								'ends'=>($t[1]??0),
+								'arr'=>($t[2]??0),
+								'toShoot'=>($t[3]??0),
+								'offset'=>($t[4]??0),
 							];
 						}
 
@@ -450,6 +462,7 @@
 						$section=array(
 							'meta' => array(
 								'event' => $curEvent,
+                                'odfUnitcode' => $myRow->OdfUnitCode ? $myRow->EvOdfCode.$myRow->OdfUnitCode : '',
 								'eventRealCode' => $myRow->EvCode,
 								'firstPhase' => $myRow->EvFinalFirstPhase,
 								'elimination1' => $myRow->EvElim1,
@@ -475,6 +488,8 @@
 								'hasShootOff' => '',
 								'distanceInfo'=>$FullDistInfo,
 								'shootOffStarted'=>$myRow->hasShootOff,
+								'qualGoldChars'=>$myRow->QualGoldChars,
+								'qualXNineChars'=>$myRow->QualXNineChars,
 							),
 							'records' => array(),
 						);
@@ -545,6 +560,7 @@
 						'countryName' => $myRow->CoName,
 						'rank' => $myRow->IrmShowRank ? $tmpRank : '',
 						'oldRank' => $myRow->OldRank,
+						'finalRank' => $myRow->IndRankFinal,
 						'rankBeforeSO'=>(isset($myRow->RankBeforeSO) ? $myRow->RankBeforeSO:0),
 						'score' => $Score,
 						'completeScore' => $myRow->Score,

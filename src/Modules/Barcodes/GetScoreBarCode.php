@@ -23,6 +23,7 @@ $ShowMiss=(!empty($_GET['ShowMiss']));
 $D=0;
 $T=0;
 $Turno='';
+$ERROR='';
 
 if($_GET) {
 	if(!empty($_GET['BARCODESEPARATOR'])) {
@@ -30,7 +31,7 @@ if($_GET) {
 		CD_redirect($_SERVER['PHP_SELF']);
 	}
 
-	if(!empty($_GET['T'])) $Turno='&T='.($T=$_GET['T']);
+	if(!empty($_GET['T'])) $Turno='&T='.($T=intval($_GET['T']));
 
 	// try to guess from input field both the distance and the selected archer
 	if(!empty($_GET['B'])) {
@@ -43,17 +44,20 @@ if($_GET) {
 			unset($tmpB[4]);
 		}
 		if(!empty($tmpB[3])) {
-			if(empty($_GET['D'])) $_GET['D']=intval($tmpB[3]);
+			$_GET['D']=intval($tmpB[3]);
 			$EnBib=$tmpB[0];
 		}
 	}
 
-
 	// sets the distance
-	if(!empty($_GET['D'])) $D=intval($_GET['D']);
+	if(!empty($_GET['D'])) {
+		$D=intval($_GET['D']);
+	}
 
 	// sets the autoedit feature
-	if(!empty($_GET['AutoEdit']) and empty($_GET['return']) and empty($_GET['C'])) $_GET['C']='EDIT2';
+	if(!empty($_GET['AutoEdit']) and empty($_GET['return']) and empty($_GET['C'])) {
+		$_GET['C']='EDIT2';
+	}
 	unset($_GET['return']);
 
 	// we can carry on ONLY if a distance is set (explicitly or through the barcode) -- Changed: No Distaxo, so Total!
@@ -62,8 +66,14 @@ if($_GET) {
 		// @STTT (S=Session, T=0-padded target)
 		// #Name/Surname
 		// _GET['target']
-		$archers=getScore($D, $_GET['B']);
-		if($EnBib=='-') {
+		$archers=getScore($D, $_GET['B'], false, $T);
+		if(!is_array($archers)) {
+            $ERROR=get_text('BarCodeSettings', 'Errors');
+            if(!$T) {
+                $ERROR=get_text('BarCodeSession', 'Errors');
+            }
+        }
+        if($EnBib=='-') {
 			$EnBib=key($archers);
 		}
 		// if we have a "C" input (beware of autoedit!) then do the action
@@ -193,8 +203,10 @@ if($_GET) {
 						// distance Rank
 						$Event = '*#*#';
 
-						$Select = "SELECT CONCAT(EnDivision,EnClass) AS MyEvent, EnCountry as MyTeam, EnDivision, EnClass, EnIndClEvent, EnIndFEvent, EnTeamClEvent, EnTeamFEvent+EnTeamMixEvent as AbsTeam
+						$Select = "SELECT CONCAT(EnDivision,EnClass) AS MyEvent, EnCountry as MyTeam, EnDivision, EnClass, EnIndClEvent, EnIndFEvent, EnTeamClEvent, EnTeamFEvent+EnTeamMixEvent as AbsTeam,
+                            ToElabTeam!=127 as MakeTeams
 							FROM Entries
+							inner join Tournament on ToId=EnTournament
 							WHERE EnId={$archer->EnId} AND EnTournament={$_SESSION['TourId']}";
 						$Rs=safe_r_sql($Select);
 
@@ -211,12 +223,12 @@ if($_GET) {
                             }
 
                             // regular teams
-                            if($rr->EnTeamClEvent) {
+                            if($rr->MakeTeams and $rr->EnTeamClEvent) {
                                 MakeTeams($Club, $Category);
                             }
 
                             // recalc AbsTeams
-                            if($rr->AbsTeam) {
+                            if($rr->MakeTeams and $rr->AbsTeam) {
                                 MakeTeamsAbs($Club, $Div, $Cl);
                             }
 
@@ -225,18 +237,21 @@ if($_GET) {
                                 $events4abs=array();
                                 $Rs=safe_r_sql("select distinct IndEvent from Individuals where IndId={$archer->EnId} AND IndTournament={$_SESSION['TourId']}");
                                 while($rr=safe_fetch($Rs)) {
-                                    $events4abs[] = $tmp->EcCode;
+                                    $events4abs[] = $tmp->IndEvent;
                                 }
-                                if ($events4abs) {
+                                if (count($events4abs)) {
                                     Obj_RankFactory::create('Abs', array('events' => $events4abs, 'dist' => $D))->calculate();
                                     Obj_RankFactory::create('Abs', array('events' => $events4abs, 'dist' => 0))->calculate();
+                                    foreach ($events4abs as $eventAbs) {
+                                        runJack("QRRankUpdate", $_SESSION['TourId'], array("Event" => $eventAbs, "Team" => 0, "TourId" => $_SESSION['TourId']));
+                                    }
                                 }
                             }
 						}
 					}
 				}
 				cd_redirect(basename(__FILE__).go_get());
-			} elseif(getScore($D, $C)) {
+			} elseif(getScore($D, $C, false, $T)) {
 				// reads another barcode
 				$_GET['B']=$C;
 				cd_redirect(basename(__FILE__).go_get());
@@ -316,6 +331,9 @@ while($r=safe_fetch($q)) echo '<option value="'.$r->SesOrder.'" '.(!empty($_GET[
 	<?php
 
 	if(!$archers){
+        if($ERROR) {
+            echo '<tr><td colspan="6"><div class="red p-2 text-white LetteraGrande">'.$ERROR.'</div></td></tr>';
+        }
 		echo '<tr class="divider"><td colspan="6"></td></tr>
 		<tr><th colspan="6"><img src="beiter.png" width="80" hspace="10" alt="Beiter Logo" border="0"/><br>' . get_text('Credits-BeiterCredits', 'Install') . '</th></tr>';
 	}
@@ -331,12 +349,23 @@ if($archers) {
 		echo '<th>'.get_text('DistanceShort','Tournament').'</th>';
 		echo '<th colspan="2">'.get_text('Name','Tournament').'</th>';
 		echo '<th>'.get_text('ClassDiv', 'InfoSystem').'</th>';
-		echo '<th>'.get_text('Total').'</th>';
-		echo '<th>'.$TOUR->ToGolds.'</th>';
-		echo '<th>'.$TOUR->ToXNine.'</th>';
-		echo '<th>'.get_text('Total').'</th>';
-		echo '<th>'.$TOUR->ToGolds.'</th>';
-		echo '<th>'.$TOUR->ToXNine.'</th>';
+        if($_SESSION['TourLocSubRule']=='NFAA3D-ReddingWestern') {
+            echo '<th>'.get_text('Total').'</th>';
+            echo '<th>'.get_text('DistanceNum', 'Api', 1).'</th>';
+            if($D>1) {
+                echo '<th>'.get_text('DistanceNum', 'Api', 2).'</th>';
+            }
+            if($D>2) {
+                echo '<th>'.get_text('DistanceNum', 'Api', 3).'</th>';
+            }
+        } else {
+            echo '<th>'.get_text('Total').'</th>';
+            echo '<th>'.$TOUR->ToGolds.'</th>';
+            echo '<th>'.$TOUR->ToXNine.'</th>';
+            echo '<th>'.get_text('Total').'</th>';
+            echo '<th>'.$TOUR->ToGolds.'</th>';
+            echo '<th>'.$TOUR->ToXNine.'</th>';
+        }
         echo '<th>'.get_text('Arrows','Tournament').'</th>';
 		echo '<th colspan="4"></th>';
 		echo '</tr>';
@@ -348,12 +377,27 @@ if($archers) {
 			echo '<td>'.$archer->Firstname.'</td>';
 			echo '<td>'.$archer->EnName.'</td>';
 			echo '<td align="center">'.$archer->EnDivision.' '.$archer->EnClass.'</td>';
-			echo '<td align="right" style="font-size:150%"><b>'.$archer->Score.'</b></td>';
-			echo '<td align="right" style="font-size:150%;padding:0 10px;"><b>'.$archer->Gold.'</b></td>';
-			echo '<td align="right" style="font-size:150%;padding:0 10px;"><b>'.$archer->Xnine.'</b></td>';
-			echo '<td align="right" style="font-size:100%">'.$archer->tScore.'</td>';
-			echo '<td align="right" style="font-size:100%;padding:0 10px;">'.$archer->tGold.'</td>';
-			echo '<td align="right" style="font-size:100%;padding:0 10px;">'.$archer->tXnine.'</td>';
+            if($_SESSION['TourLocSubRule']=='NFAA3D-ReddingWestern') {
+                $Tot=$archer->Score1;
+                $Col='<td align="right" style="font-size:100%">'.$archer->Score1.'</td>';
+                if($D>1) {
+                    $Tot+=$archer->Score2;
+                    $Col.='<td align="right" style="font-size:100%">'.$archer->Score2.'</td>';
+                }
+                if($D>2) {
+                    $Tot+=$archer->Score3;
+                    $Col.='<td align="right" style="font-size:100%">'.$archer->Score3.'</td>';
+                }
+                echo '<td align="right" style="font-size:150%"><b>'.$Tot.'</b></td>';
+                echo $Col;
+            } else {
+                echo '<td align="right" style="font-size:150%"><b>'.$archer->Score.'</b></td>';
+                echo '<td align="right" style="font-size:150%;padding:0 10px;"><b>'.$archer->Gold.'</b></td>';
+                echo '<td align="right" style="font-size:150%;padding:0 10px;"><b>'.$archer->Xnine.'</b></td>';
+                echo '<td align="right" style="font-size:100%">'.$archer->tScore.'</td>';
+                echo '<td align="right" style="font-size:100%;padding:0 10px;">'.$archer->tGold.'</td>';
+                echo '<td align="right" style="font-size:100%;padding:0 10px;">'.$archer->tXnine.'</td>';
+            }
             echo '<td align="right" style="padding:0 10px;'.((($archer->Hits OR $archer->expectedArrows) AND $archer->Hits != $archer->expectedArrows) ? 'background-color: red; color: white; font-size:125%;': 'font-size:75%;').'">'.$archer->Hits.'</td>';
 			echo '<td align="center" style="font-size:80%"><b><a href="'.go_get(array('B'=>$archer->EnBib.$_SESSION['BarCodeSeparator'].$archer->EnDivision.$_SESSION['BarCodeSeparator'].$archer->EnClass, 'C' => $archer->EnBib.$_SESSION['BarCodeSeparator'].$archer->EnDivision.$_SESSION['BarCodeSeparator'].$archer->EnClass)).'">CONFIRM</a></b></td>';
 			if($D) {
@@ -423,7 +467,7 @@ if($ShowMiss) {
 include('Common/Templates/tail.php');
 
 
-function getScore($dist, $barcode, $strict=false) {
+function getScore($dist, $barcode, $strict=false, $Session=0) {
 	global $EnBib;
 	$ret=array();
 	$div='';
@@ -435,7 +479,7 @@ function getScore($dist, $barcode, $strict=false) {
 		if(strlen($barcode)<4) $barcode=str_pad($barcode, 3, '0', STR_PAD_LEFT);
 
 		// insert jolly session if session not defined or not set
-		if(strlen($barcode)<4) $barcode=(empty($_GET['T']) ? '_' : $_GET['T']).$barcode;
+		if(strlen($barcode)<4) $barcode=($Session ?: '_').$barcode;
 
 		$filter=" QuTargetNo like '".$barcode."%'";
 	} elseif($barcode[0]=='#') {
@@ -454,25 +498,37 @@ function getScore($dist, $barcode, $strict=false) {
 		}
 		if(substr($bib, 0, 2)=='UU') $bib='_'.substr($bib, 2);
 		$filter="EnCode='$bib' and EnDivision='$div' and EnClass='$cls'";
-		$filter2="EnCode='$bib'";
-		$EnBib=$bib;
+        $filter2="EnCode='$bib'";
+        if($Session) {
+            $filter.=" and QuSession=$Session";
+            $filter2.=" and QuSession=$Session";
+        }
+
+        $EnBib=$bib;
 
 		if(!$strict and !empty($_GET['Targets'])) {
 			$filter="left(QuTargetNo,4)=(select left(QuTargetNo,4) from Qualifications inner join Entries on EnId=QuId and EnTournament={$_SESSION['TourId']} where $filter)";
 		}
 		if(empty($bib) or empty($div) or empty($cls)) return;
 	}
-	$SQL="select QuTargetNo, EnCode EnBib, EnId, EnName, upper(EnFirstname) Firstname, EnDivision, EnClass, QuScore tScore, QuGold tGold, QuXnine tXnine, IFNULL(DiEnds*DiArrows,0) as expectedArrows, " .
-		($dist ? "QuD{$dist}Score Score, QuD{$dist}Gold Gold, QuD{$dist}Xnine Xnine, QuD{$dist}Hits Hits" : "QuScore Score, QuGold Gold, QuXnine Xnine, QuHits Hits") . "
+	$SQL="select QuTargetNo, EnCode EnBib, EnId, EnName, upper(EnFirstname) Firstname, EnDivision, EnClass, QuScore tScore, QuGold tGold, QuXnine tXnine, IFNULL(if(DiScoringEnds=0, DiEnds, DiScoringEnds)*DiArrows,0) as expectedArrows, 
+	    " . ($_SESSION['TourLocSubRule']=='NFAA3D-ReddingWestern' ? "QuD1Score Score1, QuD2Score Score2, QuD3Score Score3, QuD1Hits Hits1, QuD2Hits Hits2, QuD3Hits Hits3," : "") . "
+	    " . ($dist ? "QuD{$dist}Score Score, QuD{$dist}Gold Gold, QuD{$dist}Xnine Xnine, QuD{$dist}Hits Hits" : "QuScore Score, QuGold Gold, QuXnine Xnine, QuHits Hits") . "
 		from Qualifications 
 		inner join Entries on EnId=QuId and EnTournament={$_SESSION['TourId']}
+		inner join Session on SesTournament=EnTournament and SesOrder=QuSession and SesType='Q'
 		left join DistanceInformation on DiTournament=EnTournament AND DiSession=QuSession AND DiDistance={$dist} AND DiType='Q'
 		where $filter
 		order by QuTargetNo, EnDivision='$div' desc, EnClass='$cls' desc ";
-	$q=safe_r_sql($SQL, false, true);
-	while($r=safe_fetch($q)) $ret["$r->EnBib"]=$r;
+    $q=@safe_r_sql($SQL, false, true);
+    if(!$q) {
+        return false;
+    }
+	while($r=safe_fetch($q)) {
+		$ret["$r->EnBib"]=$r;
+	}
 	if(!$ret) {
-		$SQL="select QuTargetNo, EnCode EnBib, EnId, EnName, upper(EnFirstname) Firstname, EnDivision, EnClass, QuScore tScore, QuGold tGold, QuXnine tXnine, IFNULL(DiEnds*DiArrows,0) as expectedArrows, " .
+		$SQL="select QuTargetNo, EnCode EnBib, EnId, EnName, upper(EnFirstname) Firstname, EnDivision, EnClass, QuScore tScore, QuGold tGold, QuXnine tXnine, IFNULL(if(DiScoringEnds=0, DiEnds, DiScoringEnds)*DiArrows,0) as expectedArrows, " .
 				($dist ? "QuD{$dist}Score Score, QuD{$dist}Gold Gold, QuD{$dist}Xnine Xnine, QuD{$dist}Hits Hits" : "QuScore Score, QuGold Gold, QuXnine Xnine, QuHits Hits") . "
 				from Qualifications 
 				inner join Entries on EnId=QuId and EnTournament={$_SESSION['TourId']} 
@@ -480,12 +536,20 @@ function getScore($dist, $barcode, $strict=false) {
 				where $filter2
 				order by QuTargetNo, EnDivision='$div' desc, EnClass='$cls' desc ";
 		$q=safe_r_sql($SQL, false, true);
-		while($r=safe_fetch($q)) $ret["$r->EnBib"]=$r;
-		if(count($ret)>1) $ret=array();
+		while($r=safe_fetch($q)) {
+			$ret["$r->EnBib"]=$r;
+		}
+		if(count($ret)>1) {
+			$ret=array();
+		}
 	}
 	if(!$ret) {
 		$filter="EdExtra='$bib' and EnDivision='$div' and EnClass='$cls'";
 		$filter2="EdExtra='$bib'";
+        if($Session) {
+            $filter.=" and QuSession=$Session";
+            $filter2.=" and QuSession=$Session";
+        }
 		$EnBib=$bib;
 
 		if(!$strict and !empty($_GET['Targets'])) {
@@ -493,7 +557,7 @@ function getScore($dist, $barcode, $strict=false) {
 		}
 		if(empty($bib) or empty($div) or empty($cls)) return;
 
-		$SQL="select QuTargetNo, EdExtra EnBib, EnId, EnName, upper(EnFirstname) Firstname, EnDivision, EnClass, QuScore tScore, QuGold tGold, QuXnine tXnine, IFNULL(DiEnds*DiArrows,0) as expectedArrows, " .
+		$SQL="select QuTargetNo, EdExtra EnBib, EnId, EnName, upper(EnFirstname) Firstname, EnDivision, EnClass, QuScore tScore, QuGold tGold, QuXnine tXnine, IFNULL(if(DiScoringEnds=0, DiEnds, DiScoringEnds)*DiArrows,0) as expectedArrows, " .
 			($dist ? "QuD{$dist}Score Score, QuD{$dist}Gold Gold, QuD{$dist}Xnine Xnine, QuD{$dist}Hits Hits" : "QuScore Score, QuGold Gold, QuXnine Xnine, QuHits Hits") . "
             from Qualifications 
             inner join Entries on EnId=QuId and EnTournament={$_SESSION['TourId']} 
@@ -504,7 +568,7 @@ function getScore($dist, $barcode, $strict=false) {
 		$q=safe_r_sql($SQL, false, true);
 		while($r=safe_fetch($q)) $ret["$r->EnBib"]=$r;
 		if(!$ret) {
-			$SQL="select QuTargetNo, EdExtra EnBib, EnId, EnName, upper(EnFirstname) Firstname, EnDivision, EnClass, QuScore tScore, QuGold tGold, QuXnine tXnine, IFNULL(DiEnds*DiArrows,0) as expectedArrows, " .
+			$SQL="select QuTargetNo, EdExtra EnBib, EnId, EnName, upper(EnFirstname) Firstname, EnDivision, EnClass, QuScore tScore, QuGold tGold, QuXnine tXnine, IFNULL(if(DiScoringEnds=0, DiEnds, DiScoringEnds)*DiArrows,0) as expectedArrows, " .
 				($dist ? "QuD{$dist}Score Score, QuD{$dist}Gold Gold, QuD{$dist}Xnine Xnine, QuD{$dist}Hits Hits" : "QuScore Score, QuGold Gold, QuXnine Xnine, QuHits Hits") . "
 				from Qualifications 
 				inner join Entries on EnId=QuId and EnTournament={$_SESSION['TourId']} 
@@ -514,7 +578,9 @@ function getScore($dist, $barcode, $strict=false) {
 				order by QuTargetNo, EnDivision='$div' desc, EnClass='$cls' desc ";
 			$q=safe_r_sql($SQL, false, true);
 			while($r=safe_fetch($q)) $ret["$r->EnBib"]=$r;
-			if(count($ret)>1) $ret=array();
+			if(count($ret)>1) {
+				$ret=array();
+			}
 		}
 	}
 	return $ret;

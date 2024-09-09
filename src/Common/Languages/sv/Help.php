@@ -7,6 +7,6 @@ $lang['ISK-ServerUrlPin']='<b>DELA INTE UT DENNA KOD</b><br>Ställ in PIN-kod (4
 $lang['QrCodeLandscape']='Genom att skriva en "<", får du en pil åt vänster. Genom att skriva en ">", får du en pil åt höger.<br>Genom att skriva en "^", får du en pil uppåt. Genom att skriva en "v", får du en pil nedåt.';
 $lang['QrCodePortrait']='Fältet tillåter HTML-kod.<br>
 Om du skriver något inringat av taggen &lt;qrcode&gt;...&lt;/qrcode&gt;, kommer detta att omvandlas till en QR-kod.';
-$lang['ScoreBarCodeShortcuts']='Scanna streckkoden på skjutkortet.<br>
-Saknar du scanner kan du fylla i manuellt i rutan "scanna streckkod".<br>Skriv # följt av skyttens namn, tryck enter. Eller<br>Skriv @ följt av tavelnummer, tryck enter.<br><b>OBS!</b> Välj omgång och avstånd innan du scannar/skriver.<br>Tänk på att scanna streckkoden för aktuellt avstånd.';
+$lang['ScoreBarCodeShortcuts']='<b>OBS!</b> Välj omgång och avstånd innan du scannar/skriver.<br>Tänk på att scanna streckkoden för aktuellt avstånd.<br>Scanna streckkoden på skjutkortet.<br>
+Saknar du scanner kan du fylla i manuellt i rutan "scanna streckkod".<br>Skriv @ följt av tavelnummer, tryck enter.<br>Eller, skriv # följt av skyttens namn, tryck enter.<br>';
 ?>

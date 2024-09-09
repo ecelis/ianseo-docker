@@ -116,7 +116,7 @@ if($TargetNo) {
 		$SQL="SELECT QuId, QuSession, QuTargetNo, QuTarget, DIDistance, DIEnds, DIArrows, 
 		        IF(TfGoldsChars{$dist}='',IF(TfGoldsChars='',ToGoldsChars,TfGoldsChars),TfGoldsChars{$dist}) as GoldsChars, 
 		        IF(TfXNineChars{$dist}='',IF(TfXNineChars='',ToXNineChars,TfXNineChars),TfXNineChars{$dist}) as XNineChars, 
-		        QuConfirm & ".pow(2, $dist)."=1 as StopImport, ToElabTeam, ToNumEnds 
+		        QuConfirm & ".pow(2, $dist).">0 as StopImport, ToCategory&12 as IsField3D, ToNumEnds 
 			from Qualifications
 			INNER JOIN Entries ON QuId=EnId
 			INNER JOIN Tournament ON ToId=EnTournament
@@ -220,7 +220,7 @@ if($TargetNo) {
 			importQualifications($ArrowSearch->QuId, $ArrowSearch->DIDistance, $endNum) ;
 		}
 
-		$tmp = getQualificationTotals($ArrowSearch->QuId, $ArrowSearch->DIDistance, $endNum, $ArrowSearch->DIArrows, $ArrowSearch->DIEnds, $ArrowSearch->GoldsChars, $ArrowSearch->XNineChars, $ArrowSearch->ToElabTeam ? $ArrowSearch->QuTarget : null);
+		$tmp = getQualificationTotals($ArrowSearch->QuId, $ArrowSearch->DIDistance, $endNum, $ArrowSearch->DIArrows, $ArrowSearch->DIEnds, $ArrowSearch->GoldsChars, $ArrowSearch->XNineChars, $ArrowSearch->IsField3D ? $ArrowSearch->QuTarget : null);
 
 		$JsonResult=array();
 		$JsonResult['qutarget']      = $ArrowSearch->QuTargetNo;

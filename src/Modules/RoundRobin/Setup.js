@@ -55,9 +55,13 @@ function getEventDetail() {
             $('#LevDetails').append('<tr><th>'+data.details.winPoints.text+'</th><td><input type="number" class="details" id="WinPoints" value="'+data.details.winPoints.val+'" onchange="checkValue()"></td></tr>');
             $('#LevDetails').append('<tr><th>'+data.details.tiePoints.text+'</th><td><input type="number" class="details" id="TiePoints" value="'+data.details.tiePoints.val+'" onchange="checkValue()"></td></tr>');
             $('#LevDetails').append('<tr><th>'+data.details.tieBreakSystem.text+'</th><td><select class="details non0" id="TieBreakSystem" onchange="checkValue()"></select></td></tr>');
+            $('#LevDetails').append('<tr><th>'+data.details.tieBreakSystem2.text+'</th><td><select class="details" id="TieBreakSystem2" onchange="checkValue()"><option value="0">---</option></select></td></tr>');
+            $('#LevDetails').append('<tr><th>'+data.details.checkGolds.text+'</th><td><input type="checkbox" id="CheckGolds"'+(data.details.checkGolds.val==1 ? ' checked="checked"' : '')+'" onclick="checkValue()"></td></tr>');
+            $('#LevDetails').append('<tr><th>'+data.details.checkXNines.text+'</th><td><input type="checkbox" id="CheckXNines"'+(data.details.checkXNines.val==1 ? ' checked="checked"' : '')+'" onclick="checkValue()"></td></tr>');
             $('#LevDetails').append('<tr><td colspan="2" class="Center"><input id="CmdSubmit" type="button" onclick="setValue()" disabled value="'+data.cmdSave+'"></td></tr>');
             $.each(data.tieBreakOptions, function() {
                 $('#TieBreakSystem').append('<option value="'+this.val+'">'+this.text+'</option>');
+                $('#TieBreakSystem2').append('<option value="'+this.val+'">'+this.text+'</option>');
             });
             $.each(data.modeOptions, function() {
                 $('#mode').append('<option value="'+this.val+'">'+this.text+'</option>');
@@ -66,6 +70,7 @@ function getEventDetail() {
                 $('#bestRanked').append('<option value="'+this.val+'">'+this.text+'</option>');
             });
             $('#TieBreakSystem').val(data.details.tieBreakSystem.val);
+            $('#TieBreakSystem2').val(data.details.tieBreakSystem2.val);
             $('#mode').val(data.details.mode.val);
             $('#bestRanked').val(data.details.bestRanked.val);
             $('#QualifiedArchers').html($('#Groups').val()*$('#GroupArchers').val());

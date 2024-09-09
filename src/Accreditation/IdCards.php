@@ -34,6 +34,10 @@ switch($CardType) {
 $CardNumber=0;
 if(isset($_REQUEST['CardNumber'])) {
 	$CardNumber=intval($_REQUEST['CardNumber']);
+    $q=safe_r_sql("select * from IdCards where IcTournament={$_SESSION['TourId']} and IcType='$CardType' and IcNumber=$CardNumber order by IcNumber");
+    if(!safe_num_rows($q)) {
+        cd_redirect(basename(__FILE__).go_get('CardNumber', '',true));
+    }
 } else {
 	$q=safe_r_sql("select * from IdCards where IcTournament={$_SESSION['TourId']} and IcType='$CardType' order by IcNumber");
 	if($r=safe_fetch($q)) {
@@ -50,8 +54,12 @@ $TourId=$_SESSION['TourId'];
 if(!empty($_REQUEST['delete']) AND $lvl==AclReadWrite) {
 	safe_w_sql("delete from IdCards where IcTournament=$TourId and IcType='$CardType' and IcNumber=$CardNumber");
 	safe_w_sql("delete from IdCardElements where IceTournament=$TourId and IceCardType='$CardType' and IceCardNumber=$CardNumber");
+    delModuleParameter('Accreditation', 'Matches-'.$CardType.'-'.$CardNumber);
+
 	$imgs=glob($CFG->DOCUMENT_PATH.'TV/Photos/'.$_SESSION['TourCodeSafe'].'-'.$CardType.'-'.$CardNumber.'-*');
-	foreach($imgs as $file) unlink($imgs);
+	foreach($imgs as $file) {
+        @unlink($file);
+    }
 	cd_redirect(basename(__FILE__).go_get('delete', '', true));
 }
 
@@ -61,9 +69,15 @@ if(!empty($_FILES['ImportBackNumbers']['size']) AND $lvl==AclReadWrite) {
 		// before deleting gets the name of the badge
 		$Name=get_text($CardType.'-Badge', 'BackNumbers');
 		$q=safe_r_sql("select IcName from IdCards where IcTournament=$TourId and IcType='$CardType' and IcNumber=$CardNumber");
-		if($r=safe_fetch($q)) $Name=$r->IcName;
+		if($r=safe_fetch($q)) {
+            $Name=$r->IcName;
+        }
 		safe_w_sql("delete from IdCards where IcTournament=$TourId and IcType='$CardType' and IcNumber=$CardNumber");
 		safe_w_sql("delete from IdCardElements where IceTournament=$TourId and IceCardType='$CardType' and IceCardNumber=$CardNumber");
+        $imgs=glob($CFG->DOCUMENT_PATH.'TV/Photos/'.$_SESSION['TourCodeSafe'].'-'.$CardType.'-'.$CardNumber.'-*');
+        foreach($imgs as $file) {
+            @unlink($file);
+        }
 		$SQL=array("IcTournament=$TourId");
 		$SQL[]="IcType='$CardType'";
 		$SQL[]="IcNumber=$CardNumber";
@@ -123,10 +137,9 @@ $Esessions=GetSessions('E',true);
 $SesQNo=count($Qsessions);
 $SesENo=count($Esessions);
 
-
+$IncludeJquery = true;
 $JS_SCRIPT = array(
 	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
-	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 	'<script type="text/javascript" src="Fun_AJAX_IdCards.js"></script>',
 	);
 
@@ -218,7 +231,9 @@ echo '<div class="CustomBadges">';
         echo '<tr><th>' . get_text('NewBadgeName', 'BackNumbers') . '</th>
 		    <td><input type="text" id="newBadgeName">
 			    <input type="button" value="' . get_text('BadgeCreate', 'BackNumbers') . '" onclick="CreateNewBadge()">';
-        if (safe_num_rows($IdCards)) echo ' <input type="button" value="' . get_text('BadgeDelete', 'BackNumbers') . '" onclick="if(confirm(\'' . get_text('MsgAreYouSure') . '\')) {location.href=location.href+\'&delete=1\'}">';
+        if (safe_num_rows($IdCards)) {
+            echo ' <input type="button" value="' . get_text('BadgeDelete', 'BackNumbers') . '" onclick="if(confirm(\'' . get_text('MsgAreYouSure') . '\')) {location.href=\''.$_SERVER["PHP_SELF"].'?delete=1&CardType='.$CardType.'&CardNumber='.$CardNumber.'\'}">';
+        }
         echo '</td></tr>';
     }
 	echo '</table>';
@@ -338,7 +353,10 @@ if (safe_num_rows($IdCards)) {
 					echo '<br/><input type="checkbox" name="PrintPhoto" id="PrintPhoto" checked="checked" onclick="ShowEntries()">'.get_text('BadgeOnlyPrintPhoto', 'Tournament');
 					// solo accreditati?
 					echo '<br/><input type="checkbox" name="PrintAccredited" id="PrintAccredited" onclick="ShowEntries()">'.get_text('BadgeOnlyPrintAccredited', 'Tournament');
-				}
+				} else {
+                    // should only be seen in case card type is "Q"
+                    echo '<br/><input type="checkbox" name="SortACBD" id="SortACBD" onclick="ShowEntries()">'.get_text('SortACBD', 'Tournament');
+                }
 				// solo i non stampati precedentemente?
 				echo '<br/><input type="checkbox" name="PrintNotPrinted" id="PrintNotPrinted" checked="checked" onclick="ShowEntries()">'.get_text('BadgeOnlyNotPrinted', 'Tournament');
 				echo '</div>';
@@ -423,8 +441,9 @@ if (safe_num_rows($IdCards)) {
 
 		// elenco Entries
 		echo '<td class="Center">
-			<select name="Entries[]" id="p_Entries" multiple="multiple" title="'.get_text('PressCtrl2SelectAll').'"  size="10">
+			<select name="Entries[]" id="p_Entries" multiple="multiple" title="'.get_text('PressCtrl2SelectAll').'"  size="10" onclick="hide_reset()">
 			</select>
+			<div><input type="button" class="d-none mt-1" id="reset_button" value="'.get_text('ResetBadges','Tournament').'" onclick="resetPrint()"></div>
 			</td>';
 
 		echo '</tr>';

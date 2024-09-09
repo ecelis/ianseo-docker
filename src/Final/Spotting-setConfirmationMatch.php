@@ -32,6 +32,7 @@ $q=safe_r_sql("select {$TabPrefix}WinLose as Winner, {$TabPrefix}TbClosest as Cl
 
 $Winner='';
 $Loser='';
+$JSON['finished']=false;
 if($r1=safe_fetch($q) and $r2=safe_fetch($q) and $r1->Winner+$r2->Winner) {
 	// check if there is a "tie" tiebreak
 	if($r1->Decoded and $r1->Decoded==$r2->Decoded and $r1->Closest==$r2->Closest) {
@@ -43,12 +44,14 @@ if($r1=safe_fetch($q) and $r2=safe_fetch($q) and $r1->Winner+$r2->Winner) {
 		}
 	}
 	$JSON['winner']=$r1->Winner ? 'L' : 'R';
+	$JSON['finished']=true;
 }
 
 $JSON['error']=0;
 
-runJack("FinConfirmEnd", $_SESSION['TourId'], array("Event"=>$Event ,"Team"=>$Team,"MatchNo"=>min($m) ,"TourId"=>$_SESSION['TourId']));
-runJack("MatchFinished", $_SESSION['TourId'], array("Event"=>$Event ,"Team"=>$Team,"MatchNo"=>min($m) ,"TourId"=>$_SESSION['TourId']));
+//runJack("FinConfirmEnd", $_SESSION['TourId'], array("Event"=>$Event, "Team"=>$Team,"MatchNo"=>min($m), "Side"=>0, "TourId"=>$_SESSION['TourId']));
+//runJack("FinConfirmEnd", $_SESSION['TourId'], array("Event"=>$Event, "Team"=>$Team,"MatchNo"=>min($m), "Side"=>1, "TourId"=>$_SESSION['TourId']));
+runJack("MatchFinished", $_SESSION['TourId'], array("Event"=>$Event, "Team"=>$Team, "MatchNo"=>min($m), "TourId"=>$_SESSION['TourId']));
 
 JsonOut($JSON);
 

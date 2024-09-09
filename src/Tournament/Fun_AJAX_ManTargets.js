@@ -3,9 +3,9 @@ let TargetSelect;
 $(function() {
 	TargetSelect=$('<select onchange="updateTarget(this)"><option value="">---</option></select>');
 	$.each(AvailableTargets, function(val, txt) {
-		TargetSelect.append('<option value="'+val+'">'+txt+'</option>');
+		const tmp = txt.split('|');
+		TargetSelect.append('<option value="'+tmp[0]+'">'+tmp[1]+'</option>');
 	});
-
 	loadBody();
 });
 

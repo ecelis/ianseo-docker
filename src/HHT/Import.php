@@ -93,7 +93,7 @@
 								. "QuD" . $Dist . "Gold=" . StrSafe_DB($Gold) . ","
 								. "QuD" . $Dist . "Xnine=" . StrSafe_DB($XNine) . ","
 								. "QuD" . $Dist . "ArrowString=" . StrSafe_DB($ArrowString) . ","
-								. "QuD" . $Dist . "Hits=GREATEST(LENGTH(RTRIM(QuD" . $Dist . "ArrowString))," . StrSafe_DB($LastArr) . "),"
+								. "QuD" . $Dist . "Hits=".max($LastArr, strlen(str_replace(' ','', $ArrowString))).","
 								. "QuScore=QuD1Score+QuD2Score+QuD3Score+QuD4Score+QuD5Score+QuD6Score+QuD7Score+QuD8Score,"
 								. "QuGold=QuD1Gold+QuD2Gold+QuD3Gold+QuD4Gold+QuD5Gold+QuD6Gold+QuD7Gold+QuD8Gold,"
 								. "QuXnine=QuD1Xnine+QuD2Xnine+QuD3Xnine+QuD4Xnine+QuD5Xnine+QuD6Xnine+QuD7Xnine+QuD8Xnine, "

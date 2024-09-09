@@ -94,9 +94,9 @@ if($IsRunArchery) {
     FROM Events
     inner join Individuals i1 on i1.IndTournament=EvTournament and i1.IndEvent=EvCode
     inner join Qualifications on QuId=IndId
-    left join Individuals i2 on i2.IndTournament=EvTournament and i2.IndEvent=EvCode and i2.IndRankFinal=1
-    left join Individuals i3 on i3.IndTournament=EvTournament and i3.IndEvent=EvCode and i3.IndRankFinal=3
-    WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=0
+    left join Individuals i2 on i2.IndTournament=EvTournament and i2.IndEvent=EvCode and i2.IndRankFinal=EvWinnerFinalRank
+    left join Individuals i3 on i3.IndTournament=EvTournament and i3.IndEvent=EvCode and i3.IndRankFinal=(EvWinnerFinalRank+2)
+    WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=0 and EvCodeParentWinnerBranch=0
     group by EvCode
     ORDER BY EvProgr ";
 
@@ -157,9 +157,9 @@ if($IsRunArchery) {
 	$Sql = "SELECT max(t1.TeTimeStamp) as LastUpdate, max(t1.TeHits) as Arrows, min(t1.TeHits) as MinArrows, EvCode, EvEventName, EvFinalFirstPhase, EvMedals, ifnull(t2.TeCoId,t3.TeCoId) as HasMedal, (t2.TeCoId is NOT NULL) as HasGoldMedal, EvShootOff
     FROM Events 
     inner join Teams t1 on t1.TeEvent=EvCode and t1.TeTournament=EvTournament
-    left join Teams t2 on t2.TeEvent=EvCode and t2.TeTournament=EvTournament and t2.TeRankFinal=1
-    left join Teams t3 on t3.TeEvent=EvCode and t3.TeTournament=EvTournament and t3.TeRankFinal=3
-    WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=1 
+    left join Teams t2 on t2.TeEvent=EvCode and t2.TeTournament=EvTournament and t2.TeRankFinal=EvWinnerFinalRank
+    left join Teams t3 on t3.TeEvent=EvCode and t3.TeTournament=EvTournament and t3.TeRankFinal=(EvWinnerFinalRank+2)
+    WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=1 and EvCodeParentWinnerBranch=0
     group by EvCode
     ORDER BY EvProgr";
 

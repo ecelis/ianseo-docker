@@ -3,11 +3,36 @@ $lang['AutoCheckinAlreadyDone']='You are already checked in<br>If you need to ch
 $lang['AutoCheckinConfirm']='If all the details are correct press CONFIRM CHECK-IN<br> 
 Otherwise press CANCEL and proceed to the accreditation desk';
 $lang['AutoCheckinSearch']='Scan the QR Code you received or type your name';
-$lang['AutoImportSettings']='<b>Only for Expert Users</b><br>Changing the default behavior should result in inaccurate results.<br>
-It is important to recalculate all the ranks that has been setup as "manually" BEFORE sending to ianseo.net or printing  results and in general before every distribution of any kind.';
+$lang['AutoCHK-CanEdit']='Allow check-in operators to edit Names, E-Mails, Country/Club, etc';
+$lang['AutoCHK-Code']='List of Competitions, one per line<br> First competition code will be used as header in auto-checkin kiosks';
+$lang['AutoCHK-IP']='List of IP of auto check-in devices. One IP Address per line';
+$lang['AutoCHK-IPinfo']='List of IP of self info points. One IP Address per line';
+$lang['AutoCHK-IPnoMgm']='List of IP of self check-in kiosks. One IP Address per line, matching one of the following formats:<br>
+Device IP<br>
+Device IP | Accreditation Printer Queue <br>
+Device IP | Accreditation Printer Queue | Name Tag Printer Queue<br>
+Printer Queue in form: Queue Name [ @ Printer Server ]';
+$lang['AutoCHK-Print']='Automatically show print dialog';
+$lang['AutoImportSettings']='<b>Only for Expert Users</b><br>Changing the default behavior could result in inaccurate results.<br>
+It is important to recalculate all the ranks that have been setup as "manually" BEFORE sending to ianseo.net or printing results and in general before every distribution of any kind.';
 $lang['ChangeComponents']='<p>To proceed with a change first remove the athletes that is not in the team any more in order to activate the possible options.</p>
 &#9654&nbsp;Score included in the total of team qualification round<br>
 &#9655&nbsp;Score not included in the total of team qualification round';
+$lang['CombiCompList']='List of Competitions Codes, comma separated';
+$lang['FlightsManagement']='<b>To flight categories</b>
+<ul>
+<li>Select on which Ends - Distances Total - Full Total calculate the flights;</li>
+<li>Select the initial flight cut size by category. The system preloads the standard NFAA flighting table when competition allows it;</li>
+<li>Flight Grouping preview will calculate ALL CATEGORIES, press the reload button side of the flight cut size to force calculation of a single category; </li>
+<li>Flights marked orange are just an indicator of a difference between the previewed flight and the rule table. It does NOT affect the flight division.</li>
+<li>Use  drop - split - merge commands to adjust flights info. Please note, after running a full preview or a category refresh all the changes to the flight are lost.</li>
+</ul>
+<b>Notes</b>
+<ul>
+<li>Categories with too few participants are excluded from flighting. Flighting can be forced indicating the flight cut quantity;</li>
+<li>If a category is considered to be flighted, use \'-1\' as cut to explicitly exclude from flighting</li>
+<li>Professional and/or Championships as excluded from flighting and greyed out</li>
+</ul>';
 $lang['GetBarcodeSeparator']='After printing the barcodes reference sheet, read the «SEPARATOR» barcode in order to activate the correct reader items.';
 $lang['HomePage']='This is the page where you can select or create a tournament.';
 $lang['ISK-LockedSessionHelp']='{$a} icons show if the app can score or not in that session.';
@@ -22,6 +47,17 @@ $lang['QrCodePortrait']='the field is HTML-capable. If you insert something surr
 $lang['ScoreBarCodeShortcuts']='Read the barcode printed on the scorecard.<br/>
 Inserting manually a # followed by the name of the athlete searches the database to find that athlete<br/>
 Inserting a @ followed by a target number searches for that target. Distance MUST be set. Session should be specified (first digit) and target is 0-padded to 3 digits.';
+$lang['ScoreboardFreetext-Texts']='Insert {{date}} to insert the date in english format (ie: january 4, 2024).<br>
+Insert {{date-lang}} to insert a date in local language (ie: {{date-de}} to have 4. Januar 2024)<br>
+Insert {{time}} to have the ticking time in ISO format (ie: 15:03:23)<br>
+Insert {{time-am}} to have ticking time in AM/PM format (ie: 3:03:23 PM)<br>
+Insert {{counter-datetime}} to have a full date countdown (ie: [[[days:]hours:]minutes:]seconds layout, where datetime is the time to reach in ISO format 2024-12-04T09:00:00 for local time)<br>
+There can only be one of these fields in a text';
+$lang['TargetRequests-Printout']='Prints the QrCodes of the requested targets to allow personal devices to quickly be reassigned to the correct target.<br>
+Select which group(s) of devices you want to print and the range of target butts:<br>
+1-10 prints QrCOde from target 1 to 10<br>
+1,7,12-15 prints QrCOde of targets 1, 7 and from 12 to 15';
+$lang['TargetScoring-Printout']='Prints the QrCodes of the requested targets to score in the required Session-Target-Distance with ISK NG Lite. It is the same QR code that you can find in the scorecards<br> Select which session(s) you want to print and the range of target butts:<br> 1-10 prints QrCOde from target 1 to 10<br> 1,7,12-15 prints QrCOde of targets 1, 7 and from 12 to 15';
 $lang['TV-ChannelSetup']='= Channels Setup =
 After setting up your channels as desired, connect the browser of the device you want to link to a channel to
 
@@ -62,4 +98,5 @@ $lang['TV-RotList']='<div>This is the list of available presentation pages to se
 <li>an advanced version that uses modern browsers HTML5 capabilities</li>
 </ul>
 <div>To create a new content, enter a name for it and press the button.</div>';
+$lang['ZeroBased']='Zero based number';
 ?>

@@ -12,13 +12,13 @@ if (!CheckTourSession()) {
     exit;
 }
 
+$IncludeJquery = true;
 $JS_SCRIPT = array(
 	phpVars2js(array(
 		'MsgAreYouSure' => get_text('MsgAreYouSure'),
 		'MsgRowMustBeComplete' => str_replace('<br>','\n',get_text('MsgRowMustBeComplete')),
 	)),
     '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
     '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Tournament/Fun_AJAX_ManDivClass.js"></script>',
     '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
     );
