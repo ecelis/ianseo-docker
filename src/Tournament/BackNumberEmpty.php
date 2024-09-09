@@ -2,7 +2,7 @@
 
 function emptyBackNumber($Id=0) {
 	global $CFG;
-	if(!$Id) $Id=$_SESSION['TourId'];
+	if(!$Id) $Id=intval($_SESSION['TourId']);
 	// defaults values for a BackNumber
 	// codes are as follow
 	//  1: printed

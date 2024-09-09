@@ -65,11 +65,11 @@ if (isset($_REQUEST['Command'])) {
 					$ev=getModuleParameter('Awards','Aw-CustomEvent-1-'. $Num);
 					if(empty($ev)) {
 						$UseLang=($_SESSION['TourPrintLang'] ? $_SESSION['TourPrintLang'] : SelectLanguage());
-						setModuleParameter('Awards','Aw-CustomEvent-1-'. $Num, get_text('LonginesEvent', 'Awards', '$a', '', '', $UseLang));
-						setModuleParameter('Awards','Aw-CustomPrize-1-'. $Num, get_text('LonginePresentation', 'Awards', '$a', '', '', $UseLang));
+						setModuleParameter('Awards','Aw-CustomEvent-1-'. $Num, get_text('PrecisionPrizeEvent', 'Awards', '$a', '', '', $UseLang));
+						setModuleParameter('Awards','Aw-CustomPrize-1-'. $Num, get_text('PrecPrizePresentation', 'Awards', '$a', '', '', $UseLang));
 						if($tmp=getModuleParameter('Awards', 'SecondLanguageCode')) {
-							setModuleParameter('Awards','Aw-CustomEvent-2-'. $Num, get_text('LonginesEvent', 'Awards', '$a', '', '', $tmp));
-							setModuleParameter('Awards','Aw-CustomPrize-2-'. $Num, get_text('LonginePresentation', 'Awards', '$a', '', '', $tmp));
+							setModuleParameter('Awards','Aw-CustomEvent-2-'. $Num, get_text('PrecisionPrizeEvent', 'Awards', '$a', '', '', $tmp));
+							setModuleParameter('Awards','Aw-CustomPrize-2-'. $Num, get_text('PrecPrizePresentation', 'Awards', '$a', '', '', $tmp));
 						}
 					}
 				}
@@ -154,6 +154,7 @@ foreach($aws as $awkey=>$awval) {
     $Awarders[]=['id'=>$awkey, 'val'=>preg_replace("/[\r\n]+/sim", ', ', $awval)];
 }
 
+$IncludeJquery = true;
 $JS_SCRIPT = array(
     phpVars2js(array(
         'Awarders' => $Awarders,
@@ -161,8 +162,7 @@ $JS_SCRIPT = array(
         )),
     '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Tournament/Fun_AJAX_ManAwards.js"></script>',
     '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
-    );
+);
 
 $PAGE_TITLE=get_text('MenuLM_ManAwards');
 
@@ -299,6 +299,7 @@ if(empty($tmp2) or $tmp2!=$UseLang) {
     }
     setModuleParameter('Awards', 'Aw-representing-1', get_text('Award-representing', 'IOC_Codes', '$a', '', '', $UseLang));
     setModuleParameter('Awards', 'Aw-Anthem-1', get_text('Award-Anthem', 'IOC_Codes', '', '', '', $UseLang));
+    setModuleParameter('Awards', 'Aw-Anthem-TPE-1', get_text('Award-Anthem-TPE', 'IOC_Codes', '', '', '', $UseLang));
     setModuleParameter('Awards', 'Aw-Applause-1', get_text('Award-Applause', 'IOC_Codes', '', '', '', $UseLang));
 }
 
@@ -311,10 +312,6 @@ echo '<tr>
 
 $Lines=array(
     'Aw-Intro',
-// 		'Aw-Medal',
-// 		'Aw-Plaque',
-// 		'Aw-Giver',
-// 		'Aw-Giving',
     'Aw-Med1',
     'Aw-Med2',
     'Aw-Med3',
@@ -328,8 +325,8 @@ $Lines=array(
 foreach($Lines as $k) {
     echo '<tr>
         <th colspan="6" class="Right" nowrap="nowrap">'.substr($k,3).'</th>
-        <td onclick="insertInput(\''.$k.'-1\')"><div ref="'.$k.'-1">'.getModuleParameter('Awards', $k.'-1').'</div></td>
-        <td onclick="insertInput(\''.$k.'-2\')"><div ref="'.$k.'-2" class="SecondLanguage">'.($SecondLanguage ? getModuleParameter('Awards', $k.'-2') : '').'</div></td>
+        <td onclick="insertInput(\''.$k.'-1\')"><div id="'.$k.'-1" ref="'.$k.'-1">'.getModuleParameter('Awards', $k.'-1').'</div></td>
+        <td onclick="insertInput(\''.$k.'-2\')"><div id="'.$k.'-2" ref="'.$k.'-2" class="SecondLanguage">'.($SecondLanguage ? getModuleParameter('Awards', $k.'-2') : '').'</div></td>
         <td></td>
         </tr>';
 }
@@ -342,8 +339,8 @@ foreach(getModuleParameterLike('Awards', 'Aw-Award-1-%') as $key1 => $val) {
     $n=substr($key1,11);
     echo '<tr>
         <th colspan="6" class="Right" nowrap="nowrap">'.get_text('AwardNum', 'Tournament', $n).'</th>
-        <td onclick="insertInput(\''.$key1.'\')"><div ref="'.$key1.'">'.$val.'</div></td>
-        <td onclick="insertInput(\''.$key2.'\')"><div ref="'.$key2.'" class="SecondLanguage">'.($SecondLanguage ? getModuleParameter('Awards',$key2) : '').'</div></td>
+        <td onclick="insertInput(\''.$key1.'\')"><div id="'.$key1.'" ref="'.$key1.'">'.$val.'</div></td>
+        <td onclick="insertInput(\''.$key2.'\')"><div id="'.$key2.'" ref="'.$key2.'" class="SecondLanguage">'.($SecondLanguage ? getModuleParameter('Awards',$key2) : '').'</div></td>
         <td class="Center">
             <input type="button" value="' . get_text('CmdDelete','Tournament') . '" onClick="window.location.href=\'?delAward='.$n.'\'">
         </td></tr>';

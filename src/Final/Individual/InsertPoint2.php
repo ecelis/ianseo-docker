@@ -85,7 +85,7 @@
 
 						if (isset($_REQUEST['t_' . $ee . '_' . $mm]) && is_array($_REQUEST['t_' . $ee . '_' . $mm])) {
 							foreach ($_REQUEST['t_' . $ee . '_' . $mm] as $TieKey => $TieValue) {
-								$tiebreak.=(GetLetterFromPrint($TieValue)!=' ' ? GetLetterFromPrint($TieValue) : ' ');
+								$tiebreak.=GetLetterFromPrint($TieValue, $MaxScores['Arrows']);
 							}
 
 							$Update.= ", FinTbClosest=" . (empty($_REQUEST['cl_'. $ee . '_' . $mm]) ? 0 : 1);
@@ -162,11 +162,10 @@
 	}
 
 	$PAGE_TITLE=get_text('MenuLM_Data insert (Table view)');
-
+	$IncludeJquery = true;
 	$JS_SCRIPT=array(
         phpVars2js(array('ROOT_DIR' => $CFG->ROOT_DIR)),
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Final/Individual/Fun_JS.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 		'<script type="text/javascript" src="./InsertPoint2.js"></script>',
         '<style>
             .disabled td {background-color:#bbb} 
@@ -200,7 +199,7 @@ if(!empty($_REQUEST['x_Session']) and $_REQUEST['x_Session']!=-1) {
 	echo '<input type="hidden" name="x_Session" id="x_Session" value="'.$_REQUEST['x_Session'].'">';
 
 	$ComboArr=array();
-	ComboSession('Individuals','x_Session', $ComboArr);
+	ApiComboSession(['I'],'x_Session', $ComboArr);
 
 // schedule attuale
 	$actual=array_search($_REQUEST['x_Session'],$ComboArr);
@@ -323,7 +322,10 @@ if(!empty($_REQUEST['x_Session']) and $_REQUEST['x_Session']!=-1) {
 				// queste due solo per i nomi e gli score del turno successivo (e volendo precedente)
 					$PrecPhase=$PP;
 					$NextPhase=$NP;
-				}
+				} else {
+                    $PrecPhase=getPhase(intval($MyRow->GrMatchNo*2));
+                    $NextPhase=getPhase(intval($MyRow->GrMatchNo/2));
+                }
 
 				print '<a class="Link mr-5" href="javascript:ChangePhase(\'' . $PP . '\',' .$Sch .');">' . get_text('PrecPhase') . '</a>
 				    <a class="Link mr-5" href="javascript:ChangePhase(\'' . $NP . '\',' .$Sch .');">' . get_text('NextPhase') . '</a>

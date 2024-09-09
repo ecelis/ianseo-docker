@@ -1,6 +1,7 @@
 <?php
 $lang['AutoUpdate']='Auto actualización';
 $lang['BarRecord']='Mostrar la barra de Récords por media';
+$lang['BrokenRecords']='Records batidos';
 $lang['ByClub']='Por país/club';
 $lang['ByEvent']='Por Evento';
 $lang['ByName']='Por nombre';
@@ -66,6 +67,8 @@ $lang['Record-OR-avg']='Promedio Récord Olímpico';
 $lang['Record-OR-WA']='Récord Olímpico';
 $lang['Record-OR-WA-avg']='Récord Olímpico por media';
 $lang['Record-WAAF-CR-avg']='Promedio Récord de Africa';
+$lang['Record-WAAM-CC-GR']='Record de Campeonatos Pan Am';
+$lang['Record-WAAM-CC-GR-avg']='Record de Campeonatos Pan Am (Avg)';
 $lang['Record-WAAM-CR-avg']='Promedio Récord de las Americas';
 $lang['Record-WAAS-CR-avg']='Promedio Récord de Asia';
 $lang['Record-WAE-CR-avg']='Promedio de Récord Europeo';
@@ -74,6 +77,7 @@ $lang['Record-WR-avg']='Promedio de Récord del Mundo';
 $lang['Record-WR-WA']='Récord del Mundo';
 $lang['Record-WR-WA-avg']='Récord del mundo por media';
 $lang['RR_Score']='Resultados de la Serie de Calificación';
+$lang['StandingRecords']='Records actuales';
 $lang['Teams']='Equipos';
 $lang['TypeName']='Escribe el nombre que estas buscando';
 $lang['ViewIndividualResults']='Ver resultados individuales';

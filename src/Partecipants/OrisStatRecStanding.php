@@ -10,10 +10,11 @@ require_once('Common/pdf/PdfChunkLoader.php');
 // MUST BE called $PdfData
 $PdfData=getStandingRecords();
 
-if(!isset($isCompleteResultBook))
-	$pdf = new OrisPDF($PdfData->Code, $PdfData->Description);
-else
-	$pdf->setOrisCode($PdfData->Code, $PdfData->Description);
+if(!isset($isCompleteResultBook)) {
+    $pdf = new OrisPDF($PdfData->Code, $PdfData->Description);
+} else {
+    $pdf->setOrisCode($PdfData->Code, $PdfData->Description);
+}
 
 require_once(PdfChunkLoader('OrisRecStanding.inc.php'));
 

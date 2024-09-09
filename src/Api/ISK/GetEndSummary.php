@@ -77,7 +77,7 @@ if(count($tmp)==3) {
 	$SQL="SELECT QuId, QuSession, QuTargetNo, QuTarget, DIDistance, DIEnds, DIArrows, 
             IF(TfGoldsChars{$Distance}='',IF(TfGoldsChars='',ToGoldsChars,TfGoldsChars),TfGoldsChars{$Distance}) as GoldsChars, 
             IF(TfXNineChars{$Distance}='',IF(TfXNineChars='',ToXNineChars,TfXNineChars),TfXNineChars{$Distance}) as XNineChars,         
-            ToElabTeam 
+            ToCategory&12 as IsField3D 
         from Qualifications
         INNER JOIN Entries ON QuId=EnId
         INNER JOIN Tournament ON ToId=EnTournament
@@ -87,7 +87,7 @@ if(count($tmp)==3) {
         ORDER BY QuTargetNo";
 	$q=safe_r_sql($SQL);
 	while($r=safe_fetch($q)) {
-		$tmp = getQualificationTotals($r->QuId, $r->DIDistance, $End, $r->DIArrows, $r->DIEnds, $r->GoldsChars, $r->XNineChars, $r->ToElabTeam ? $r->QuTarget : null);
+		$tmp = getQualificationTotals($r->QuId, $r->DIDistance, $End, $r->DIArrows, $r->DIEnds, $r->GoldsChars, $r->XNineChars, $r->IsField3D ? $r->QuTarget : null);
 		$json_array[]=array(
 			'qutarget' => $r->QuTargetNo,
 			'endscore' => $tmp['curendscore'],

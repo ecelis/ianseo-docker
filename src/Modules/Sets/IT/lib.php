@@ -783,19 +783,15 @@ function CreateStandardStudClasses($TourId, $TourType) {
 
 function CreateStandardGdGClasses($TourId, $SubRule, $Field='') {
 	$i=1;
-    CreateClass($TourId, $i++, 8, 8, 0, 'GM', 'GM', 'Ragazzi 2015');
-    CreateClass($TourId, $i++, 8, 8, 1, 'GF', 'GF', 'Ragazze 2015');
-    CreateClass($TourId, $i++, 9, 9, 0, 'M0', 'M0', 'Ragazzi 2014');
-    CreateClass($TourId, $i++, 9, 9, 1, 'F0', 'F0', 'Ragazze 2014');
-    CreateClass($TourId, $i++, 10, 10, 0, 'M1', 'M1', 'Ragazzi 2013');
-    CreateClass($TourId, $i++, 10, 10, 1, 'F1', 'F1', 'Ragazze 2013');
-	CreateClass($TourId, $i++, 11, 11, 0, 'M2', 'M2', 'Ragazzi 2012');
-	CreateClass($TourId, $i++, 11, 11, 1, 'F2', 'F2', 'Ragazze 2012');
-    CreateClass($TourId, $i++, 12, 12, 0, 'M3', 'M3', 'Ragazzi 2011');
-    CreateClass($TourId, $i++, 12, 12, 1, 'F3', 'F3', 'Ragazze 2011');
-    CreateClass($TourId, $i++, 13, 13, 0, 'M4', 'M4', 'Ragazzi 2010');
-    CreateClass($TourId, $i++, 13, 13, 1, 'F4', 'F4', 'Ragazze 2010');
-
+    CreateClass($TourId, $i++, 8, 8, 0, 'GM', 'GM', 'Ragazzi 2016',1, 'OL');
+    CreateClass($TourId, $i++, 8, 8, 1, 'GF', 'GF', 'Ragazze 2016',1, 'OL');
+    CreateClass($TourId, $i++, 9, 11, 0, 'M0', 'M0', 'Ragazzi 2013-2014-2015',1, 'OL');
+    CreateClass($TourId, $i++, 9, 11, 1, 'F0', 'F0', 'Ragazze 2013-2014-2015',1, 'OL');
+    CreateClass($TourId, $i++, 12, 12, 0, 'M3', 'M3', 'Ragazzi 2012',1, 'OL');
+    CreateClass($TourId, $i++, 12, 12, 1, 'F3', 'F3', 'Ragazze 2012',1, 'OL');
+    CreateClass($TourId, $i++, 13, 13, 0, 'M4', 'M4', 'Ragazzi 2011',1, 'OL');
+    CreateClass($TourId, $i++, 13, 13, 1, 'F4', 'F4', 'Ragazze 2011',1, 'OL');
+    CreateClass($TourId, $i++, 12, 13, -1, 'X', 'X', 'Ragazzi/e 2011-2012',1, 'CO');
 }
 
 function CreateStandardSperimClasses($TourId) {

@@ -609,73 +609,203 @@ function DefineForcePrintouts($TourId, $Restore=false) {
     }
 }
 
-function getScheduledSessions($return='API', $TourId=0, $OnlyToday=false, $Short=false) {
+
+/**
+ * @param array $ScheduleOptions an array of options (case insensitive):
+ *              <ul>
+ *                  <li><b>(int) TourId:</b> the ID of the competition</li>
+ *                  <li><b>(bool) OnlyToday:</b> filter on items happening today</li>
+ *                  <li><b>(bool) Unfinished:</b> filters on items not already finished</li>
+ *                  <li><b>(array) Type:</b> an optional array of phases to select:
+ *                      <ul>
+ *                          <li><b>Q:</b> Qualifications</li>
+ *                          <li><b>E:</b> Eliminations</li>
+ *                          <li><b>I:</b> Individual matches</li>
+ *                          <li><b>T:</b> Team Matches</li>
+ *                          <li><b>R:</b> Round Robin matches</li>
+ *                      </ul>
+ *                  </li>
+ *                  <li><b>(bool) Short:</b> shows a shortened version of the items</li>
+ *              </ul>
+ * @return array
+ */
+function getApiScheduledSessions($ScheduleOptions=[]) {
 	require_once('Common/Lib/Fun_Phases.inc.php');
-	if(!$TourId) $TourId=$_SESSION['TourId'];
+
+	$Options=(object) [
+		'TOURID' => 0,
+		'ONLYTODAY' => false,
+		'UNFINISHED' => false,
+		'TYPE' => [],
+		'SHORT' => false,
+	];
+	foreach($ScheduleOptions as $k=>$v) {
+		$Options->{strtoupper($k)}=$v;
+	}
+	if(!$Options->TOURID) {
+		$Options->TOURID=$_SESSION['TourId'];
+	}
 
 	$ret=array();
-
-	$SQL = "("."SELECT DISTINCT CONCAT(SesType,ToNumDist,SesOrder) as keyValue, SesType as Type, 'Q' as txtkey,
+	$aSQL=[];
+	if(!$Options->TYPE or in_array('Q', $Options->TYPE)) {
+		// Qualifications
+        $SubQuery='';
+        if($Options->UNFINISHED) {
+            $SubQuery="and SesOrder in ("."
+				select QuSession 
+				from Qualifications
+                inner join Entries on QuId=EnId 
+				left join Individuals on IndTournament=EnTournament AND IndId=EnId
+                left join Events on IndTournament=EvTournament AND IndEvent=EvCode AND EvTeamEvent=0
+				where EnTournament={$Options->TOURID} and (EvShootOff=0 or EvShootOff IS NULL)
+				group by QuSession
+				)";
+        }
+		$aSQL[]="SELECT DISTINCT CONCAT(SesType,ToNumDist,SesOrder) as keyValue, SesType as Type, 'Q' as txtkey,
 				if(SesName='', SesOrder, SesName) as Description, '0' as FirstPhase,
-				IFNULL(CONCAT(SchDay, ' ', SchStart), concat('0000-00-00 00:00:', SesOrder)) as dtOrder, group_concat(DiEnds order by DiDistance) MaxEnds, 0 as EvElimType
+				IFNULL(CONCAT(SchDay, ' ', SchStart), concat('0000-00-00 00:00:', SesOrder)) as dtOrder, group_concat(DiEnds order by DiDistance) MaxEnds, 0 as EvElimType,
+				SesOrder as ComboKey
 			FROM Session
 			INNER JOIN Tournament ON SesTournament=ToId
 			LEFT JOIN DistanceInformation on DiTournament=SesTournament and DiType=SesType and DiSession=SesOrder
 			LEFT JOIN Scheduler ON SchTournament=SesTournament AND SchSesType=SesType AND SchSesOrder=SesOrder
-			WHERE SesTournament=$TourId AND SesType='Q'
-			" . ($OnlyToday ? " AND (SchDay=UTC_DATE() or DiDay=UTC_DATE())" : "") ."
-			GROUP BY SesOrder, SesType
-		) UNION ALL (
-		SELECT DISTINCT CONCAT('E1',ElSession) as keyValue, 'E' as Type, 'E1' as txtkey,
+			WHERE SesTournament={$Options->TOURID} AND SesType='Q' $SubQuery
+			" . ($Options->ONLYTODAY ? " AND (date(convert_tz(SchDay, ToTimeZone, '+00:00'))=UTC_DATE() or date(convert_tz(DiDay, ToTimeZone, '+00:00'))=UTC_DATE())" : "") ."
+			GROUP BY SesOrder, SesType";
+    }
+
+	if(!$Options->TYPE or in_array('E', $Options->TYPE)) {
+		// Eliminations 1st level
+		$aSQL[]="SELECT DISTINCT CONCAT('E1',ElSession) as keyValue, 'E' as Type, 'E1' as txtkey,
 				if(SesName is null or SesName='', ElSession, SesName) as Description, '0' as FirstPhase,
-				IFNULL(CONCAT(SchDay, ' ', SchStart), concat('0000-00-00 00:00:', ElSession)) as dtOrder, EvElimEnds as MaxEnds, EvElimType
+				IFNULL(CONCAT(SchDay, ' ', SchStart), concat('0000-00-00 00:00:', ElSession)) as dtOrder, EvElimEnds as MaxEnds, EvElimType,
+				'E1' as ComboKey
 			FROM Events
+            inner join Tournament on ToId=EvTournament
 			INNER JOIN Eliminations ON ElTournament=EvTournament and EvCode=ElEventCode and EvTeamEvent=0 and EvElim1>0 and ElElimPhase=0 and EvElimType<3
 			left JOIN Session on EvTournament=SesTournament and ElSession=SesOrder AND SesType='E'
 			LEFT JOIN Scheduler ON SchTournament=EvTournament AND SchSesType='E' AND SchSesOrder=ElSession
-			WHERE EvTournament=$TourId
-			" . ($OnlyToday ? "AND SchDay=UTC_DATE()" : "") ."
-			GROUP BY EvCode
-		) UNION ALL (
-		SELECT DISTINCT CONCAT('E2',ElSession) as keyValue, 'E' as Type, 'E2' as txtkey,
+			WHERE EvTournament={$Options->TOURID}
+			" . ($Options->ONLYTODAY ? "AND date(convert_tz(SchDay, ToTimeZone, '+00:00'))=UTC_DATE()" : "") ."
+			" . ($Options->UNFINISHED ? "AND EvE1ShootOff=0" : "") ."
+			GROUP BY EvCode";
+
+		// Eliminations 2nd level
+		$aSQL[]="SELECT DISTINCT CONCAT('E2',ElSession) as keyValue, 'E' as Type, 'E2' as txtkey,
 				if(SesName is null or SesName='', ElSession, SesName) as Description, '0' as FirstPhase, 
-				IFNULL(CONCAT(SchDay, ' ', SchStart), concat('0000-00-00 00:00:', ElSession)) as dtOrder, EvElim2 as MaxEnds, EvElimType
+				IFNULL(CONCAT(SchDay, ' ', SchStart), concat('0000-00-00 00:00:', ElSession)) as dtOrder, EvElim2 as MaxEnds, EvElimType,
+				'E2' as ComboKey
 			FROM Events
+            inner join Tournament on ToId=EvTournament
 			INNER JOIN Eliminations ON ElTournament=EvTournament and EvCode=ElEventCode and EvTeamEvent=0 and EvElim2>0 and ElElimPhase=1 and EvElimType<3
 			left JOIN Session on SesTournament=ElTournament and ElSession=SesOrder AND SesType='E'
 			LEFT JOIN Scheduler ON SchTournament=EvTournament AND SchSesType='E' AND SchSesOrder=ElSession
-			WHERE EvTournament=$TourId
-			" . ($OnlyToday ? "AND SchDay=UTC_DATE()" : "") ."
-			GROUP BY EvCode
-		) UNION ALL (
-		SELECT DISTINCT CONCAT(IF(FSTeamEvent=0,'I','T'), FSScheduledDate, FSScheduledTime) AS keyValue, FSTeamEvent as Type, FSTeamEvent as txtkey,
+			WHERE EvTournament={$Options->TOURID}
+			" . ($Options->ONLYTODAY ? "AND date(convert_tz(SchDay, ToTimeZone, '+00:00'))=UTC_DATE()" : "") ."
+			" . ($Options->UNFINISHED ? "AND EvE2ShootOff=0" : "") ."
+			GROUP BY EvCode";
+	}
+
+	if(!$Options->TYPE or in_array('I', $Options->TYPE)) {
+		// Individual and Team matches
+		$SubQuery='';
+		if($Options->UNFINISHED) {
+			$SubQuery="and (EvTeamEvent, EvCode, FSMatchNo) in (
+				select 0 as TeamEvent, f1.FinEvent, f1.FinMatchNo 
+				from Finals f1
+				inner join Finals f2 on f2.FinEvent=f1.FinEvent and f2.FinMatchNo=f1.FinMatchNo+1 and f2.FinTournament=f1.FinTournament
+                inner join Events on EvTournament=f1.FinTournament and EvCode=f1.FinEvent and EvTeamEvent=0
+				inner join Grids on GrMatchNo=f1.FinMatchNo
+				where f1.FinTournament={$Options->TOURID} and f1.FinMatchNo%2=0 and 
+				((greatest(f1.FinAthlete, f2.FinAthlete)=0 and GrPhase<EvFinalFirstPhase) OR (greatest(f1.FinWinLose,f2.FinWinLose, f1.FinTie, f2.FinTie)=0 and greatest(f1.FinAthlete,f2.FinAthlete)>0))
+				group by f1.FinEvent, f1.FinMatchNo 
+				)";
+		}
+		$aSQL[]="SELECT DISTINCT CONCAT('I', FSScheduledDate, FSScheduledTime) AS keyValue, FSTeamEvent as Type, FSTeamEvent as txtkey,
 				CONCAT(date_format(FSScheduledDate, '%e %b '),date_format(FSScheduledTime, '%H:%i'), ' ', group_concat(distinct concat('--', GrPhase, '-- ', FsEvent) separator '+')) AS Description, EvFinalFirstPhase as FirstPhase, 
-				CONCAT(FSScheduledDate,' ',FSScheduledTime) as dtOrder, max(if(GrPhase>4, EvElimEnds, EvFinEnds))+3 as MaxEnds, EvElimType
+				CONCAT(FSScheduledDate,' ',FSScheduledTime) as dtOrder, max(if((EvMatchArrowsNo & GrBitPhase), EvElimEnds, EvFinEnds))+3 as MaxEnds, EvElimType,
+				concat(FSTeamEvent,FSScheduledDate,' ',FSScheduledTime) as ComboKey
 			FROM FinSchedule
+            inner join Tournament on ToId=FSTournament
 			inner join Grids on GrMatchNo=FsMatchNo
-			inner join Events on EvCode=FsEvent and EvTournament=FsTournament and EvTeamEvent=FsTeamEvent
-			WHERE FSTournament=$TourId and FSScheduledDate>0
-			" . ($OnlyToday ? "AND FSScheduledDate=UTC_DATE()" : "") ."
-			GROUP BY CONCAT(IF(FSTeamEvent=0,'I','T'), FSScheduledDate, FSScheduledTime)
-		) UNION ALL (
-		SELECT DISTINCT CONCAT(IF(RrMatchTeam=0,'IR','TR'), RrMatchScheduledDate, RrMatchScheduledTime) AS keyValue, RrMatchTeam as Type, 'R' as txtkey,
+			inner join Events on EvCode=FsEvent and EvTournament=FsTournament and EvTeamEvent=FsTeamEvent $SubQuery
+			WHERE FSTournament={$Options->TOURID} and FSScheduledDate>0 and FsTeamEvent=0 "
+            . ($Options->ONLYTODAY ? "AND date(convert_tz(FSScheduledDate, ToTimeZone, '+00:00'))=utc_date() " : "")
+            . ($Options->TYPE=='I' ? "AND EvTeamEvent=0 " : "")
+            ."GROUP BY CONCAT('I', FSScheduledDate, FSScheduledTime)";
+	}
+
+	if(!$Options->TYPE or in_array('T', $Options->TYPE)) {
+		// Individual and Team matches
+		$SubQuery='';
+		if($Options->UNFINISHED) {
+			$SubQuery="and (EvTeamEvent, EvCode, FSMatchNo) in (
+				select 1 as TeamEvent, f1.TfEvent as FinEvent, f1.TfMatchNo as FinMatchNo 
+				from TeamFinals f1
+				inner join TeamFinals f2 on f2.tfEvent=f1.tfEvent and f2.tfMatchNo=f1.tfMatchNo+1 and f2.tfTournament=f1.tfTournament
+				inner join Events on EvTournament=f1.tfTournament and EvCode=f1.tfEvent and EvTeamEvent=1
+				inner join Grids on GrMatchNo=f1.tfMatchNo
+				where f1.tfTournament={$Options->TOURID} and f1.TfMatchNo%2=0 and 
+				((greatest(f1.TfTeam, f2.TfTeam)=0 and GrPhase<EvFinalFirstPhase) OR (greatest(f1.TfWinLose,f2.TfWinLose, f1.TfTie, f2.TfTie)=0 and greatest(f1.TfTeam, f2.TfTeam)>0)) 
+				group by f1.TfEvent, f1.TfMatchNo
+				)";
+		}
+		$aSQL[]="SELECT DISTINCT CONCAT(IF(FSTeamEvent=0,'I','T'), FSScheduledDate, FSScheduledTime) AS keyValue, FSTeamEvent as Type, FSTeamEvent as txtkey,
+				CONCAT(date_format(FSScheduledDate, '%e %b '),date_format(FSScheduledTime, '%H:%i'), ' ', group_concat(distinct concat('--', GrPhase, '-- ', FsEvent) separator '+')) AS Description, EvFinalFirstPhase as FirstPhase, 
+				CONCAT(FSScheduledDate,' ',FSScheduledTime) as dtOrder, max(if((EvMatchArrowsNo & GrBitPhase), EvElimEnds, EvFinEnds))+3 as MaxEnds, EvElimType,
+				concat(FSTeamEvent,FSScheduledDate,' ',FSScheduledTime) as ComboKey
+			FROM FinSchedule
+            inner join Tournament on ToId=FSTournament
+			inner join Grids on GrMatchNo=FsMatchNo
+			inner join Events on EvCode=FsEvent and EvTournament=FsTournament and EvTeamEvent=FsTeamEvent $SubQuery
+			WHERE FSTournament={$Options->TOURID} and FSScheduledDate>0 and FsTeamEvent=1
+			" . ($Options->ONLYTODAY ? "AND date(convert_tz(FSScheduledDate, ToTimeZone, '+00:00'))=UTC_DATE()" : "") ."
+			" . ($Options->TYPE=='T' ? "AND EvTeamEvent=1" : "") ."
+			GROUP BY CONCAT('T', FSScheduledDate, FSScheduledTime)";
+	}
+
+	if(!$Options->TYPE or in_array('R', $Options->TYPE)) {
+		$SubQuery='';
+		if($Options->UNFINISHED) {
+			$SubQuery="and (EvTeamEvent, EvCode) in ("."
+				select f1.RrMatchTeam as TeamEvent, f1.RrMatchEvent 
+				from RoundRobinMatches f1
+				inner join RoundRobinMatches f2 
+				    on f2.RrMatchEvent=f1.RrMatchEvent
+		           and f2.RrMatchTeam=f1.RrMatchTeam
+		           and f2.RrMatchLevel=f1.RrMatchLevel
+		           and f2.RrMatchGroup=f1.RrMatchGroup
+		           and f2.RrMatchRound=f1.RrMatchRound
+		           and f2.RrMatchTournament=f1.RrMatchTournament
+		           and f2.RrMatchMatchNo=f1.RrMatchMatchNo+1 
+				where f1.RrMatchTournament={$Options->TOURID} and f1.RrMatchMatchNo%2=0 and greatest(f1.RrMatchWinLose,f2.RrMatchWinLose, f1.RrMatchTie, f2.RrMatchTie)=0 and greatest(f1.RrMatchAthlete, f2.RrMatchAthlete)>0
+				group by f1.RrMatchTeam, f1.RrMatchEvent
+				)";
+		}
+		// Round Robin matches
+		$aSQL[]="SELECT DISTINCT CONCAT(IF(RrMatchTeam=0,'IR','TR'), RrMatchScheduledDate, RrMatchScheduledTime) AS keyValue, RrMatchTeam as Type, 'R' as txtkey,
 				CONCAT(date_format(RrMatchScheduledDate, '%e %b '),date_format(RrMatchScheduledTime, '%H:%i'), '@', group_concat(distinct concat_ws('|', RrMatchEvent, RrMatchTeam, RrMatchLevel, RrMatchGroup, RrMatchRound) separator '+')) AS Description, EvFinalFirstPhase as FirstPhase, 
-				CONCAT(RrMatchScheduledDate,' ',RrMatchScheduledTime) as dtOrder, (RrLevEnds+5) as MaxEnds, EvElimType
+				CONCAT(RrMatchScheduledDate,' ',RrMatchScheduledTime) as dtOrder, (RrLevEnds+5) as MaxEnds, EvElimType,
+				concat(RrMatchScheduledDate,' ',RrMatchScheduledTime) as ComboKey
 			FROM RoundRobinMatches
+            inner join Tournament on ToId=RrMatchTournament
 			inner join RoundRobinLevel on RrLevTournament=RrMatchTournament and RrLevTeam=RrMatchTeam and RrLevLevel=RrMatchLevel
 			inner join Events on EvCode=RrMatchEvent and EvTournament=RrMatchTournament and EvTeamEvent=RrMatchTeam
-			WHERE RrMatchTournament=$TourId and RrMatchScheduledDate>0
-			" . ($OnlyToday ? "AND RRMatchScheduledDate=UTC_DATE()" : "") ."
-			GROUP BY RrMatchScheduledDate, RRMatchScheduledTime
-		) ORDER BY Type='Q' desc, Type='E' desc, dtOrder ASC, Description ";
+			WHERE RrMatchTournament={$Options->TOURID} and RrMatchScheduledDate>0 $SubQuery
+			" . ($Options->ONLYTODAY ? "AND date(convert_tz(RRMatchScheduledDate, ToTimeZone, '+00:00'))=UTC_DATE()" : "") ."
+			GROUP BY RrMatchScheduledDate, RRMatchScheduledTime";
+	}
+
+	$SQL = "(" . implode(') UNION (', $aSQL) . ") ORDER BY Type='Q' desc, Type='E' desc, dtOrder ASC, Description ";
 
 	$texts=array(
-		'type-Q' => $Short ? 'Q' : get_text('QualSession', 'HTT'),
-		'type-E1' => $Short ? 'E1' : get_text('EliminationShort', 'Tournament').' 1',
-		'type-E2' => $Short ? 'E2' : get_text('EliminationShort', 'Tournament').' 2',
-		'type-0' => $Short ? 'I' : get_text('FinInd', 'HTT'),
-		'type-1' => $Short ? 'T' : get_text('FinTeam', 'HTT'),
-		'type-R' => $Short ? 'R' : get_text('R-Session', 'Tournament'),
+		'type-Q' => $Options->SHORT ? 'Q' : get_text('QualSession', 'HTT'),
+		'type-E1' => $Options->SHORT ? 'E1' : get_text('EliminationShort', 'Tournament').' 1',
+		'type-E2' => $Options->SHORT ? 'E2' : get_text('EliminationShort', 'Tournament').' 2',
+		'type-0' => $Options->SHORT ? 'I' : get_text('FinInd', 'HTT'),
+		'type-1' => $Options->SHORT ? 'T' : get_text('FinTeam', 'HTT'),
+		'type-R' => $Options->SHORT ? 'R' : get_text('R-Session', 'Tournament'),
 	);
 
 	$PoolMatches=getPoolMatchesPhases();
@@ -684,7 +814,7 @@ function getScheduledSessions($return='API', $TourId=0, $OnlyToday=false, $Short
 	$q=safe_r_SQL($SQL);
 	while($r=safe_fetch($q)) {
 		if($r->EvElimType==5 and substr($r->keyValue,1,1)=='R') {
-			// split description into blocks
+			// Round Robin, split description into blocks
 			$f=[];
 			list($d, $a)=explode('@', $r->Description);
 			foreach(explode('+', $a) as $b) {
@@ -801,20 +931,25 @@ function getStatusFromEnds($Ends, $Group, &$JSON) {
 
 function getMatchLive($TourId) {
 	// gets the live match
-	$q=safe_r_SQL("(Select '0' Team, FinEvent Event, FinMatchNo MatchNo, FinDateTime DateTime, EvMaxTeamPerson, EvEventName, EvFinalFirstPhase, GrPhase
+	$q=safe_r_SQL("("."Select '0' Team, FinEvent Event, FinMatchNo MatchNo, FinDateTime DateTime, EvMaxTeamPerson, EvEventName, EvFinalFirstPhase, GrPhase, EvFinArrows, EvMatchMode
 		from Finals use index (FinLive)
 		inner join Events on FinTournament=EvTournament and FinEvent=EvCode and EvTeamEvent=0
 		inner join Grids on FinMatchNo=GrMatchNo
 		where FinLive='1' and FinMatchNo%2=0 and FinTournament=$TourId
 		) UNION (
-		Select '1' Team, TfEvent Event, TfMatchNo MatchNo, TfDateTime DateTime, EvMaxTeamPerson, EvEventName, EvFinalFirstPhase, GrPhase
+		Select '1' Team, TfEvent Event, TfMatchNo MatchNo, TfDateTime DateTime, EvMaxTeamPerson, EvEventName, EvFinalFirstPhase, GrPhase, EvFinArrows, EvMatchMode
 		from TeamFinals
 		inner join Events on TfTournament=EvTournament and TfEvent=EvCode and EvTeamEvent=1
 		inner join Grids on TfMatchNo=GrMatchNo
 		where TfLive='1' and TfMatchNo%2=0 and TfTournament=$TourId
+        ) UNION (
+        Select RrMatchTeam Team, RrMatchEvent Event, RrMatchMatchNo+(RrMatchRound*100)+(RrMatchGroup*10000)+(RrMatchLevel*1000000) as MatchNo, RrMatchDateTime DateTime, EvMaxTeamPerson, EvEventName, EvFinalFirstPhase, 0 GrPhase, EvFinArrows, EvMatchMode
+        from RoundRobinMatches
+        inner join Events on EvTournament=RrMatchTournament and EvCode=RrMatchEvent and EvTeamEvent=RrMatchTeam
+        where RrMatchLive=1 and RrMatchMatchNo%2=0 and RrMatchTournament=$TourId
 		)");
 	if($r=safe_fetch($q)) {
-		return (object) array("MatchNo"=>$r->MatchNo, "Event"=>$r->Event, "Phase"=>$r->GrPhase, "Team"=>$r->Team, 'Archers'=>$r->EvMaxTeamPerson, 'Name'=>$r->EvEventName, 'FirstPhase'=>$r->EvFinalFirstPhase);
+		return (object) array("MatchNo"=>$r->MatchNo, "Event"=>$r->Event, "Phase"=>$r->GrPhase, "Team"=>$r->Team, 'Archers'=>$r->EvMaxTeamPerson, 'Name'=>$r->EvEventName, 'FirstPhase'=>$r->EvFinalFirstPhase, 'FinArrows'=>$r->EvFinArrows, 'MatchMode'=>$r->EvMatchMode);
 	} else {
 		return false;
 	}
@@ -1074,6 +1209,187 @@ function ComboSession($AllHHT=false, $Field='x_Session', &$ComboSesArray=null, $
 	if ($ComboSesArray!==null) {
 		$ComboSesArray=$ComboArr;
 	}
+	return $ComboSes;
+}
+
+//function ApiComboSession($AllHHT=false, $Field='x_Session', &$ComboSesArray=null, $extras='') {
+function ApiComboSession($Type=[], $Field='x_Session', &$ComboSesArray=null, $extras='') {
+	$ComboArr=array();
+	$ComboSes='';
+	$numOptions=0;
+
+	$MatchNames=getPoolMatchesPhases();
+	$MatchNamesWA=getPoolMatchesPhasesWA();
+
+    $Options=['Short'=>true];
+    if($Type) {
+        $Options['Type']=$Type;
+    }
+
+    $ScheduledSessions=getApiScheduledSessions($Options);
+    if(count($ScheduledSessions)>1) {
+        $ComboSes='<option value="-1">---</option>';
+    }
+
+    foreach($ScheduledSessions as $Session) {
+        $ComboArr[]=$Session->ComboKey;
+        $ComboSes.= '<option value="' . $Session->ComboKey . '"' . (isset($_REQUEST[$Field]) && $_REQUEST[$Field]==$Session->ComboKey ? ' selected' : '') . '>' . $Session->Description . '</option>';
+//        switch($Session->txtkey) {
+//            case 'Q': // Qualifications
+//                break;
+//            case 'E1': // Eliminations
+//            case 'E2': // Eliminations
+//                break;
+//            case 'R': // Round Robin
+//                $Dt="concat(DATE_FORMAT(RrMatchScheduledDate,'" . get_text('DateFmtDBshort') . "'),'@',left(RrMatchScheduledTime,5))";
+//                $selected=($_REQUEST[$Field]??null);
+//                $KeyDate="CONCAT(RrMatchScheduledDate,'".($ComboSesArray ? '|' : ' ')."',RrMatchScheduledTime)";
+//                $Select="SELECT
+//						$KeyDate AS MyDate,
+//						$Dt AS Dt,
+//						concat_ws('|', RrMatchScheduledDate, RrMatchScheduledTime) as SchedDateTime,
+//						RrMatchTeam,
+//						RrMatchEvent,
+//       					RrMatchLevel,
+//       					RrMatchGroup,
+//       					group_concat(distinct RrMatchRound order by RrMatchRound separator '/') as groupedRounds,
+//       					EvProgr
+//					FROM Events
+//					inner join RoundRobinMatches on RrMatchEvent=EvCode and RrMatchTeam=EvTeamEvent and RrMatchTournament=EvTournament
+//					where RrMatchScheduledDate>0 and EvElimType=5 and RrMatchTournament={$_SESSION['TourId']}
+//					group by RrMatchScheduledDate, RrMatchScheduledTime, RrMatchEvent, RrMatchLevel, RrMatchGroup, RrMatchTeam
+//					order by RrMatchScheduledDate, RrMatchScheduledTime, RrMatchTeam, EvProgr";
+//
+//                $tmp=array();
+//                $Rs=safe_r_sql($Select);
+//                while ($MyRow=safe_fetch($Rs)) {
+//                    $tmp[$MyRow->MyDate]['n']=$MyRow->Dt;
+//                    $tmp[$MyRow->MyDate]['i'][$MyRow->RrMatchTeam][$MyRow->RrMatchLevel][$MyRow->groupedRounds][$MyRow->RrMatchEvent][]=$MyRow->RrMatchGroup;
+//                }
+//                foreach($tmp as $date => $teams) {
+//                    $val=array();
+//                    foreach($teams['i'] as $team => $levels) {
+//                        $val[$team]=($team ? 'T: ' : 'I: ');
+//                        $l=[];
+//                        foreach($levels as $level => $rounds) {
+//                            $r=[];
+//                            foreach($rounds as $round => $events) {
+//                                $e=[];
+//                                foreach($events as $event => $groups) {
+//                                    $e['(G'.implode('/G', $groups).')'][]=$event;
+//                                }
+//                                foreach($e as $gr => $ev) {
+//                                    $k=implode('+',$ev).' '.$gr;
+//                                    $r[$k][]='R'.$round;
+//                                }
+//                            }
+//                            foreach($r as $k1=>$v1) {
+//                                $k=implode(',', $v1). ' '.$k1;
+//                                $l[$k][]='L'.$level;
+//                            }
+//                        }
+//                        $f=[];
+//                        foreach($l as $k1 => $v1) {
+//                            $f[]=implode('; ', $v1).' '.$k1;
+//                        }
+//                        $val[$team].=implode(' | ', $f);
+//                    }
+//                    $ComboSes.='<option value="'.$date.'"'.($selected==$date ? ' selected="selected"' : '').'>'.$teams['n']  . ' '. implode('; ',$val).'</option>';
+//                }
+//                if($ComboSes) {
+//                    $ComboSes='<option value="">---</option>'.$ComboSes;
+//                }
+//                if($ComboSesArray) {
+//                    return $ComboSes;
+//                }
+//                break;
+//            case '0': // Individual matches
+//                $Select='SELECT
+//                        @Phase:=ifnull(2*pow(2,truncate(log2(fsmatchno/2),0)),1) Phase,
+//                        @RealPhase:=truncate(@Phase/2, 0) RealPhase,
+//                        CONCAT(FSScheduledDate," ",FSScheduledTime) AS MyDate,
+//                        DATE_FORMAT(FSScheduledDate,"' . get_text('DateFmtDBshort') . '") AS Dt,
+//                        DATE_FORMAT(FSScheduledDate,"' . get_text('DateFmtDB') . '") AS Dat,
+//                        FSTeamEvent,
+//                        FSEvent,
+//                        FSScheduledTime,
+//                        EvFinalFirstPhase,
+//                        EvElimType
+//                    FROM FinSchedule fs
+//                    inner join Events on FSEvent=EvCode and FSTeamEvent=EvTeamEvent and FsTournament=EvTournament
+//                    where FsTournament=' . $_SESSION['TourId'] . ' and FsTeamEvent=0
+//                        and fsscheduleddate >0
+//                    group by FsScheduledDate, FsScheduledTime, FsEvent, Phase
+//                    order by FsScheduledDate, FsScheduledTime, FsEvent, Phase';
+//                $tmp=array();
+//                $Rs=safe_r_sql($Select);
+//                while ($MyRow=safe_fetch($Rs)) {
+//                    $val=$MyRow->FSTeamEvent . $MyRow->MyDate;
+//                    $text=get_text('FinInd','HTT') . ': ' . $MyRow->MyDate ;
+//                    if($MyRow->EvElimType==3 and isset($MatchNames[$MyRow->RealPhase])) {
+//                        $idx=$MatchNames[$MyRow->RealPhase];
+//                    } elseif($MyRow->EvElimType==4 and isset($MatchNamesWA[$MyRow->RealPhase])) {
+//                        $idx=$MatchNamesWA[$MyRow->RealPhase];
+//                    } else {
+//                        $idx=get_text(namePhase($MyRow->EvFinalFirstPhase, $MyRow->RealPhase) . '_Phase');
+//                    }
+//                    $tmp[$val]['events'][$idx][]= $MyRow->FSEvent;
+//                    $tmp[$val]['date']= $MyRow->Dt . ' '. substr($MyRow->FSScheduledTime,0,5) . ' ' . get_text('FinInd','HTT') ;
+//                    $tmp[$val]['selected']= isset($_REQUEST[$Field]) && $_REQUEST[$Field]==$val ? ' selected' : '';
+//                    $numOptions++;
+//                }
+//                foreach($tmp as $k => $v) {
+//                    $val=array();
+//                    foreach($v['events'] as $ph => $ev) $val[]= $ph . ' ('.implode('+',$ev).')';
+//                    $ComboSes.='<option value="'.$k.'"'.$v['selected'].'>'.$v['date']  . ' '. implode('; ',$val).'</option>';
+//                    if ($ComboSesArray!==null)
+//                    {
+//                        $ComboArr[]=$k;
+//                    }
+//                }
+//                break;
+//            case '1': // Team matches
+//                $Select='SELECT  @Phase:=ifnull(2*pow(2,truncate(log2(fsmatchno/2),0)),1) Phase, @RealPhase:=truncate(@Phase/2, 0) RealPhase,
+//                    CONCAT(FSScheduledDate,\' \',FSScheduledTime) AS MyDate, DATE_FORMAT(FSScheduledDate,"' . get_text('DateFmtDBshort') . '") AS Dt, DATE_FORMAT(FSScheduledDate,"' . get_text('DateFmtDB') . '") AS Dat,
+//                    FSTeamEvent, FSEvent, FSScheduledTime, EvFinalFirstPhase
+//                    FROM `FinSchedule` fs
+//                    INNER JOIN Events on FSEvent=EvCode and FSTeamEvent=EvTeamEvent and FsTournament=EvTournament
+//                    WHERE FsTournament=' . $_SESSION['TourId'] . ' and fsscheduleddate >0 AND FSTeamEvent!=0
+//                    GROUP BY FsScheduledDate, FsScheduledTime, FsEvent, Phase
+//                    order BY FsScheduledDate, FsScheduledTime, FsEvent, Phase';
+//                $tmp=array();
+//                $Rs=safe_r_sql($Select);
+//                if (safe_num_rows($Rs)>0) {
+//                    while ($MyRow=safe_fetch($Rs)) {
+//                        $val=$MyRow->FSTeamEvent . $MyRow->MyDate;
+//                        $text=get_text('FinTeam','HTT') . ': ' . $MyRow->MyDate;
+//                        $tmp[$val]['events'][get_text(namePhase($MyRow->EvFinalFirstPhase, $MyRow->RealPhase) . '_Phase')][]= $MyRow->FSEvent;
+//                        $tmp[$val]['date']= get_text('FinTeam','HTT') . ': ' . $MyRow->Dt.' '. substr($MyRow->FSScheduledTime,0,5);
+//                        $tmp[$val]['selected']= isset($_REQUEST[$Field]) && $_REQUEST[$Field]==$val ? ' selected' : '';
+//                        $numOptions++;
+//                    }
+//                    foreach($tmp as $k => $v) {
+//                        $val=array();
+//                        foreach($v['events'] as $ph => $ev) $val[]= $ph . ' ('.implode('+',$ev).')';
+//                        $ComboSes.='<option value="'.$k.'"'.$v['selected'].'>'.$v['date']  . ': '. implode('; ',$val).'</option>';
+//                        if ($ComboSesArray!==null)
+//                        {
+//                            $ComboArr[]=$k;
+//                        }
+//                    }
+//                }
+//                break;
+//        }
+    }
+
+    $ComboSesArray=$ComboArr;
+
+    if($Field) {
+        $ComboSes = '<select name="'.$Field.'" id="'.$Field.'" '.$extras.'>'
+            . $ComboSes
+            . '</select>';
+    }
+
 	return $ComboSes;
 }
 
@@ -1367,4 +1683,72 @@ if (!function_exists('array_key_first')) {
 		}
 		return NULL;
 	}
+}
+
+function ReddingGrouping($tgt, $flip, $space='-') {
+    static $bis=['A','B'];
+    $ret=intval($tgt);
+    $let=substr($tgt,-1);
+    if(is_numeric($let)) {
+        $let='';
+        $space='';
+    }
+    return ((($ret-1)%$flip)+1) .$bis[floor(($ret-1)/$flip)] . $space . $let;
+}
+
+function CheckBisTargets($tgt, $flip, $space='-') {
+	static $bis=['bis','ter','quat', 'quin', 'sex', 'sept', 'oct'];
+	$ret=intval($tgt);
+	$let=substr($tgt,-1);
+	if(is_numeric($let)) {
+		$let='';
+		$space='';
+	}
+	if($ret>$flip) {
+		return ((($ret-1)%$flip)+1) .$bis[floor(($ret-1)/$flip)-1] . $space . $let;
+	}
+	return ltrim($tgt, '0');
+}
+
+
+/**
+ * Translitterate into pure ASCII characters, and change case based on $type. See https://odf.olympictech.org/2024-Paris/general/PDF/Language_Guidelines_R-SOG-2024_LANG.pdf
+ * @param $Name Name to change
+ * @param $Type <ul><li>A(llcaps): all chars will be set uppercase</li><li>L(limited mixed): all chars will be set uppercase apart Mc[Something]</li><li>T(itle): $Name will be transformed Title Case, taking care of alikes of McCormick or O'Brien</li></ul>
+ * @return array|string|string[]
+ */
+function OdfCapitalise($Name, $Type='A') {
+	static $Lower='/\b(da|de|dei|del|den|der|di|dos|du|la|le|los|ter|van|vander|von)\b/sim';
+	$Type=strtoupper($Type);
+	// first change it into a strict latin name
+	if(function_exists('transliterator_transliterate')) {
+		$Name=transliterator_transliterate("Any-Latin; Latin-ASCII; ".($Type=='T' ? "Title ()" : "Upper ()"), $Name);
+	} elseif($Type=='T') {
+		$Name=iconv('UTF-8','ASCII//TRANSLIT', mb_convert_case($Name, MB_CASE_TITLE, 'UTF-8'));
+	} else {
+		$Name=iconv('UTF-8','ASCII//TRANSLIT', mb_convert_case($Name, MB_CASE_UPPER, 'UTF-8'));
+	}
+
+	// these go lowercase in any case
+	$Name=preg_replace_callback($Lower, function($word) {
+		return strtolower($word[1]);
+	}, $Name);
+
+	if($Type=='A') {
+		// nothing else to do
+		return $Name;
+	}
+
+	if(strlen($Name>2)) {
+		if(strtoupper(substr($Name, 0, 2))=='MC') {
+			// takes care of Mc[Something] and alike
+			$Name[1]='c';
+			$Name[2]=strtoupper($Name[2]);
+		} elseif($Type=='T' and ($Name[1]=="'" or $Name[1]=="’" or $Name[1]=="`" or $Name[1]=="‘")) {
+			// takes care of the letter after apostrophe
+			$Name[2]=strtoupper($Name[2]);
+		}
+	}
+
+	return $Name;
 }

@@ -78,8 +78,8 @@ mettere in $ESS_EXT i moduli essenziali
 
 $INI_SET=ini_get_all(); // solo il dato attuale
 $EXT_SET=get_loaded_extensions();
-$ESS_EXT=array('mysqli', 'curl', 'gd', 'mbstring', 'iconv');
-$SUG_EXT=array('imagick');
+$ESS_EXT=array('curl', 'gd', 'iconv', 'json', 'mbstring', 'mysqli', 'xml');
+$SUG_EXT=array('imagick', 'intl');
 
 $INI_FAIL=false;
 $MOD_FAIL=false;
@@ -95,10 +95,10 @@ echo '<th>'.get_text('System value','Install').'</th>';
 echo '</tr>';
 
 // Check PHP version
-print_row(PHP_VERSION, '>= 7.4', '<b>'.get_text('PHP version','Install') . '</b>', PHP_VERSION < 7.4, true);
+print_row(PHP_VERSION, '>= 8.0', '<b>'.get_text('PHP version','Install') . '</b>', PHP_VERSION < 8.0, true);
 
 // se la versione è inferiore a 7.4 è inutile proseguire!!!
-if(PHP_VERSION < 7.4) {
+if(PHP_VERSION < 8.0) {
 		echo '<tr><td colspan="3">'.get_text('PHP too old','Install').'<br/>'.get_text('Failing install','Install').'</td></tr>';
 } else {
 
@@ -169,7 +169,18 @@ if(PHP_VERSION < 7.4) {
 		echo '<tr><td colspan="3">'.get_text('Missing modules','Install').'<br/>'.get_text('Failing install','Install').'</td></tr>';
 	} else {
 		// si va avanti... ma magari si può sistemare il php.ini
-		if($INI_FAIL) echo '<tr><td colspan="3">'.get_text('Suboptimal','Install').'</td></tr>';
+		if($INI_FAIL) {
+			echo '<tr><td colspan="3">'.get_text('Suboptimal','Install');
+			$IniDir=[];
+			foreach(preg_split('/[,\n\r]+/', php_ini_scanned_files()) as $file) {
+				$dir=dirname($file);
+				if(!in_array($dir, $IniDir)) {
+					$IniDir[]=$dir;
+				}
+			}
+			echo '<div><b>'.implode('</b></div><div><b>', $IniDir).'</b></div>';
+			echo '</td></tr>';
+		}
 		echo '<tr><th colspan="3"><a href="?step=2">'.get_text('Continue').'</a></th></tr>';
 	}
 }

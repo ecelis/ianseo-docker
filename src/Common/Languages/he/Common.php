@@ -166,6 +166,7 @@ $lang['IndTeam-1']='קבוצתי';
 $lang['InitEliminations']='אתחל סבבי הדחה';
 $lang['InitEliminations1']='אתחל שלב סבבי הדחה ראשון';
 $lang['InitEliminations2']='אתחל שלב סבבי הדחה שני';
+$lang['InitFinalGrids']='אתחל תרשים התמודדויות';
 $lang['InitPools']='אתחל פולים';
 $lang['InvalidAction']='פעולה לא חוקית';
 $lang['ISK-Configuration']='ניהול מכשיר';

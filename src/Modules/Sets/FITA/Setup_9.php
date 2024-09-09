@@ -28,4 +28,3 @@ $DistanceInfoArray=array(array(24, 3));
 
 require_once('Setup_Field.php');
 
-?>

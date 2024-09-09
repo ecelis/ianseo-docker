@@ -44,11 +44,9 @@ if (isset($PdfData->Data['Items']) && count($PdfData->Data['Items'])>0)
 		$pdf->Cell(190, 0.5,  '', 1, 1, 'C', 0);
 
 		foreach($Rows as $MyRow) {
-			$secondaryTeam = (is_null($MyRow->NationCode2) ? 1 : 2);
-			if ($secondaryTeam==2 && !is_null($MyRow->NationCode3))
-			{
-				$secondaryTeam=3;
-			}
+			$secondaryTeam = 1;
+            $secondaryTeam += (is_null($MyRow->NationCode2) ? 0 : 1);
+            $secondaryTeam += (is_null($MyRow->NationCode3) ? 0 : 1);
 			if (!$pdf->SamePage(4*$secondaryTeam)) {
 				$pdf->AddPage();
 				$pdf->SetFont($pdf->FontStd,'B',10);
@@ -95,17 +93,15 @@ if (isset($PdfData->Data['Items']) && count($PdfData->Data['Items'])>0)
 		   	$pdf->SetFont($pdf->FontStd,'',7);
 		   	$pdf->Cell(8, 4,  $MyRow->NationCode, 'LTB', 0, 'C', 0);
 			$pdf->Cell(46, 4,  $MyRow->Nation . ($MyRow->EnSubTeam==0 ? "" : " (" . $MyRow->EnSubTeam . ")"), 'RTB', 0, 'L', 0);
-			if($secondaryTeam>=2)
-			{
+			if($secondaryTeam>=2) {
 				$secTmpX=$pdf->GetX();
 				$secTmpY=$pdf->GetY();
 				$pdf->SetXY($secTmpX-54,$secTmpY+4);
-		   		$pdf->Cell(8, 4,  $MyRow->NationCode2, 'LTB', 0, 'C', 0);
-				$pdf->Cell(46, 4,  $MyRow->Nation2, 'RTB', 0, 'L', 0);
+		   		$pdf->Cell(8, 4, $MyRow->NationCode2 ?? $MyRow->NationCode3, 'LTB', 0, 'C', 0);
+				$pdf->Cell(46, 4, $MyRow->Nation2 ?? $MyRow->Nation3, 'RTB', 0, 'L', 0);
 				$pdf->SetXY($secTmpX,$secTmpY);
 			}
-			if($secondaryTeam==3)
-			{
+			if($secondaryTeam==3) {
 				$secTmpX=$pdf->GetX();
 				$secTmpY=$pdf->GetY();
 				$pdf->SetXY($secTmpX-54,$secTmpY+8);

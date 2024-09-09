@@ -3,7 +3,7 @@
 require_once('Common/Lib/Fun_Phases.inc.php');
 $ExtraSql='';
 $ExtraWhere='';
-$ExtraGroup='';
+$ExtraGroup='GROUP BY EnId';
 
 $QuSession='QuSession';
 $QuSesLetter='Q';
@@ -13,24 +13,28 @@ $EventBased='';
 
 $BibNumber=empty($_REQUEST['BibNumber']) ? '' : str_replace('UU', '_', $_REQUEST['BibNumber']);
 
-$TourId=$_SESSION['TourId'];
+if(empty($TourId)) {
+    $TourId = $_SESSION['TourId'];
+}
 
 if(empty($SpecialFilter)) $SpecialFilter='';
 if(empty($CardType)) $CardType='A';
 if(empty($CardNumber)) $CardNumber=0;
 
 if(empty($FIELDS)) {
-	$FIELDS='EnId, EnCode as Bib, EnTournament, ToCode, ToName, ToWhere, ToWhenFrom, ToWhenTo, ToCategory,
+	$FIELDS="EnId, EnCode as Bib, EnTournament, ToCode, ToName, ToWhere, ToWhenFrom, ToWhenTo, ToCategory,
 		EnName AS Name, upper(EnFirstName) AS FirstName, EnName as GivCamel, upper(EnName) as GivCaps, EnFirstName as FamCamel, upper(EnFirstName) AS FamCaps,
-		QuSession AS Session,
-		CoId, CoCode AS NationCode, CoName AS Nation, upper(CoName) as NationCaps, SesName,
+		QuSession AS Session, SesName,
+		c.CoId, c.CoCode AS NationCode, c.CoName AS Nation, upper(c.CoName) as NationCaps, 
+		ifnull(c2.CoId,0) as CoId2, ifnull(c2.CoCode,'') AS NationCode2, ifnull(c2.CoName,'') AS Nation2, upper(ifnull(c2.CoName,'')) as NationCaps2,
+		ifnull(c3.CoId,0) as CoId3, ifnull(c3.CoCode,'') AS NationCode3, ifnull(c3.CoName,'') AS Nation3, upper(ifnull(c3.CoName,'')) as NationCaps3,
 		EnClass AS ClassCode, EnDivision AS DivCode, EnAgeClass as AgeClass, DivDescription,ClDescription,
 		aextra.EdExtra as HasPlastic, aextra.EdEmail as HasPaper,
-		cextra.EdExtra as EnCaption,
+		cextra.EdExtra as EnCaption, COALESCE(RankRanking, '') as WRank, ifnull(pextra.EdExtra,0) as ExtraAddOns,
 		EnSubClass as SubClass, EnStatus as Status, EnIndClEvent AS `IC`, EnTeamClEvent AS `TC`, EnIndFEvent AS `IF`, EnTeamFEvent as `TF`,
 		AcColor, AcTitleReverse,(ClAthlete*DivAthlete) AS  AcIsAthlete, PhPhoto,
 		AcArea0, AcArea1, AcArea2, AcArea3, AcArea4, AcArea5, AcArea6, AcArea7, AcAreaStar,
-		AcTransport, AcAccomodation, AcMeal ';
+		AcTransport, AcAccomodation, AcMeal ";
 }
 $Where=array();
 
@@ -39,7 +43,6 @@ if(!empty($_REQUEST['Specifics'])) {
 } else {
 	$FIELDS.=", $CardNumber as IcNumber";
 }
-
 
 switch($CardType) {
 	case 'A': // Accreditation
@@ -56,6 +59,9 @@ switch($CardType) {
 			$Where[] = " AND aextra.EdExtra='1' and aextra.EdEmail!='1' ";
 		}
 		if(empty($SORT)) $SORT='Printed, NationCode, FirstName, Name';
+        $ExtraSql="LEFT JOIN Individuals ON IndTournament=EnTournament AND EnId=IndId
+			LEFT JOIN Events on EvCode=IndEvent and EvTournament=EnTournament and EvTeamEvent=0
+			";
 
 		if(!empty($_REQUEST['Specifics'])) {
 			$f=array();
@@ -77,8 +83,11 @@ switch($CardType) {
 			$Where[] = ' AND (QuBacknoPrinted is NULL or QuBacknoPrinted=0) ';
 		}
 		$Where[] = ' AND EnAthlete=1 ';
+        $ExtraSql="LEFT JOIN Individuals ON IndTournament=EnTournament AND EnId=IndId
+			LEFT JOIN Events on EvCode=IndEvent and EvTournament=EnTournament and EvTeamEvent=0
+			";
 
-		if(!empty($_REQUEST['Specifics'])) {
+        if(!empty($_REQUEST['Specifics'])) {
 			$f=array();
 			foreach($_REQUEST['Specifics'] as $ToId=>$specs) {
 				foreach($specs as $k=>$v) {
@@ -256,8 +265,11 @@ switch($CardType) {
 		break;
 }
 
-if(empty($SORT)) $SORT='Printed, FirstName, Name';
+if(empty($SORT)) {
+    $SORT='Printed, FirstName, Name';
+}
 
+$EntryWhere='';
 if(!empty($_REQUEST['Entries'])) {
 	$tmp=array();
 	foreach($_REQUEST['Entries'] as $item) {
@@ -265,7 +277,7 @@ if(!empty($_REQUEST['Entries'])) {
 	}
 	if($tmp) {
 		sort($tmp);
-		$Where[]='AND EnId in ('.implode(',', $tmp).')';
+		$Where[]=($EntryWhere='AND EnId in ('.implode(',', $tmp).')');
 	}
 }
 
@@ -366,13 +378,15 @@ if(!empty($BibNumber)) {
 
 
 
-$MyQuery = "SELECT $FIELDS
+$MyQuery = "SELECT $FIELDS, QuTargetNo as AbcdTarget
 	FROM Entries AS e
 	INNER JOIN Tournament on EnTournament=ToId
+	INNER JOIN Qualifications AS q ON e.EnId=q.QuId
 	INNER JOIN Divisions ON TRIM(EnDivision)=TRIM(DivId) AND DivTournament=EnTournament
 	INNER JOIN Classes ON TRIM(EnClass)=TRIM(ClId) AND ClTournament=EnTournament
 	INNER JOIN Countries AS c ON e.EnCountry=c.CoId AND e.EnTournament=c.CoTournament
-	INNER JOIN Qualifications AS q ON e.EnId=q.QuId
+    LEFT JOIN Countries AS c2 ON e.EnCountry2=c2.CoId AND e.EnTournament=c2.CoTournament
+    LEFT JOIN Countries AS c3 ON e.EnCountry3=c3.CoId AND e.EnTournament=c3.CoTournament
 	$ExtraSql
 	LEFT JOIN AccEntries ON AEId=EnId and AETournament=EnTournament and AeOperation=1
 	LEFT JOIN Session ON SesTournament=EnTournament and SesOrder=$QuSession and SesType='$QuSesLetter'
@@ -381,9 +395,24 @@ $MyQuery = "SELECT $FIELDS
 	LEFT JOIN ExtraData cextra ON e.EnId=cextra.EdId and cextra.EdType='C'
 	LEFT JOIN ExtraData aextra ON e.EnId=aextra.EdId and aextra.EdType='A'
 	LEFT JOIN ExtraData zextra ON e.EnId=zextra.EdId and zextra.EdType='Z'
+    LEFT JOIN ExtraData pextra ON e.EnId=pextra.EdId and pextra.EdType='P'
+    LEFT JOIN Rankings on EnTournament=RankTournament and RankEvent=IF(EvWaCategory!='',EvWaCategory,EvCode) and RankTeam=0 and EnCode=RankCode and ToIocCode='FITA' and EnIocCode in ('', 'FITA') and RankIocCode='FITA'
 	WHERE EnTournament in ($TourId)
 	$SpecialFilter
 	".implode(' ', $Where)."
 	$ExtraWhere
 	$ExtraGroup
 	ORDER BY  ".(empty($SORTSTRICT) ? "EnTournament, IcNumber, $SORT, Bib" : $SORTSTRICT);
+
+if(!empty($_REQUEST['SortACBD'])) {
+    $MyQuery="select realQuery.*, AtTargetNo
+        from AvailableTarget
+        left join ($MyQuery) realQuery on AtTargetNo=AbcdTarget and AtTournament=EnTournament
+        where AtTournament in ($TourId) and (AtTarget, AtSession, AtTournament) in (
+            select distinct QuTarget, QuSession, EnTournament 
+            from Qualifications 
+            inner join Entries on EnId=QuId and EnTournament in ($TourId)
+            ".implode(' ', $Where)."
+            )
+        order by AtSession, AtTarget, AtLetter in ('B','D'), AtLetter";
+}

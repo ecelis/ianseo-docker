@@ -119,7 +119,7 @@ $JS_SCRIPT[]='
 	.txtGray {color:gray;}
 	';
 $JS_SCRIPT[]='</style>';
-$JS_SCRIPT[] = '<link href="'.$CFG->ROOT_DIR.'Common/css/font-awesome.css" rel="stylesheet" type="text/css">';
+$IncludeFA = true;
 
 include('Common/Templates/head.php');
 
@@ -160,8 +160,7 @@ if(!empty($_GET['B'])) {
 ?></td>
 		<td class="Center"><select id="Session" name="T"  onchange="document.Frm.bib.focus()"><?php
 
-$tmp=array(1);
-$Combo=ComboSession('Robin', '', $tmp);
+$Combo=ApiComboSession(['R'], '');
 
 if(!empty($_REQUEST['T'])) {
     $s='value="'.$_REQUEST['T'].'"';
@@ -187,24 +186,29 @@ if(!empty($_REQUEST['T'])) {
 
 if($Match) {
     // check who is winner...
+    $Lx=1;$Rx=2;
+    if($Match->Swapped) {
+        $Lx=2;$Rx=1;
+    }
     $Win1='';
     $Win2='';
-    $Score1=($Match->RrLevMatchMode ? $Match->M1SetScore:$Match->M1Score);
-    $Score2=($Match->RrLevMatchMode ? $Match->M2SetScore:$Match->M2Score);
-    $TB1=ValutaArrowStringSO($Match->M1Tiebreak);
-    $TB2=ValutaArrowStringSO($Match->M2Tiebreak);
-    $Closest1=($Match->M1Tiebreak!=strtoupper($Match->M1Tiebreak) or $Match->M1TbClosest);
-    $Closest2=($Match->M2Tiebreak!=strtoupper($Match->M2Tiebreak) or $Match->M2TbClosest);
+    $Score1=($Match->RrLevMatchMode ? $Match->{"M{$Lx}SetScore"}:$Match->{"M{$Lx}Score"});
+    $Score2=($Match->RrLevMatchMode ? $Match->{"M{$Rx}SetScore"}:$Match->{"M{$Rx}Score"});
+    $XChar=(($Match->EvCheckGolds??'') ? $Match->EvGoldsChars : (($Match->EvCheckXNines??'') ? $Match->EvXNineChars : null));
+    $TB1=ValutaArrowStringSO($Match->{"M{$Lx}Tiebreak"}, $XChar, $XChar ? 'A' : null);
+    $TB2=ValutaArrowStringSO($Match->{"M{$Rx}Tiebreak"}, $XChar, $XChar ? 'A' : null);
+    $Closest1=($Match->{"M{$Lx}Tiebreak"}!=strtoupper($Match->{"M{$Lx}Tiebreak"}) or $Match->{"M{$Lx}TbClosest"});
+    $Closest2=($Match->{"M{$Rx}Tiebreak"}!=strtoupper($Match->{"M{$Rx}Tiebreak"}) or $Match->{"M{$Rx}TbClosest"});
 
-	if($Match->M1WinLose) {
+	if($Match->{"M{$Lx}WinLose"}) {
 		$Win1=' winner';
-	} elseif($Match->M2WinLose) {
+	} elseif($Match->{"M{$Rx}WinLose"}) {
 		$Win2=' winner';
 	} else {
-        $A1String=strlen(str_replace(' ','', $Match->M1Arrowstring));
-        $A2String=strlen(str_replace(' ','', $Match->M2Arrowstring));
+        $A1String=strlen(str_replace(' ','', $Match->{"M{$Lx}Arrowstring"}));
+        $A2String=strlen(str_replace(' ','', $Match->{"M{$Rx}Arrowstring"}));
         $TieAllowedCumulative=($Match->RrLevMatchMode==0 and $A1String==$A2String and $A1String==$Match->RrLevArrows*$Match->RrLevEnds);
-        $TieAllowedSetSystem=($Match->RrLevMatchMode==1 and $Match->M1SetScore==$Match->M2SetScore and $Match->M1SetScore==$Match->RrLevEnds);
+        $TieAllowedSetSystem=($Match->RrLevMatchMode==1 and $Match->{"M{$Lx}SetScore"}==$Match->{"M{$Rx}SetScore"} and $Match->{"M{$Lx}SetScore"}==$Match->RrLevEnds);
         if($Match->RrLevTieAllowed and ($TieAllowedSetSystem or $TieAllowedCumulative)) {
 	        $Win1=' equals';
 	        $Win2=' equals';
@@ -216,20 +220,20 @@ if($Match) {
 
 	echo '<table class="Tabella2 half" style="font-size:150%">';
 	echo '<tr><th class="Title" colspan="5">'.get_text('Archer').'</th></tr>';
-	echo '<tr><th class="Title" colspan="5">'.get_text('Target'). ' ' . ltrim($Match->M1Target, '0') . ($Match->M1Target!=$Match->M2Target ? ' - ' . ltrim($Match->M2Target,'0') : '') . '</th></tr>';
+	echo '<tr><th class="Title" colspan="5">'.get_text('Target'). ' ' . ltrim($Match->{"M{$Lx}Target"}, '0') . ($Match->{"M{$Lx}Target"}!=$Match->{"M{$Rx}Target"} ? ' - ' . ltrim($Match->{"M{$Rx}Target"},'0') : '') . '</th></tr>';
 
 	echo '<tr>';
 
 	// Opponent 1
 	echo '<td colspan="2" class="'.$Win1.'">';
-	echo '<div class="th"><div>'.$Match->Athlete1.'</div></div>';
+	echo '<div class="th"><div>'.$Match->{"Athlete".$Lx}.'</div></div>';
 	echo '<div class="th"><div>'.get_text('Score', 'Tournament').'</div><div class="LetteraGrande td"> '.$Score1.'</div></div>';
 	if($Match->RrLevMatchMode) {
 		echo '<div>';
-		echo '<div class="LetteraGrande td">'.str_replace("|",",&nbsp;",$Match->M1SetPoints).'</div>';
+		echo '<div class="LetteraGrande td">'.str_replace("|",",&nbsp;",$Match->{"M{$Lx}SetPoints"}).'</div>';
 		echo '</div>';
 	}
-	echo '<div class="th"><div>'.get_text('ShotOffShort', 'Tournament').'</div><div class="LetteraGrande td">'.(!empty($Match->M1Tiebreak) ? (strlen($Match->M1Tiebreak)>1 ? implode(DecodeFromString($Match->M1Tiebreak, false),',') : DecodeFromString($Match->M1Tiebreak, false)):'&nbsp;').'</div></div>';
+	echo '<div class="th"><div>'.get_text('ShotOffShort', 'Tournament').'</div><div class="LetteraGrande td">'.(!empty($Match->{"M{$Lx}Tiebreak"}) ? implode(',', DecodeFromString($Match->{"M{$Lx}Tiebreak"}, false, true)) :'&nbsp;').'</div></div>';
 
 	if($Closest1 or $Closest2) {
         echo '<div class="th"><div>'.get_text('ClosestShort', 'Tournament').'</div><div class="LetteraGrande td">'.($Closest1 ? '<i class="fa fa-check-circle txtGreen"></i>' :'&nbsp;').'</div></div>';
@@ -241,44 +245,20 @@ if($Match) {
 
 	// Opponent 2
 	echo '<td colspan="2" class="'.$Win2.'">';
-	echo '<div class="th"><div>'.$Match->Athlete2.'</div></div>';
+	echo '<div class="th"><div>'.$Match->{"Athlete".$Rx}.'</div></div>';
 	echo '<div class="th"><div>'.get_text('Score', 'Tournament').'</div><div class="LetteraGrande td"> '.$Score2.'</div></div>';
 	if($Match->RrLevMatchMode) {
 		echo '<div>';
-		echo '<div class="LetteraGrande td">'.str_replace("|",",&nbsp;",$Match->M2SetPoints).'</div>';
+		echo '<div class="LetteraGrande td">'.str_replace("|",",&nbsp;",$Match->{"M{$Rx}SetPoints"}).'</div>';
 		echo '</div>';
 	}
-	echo '<div class="th"><div>'.get_text('ShotOffShort', 'Tournament').'</div><div class="LetteraGrande td">'.(!empty($Match->M2Tiebreak) ? (strlen($Match->M2Tiebreak)>1 ? implode(DecodeFromString($Match->M2Tiebreak, false),',') : DecodeFromString($Match->M2Tiebreak, false)):'&nbsp;').'</div></div>';
+	echo '<div class="th"><div>'.get_text('ShotOffShort', 'Tournament').'</div><div class="LetteraGrande td">'.(!empty($Match->{"M{$Rx}Tiebreak"}) ? implode(',', DecodeFromString($Match->{"M{$Rx}Tiebreak"}, false, true)) : '&nbsp;').'</div></div>';
 
 	if($Closest1 or $Closest2) {
 		echo '<div class="th"><div>'.get_text('ClosestShort', 'Tournament').'</div><div class="LetteraGrande td">'.($Closest2 ? '<i class="fa fa-check-circle txtGreen"></i>' :'&nbsp;').'</div></div>';
 	}
     echo '</td>';
 	echo '</tr>';
-
-	//echo '<tr>';
-	//echo '<th class="'.$Win1.'">'.get_text('Score', 'Tournament').'</th>';
-	//echo '<td class="LetteraGrande'.$Win1.'" align="right">'.$Score1.'</td>';
-	//echo '<td>&nbsp;</td>';
-	//echo '<th class="'.$Win2.'">'.get_text('Score', 'Tournament').'</th>';
-	//echo '<td class="LetteraGrande'.$Win2.'" align="right">'.$Score2.'</td>';
-	//echo '</tr>';
-	//
-	//if($Match->matchMode) {
-	//	echo '<tr>';
-	//	echo '<td colspan="2" class="LetteraGrande'.$Win1.'" align="right">'.str_replace("|",",&nbsp;",$Match->setPoints1).'</td>';
-	//	echo '<td>&nbsp;</td>';
-	//	echo '<td colspan="2" class="LetteraGrande'.$Win2.'" align="right">'.str_replace("|",",&nbsp;",$Match->setPoints2).'</td>';
-	//	echo '</tr>';
-	//}
-	//
-	//echo '<tr>';
-	//echo '<th>'.get_text('ShotOffShort', 'Tournament').'</th>';
-	//echo '<td class="LetteraGrande" align="right">'.(!empty($Match->M1Tiebreak) ? (strlen($Match->M1Tiebreak)>1 ? implode(DecodeFromString($Match->M1Tiebreak, false),',') : DecodeFromString($Match->M1Tiebreak, false)):'&nbsp;').'</td>';
-	//echo '<td>&nbsp;</td>';
-	//echo '<th>'.get_text('ShotOffShort', 'Tournament').'</th>';
-	//echo '<td class="LetteraGrande" align="right">'.(!empty($Match->M2Tiebreak) ? (strlen($Match->M2Tiebreak)>1 ? implode(DecodeFromString($Match->M2Tiebreak, false),',') : DecodeFromString($Match->M2Tiebreak, false)):'&nbsp;').'</td>';
-	//echo '</tr>';
 
 	echo '<tr>';
 		echo '<td colspan="2" align="center" style="font-size:80%"><b><a href="'.go_get(array('C'=>$_REQUEST['B'])).'">CONFIRM</a></b></td>';
@@ -299,7 +279,7 @@ if($Match) {
 
 <?php
 if($ShowMiss and !empty($_GET['T'])) {
-	list($Date, $Time)=explode('|', $_GET['T']);
+	list($Date, $Time)=explode(' ', $_GET['T']);
 	echo '<table class="Missing">';
 	$cnt = 0;
 	$tmpRow = '';
@@ -318,10 +298,10 @@ if($ShowMiss and !empty($_GET['T'])) {
 	while($r=safe_fetch($Q)) {
 		if(!$r->AthleteShort1 and !$r->AthleteShort2) continue;
 	    $lnk=' onclick="location.href=\''.go_get('B', implode($_SESSION['BarCodeSeparator'], [$r->M1MatchNo, $r->M1Round, $r->M1Group, $r->M1Level, $r->EvTeamEvent, $r->EvCode])).'\'"';
-		if($r->M1WinLose or $r->M2WinLose) {
+		if($r->{"M1WinLose"} or $r->{"M2WinLose"}) {
 			$lnk.=' style="font-weight:bold;"';
         }
-		$tmpRow .= '<tr'.$lnk.'><td nowrap="nowrap">'.ltrim($r->M1Target,'0').($r->M1Target!=$r->M2Target ? '-'.ltrim($r->M2Target,'0') : '').'</td><td nowrap="nowrap">'.$r->AthleteShort1.'</td><td nowrap="nowrap">'.$r->AthleteShort2.'</td></tr>';
+		$tmpRow .= '<tr'.$lnk.'><td nowrap="nowrap">'.ltrim($r->{"M1Target"},'0').($r->{"M1Target"}!=$r->{"M2Target"} ? '-'.ltrim($r->{"M2Target"},'0') : '').'</td><td nowrap="nowrap">'.$r->AthleteShort1.'</td><td nowrap="nowrap">'.$r->AthleteShort2.'</td></tr>';
 		$cnt++;
 	}
 	echo '<tr><th colspan="3" class="Title">' . get_text('TotalMissingScorecars','Tournament',$cnt) . '</th></tr>';
@@ -360,6 +340,7 @@ function getScore($barcode, $strict=false) {
 }
 
 function ConfirmMatch($Match) {
+    global $CFG;
 	$SQL= "update RoundRobinMatches
 		set RrMatchConfirmed=1,
 		RrMatchStatus=1
@@ -385,6 +366,29 @@ function ConfirmMatch($Match) {
     require_once('../RoundRobin/Lib.php');
 	calculateGroupRank($Event);
 
-	// runJack("FinConfirmEnd", $_SESSION['TourId'], array("Event"=>$Match->event ,"Team"=>$Match->teamEvent,"MatchNo"=>min($Match->match1, $Match->match2) ,"TourId"=>$_SESSION['TourId']));
+    // get info to pass to other confirmation processes
+    $q=safe_r_sql("select ToType, ToLocRule, ToTypeSubRule from Tournament where ToId={$_SESSION['TourId']}");
+    if($r=safe_fetch($q)) {
+        $ToType=$r->ToType;
+        $ToLocRule=$r->ToLocRule;
+        $ToSubRule=$r->ToTypeSubRule;
+        $Common=$CFG->DOCUMENT_PATH . "Modules/Sets/$ToLocRule/Functions/confirmRobinMatch%s.php";
+
+        if(file_exists($file=sprintf($Common, "-$ToType-$ToSubRule"))
+            or file_exists($file=sprintf($Common, "-$ToType"))
+            or file_exists($file=sprintf($Common, "-$ToSubRule"))
+            or file_exists($file=sprintf($Common, ""))
+        ) {
+            $Event=$Match->EvCode;
+            $Team=$Match->EvTeamEvent;
+            $Level=$Match->M1Level;
+            $Group=$Match->M1Group;
+            $Round=$Match->M1Round;
+            $Match="{$Match->M1MatchNo}, {$Match->M2MatchNo}";
+            require_once($file);
+        }
+    }
+
+    // runJack("FinConfirmEnd", $_SESSION['TourId'], array("Event"=>$Match->event ,"Team"=>$Match->teamEvent,"MatchNo"=>min($Match->match1, $Match->match2) ,"TourId"=>$_SESSION['TourId']));
 	//runJack("MatchConfirmed", $_SESSION['TourId'], array("Event"=>$Match->event ,"Team"=>$Match->teamEvent,"MatchNo"=>min($Match->match1, $Match->match2) ,"TourId"=>$_SESSION['TourId']));
 }

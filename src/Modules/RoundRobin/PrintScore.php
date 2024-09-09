@@ -11,9 +11,9 @@ require_once('Common/Lib/CommonLib.php');
 
 $Team=intval($_REQUEST['team']??-1);
 
+$IncludeJquery = true;
 $JS_SCRIPT=array(
 	phpVars2js(array("WebDir" => $CFG->ROOT_DIR, "AllEvents" => get_text('AllEvents'))),
-	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 	'<script type="text/javascript" src="./PrintScore.js"></script>',
 	);
 
@@ -41,10 +41,10 @@ echo '<tbody id="mainTdBody">';
  *
  *********************************/
 echo '<tr>';
-echo '<td class="Center"><select id="EventSelector" multiple="multiple" size="10" onchange="getLevels()"></select></td>';
-echo '<td class="Center"><select id="LevelSelector" multiple="multiple" size="10" onchange="getGroups()"></select></td>';
-echo '<td class="Center"><select id="GroupSelector" multiple="multiple" size="10" onchange="getRounds()"></select></td>';
-echo '<td class="Center"><select id="RoundSelector" multiple="multiple" size="10"></select></td>';
+echo '<td class="Center w-40"><select id="EventSelector" class="w-90" multiple="multiple" size="10" onchange="getLevels()"></select></td>';
+echo '<td class="Center w-20"><select id="LevelSelector" class="w-90" multiple="multiple" size="10" onchange="getGroups()"></select></td>';
+echo '<td class="Center w-20"><select id="GroupSelector" class="w-90" multiple="multiple" size="10" onchange="getRounds()"></select></td>';
+echo '<td class="Center w-20"><select id="RoundSelector" class="w-90" multiple="multiple" size="10"></select></td>';
 echo '</tr>';
 
 /**********************************
@@ -53,7 +53,7 @@ echo '</tr>';
  *
  *********************************/
 echo '<tr>';
-echo '<td colspan="4" class="Center">' . ComboSession('Robin', 'ScheduleSelector') . '</td>';
+echo '<td colspan="4" class="Center">' . ApiComboSession(['R'], 'ScheduleSelector') . '</td>';
 echo '</tr>';
 
 /**********************************
@@ -69,6 +69,12 @@ echo '<input class="includeInForm" id="IncEmpty" type="checkbox" value="1">&nbsp
 echo '<input class="includeInForm" id="ScoreFlags" type="checkbox" value="1">&nbsp;' . get_text('ScoreFlags','Tournament') . '<br>';
 if(module_exists("Barcodes")) {
 	echo '<input class="includeInForm" id="Barcode" type="checkbox" checked value="1">&nbsp;' . get_text('ScoreBarcode','Tournament') . '<br>';
+}
+if($_SESSION['TourLocRule']=='LANC') {
+    // specific fro lancaster
+    echo '<input class="includeInForm" id="Margins" type="checkbox" checked value="1" >&nbsp;' . get_text('LancasterScorecard','Tournament') . '<br>';
+    echo '<input class="includeInForm" id="TopMargin" type="number" value="165" >&nbsp;' . get_text('IdMarginT','BackNumbers') . '<br>';
+    echo '<input class="includeInForm" id="LeftMargin" type="number" value="180" >&nbsp;' . get_text('IdMarginL','BackNumbers') . '<br>';
 }
 foreach(AvailableApis() as $Api) {
     if(!($tmp=getModuleParameter($Api, 'Mode')) || strpos($tmp,'live') !== false) {

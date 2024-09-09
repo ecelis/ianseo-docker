@@ -4,11 +4,22 @@ define('debug',false);	// settare a true per l'output di debug
 require_once(dirname(dirname(__FILE__)) . '/config.php');
 checkACL(AclAccreditation, AclReadWrite);
 require_once('Common/Fun_Number.inc.php');
+require_once('Common/Fun_Sessions.inc.php');
 require_once('Common/Fun_FormatText.inc.php');
 require_once(dirname(__FILE__).'/Lib.php');
 
 CheckTourSession(true);
 
+if(($_REQUEST['act']??'')=='reset') {
+    $_SESSION['chk_Turni']=($_REQUEST['sessions']??[]);
+    if(!$_SESSION['chk_Turni']) {
+        // get all the sessions!!!
+        $_SESSION['chk_Turni'][]='0';
+        foreach(GetSessions('Q',true) as $s) {
+            $_SESSION['chk_Turni'][]=$s->SesOrder;
+        }
+    }
+}
 
 if (!(isset($_SESSION['chk_Turni']) && is_array($_SESSION['chk_Turni']) && isset($_SESSION['AccOp']) && is_numeric($_SESSION['AccOp']))) {
 	header('Location: index.php');
@@ -51,7 +62,15 @@ if (!IsBlocked(BIT_BLOCK_ACCREDITATION)) {
         }
         CD_redirect('Accreditation.php'.go_get('AccreditateNone', '', true));
     }
-	if(isset($_REQUEST["Command"])) {
+
+    if(($_REQUEST['act']??'')=='delete') {
+        $Sql = "DELETE FROM AccEntries 
+            WHERE AEId=" . intval($_REQUEST['id']??0) . " AND AEOperation=" . StrSafe_DB($_SESSION['AccOp']) . " AND AETournament={$_SESSION['TourId']}";
+        $Rs=safe_w_sql($Sql);
+        CD_redirect('Accreditation.php'.go_get(['act'=>0,'id'=>0], true));
+    }
+
+    if(isset($_REQUEST["Command"])) {
 		if ($_REQUEST['Command']=='Del') {
 			$Sql
 				= "DELETE FROM AccEntries "
@@ -129,7 +148,7 @@ $JS_SCRIPT=array(
 	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
 	'<style>.Full {width:100%;box-sizing:border-box;}</style>',
 	);
-
+$IncludeJquery=true;
 include('Common/Templates/head.php');
 
 $Counter = "SELECT
@@ -147,11 +166,22 @@ $MyRowCounter = safe_fetch($Rs);
 <form name="Frm" method="get" action="">
 <table class="Tabella">
     <tr>
-      <th colspan="5" class="Title"><?php print $OpDescr;?></th>
+      <th colspan="6" class="Title"><?php print $OpDescr;?></th>
+    </tr>
+    <tr>
+      <th colspan="6" class="Title"><?php
+          echo '<span class="mx-2"><input type="checkbox" class="chk_Turni" value="0" onclick="checkSession()" '.(in_array('0', $_SESSION['chk_Turni']) ? 'checked="checked"' : '').'>0</span>';
+          foreach (GetSessions('Q',true) as $s) {
+              echo '<span class="mx-2"><input type="checkbox" class="chk_Turni" value="' . $s->SesOrder . '" onclick="checkSession()" onclick="checkSession()" '.(in_array($s->SesOrder, $_SESSION['chk_Turni']) ? 'checked="checked"' : '').'>' . $s->Descr . '</span>';
+          }
+
+
+
+          ?></th>
     </tr>
     <tr>
       <th width="15%"><?php print get_text('Code','Tournament');?></th>
-      <th width="42%" colspan="3" class="Center"><?php print get_text('Search','Tournament');?></th>
+      <th width="42%" colspan="4" class="Center"><?php print get_text('Search','Tournament');?></th>
       <th><?php print get_text('Bill','Tournament');?></th>
     </tr>
     <tr>
@@ -167,6 +197,7 @@ $MyRowCounter = safe_fetch($Rs);
       </td>
       <th width="16%"><?php print get_text('FamilyName','Tournament');?></th>
       <th width="16%"><?php print get_text('Country');?></th>
+      <th width="16%"><?php print get_text('Category', 'BackNumbers');?></th>
       <td width="10%" class="Center" rowspan="3">
       <input type="button" name="Cerca" value="<?php print get_text('Search','Tournament');?>" onClick="javascript:Filtra();"><br><br>
       <input type="button" name="TogliFiltro" value="<?php print get_text('CmdRemoveFilter','Tournament');?>" onClick="javascript:ResetFilter();">
@@ -174,12 +205,13 @@ $MyRowCounter = safe_fetch($Rs);
       <td class="Center LetteraGrande" rowspan="2"><?php print $StrConto;?></td>
     </tr>
     <tr>
-      <td class="Center"><input type="text" name="txt_Cognome" id="txt_Cognome" size="32" value="<?php print (isset($_REQUEST['txt_Cognome']) ? $_REQUEST['txt_Cognome'] : '');?>"></td>
-      <td class="Center"><input type="text" name="txt_Societa" id="txt_Societa" size="32" value="<?php print (isset($_REQUEST['txt_Societa']) ? $_REQUEST['txt_Societa'] : '');?>"></td>
+      <td class="Center"><input type="text" name="txt_Cognome" id="txt_Cognome" size="32" value="<?= ($_REQUEST['txt_Cognome'] ?? '') ?>" onchange="checkSession()"></td>
+      <td class="Center"><input type="text" name="txt_Societa" id="txt_Societa" size="32" value="<?= ($_REQUEST['txt_Societa'] ?? '') ?>" onchange="checkSession()"></td>
+      <td class="Center"><input type="text" name="txt_Category" id="txt_Category" size="5" value="<?= ($_REQUEST['txt_Category'] ?? '') ?>" onchange="checkSession()"></td>
     </tr>
     <tr>
-      <td class="Bold"><input type="checkbox" name="RemoveAcc" id="RemoveAcc" value="1"<?php print (isset($_REQUEST['RemoveAcc']) && $_REQUEST['RemoveAcc']==1 ? ' checked' : '');?>>&nbsp;<?php print get_text('HiddenCredited','Tournament');?></td>
-      <td><?php
+      <td class="Bold"><input type="checkbox" name="RemoveAcc" id="RemoveAcc" value="1"<?php print (isset($_REQUEST['RemoveAcc']) && $_REQUEST['RemoveAcc']==1 ? ' checked' : '');?> onclick="checkSession()">&nbsp;<label for="RemoveAcc"><?php print get_text('HiddenCredited','Tournament');?></label></td>
+      <td colspan="2"><?php
       	echo get_text('Credited', 'Tournament') . ": " . $MyRowCounter->Presenti . " (" . $MyRowCounter->NonAccreditati . ")<br/>" . get_text('NoAcc', 'Tournament') . ": " . $MyRowCounter->Assenti;
       	?></td>
       <td class="Center">
@@ -270,7 +302,7 @@ $MyRowCounter = safe_fetch($Rs);
 			print '</td>';
 			print '<td class="Center">' . $MyRow->QuSession . '</td>';
 			print '<td class="Center">' . $MyRow->TargetNo . '</td>';
-			print '<td>' . $MyRow->EnFirstName . ' ' . $MyRow->EnName . (!is_null($MyRow->AEOperation) ? ' <a class="Link" href="' . $_SERVER['PHP_SELF'] . '?Command=Del&amp;Del=' . $MyRow->EnId . '">[' . $DelAccr . ']</a>':'') . '</td>';
+			print '<td>' . $MyRow->EnFirstName . ' ' . $MyRow->EnName . (!is_null($MyRow->AEOperation) ? ' <span class="Link" onclick="delAccr(' . $MyRow->EnId . ')">[' . $DelAccr . ']</a>':'') . '</td>';
 			print '<td>' . $MyRow->CoCode . ' - ' . $MyRow->CoName . '</td>';
 			print '<td class="Center">' . $MyRow->EnDivision . '</td>';
 			print '<td class="Center">' . $MyRow->EnClass . '</td>';

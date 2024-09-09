@@ -1,39 +1,39 @@
 <?php
 
 /*
-- 3 giornate
-- ogni giornata ha 5 match (fasi)
-- ogni match (fase) consta di 8 incontri
-- ogni incontro è fatto da 5 scontri veri e propri
-- Scontro 1: tra i 2 primi
-- Scontro 2: tra i 2 secondi
-- scontro 3: tra le 2 squadre
-- scontro 4: tra i 2 terzi
-- scontro 5: tra i 2 quarti
+- TAE, le seguenti subrule
 
-PASSO 1:
-- done: creare i 16 eventi dove poi andranno infialti gli atleti
-- TODO: ogni evento consta di 40 scontri (8*5), quindi servono 80 matchno (16 per fase).
-- TODO: fase 1: matchno da 128 a 143
-- TODO: fase 2: matchno da 144 a 159
-- TODO: fase 3: matchno da 160 a 175
-- TODO: fase 4: matchno da 176 a 191
-- TODO: fase 5: matchno da 192 a 207
+13: Selectif TAE		SetFRTAE-Valides
+14: Selectif TAE  +Para		SetFRTAE-Para
+ 3: Championnat de France Jeune 	France TAE Jeune	SetFRChampionshipJun
+15: Championnat de France Jeune Equipe 	à faire	SetFRChampJunTeams
+11: Championnat de France Adulte		SetFRCoupeFrance
+10: Championnat de France Elite		SetFRTAE
+ 2: Tournoi National Jeune		SetFRChampsTNJ
+ 9: Finale des DR		SetFRFinDRD2
+16: Finale France D2		SetFRFinalsD2
+12: Championnat D1		SetFRD12023
 
-*** ATTENZIONE AL CONTROLLO SCORE CHE NON FACCIA PASSARE GENTE NEL MATCHNO SUCCESSIVO
+// SALLE
+
+TODO:  1: All Classes (Selectif)
+TODO:  2: SetFRChampionshipSen
+ 3: SetFRChampionshipJun
+ 4: SetFRChampionshipElite
+
+25 and 25+18 only "selectif" and "selectif+para"
+
+// Bersault
 
 
-Modifica 2021
 
-Solo squadre, no qualifica
+- blason:
+- 1: 450mm
+- 2: 290mm
+- 3: 125mm
+- 4: 40mm
 
-RM, RW, CM: 16 squadre, ognuna con 15 scontri
-CW: 6 sqaudre, 3 volte 5 scontri ognuna
-
-Vincitore 2 punti
-pareggio 1 a testa
-
-nel tie, differenza punti nel R, somma di tutto nel C
-
-dalle semifinali, normale
-
+-Bouquet
+- 1: 450mm
+- 2: 125mm
+- 3: 56mm

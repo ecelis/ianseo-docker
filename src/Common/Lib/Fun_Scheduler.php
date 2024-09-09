@@ -37,6 +37,10 @@ Class Scheduler {
 	var $RunningEvents=array();
 	var $HasArchers=false;
 	var $TargetsInvolved='';
+    var $PoolMatchWinners=array();
+    var $PoolMatchWinnersWA=array();
+    var $PoolMatches=array();
+    var $PoolMatchesWA=array();
 
 	function __destruct() {
 		DefineForcePrintouts($this->TourId, true);
@@ -176,7 +180,8 @@ Class Scheduler {
 		$tmp->SO=$r->EvShootOff;
 		$tmp->grPos=$r->grPos;
 		$tmp->ElimType=$r->EvElimType;
-		$tmp->UID=$r->UID;
+		$tmp->UID=$r->UID.($Warmup ? 'W' : '');
+		$tmp->RowLocation=($r->RowLocation??'');
 
 		switch($r->Type) {
 			case 'Q':
@@ -196,10 +201,10 @@ Class Scheduler {
 				$tmp->Target=$r->Target;
 				break;
 			case 'R':
-				list($Level, $Group, $Round)=explode('-', $r->Session);
-				$tmp->Title=get_text('LevelNum', 'RoundRobin', $Level).' '.get_text('GroupNum', 'RoundRobin', $Group).' '.get_text('RoundNum', 'RoundRobin', $Round);
+				list($LevelName, $Level, $GroupName, $Group, $Round)=explode('|', $r->Session);
+				$tmp->Text=($LevelName ?: get_text('LevelNum', 'RoundRobin', $Level)).' '.($GroupName ?: get_text('GroupNum', 'RoundRobin', $Group)).' '.get_text('RoundNum', 'RoundRobin', $Round);
 				$tmp->SubTitle=$r->Options;
-				$tmp->Text=$r->Events;
+				// $tmp->Text=$r->Events;
 				$tmp->Target=$r->Target;
 				break;
 			case 'RA':
@@ -212,7 +217,7 @@ Class Scheduler {
 					// finals
 					$tmp->Events=get_text('Final'.$Pool,'RunArchery');
 				} elseif($Phase==2) {
-					$tmp->Events=get_text('PoolName','Tournament', $Pool);
+					$tmp->Events=get_text('SemiFinalName','RunArchery', $Pool);
 				} elseif($Group) {
 					$tmp->Events=get_text('GroupNum','RoundRobin', $Group);
 				} else {
@@ -340,14 +345,16 @@ Class Scheduler {
 					SchText Events,
 					'' Event,
 					'' as Locations,
+					SchLocation as RowLocation,
 					SchOrder OrderPhase,
 					SchShift SchDelay,
 					'' TD1, '' TD2, '' TD3, '' TD4, '' TD5, '' TD6, '' TD7, '' TD8
 				from Scheduler
+				inner join Tournament on ToId=SchTournament
 				where SchTournament=$this->TourId
 					and SchDay>0 and SchStart>0
-					".($this->SingleDay ? " and SchDay='$this->SingleDay'" : '')."
-					".($this->FromDay ? " and SchDay>='$this->FromDay'" : '')."
+					".($this->SingleDay ? " and date(convert_tz(SchDay, ToTimeZone, '+00:00'))='$this->SingleDay'" : '')."
+					".($this->FromDay ? " and date(convert_tz(SchDay, ToTimeZone, '+00:00'))>='$this->FromDay'" : '')."
 					";
 		}
 
@@ -396,6 +403,7 @@ Class Scheduler {
 						'' Events,
 						'' Event,
 						'' as Locations,
+						SesLocation as RowLocation,
 						DiSession OrderPhase,
 						DiShift SchDelay,
 						if(DiDistance=1, group_concat(distinct Td1 separator '£££'), '') as TD1, 
@@ -409,6 +417,7 @@ Class Scheduler {
 					from DistanceInformation
 					inner join Session on SesTournament=DiTournament and SesOrder=DiSession and SesType=DiType and SesType='Q'
 					inner join TournamentDistances on TdTournament=DiTournament
+                    inner join Tournament on ToId=DiTournament
 					left join (select EnTournament, concat(EnDivision,EnClass) as Category, QuSession
 						from Entries
 						inner join Qualifications on QuId=EnId and QuSession>0
@@ -417,8 +426,8 @@ Class Scheduler {
 					
 					where DiTournament=$this->TourId
 						and DiDay>0 and (DiStart>0 or DiWarmStart>0)
-						" .($this->SingleDay ? " and DiDay='$this->SingleDay'" : '') ."
-						" .($this->FromDay ? " and DiDay>='$this->FromDay'" : '') ."
+						" .($this->SingleDay ? " and date(convert_tz(DiDay, ToTimeZone, '+00:00'))='$this->SingleDay'" : '') ."
+						" .($this->FromDay ? " and date(convert_tz(DiDay, ToTimeZone, '+00:00'))>='$this->FromDay'" : '') ."
 						" .(strlen($this->SesFilter) ? " and DiSession='$this->SesFilter'" : '') ."  
 					group by DiDistance, DiSession, DiType 
 					order by DiDay, DiStart, DiWarmStart, DiSession, DiDistance";
@@ -449,16 +458,18 @@ Class Scheduler {
 						'' Events,
 						'' Event,
 						'' as Locations,
+						SesLocation as RowLocation,
 						DiSession OrderPhase,
 						DiShift SchDelay,
 						TD1, TD2, TD3, TD4, TD5, TD6, TD7, TD8
 					from DistanceInformation
+                    inner join Tournament on ToId=DiTournament
 					INNER join Session on SesTournament=DiTournament and SesOrder=DiSession and SesType=DiType and SesType='Q'
 					$DistanceNames
 					where DiTournament=$this->TourId
 						and DiDay>0 and (DiStart>0 or DiWarmStart>0)
-						".($this->SingleDay ? " and DiDay='$this->SingleDay'" : '')."
-						".($this->FromDay ? " and DiDay>='$this->FromDay'" : '')."
+						".($this->SingleDay ? " and date(convert_tz(DiDay, ToTimeZone, '+00:00'))='$this->SingleDay'" : '')."
+						".($this->FromDay ? " and date(convert_tz(DiDay, ToTimeZone, '+00:00'))>='$this->FromDay'" : '')."
 						".(strlen($this->SesFilter) ? " and DiSession='$this->SesFilter'" : '')."
 					order by DiDay, DiStart, DiWarmStart, DiSession, DiDistance";
 			}
@@ -490,16 +501,18 @@ Class Scheduler {
 					Events,
 					'' Event,
 					'' as Locations,
+					SesLocation as RowLocation,
 					DiSession OrderPhase,
 					DiShift SchDelay,
 					'' TD1, '' TD2, '' TD3, '' TD4, '' TD5, '' TD6, '' TD7, '' TD8
 				from Session
+                inner join Tournament on ToId=SesTournament
 				inner join (select distinct ElSession, ElTournament, ElElimPhase, group_concat(distinct ElEventCode order by ElEventCode separator ', ') Events from Eliminations where ElTournament=$this->TourId group by ElTournament, ElSession, ElElimPhase) Phase on ElSession=SesOrder and ElTournament=SesTournament
 				inner join DistanceInformation on SesTournament=DiTournament and SesOrder=DiSession and ElElimPhase=DiDistance and DiType='E'
 				where DiTournament=$this->TourId
 					and DiDay>0 and (DiStart>0 or DiWarmStart>0)
-					".($this->SingleDay ? " and DiDay='$this->SingleDay'" : '')."
-					".($this->FromDay ? " and DiDay>='$this->FromDay'" : '')."
+					".($this->SingleDay ? " and date(convert_tz(DiDay, ToTimeZone, '+00:00'))='$this->SingleDay'" : '')."
+					".($this->FromDay ? " and date(convert_tz(DiDay, ToTimeZone, '+00:00'))>='$this->FromDay'" : '')."
 				order by DiDay, DiStart, DiWarmStart, DiSession, DiDistance";
 		}
 
@@ -527,9 +540,10 @@ Class Scheduler {
 				if(count(*)=2, group_concat(distinct EvEventName order by EvEventName separator ', '), group_concat(distinct FwEvent order by FwEvent separator ', ')) Events,
 				group_concat(distinct FwEvent order by FwEvent separator '\',\'') Event,
 				'' as Locations,
+				'' as RowLocation,
 				'' OrderPhase,
 				'' SchDelay,
-					'' TD1, '' TD2, '' TD3, '' TD4, '' TD5, '' TD6, '' TD7, '' TD8
+				'' TD1, '' TD2, '' TD3, '' TD4, '' TD5, '' TD6, '' TD7, '' TD8
 
 				from FinWarmup
 				inner join Events on FwEvent=EvCode and EvTeamEvent=FwTeamEvent and EvTournament=FwTournament
@@ -564,15 +578,17 @@ Class Scheduler {
 					'' Events,
 					'' Event,
 					'' as Locations,
+					sesLocation as RowLocation,
 					0 OrderPhase,
 					0 SchDelay,
 					'' TD1, '' TD2, '' TD3, '' TD4, '' TD5, '' TD6, '' TD7, '' TD8
 				from Session
+				inner join Tournament on ToId=SesTournament
 				where SesTournament=$this->TourId
 					and SesName!=''
 					and SesDtStart>0
-					".($this->SingleDay ? " and date_format(SesDtStart, '%Y-%m-%d')='$this->SingleDay'" : '')."
-					".($this->FromDay ? " and date_format(SesDtStart, '%Y-%m-%d')>='$this->FromDay'" : '')."
+					".($this->SingleDay ? " and date(convert_tz(SesDtStart, ToTimeZone, '+00:00'))='$this->SingleDay'" : '')."
+					".($this->FromDay ? " and date(convert_tz(SesDtStart, ToTimeZone, '+00:00'))>='$this->FromDay'" : '')."
 				order by SesDtStart";
 
 			$SQL[]="select distinct
@@ -597,18 +613,20 @@ Class Scheduler {
 				if(count(*)<=2 and EvCodeParent='', group_concat(distinct EvEventName order by EvProgr separator ', '), group_concat(distinct FsEvent order by EvProgr separator ', ')) Events,
 				group_concat(distinct FsEvent order by EvProgr separator '\',\'') Event,
 				".sprintf($LocField, 'FsTarget*1')."
+				'' as RowLocation,
 				cast(if(EvWinnerFinalRank>1, EvWinnerFinalRank*100 + GrPhase, 1+(1/(1+GrPhase))) as decimal(15,4)) as OrderPhase,
 				FsShift SchDelay,
 					'' TD1, '' TD2, '' TD3, '' TD4, '' TD5, '' TD6, '' TD7, '' TD8
 
 				from FinSchedule
+				inner join Tournament on ToId=FsTournament
 				inner join Events on FsEvent=EvCode and FsTeamEvent=EvTeamEvent and FsTournament=EvTournament
 				inner join Grids on FsMatchNo=GrMatchNo
 				left join FinWarmup on FsEvent=FwEvent and FsTeamEvent=FwTeamEvent and FsTournament=FwTournament and FsScheduledDate=FwDay and FsScheduledTime=FwMatchTime
 				where FsTournament=$this->TourId
-					and FsScheduledDate>0 and (FsScheduledTime>0 or FwTime>0) and FsTarget!=0
-					".($this->SingleDay ? " and FsScheduledDate='$this->SingleDay'" : '')."
-					".($this->FromDay ? " and FsScheduledDate>='$this->FromDay'" : '')."
+					and FsScheduledDate>0 and (FsScheduledTime>0 or FwTime>0)
+					".($this->SingleDay ? " and date(convert_tz(FsScheduledDate, ToTimeZone, '+00:00'))='$this->SingleDay'" : '')."
+					".($this->FromDay ? " and date(convert_tz(FsScheduledDate, ToTimeZone, '+00:00'))>='$this->FromDay'" : '')."
 				group by /*if(EvElimType>=3, FsMatchNo, 0), */FsTeamEvent, FsScheduledDate, FsScheduledTime, Locations, if(EvWinnerFinalRank>1, EvWinnerFinalRank*100-GrPhase, GrPhase), FwTime
 				order by FsTeamEvent, FsScheduledDate, FsScheduledTime, EvFirstRank, GrPhase, FwTime
 				";
@@ -619,9 +637,9 @@ Class Scheduler {
 			$LocationFields=sprintf($LocField, 'RrMatchTarget*1');
 			$Date="RrMatchScheduledDate>0";
 			if($this->SingleDay) {
-				$Date="RrMatchScheduledDate='$this->SingleDay'";
+				$Date="date(convert_tz(RrMatchScheduledDate, ToTimeZone, '+00:00'))='$this->SingleDay'";
 			} elseif($this->FromDay) {
-				$Date="RrMatchScheduledDate>='$this->FromDay'";
+				$Date="date(convert_tz(RrMatchScheduledDate, ToTimeZone, '+00:00'))>='$this->FromDay'";
 			}
 			$SQL[]="select distinct
                 concat_ws('-',group_concat(distinct RrMatchEvent order by EvProgr separator '-'), (RrMatchLevel*1000000)+(RrMatchGroup*10000)+(RrMatchRound*100), sum(RrMatchMatchNo)) as UID,
@@ -632,7 +650,7 @@ Class Scheduler {
 				max(RrMatchTarget*1) as Target,
 				'R' Type,
 				RrMatchScheduledDate Day,
-				concat_ws('-', RrMatchLevel, RrMatchGroup, RrMatchRound) Session,
+				concat_ws('|', RrLevName, RrMatchLevel, RrGrName, RrMatchGroup, RrMatchRound) Session,
 				RrMatchRound Distance,
 				EvDistance as RealDistance,
 				EvMedals as Medal,
@@ -645,16 +663,20 @@ Class Scheduler {
 				if(count(*)<=2 and EvCodeParent='', group_concat(distinct EvEventName order by EvProgr separator ', '), group_concat(distinct RrMatchEvent order by EvProgr separator ', ')) Events,
 				group_concat(distinct RrMatchEvent order by EvProgr separator '\',\'') Event,
 				$LocationFields
+				'' as RowLocation,
 				(RrMatchLevel*1000000)+(RrMatchGroup*10000)+(RrMatchRound*100) as OrderPhase,
 				'' SchDelay,
 					'' TD1, '' TD2, '' TD3, '' TD4, '' TD5, '' TD6, '' TD7, '' TD8
 				from RoundRobinMatches
+                inner join Tournament on ToId=RrMatchTournament
+			    inner join RoundRobinGroup on RrGrTournament=RrMatchTournament and RrGrTeam=RrMatchTeam and RrGrEvent=RrMatchEvent and RrGrLevel=RrMatchLevel and RrGrGroup=RrMatchGroup
+			    inner join RoundRobinLevel on RrLevTournament=RrMatchTournament and RrLevTeam=RrMatchTeam and RrLevEvent=RrMatchEvent and RrLevLevel=RrMatchLevel
 				inner join Events on EvCode=RrMatchEvent and EvTeamEvent=RrMatchTeam and EvTournament=RrMatchTournament
 				left join FinWarmup on FwEvent=RrMatchEvent and FwTeamEvent=RrMatchTeam and FwTournament=RrMatchTournament and FwDay=RrMatchScheduledDate and FwMatchTime=RrMatchScheduledTime
 				where RrMatchTournament=$this->TourId
-					and $Date and (RrMatchScheduledTime>0 or FwTime>0) and RrMatchTarget!=0
-				group by RrMatchTeam, RrMatchScheduledDate, RrMatchScheduledTime, Locations, FwTime
-				order by RrMatchTeam, RrMatchScheduledDate, RrMatchScheduledTime, OrderPhase, FwTime
+					and $Date and (RrMatchScheduledTime>0 or FwTime>0) 
+				group by RrMatchTeam, RrMatchScheduledDate, RrMatchScheduledTime, RrMatchLevel, RrMatchGroup, RrMatchRound, Locations, FwTime
+				order by RrMatchTeam, RrMatchScheduledDate, RrMatchScheduledTime, RrMatchLevel, RrMatchGroup, RrMatchRound, OrderPhase, FwTime
 				";
 		}
 
@@ -663,9 +685,9 @@ Class Scheduler {
 			$LocationFields=sprintf($LocField, '0');
 			$Date="RarStartlist>0";
 			if($this->SingleDay) {
-				$Date="date(RarStartlist)='$this->SingleDay'";
+				$Date="date(convert_tz(RarStartlist, ToTimeZone, '+00:00'))='$this->SingleDay'";
 			} elseif($this->FromDay) {
-				$Date="date(RarStartlist)>='$this->FromDay'";
+				$Date="date(convert_tz(RarStartlist, ToTimeZone, '+00:00'))>='$this->FromDay'";
 			}
 			$SQL[]="select distinct
                 concat_ws('-', RarTeam, RarEvent, RarPhase, RarPool, RarGroup) as UID,
@@ -689,10 +711,12 @@ Class Scheduler {
 				group_concat(distinct EvEventName order by EvProgr separator ', ') as Events,
 				group_concat(distinct RarEvent order by EvProgr separator '\',\'') Event,
 				$LocationFields
+				'' as RowLocation,
 				(RarPhase*1000000)+(RarPool*10000)+(RarGroup*100) as OrderPhase,
 				RarShift as SchDelay,
 					'' TD1, '' TD2, '' TD3, '' TD4, '' TD5, '' TD6, '' TD7, '' TD8
 				from RunArcheryRank
+                inner join Tournament on ToId=RarTournament
 				inner join Events on EvCode=RarEvent and EvTeamEvent=RarTeam and EvTournament=RarTournament
 				where RarTournament=$this->TourId
 					and $Date and RarStartlist>0
@@ -737,6 +761,7 @@ Class Scheduler {
 			$ret[]='<tr><th colspan="2" class="SchDay">'.formatTextDate($Date, true).'</th></tr>';
 			$OldTitle='';
 			$OldSubTitle='';
+			$OldText='';
 			$OldType='';
 			$OldStart='';
 			$OldEnd='';
@@ -790,7 +815,7 @@ Class Scheduler {
 											$txt='<a href="?Activate='.$key.'">'.strip_tags($txt).'</a>';
 										}
 
-										$tmp.='</td><td class="SchTitle">'.$txt.'</td></tr>';
+										$tmp.='</td><td class="SchTitle">'.$txt.(($Item->SubTitle or $Item->Text or !$Item->RowLocation) ? '' : ' ('.$Item->RowLocation.')').'</td></tr>';
 										$ret[]=$tmp;
 									}
 									$OldTitle=$Item->Title;
@@ -807,14 +832,15 @@ Class Scheduler {
 									if($Type=='SET') {
 										$txt='<a href="?Activate='.$key.'">'.strip_tags($txt).'</a>';
 									}
-									$tmp.='</td><td class="SchSubTitle">'.$txt.'</td></tr>';
+									$tmp.='</td><td class="SchSubTitle">'.$txt.(($Item->Text or !$Item->RowLocation) ? '' : ' ('.$Item->RowLocation.')').'</td></tr>';
 									$ret[]=$tmp;
 									$OldSubTitle=$Item->SubTitle;
 									$IsTitle=false;
 								}
 								if($Item->Text) {
-									$txt=$Item->Text;
-									if($Type=='SET') {
+									$txt=$Item->Text.($Item->RowLocation ? ' ('.$Item->RowLocation.')' : '');
+                                    $OldText=$txt;
+                                    if($Type=='SET') {
 										$txt='<a href="?Activate='.$key.'">'.strip_tags($txt).'</a>';
 									}
 									$tmp='<tr name="'.$key.'"'.($ActiveSession ? ' class="active"' : '').'><td>';
@@ -831,7 +857,7 @@ Class Scheduler {
 								if($OldTitle!=$Item->Title) {
 									// Title
 									if(!$IsTitle) {
-										$ret[]='<tr><td></td><td class="SchTitle">'.$Item->Title.'</td></tr>';
+										$ret[]='<tr><td></td><td class="SchTitle">'.$Item->Title.(($Item->SubTitle or $Item->Text or !$Item->RowLocation) ? '' : ' ('.$Item->RowLocation.')').'</td></tr>';
 									}
 									$OldTitle=$Item->Title;
 									$OldSubTitle='';
@@ -839,7 +865,7 @@ Class Scheduler {
 								}
 								if($OldSubTitle!=$Item->SubTitle and $Item->Type!='RA') {
 									// SubTitle
-									$ret[]='<tr><td></td><td class="SchSubTitle">'.$Item->SubTitle.'</td></tr>';
+									$ret[]='<tr><td></td><td class="SchSubTitle">'.$Item->SubTitle.(($Item->Text or !$Item->RowLocation) ? '' : ' ('.$Item->RowLocation.')').'</td></tr>';
 									$OldSubTitle=$Item->SubTitle;
 									$IsTitle=false;
 								}
@@ -858,7 +884,7 @@ Class Scheduler {
 									switch($Item->Type) {
 										case 'Q':
 										case 'E':
-											$lnk='';
+											$lnk=[];
 											if($Item->Comments) {
 												$txt=$Item->Comments;
 												if($Type=='SET') {
@@ -869,35 +895,45 @@ Class Scheduler {
 													.'</td><td class="SchWarmup">'.$txt.'</td></tr>';
 												$timing='';
 											}
-											if($Type=='IS') {
-												if(!empty($this->RunningEvents[$Item->Session][0])) {
-													$lnk.='<br/><a href="'.$this->ROOT_DIR.'Qualification/?type=0&'.implode('&',$this->RunningEvents[$Item->Session][0]).$TourCode.'">'.get_text('ViewIndividualResults', 'InfoSystem').'</a>';
-												}
-												if(!empty($this->RunningEvents[$Item->Session][1])) {
-													$lnk.='<br/><a href="'.$this->ROOT_DIR.'Qualification/?type=1&'.implode('&',$this->RunningEvents[$Item->Session][1]).$TourCode.'">'.get_text('ViewTeamResults', 'InfoSystem').'</a>';
-												}
-											}
-											if(count($this->Groups[$Item->Type][$Session])==1) {
-												$txt=$Item->Text.$lnk;
-											} elseif($Item==@end(end(end(end($this->Groups[$Item->Type][$Session]))))) {
-												$txt=$Item->DistanceName.$lnk;
-											} else {
-												$txt=$Item->DistanceName;
-												// more distances defined so format is different...
-											}
+											if($Item->Text) {
 
-											if($Type=='SET') {
-												$txt='<a href="?Activate='.urlencode($key).'">'.strip_tags($txt).'</a>';
+												if($Type=='IS') {
+													if(!empty($this->RunningEvents[$Item->Session][0])) {
+														$lnk[]='<a href="'.$this->ROOT_DIR.'Qualification/?type=0&'.implode('&',$this->RunningEvents[$Item->Session][0]).$TourCode.'">'.get_text('ViewIndividualResults', 'InfoSystem').'</a>';
+													}
+													if(!empty($this->RunningEvents[$Item->Session][1])) {
+														$lnk[]='<a href="'.$this->ROOT_DIR.'Qualification/?type=1&'.implode('&',$this->RunningEvents[$Item->Session][1]).$TourCode.'">'.get_text('ViewTeamResults', 'InfoSystem').'</a>';
+													}
+												}
+												if(count($this->Groups[$Item->Type][$Session])==1) {
+                                                    $txt=implode('<br/>', $lnk);
+                                                    if($Item->Text!=$OldText) {
+                                                        $txt=$Item->Text.'<br/>'.$txt;
+                                                    }
+												} elseif($Item==@end(end(end(end($this->Groups[$Item->Type][$Session]))))) {
+													$txt=$Item->DistanceName.implode('<br/>', $lnk);
+												} else {
+													$txt=$Item->DistanceName;
+													// more distances defined so format is different...
+												}
+
+                                                if($Item->RowLocation) {
+                                                    $txt.=' ('.$Item->RowLocation.')';
+                                                }
+                                                $OldText=$txt;
+                                                if($Type=='SET') {
+													$txt='<a href="?Activate='.urlencode($key).'">'.strip_tags($txt).'</a>';
+												}
+												$ret[]='<tr name="'.$key.'"'.($ActiveSession ? ' class="active"' : '').'><td>'
+													. $timing . ($Item->Shift && $timing ? ($Type=='IS' ? '<span class="SchDelay">' : '') . '&nbsp;+' . $Item->Shift . ($Type=='IS' ? '</span>' : ''): "")
+													.'</td><td class="SchItem">'.$txt.'</td></tr>';
+												$IsTitle=false;
 											}
-											$ret[]='<tr name="'.$key.'"'.($ActiveSession ? ' class="active"' : '').'><td>'
-												. $timing . ($Item->Shift && $timing ? ($Type=='IS' ? '<span class="SchDelay">' : '') . '&nbsp;+' . $Item->Shift . ($Type=='IS' ? '</span>' : ''): "")
-												.'</td><td class="SchItem">'.$txt.'</td></tr>';
-											$IsTitle=false;
 											break;
 										case 'I':
 										case 'T':
 											$lnk=$Item->Text.': '.$Item->Events;
-											$Join=($Item->ElimType>=3 ? 'LEFT' : 'INNER');
+											$Join=(($Item->ElimType==3 or $Item->ElimType==4) ? 'LEFT' : 'INNER');
 											$Class='';
 											if($this->Finalists or $Type=='SET') { // && $Item->Session<=1) {
 												// Bronze or Gold Finals
@@ -929,9 +965,9 @@ Class Scheduler {
 													where tf1.TfTournament=$this->TourId";
 												}
 												$q=safe_r_SQL($SQL);
-												if(safe_num_rows($q)==1 or $Item->ElimType>=3) {
+												if(safe_num_rows($q)==1 or $Item->ElimType==3 or $Item->ElimType==4) {
 													$tmp=array();
-													if($Item->ElimType>=3) {
+													if($Item->ElimType==3 or $Item->ElimType==4) {
 														$lnk='';
 													}
 													while($r=safe_fetch($q)) {
@@ -999,6 +1035,34 @@ Class Scheduler {
 											$IsTitle=false;
 											break;
 										case 'R':
+											$lnk=$Item->Text.': '.$Item->Events;
+											$Class='';
+                                            $SQL="select concat_ws(' ', ucase(e1.EnFirstName), e1.EnName) as M1Name, concat_ws(' ', ucase(e2.EnFirstName), e2.EnName) as M2Name
+                                                from RoundRobinMatches m1
+                                                inner join RoundRobinMatches m2 on m2.RrMatchTournament=m1.RrMatchTournament and m2.RrMatchTeam=m1.RrMatchTeam and m2.RrMatchEvent=m1.RrMatchEvent and m2.RrMatchLevel=m1.RrMatchLevel and m2.RrMatchGroup=m1.RrMatchGroup and m2.RrMatchRound=m1.RrMatchRound and m2.RrMatchMatchNo=m1.RrMatchMatchNo+1
+                                                left join Entries e1 on e1.EnId=m1.RrMatchAthlete
+                                                left join Entries e2 on e2.EnId=m2.RrMatchAthlete
+                                                where m1.RrMatchMatchNo%2=0 and m1.RrMatchTournament=$this->TourId and m1.RrMatchScheduledDate='$Date' and m1.RrMatchScheduledTime='$Time'";
+											$NameLink='';
+                                            $q=safe_r_sql($SQL);
+                                            if(safe_num_rows($q)==1) {
+                                                $r=safe_fetch($q);
+                                                if($r->M1Name or $r->M2Name) {
+                                                    $NameLink= ($r->M1Name? "<b>{$r->M1Name}</b>" :'TBD').' - '.($r->M2Name? "<b>{$r->M2Name}</b>" :'TBD');
+                                                }
+                                            }
+                                            if($Type=='SET') {
+												$lnk='<a href="?Activate='.urlencode($key).'">'.strip_tags(str_replace('<br>', ' / ', $lnk), '<div>').' / '.$NameLink.'</a>';
+											} elseif($Type=='IS') {
+                                                if($NameLink) {
+                                                    $NameLink=" ($NameLink)";
+                                                }
+												$lnk='<a href="'.$this->ROOT_DIR.'Finals/session.php?Session='.urlencode(($Item->Type=='T' ? 1 : 0)."$Item->Day $Item->Start:00").$TourCode.'">'.$lnk.$NameLink.'</a>';
+											}
+											$ret[]='<tr name="'.$key.'" class="'.$Class.($ActiveSession ? ' active' : '').'"><td>'
+												. $timing . ($Item->Shift && $timing ? ($Type=='IS' ? '<span class="SchDelay">' : '') . '&nbsp;+' . $Item->Shift . ($Type=='IS' ? '</span>' : ''): "")
+												.'</td><td class="SchItem">'.$lnk.'</td></tr>';
+											$IsTitle=false;
 											break;
 										case 'RA':
 											$lnk=$Item->Text.($Item->Events ? ': '.$Item->Events : '');
@@ -1042,8 +1106,9 @@ Class Scheduler {
 									if($OldComment==$lnk) continue;
 
 									$OldComment=$lnk;
+                                    $OldText=$lnk;
 
-									if($Type=='SET') {
+                                    if($Type=='SET') {
 										$lnk='<a href="?Activate='.urlencode($key).'">'.strip_tags($lnk).'</a>';
 									}
 									$ret[]='<tr name="'.$key.'"'.($ActiveSession ? ' class="active"' : '').'><td>'
@@ -1456,7 +1521,7 @@ Class Scheduler {
 										if(!$FirstTitle) $pdf->ln(2);
 										$pdf->SetX($StartX+$TimeColumns);
 										$pdf->SetFont('', 'B');
-										$pdf->Cell($descrSize, $CellHeight, strip_tags($Item->Title), 0, 1, 'L', 0);
+										$pdf->Cell($descrSize, $CellHeight, strip_tags($Item->Title).(($Item->SubTitle or $Item->Text or !$Item->RowLocation) ? '' : ' ('.$Item->RowLocation.')'), 0, 1, 'L', 0);
 										$pdf->SetFont('', '');
 										$RepeatTitle=$Item->Title;
 									}
@@ -1486,7 +1551,7 @@ Class Scheduler {
 									}
 									$pdf->SetX($StartX+$TimeColumns);
 									$pdf->SetFont('', 'BI');
-									$pdf->Cell($descrSize, $CellHeight, strip_tags($Item->SubTitle), 0, 1, 'L', 0);
+									$pdf->Cell($descrSize, $CellHeight, strip_tags($Item->SubTitle).(($Item->Text or !$Item->RowLocation) ? '' : ' ('.$Item->RowLocation.')'), 0, 1, 'L', 0);
 									$pdf->SetFont('', '');
 									$OldSubTitle=$Item->SubTitle;
 									$IsTitle=false;
@@ -1509,7 +1574,7 @@ Class Scheduler {
 										$pdf->setColor('text', 0);
 									}
 									$pdf->SetX($StartX+$TimeColumns);
-									$pdf->Cell($descrSize, $CellHeight, strip_tags($Item->Text), 0, 1, 'L', 0);
+									$pdf->Cell($descrSize, $CellHeight, strip_tags($Item->Text).($Item->RowLocation ? ' ('.$Item->RowLocation.')' : ''), 0, 1, 'L', 0);
 									$timing='';
 									$IsTitle=false;
 								}
@@ -1524,7 +1589,7 @@ Class Scheduler {
 										if(!$FirstTitle) $pdf->ln(2);
 										$pdf->SetX($StartX+$TimeColumns);
 										$pdf->SetFont('', 'B');
-										$pdf->Cell($descrSize, $CellHeight, $Item->Title, 0, 1, 'L', 0);
+										$pdf->Cell($descrSize, $CellHeight, $Item->Title.(($Item->SubTitle or $Item->Text or !$Item->RowLocation) ? '' : ' ('.$Item->RowLocation.')'), 0, 1, 'L', 0);
 										$pdf->SetFont('', '');
 										$RepeatTitle=$Item->Title;
 									}
@@ -1540,7 +1605,7 @@ Class Scheduler {
 									// SubTitle
 									$pdf->SetX($StartX+$TimeColumns);
 									$pdf->SetFont('', 'BI');
-									$pdf->Cell($descrSize, $CellHeight, $Item->SubTitle, 0, 1, 'L', 0);
+									$pdf->Cell($descrSize, $CellHeight, $Item->SubTitle.(($Item->Text or !$Item->RowLocation) ? '' : ' ('.$Item->RowLocation.')'), 0, 1, 'L', 0);
 									$pdf->SetFont('', '');
 									$OldSubTitle=$Item->SubTitle;
 									$IsTitle=false;
@@ -1619,7 +1684,7 @@ Class Scheduler {
 												$pdf->setColor('text', 0);
 											}
 											$pdf->SetX($StartX+$TimeColumns);
-											$pdf->Cell($descrSize, $CellHeight, $txt, 0, 1, 'L', 0);
+											$pdf->Cell($descrSize, $CellHeight, $txt.($Item->RowLocation ? ' ('.$Item->RowLocation.')' : ''), 0, 1, 'L', 0);
 											$IsTitle=false;
 											break;
 										case 'I':
@@ -1642,12 +1707,12 @@ Class Scheduler {
 											}
 											$pdf->SetX($StartX+$TimeColumns);
 											$IsTitle=false;
-											if($this->Finalists or $Item->ElimType>=3) { // && $Item->Session<=1) {
+											if($this->Finalists or $Item->ElimType==3 or $Item->ElimType==4) { // && $Item->Session<=1) {
 												$SQL='';
 												// Bronze or Gold Finals
 												if($Item->Type=='I') {
 													if($Item->SO or $Item->ElimType>=3) {
-														$Join=($Item->ElimType>=3 ? 'LEFT' : 'INNER');
+														$Join=(($Item->ElimType==3 or $Item->ElimType==4) ? 'LEFT' : 'INNER');
 														// SO are resolved so we can extract the people
 														$SQL="select distinct ind1.IndRank LeftRank, ind2.IndRank RightRank, concat(upper(e1.EnFirstname), ' ', e1.EnName, ' (', c1.CoCode, ')') LeftSide,
 																concat('(', c2.CoCode, ') ', upper(e2.EnFirstname), ' ', e2.EnName) RightSide,
@@ -1708,7 +1773,7 @@ Class Scheduler {
 															where tf1.TfTournament=$this->TourId";
 													}
 												}
-												if($SQL and $q=safe_r_SQL($SQL) and (safe_num_rows($q)==1 or $Item->ElimType>=3)) {
+												if($SQL and $q=safe_r_SQL($SQL) and (safe_num_rows($q)==1 or $Item->ElimType==3 or $Item->ElimType==4)) {
 													$tmp=array();
 													while($r=safe_fetch($q)) {
 
@@ -1793,6 +1858,27 @@ Class Scheduler {
 											} else {
 												$pdf->Cell($descrSize, $CellHeight, $lnk, 0, 1, 'L', 0);
 											}
+											break;
+										case 'R':
+											$lnk=$Item->Text.': '.$Item->Events;
+											if($Item->Shift and $timing) {
+												$pdf->SetX($StartX);
+												$pdf->Cell($DelayWidth, $CellHeight, $timingDelayed, 0, 0);
+												$pdf->Cell($TimingWidth, $CellHeight, $timing, 0, 0);
+											} else {
+												$pdf->SetX($StartX+$DelayWidth);
+												$pdf->Cell($TimingWidth, $CellHeight, $timing, 0, 0);
+											}
+											if($timing and $Item->Duration) {
+												$pdf->SetFont('', 'I');
+												$pdf->setColor('text', 75);
+												$pdf->Cell($DurationWidth, $CellHeight, sprintf('%02d:%02d', $Item->Duration/60, $Item->Duration%60), 0, 0, 'R');
+												$pdf->SetFont('', '');
+												$pdf->setColor('text', 0);
+											}
+											$pdf->SetX($StartX+$TimeColumns);
+											$IsTitle=false;
+											$pdf->Cell($descrSize, $CellHeight, $lnk, 0, 1, 'L', 0);
 											break;
 										case 'RA':
 											$lnk=$Item->Text.($Item->Events ? ': '.$Item->Events : '');
@@ -2136,7 +2222,7 @@ Class Scheduler {
 								}
 							}
 							$FirstTitle=false;
-							$cal['summary']=$COMP->ToCode.': '.$cal['summary'];
+							$cal['summary']=$cal['summary'].' - '.$COMP->ToName;
 							$ICS->addEvent($cal);
 						}
 					}
@@ -3803,6 +3889,9 @@ Class Scheduler {
 
 														foreach($Ranges as $tmp) {
 															if(count($tmp)>1) {
+                                                                if(!$u->Persons and (substr($tmp[1],-2)=='AB' or substr($tmp[1],-2)=='CD')) {
+                                                                    $u->Persons=substr($tmp[1],-2);
+                                                                }
 																foreach(range($tmp[0], $tmp[1]) as $tgt) {
 																	$DistanceMin=min($DistanceMin, $u->EvDistance);
 																	$DistanceMax=max($DistanceMax, $u->EvDistance);
@@ -3816,6 +3905,9 @@ Class Scheduler {
 																	$rows[$u->FwEvent][$tgt]['mp']=$u->EvMaxTeamPerson;
 																}
 															} else {
+                                                                if(!$u->Persons and (substr($tmp[0],-2)=='AB' or substr($tmp[0],-2)=='CD')) {
+                                                                    $u->Persons=substr($tmp[0],-2);
+                                                                }
 																$DistanceMin=min($DistanceMin, $u->EvDistance);
 																$DistanceMax=max($DistanceMax, $u->EvDistance);
 
@@ -4441,7 +4533,7 @@ Class Scheduler {
 					$MaxOffset=max($MaxOffset, $Offset);
 
 					if(!empty($Range->Line)) {
-						$Y+=$DistHeight + $Offset + $EventHeight + ($Range->Phase ? $PhaseHeight : 0) + $ArcTgtHeight+2;
+						$Y+=$DistHeight + $Offset + $EventHeight + ($Range->Phase ? $PhaseHeight : 0) + $ArcTgtHeight + 3.5;
 					}
 
 					// prints the distance block

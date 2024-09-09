@@ -43,6 +43,7 @@ if(!empty($_REQUEST['Activate'])) {
 		$_SESSION['ActiveSession'][]=$_REQUEST['Activate'];
 	}
 	Set_Tournament_Option('ActiveSession', $_SESSION['ActiveSession']);
+    runJack("ScheduleRunUpdate", $_SESSION['TourId'], array("ActiveSession"=>$_SESSION['ActiveSession'], "TourId"=>$_SESSION['TourId']));
 	CD_redirect(basename(__FILE__));
 }
 
@@ -96,13 +97,20 @@ if(!empty($_REQUEST['ics'])) {
 $edit=(empty($_REQUEST['key']) ? '' : preg_replace('#[^0-9:| -]#sim', '', $_REQUEST['key']));
 
 $JS_SCRIPT=array(
-	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
 	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Scheduler/Fun_AJAX_Scheduler.js"></script>',
 	'<link href="'.$CFG->ROOT_DIR.'Scheduler/Scheduler.css" media="screen" rel="stylesheet" type="text/css">',
+	phpVars2js([
+		'titAdvanced' => get_text('Advanced'),
+		'labelTargets' => get_text('Targets', 'Tournament').': #1-#N@Dist[@Cat[@Face]]',
+		'labelLocation' => get_text('Location', 'Tournament'),
+		'btnSubmit' => get_text('CmdUpdate'),
+		'btnCancel' => get_text('CmdCancel'),
+	]),
 );
-$JS_SCRIPT[]='<style>
-</style>';
+
+$IncludeFA=true;
+$IncludeJquery=true;
 
 include('Common/Templates/head.php');
 
@@ -243,8 +251,8 @@ if($aclLevel == AclReadWrite) {
 	        echo '<tr>
 			<th nowrap="nowrap">' . $r->Session . '</td>
 			<th nowrap="nowrap">' . $r->DiDistance . '</td>
-			<td><input size="10" type="date" name="Fld[Q][Day][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiDay . '" onchange="DiUpdate(this)"></td>
-			<td><input size="5" type="time" name="Fld[Q][Start][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiStart . '" onchange="DiUpdate(this)"></td>
+			<td><input size="10" type="date" name="Fld[Q][Day][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiDay . '" onblur="DiUpdate(this)"></td>
+			<td><input size="5" type="time" name="Fld[Q][Start][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiStart . '" onblur="DiUpdate(this)"></td>
 			<td><input size="3" max="999" min="0" type="number" name="Fld[Q][Duration][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiDuration . '" onchange="DiUpdate(this)"></td>
 			<td><input size="3" max="999" min="-1" type="number" name="Fld[Q][Shift][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiShift . '" onchange="DiUpdate(this)"></td>
 			<td><input size="5" type="text" name="Fld[Q][WarmTime][' . $r->DiSession . '][' . $r->DiDistance . ']" value="' . $r->DiWarmStart . '" onchange="DiUpdate(this)"></td>
@@ -292,8 +300,8 @@ if($aclLevel == AclReadWrite) {
             echo '<tr>
 			<th nowrap="nowrap">' . $r->Session . '<br/>' . $r->Events . '</td>
 			<th nowrap="nowrap">' . get_text('Eliminations_' . ($r->ElElimPhase + 1)) . '</td>
-			<td><input size="10" type="date" name="Fld[E][Day][' . $r->SesOrder . '][' . $r->ElElimPhase . ']" value="' . $r->DiDay . '" onchange="DiUpdate(this)"></td>
-			<td><input size="5" type="time" name="Fld[E][Start][' . $r->SesOrder . '][' . $r->ElElimPhase . ']" value="' . $r->DiStart . '" onchange="DiUpdate(this)"></td>
+			<td><input size="10" type="date" name="Fld[E][Day][' . $r->SesOrder . '][' . $r->ElElimPhase . ']" value="' . $r->DiDay . '" onblur="DiUpdate(this)"></td>
+			<td><input size="5" type="time" name="Fld[E][Start][' . $r->SesOrder . '][' . $r->ElElimPhase . ']" value="' . $r->DiStart . '" onblur="DiUpdate(this)"></td>
 			<td><input size="3" max="999" min="0" type="number" name="Fld[E][Duration][' . $r->SesOrder . '][' . $r->ElElimPhase . ']" value="' . $r->DiDuration . '" onchange="DiUpdate(this)"></td>
 			<td><input size="3" max="999" min="-1" type="number" name="Fld[E][Shift][' . $r->SesOrder . '][' . $r->ElElimPhase . ']" value="' . $r->DiShift . '" onchange="DiUpdate(this)"></td>
 			<td><input size="5" type="text" name="Fld[E][WarmTime][' . $r->SesOrder . '][' . $r->ElElimPhase . ']" value="' . $r->DiWarmStart . '" onchange="DiUpdate(this)"></td>
@@ -358,8 +366,8 @@ if($aclLevel == AclReadWrite) {
             echo '<tr>
 			<th nowrap="nowrap">' . $r->Events . '</td>
 			<th nowrap="nowrap">' . get_text(namePhase($r->EvFinalFirstPhase, $r->GrPhase) . '_Phase') . '</td>
-			<td><input size="10" type="date" name="Fld[' . $TeamEvent . '][Day][' . $r->GrPhase . '][' . $r->FsScheduledDate . '][' . $r->FsScheduledTime . ']" value="' . $r->ScheduledDate . '" onchange="DiUpdate(this)"></td>
-			<td><input size="5"  type="time" name="Fld[' . $TeamEvent . '][Start][' . $r->GrPhase . '][' . $r->FsScheduledDate . '][' . $r->FsScheduledTime . ']" value="' . $r->ScheduledTime . '" onchange="DiUpdate(this)"></td>
+			<td><input size="10" type="date" name="Fld[' . $TeamEvent . '][Day][' . $r->GrPhase . '][' . $r->FsScheduledDate . '][' . $r->FsScheduledTime . ']" value="' . $r->ScheduledDate . '" onblur="DiUpdate(this)"></td>
+			<td><input size="5"  type="time" name="Fld[' . $TeamEvent . '][Start][' . $r->GrPhase . '][' . $r->FsScheduledDate . '][' . $r->FsScheduledTime . ']" value="' . $r->ScheduledTime . '" onblur="DiUpdate(this)"></td>
 			<td><input size="3" max="999" min="0" type="number" name="Fld[' . $TeamEvent . '][Duration][' . $r->GrPhase . '][' . $r->FsScheduledDate . '][' . $r->FsScheduledTime . ']" value="' . $r->FsScheduledLen . '" onchange="DiUpdate(this)"></td>
 			<td><input size="3" max="999" min="-1" type="number" name="Fld[' . $TeamEvent . '][Shift][' . $r->GrPhase . '][' . $r->FsScheduledDate . '][' . $r->FsScheduledTime . ']" value="' . $r->FsShift . '" onchange="DiUpdate(this)"></td>
 			<td>';

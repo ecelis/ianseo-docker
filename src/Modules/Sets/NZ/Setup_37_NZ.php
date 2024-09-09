@@ -1,6 +1,6 @@
 <?php
 /*
-37 	Type_70m Round
+37 	Type_2x70m Round
 
 $TourId is the ID of the tournament!
 $SubRule is the eventual subrule (see sets.php for the order)

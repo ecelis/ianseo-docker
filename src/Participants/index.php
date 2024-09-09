@@ -59,7 +59,7 @@ if($_POST) {
 // $=(isset($_REQUEST['']) ? intval($_REQUEST['']) : 0);
 
 $PAGE_TITLE=get_text('TourPartecipants','Tournament');
-
+$IncludeJquery = true;
 $JS_SCRIPT=array(
 	phpVars2js(array(
 		'StrAreYouSure'=>get_text('MsgAreYouSure'),
@@ -72,7 +72,6 @@ $JS_SCRIPT=array(
         'strStatus_8' => get_text('Status_8'),
         'strStatus_9' => get_text('Status_9'),
 	)),
-	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 	'<script type="text/javascript" src="index.js"></script>',
 	'<link href="./index.css" rel="stylesheet" type="text/css">',
 );

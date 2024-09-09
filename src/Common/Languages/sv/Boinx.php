@@ -12,6 +12,7 @@ $lang['CssArrTitle']='Total, rubrik';
 $lang['CssArrTotal']='Total';
 $lang['CssCountryCommon']='Förening/Land';
 $lang['CssPointsCommon']='Poäng';
+$lang['CssReminder']='<b><i>Glöm inte att klicka på spara när du gjort ändringar.</i></b>';
 $lang['CssVegasFreeTextText']='Brödtext';
 $lang['CssVegasFreeTextTitle']='Rubrik';
 $lang['CssVegasSOTarget']='Tavelnummer';

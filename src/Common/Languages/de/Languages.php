@@ -1,5 +1,15 @@
 <?php
 $lang['Aggiorna']='Aktualisieren';
+$lang['CA-Ev-CM']='Compound Herren';
+$lang['CA-Ev-CMT']='Compound Herren Team';
+$lang['CA-Ev-CW']='Compound Damen';
+$lang['CA-Ev-CWT']='Compound Damen Team';
+$lang['CA-Ev-CX']='Compound Mixed Team';
+$lang['CA-Ev-RM']='Recurve Schützenklasse Herren';
+$lang['CA-Ev-RMT']='Recurve Schützenklasse Herren Mannschaft';
+$lang['CA-Ev-RW']='Recurve Schützenklasse Damen';
+$lang['CA-Ev-RWT']='Recurve Schützenklasse Damen Mannschaft';
+$lang['CA-Ev-RX']='Recurve Mix Team';
 $lang['CmdSearch']='Finde Module';
 $lang['Create']='Erzeuge';
 $lang['CreateDescr']='Sie müssen die übersetzte Datei erzeugen';

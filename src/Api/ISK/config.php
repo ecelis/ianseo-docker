@@ -336,7 +336,8 @@ function importQualifications($EnId, $dist=1, $end=1) {
 	$SQL="SELECT QuId, EnDivision, EnClass, EnSubClass, EnCountry, EnCountry2, EnCountry3, IF(EnCountry2=0,EnCountry,EnCountry2) as TeamCode, EnIndClEvent, EnTeamClEvent, EnIndFEvent, (EnTeamFEvent+EnTeamMixEvent) as EnTeamFEvent,
 			QuTargetNo, QuD{$dist}Arrowstring as Arrowstring, IskDtArrowstring, IskDtEndNo, DIDistance, DIEnds, DIArrows, 
             IF(TfGoldsChars{$dist}='',IF(TfGoldsChars='',ToGoldsChars,TfGoldsChars),TfGoldsChars{$dist}) as GoldsChars, 
-            IF(TfXNineChars{$dist}='',IF(TfXNineChars='',ToXNineChars,TfXNineChars),TfXNineChars{$dist}) as XNineChars  
+            IF(TfXNineChars{$dist}='',IF(TfXNineChars='',ToXNineChars,TfXNineChars),TfXNineChars{$dist}) as XNineChars,
+            ToElabTeam!=127 as MakeTeams
 		from Qualifications
 		INNER JOIN Entries ON QuId=EnId
 		INNER JOIN Tournament ON ToId=EnTournament
@@ -384,7 +385,7 @@ function importQualifications($EnId, $dist=1, $end=1) {
             Obj_RankFactory::create('DivClass', array('tournament' => $CompId, 'events' => $r->EnDivision . $r->EnClass, 'dist' => $dist))->calculate();
             Obj_RankFactory::create('DivClass', array('tournament' => $CompId, 'events' => $r->EnDivision . $r->EnClass, 'dist' => 0))->calculate();
         }
-        if(defined('RKCALC_DivClT') AND RKCALC_DivClI==0 AND $r->EnTeamClEvent != 0) {
+        if($r->MakeTeams and defined('RKCALC_DivClT') AND RKCALC_DivClI==0 AND $r->EnTeamClEvent != 0) {
             MakeTeams($r->TeamCode, $r->EnDivision.$r->EnClass, $CompId);
         }
 
@@ -401,7 +402,7 @@ function importQualifications($EnId, $dist=1, $end=1) {
 					Obj_RankFactory::create('Abs',array('tournament'=>$CompId,'events'=>$r2->EvCode,'dist'=>0))->calculate();
 					ResetShootoff($r2->EvCode,0,0, $CompId);
 				}
-                if(defined('RKCALC_FinT') AND RKCALC_FinT==0 AND $r2->EvTeamEvent==1 AND $r->EnTeamFEvent!=0) {
+                if($r->MakeTeams and defined('RKCALC_FinT') AND RKCALC_FinT==0 AND $r2->EvTeamEvent==1 AND $r->EnTeamFEvent!=0) {
                     $calculateTeam=$r->TeamCode;
                     if($r2->EvTeamCreationMode==1) {
                         $calculateTeam=$r->EnCountry;

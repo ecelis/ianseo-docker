@@ -56,7 +56,11 @@ function ChangeLocalSubRule(who) {
 	}
 }
 
-function ChangeIskConfig() {
+function ChangeIskConfig(obj) {
+	$('#ISK-WARNING').remove();
+	if(obj && $(obj).val()!=$(obj).attr('oldval') && $(obj).attr('oldval')!='') {
+		$('#ISK-Messages').html('<div class="alert alert-danger m-1" id="ISK-WARNING"><b>'+IskResetAlert+'</b></div>');
+	}
     $.getJSON('index-getIskConfig.php?api='+$('#IskSelect').val(), function (data) {
         $('#IskConfig').html(data.html);
     });
@@ -73,4 +77,12 @@ function ChangeLookUpCombo() {
 function assignCurrentLookUp() {
 	$('#Command').val('AssignLookupEntry');
 	$('#Frm').submit();
+}
+
+function CheckIskStatus() {
+	if($('#ISK-WARNING').length==0) {
+		return true;
+	}
+
+	return confirm(IskResetAlert);
 }

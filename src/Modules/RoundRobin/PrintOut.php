@@ -4,9 +4,8 @@ CheckTourSession(true);
 // require_once('Common/Fun_FormatText.inc.php');
 checkACL(array(AclRobin), AclReadOnly);
 
-
+$IncludeJquery = true;
 $JS_SCRIPT=array(
-	'<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 	'<script src="PrintOut.js"></script>',
 	);
 

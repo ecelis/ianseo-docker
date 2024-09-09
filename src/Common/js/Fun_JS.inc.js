@@ -238,3 +238,227 @@ function doAlert(msg) {
 		backgroundDismiss: true,
 	});
 }
+
+function editCss(data) {
+	let css= {
+		display: '',
+		left: '',
+		top:'',
+		right:'',
+		bottom:'',
+		height:'',
+		width:'',
+		position:'',
+		color:'',
+		'background-color':'',
+		'font-family':'',
+		'font-size':'',
+		'font-weight':'',
+		'text-align':'',
+		'margin':'',
+		'margin-top':'',
+		'margin-left':'',
+		'margin-right':'',
+		'margin-bottom':'',
+		'padding':'',
+		'padding-top':'',
+		'padding-left':'',
+		'padding-right':'',
+		'padding-bottom':'',
+		'white-space':'',
+		'overflow':'',
+		'flex':'',
+		extra:''
+	};
+	let extra='';
+	let OriginalField=$(data).closest('tr').find('input');
+	let css2decode=OriginalField.val();
+	$.each(css2decode.split(';'), function() {
+		if(this.trim()=='') {
+			return;
+		}
+		let item=this.trim().split(':');
+		if(typeof css[item[0]]=='undefined') {
+			extra+=this.trim()+';';
+		} else {
+			css[item[0]]=item[1];
+		}
+	})
+
+	if(css['background-color'].length>7) {
+		css['background-alpha']=parseInt(css['background-color'].substring(7),16);
+		css['background-color']=css['background-color'].substring(0,7);
+	} else {
+		css['background-alpha']=255;
+	}
+	if(css['color'].length>7) {
+		css['color-alpha']=parseInt(css['color'].substring(7),16);
+		css['color']=css['color'].substring(0,7);
+	} else {
+		css['color-alpha']=255;
+	}
+
+	let content='<table class="Tabella" id="CssEditTable">' +
+		'<tr>' +
+		'<th colspan="8" class="Title">Box Layout</th>' +
+		'</tr>' +
+		'<tr>' +
+		'<th>Display<i class="fa fa-circle-info text-grey ml-1" ref="display" onclick="cssHelp(this)"></i></th>' +
+		'<th>Position<i class="fa fa-circle-info text-grey ml-1" ref="position" onclick="cssHelp(this)"></i></th>' +
+		'<th>Width<i class="fa fa-circle-info text-grey ml-1" ref="width" onclick="cssHelp(this)"></i></th>' +
+		'<th>Height<i class="fa fa-circle-info text-grey ml-1" ref="height" onclick="cssHelp(this)"></i></th>' +
+		'<th>Left<i class="fa fa-circle-info text-grey ml-1" ref="left" onclick="cssHelp(this)"></i></th>' +
+		'<th>Top<i class="fa fa-circle-info text-grey ml-1" ref="top" onclick="cssHelp(this)"></i></th>' +
+		'<th>Right<i class="fa fa-circle-info text-grey ml-1" ref="right" onclick="cssHelp(this)"></i></th>' +
+		'<th>Bottom<i class="fa fa-circle-info text-grey ml-1" ref="bottom" onclick="cssHelp(this)"></i></th>' +
+		'</tr>' +
+		'<tr>' +
+		'<td><input class="w-100" type="text" value="'+css.display+'" id="display"></div></td>' +
+		'<td><input class="w-100" type="text" value="'+css.position+'" id="position"></div></td>' +
+		'<td><input class="w-100" type="text" value="'+css.width+'" id="width"></div></td>' +
+		'<td><input class="w-100" type="text" value="'+css.height+'" id="height"></div></td>' +
+		'<td><input class="w-100" type="text" value="'+css.left+'" id="left"></div></td>' +
+		'<td><input class="w-100" type="text" value="'+css.top+'" id="top"></div></td>' +
+		'<td><input class="w-100" type="text" value="'+css.right+'" id="right"></div></td>' +
+		'<td><input class="w-100" type="text" value="'+css.bottom+'" id="bottom"></div></td>' +
+		'</tr>' +
+		'<tr><td colspan="8">&nbsp;</td></tr>' +
+		'<tr>' +
+		'<th colspan="2" class="Title"><input type="checkbox" class="mx-1" onclick="toggleColor(this)" ref="background" '+(css['background-color']==''?'':'checked="checked"')+'>Background Color<i class="fa fa-circle-info text-grey ml-1" ref="background-color" onclick="cssHelp(this)"></i></th>' +
+		'<th colspan="2" class="Title"><input type="checkbox" class="mx-1" onclick="toggleColor(this)" ref="color" '+(css['color']==''?'':'checked="checked"')+'>Color<i class="fa fa-circle-info text-grey ml-1" ref="color" onclick="cssHelp(this)"></i></th>' +
+		'<th colspan="4" class="Title">Text</th>' +
+		'</tr>' +
+		'<tr>' +
+		'<th>Color</th>' +
+		'<th>Opacity</th>' +
+		'<th>Color</th>' +
+		'<th>Opacity</th>' +
+		'<th>Font Family<i class="fa fa-circle-info text-grey ml-1" ref="font-family" onclick="cssHelp(this)"></i></th>' +
+		'<th>Font Size<i class="fa fa-circle-info text-grey ml-1" ref="font-size" onclick="cssHelp(this)"></i></th>' +
+		'<th>Font Weight<i class="fa fa-circle-info text-grey ml-1" ref="font-weight" onclick="cssHelp(this)"></i></th>' +
+		'<th>Text Align<i class="fa fa-circle-info text-grey ml-1" ref="text-align" onclick="cssHelp(this)"></i></th>' +
+		'</tr>' +
+		'<tr>' +
+		'<td><input class="w-100" type="color" value="'+css['background-color']+'" id="background-color" '+(css['background-color']==''?'disabled="disabled"':'style="opacity:'+(css['background-alpha']/255)+'"')+'></div></td>' +
+		'<td><input class="w-100" type="range" value="'+css['background-alpha']+'" id="background-alpha" min="0" max="255" onchange="adaptTransparency(this)" '+(css['background-color']==''?'disabled="disabled"':'')+'></div></td>' +
+		'<td><input class="w-100" type="color" value="'+css['color']+'" id="color-color" '+(css['color']==''?'disabled="disabled"':'style="opacity:'+(css['color-alpha']/255)+'"')+'></div></td>' +
+		'<td><input class="w-100" type="range" value="'+css['color-alpha']+'" id="color-alpha" min="0" max="255" onchange="adaptTransparency(this)" '+(css['color']==''?'disabled="disabled"':'')+'></div></td>' +
+		'<td><input class="w-100" type="text" value="'+css['font-family']+'" id="font-family"></td>' +
+		'<td><input class="w-100" type="text" value="'+css['font-size']+'" id="font-size"></td>' +
+		'<td><input class="w-100" type="text" value="'+css['font-weight']+'" id="font-weight"></td>' +
+		'<td><input class="w-100" type="text" value="'+css['text-align']+'" id="text-align"></td>' +
+		'</tr>' +
+		'<tr><td colspan="8">&nbsp;</td></tr>' +
+		'<tr>' +
+		'<th colspan="5" class="Title">Margin</th>' +
+		'<th colspan="2" class="Title">Wrapping</th>' +
+		'<th class="Title">Flex</th>' +
+		'</tr>' +
+		'<tr>' +
+		'<th>Global<i class="fa fa-circle-info text-grey ml-1" ref="margin" onclick="cssHelp(this)"></i></th>' +
+		'<th>Left Margin<i class="fa fa-circle-info text-grey ml-1" ref="margin-left" onclick="cssHelp(this)"></i></th>' +
+		'<th>Top Margin<i class="fa fa-circle-info text-grey ml-1" ref="margin-top" onclick="cssHelp(this)"></i></th>' +
+		'<th>Right Margin<i class="fa fa-circle-info text-grey ml-1" ref="margin-right" onclick="cssHelp(this)"></i></th>' +
+		'<th>Bottom Margin<i class="fa fa-circle-info text-grey ml-1" ref="margin-bottom" onclick="cssHelp(this)"></i></th>' +
+		'<th>White space<i class="fa fa-circle-info text-grey ml-1" ref="white-space" onclick="cssHelp(this)"></i></th>' +
+		'<th>Overflow<i class="fa fa-circle-info text-grey ml-1" ref="overflow" onclick="cssHelp(this)"></i></th>' +
+		'<th>Flex<i class="fa fa-circle-info text-grey ml-1" ref="flex" onclick="cssHelp(this)"></i></th>' +
+		'</tr>' +
+		'<tr>' +
+		'<td ><input class="w-100" type="text" value="'+css['margin']+'" id="margin"></td>' +
+		'<td ><input class="w-100" type="text" value="'+css['margin-left']+'" id="margin-left"></td>' +
+		'<td ><input class="w-100" type="text" value="'+css['margin-top']+'" id="margin-top"></td>' +
+		'<td ><input class="w-100" type="text" value="'+css['margin-right']+'" id="margin-right"></td>' +
+		'<td ><input class="w-100" type="text" value="'+css['margin-bottom']+'" id="margin-bottom"></td>' +
+		'<td ><input class="w-100" type="text" value="'+css['white-space']+'" id="white-space"></td>' +
+		'<td ><input class="w-100" type="text" value="'+css['overflow']+'" id="overflow"></td>' +
+		'<td ><input class="w-100" type="text" value="'+css['flex']+'" id="flex"></td>' +
+		'</tr>' +
+		'<tr><td colspan="8">&nbsp;</td></tr>' +
+		'<tr>' +
+		'<th colspan="5" class="Title">Padding</th>' +
+		'<th colspan="3" class="Title"></th>' +
+		'</tr>' +
+		'<tr>' +
+		'<th>Global<i class="fa fa-circle-info text-grey ml-1" ref="padding" onclick="cssHelp(this)"></i></th>' +
+		'<th>Padding-left<i class="fa fa-circle-info text-grey ml-1" ref="padding-left" onclick="cssHelp(this)"></i></th>' +
+		'<th>Padding-top<i class="fa fa-circle-info text-grey ml-1" ref="padding-top" onclick="cssHelp(this)"></i></th>' +
+		'<th>Padding-right<i class="fa fa-circle-info text-grey ml-1" ref="padding-right" onclick="cssHelp(this)"></i></th>' +
+		'<th>Padding-bottom<i class="fa fa-circle-info text-grey ml-1" ref="padding-bottom" onclick="cssHelp(this)"></i></th>' +
+		'<th></th>' +
+		'<th></th>' +
+		'<th></th>' +
+		'</tr>' +
+		'<tr>' +
+		'<td ><input class="w-100" type="text" value="'+css['padding']+'" id="padding"></td>' +
+		'<td ><input class="w-100" type="text" value="'+css['padding-left']+'" id="padding-left"></td>' +
+		'<td ><input class="w-100" type="text" value="'+css['padding-top']+'" id="padding-top"></td>' +
+		'<td ><input class="w-100" type="text" value="'+css['padding-right']+'" id="padding-right"></td>' +
+		'<td ><input class="w-100" type="text" value="'+css['padding-bottom']+'" id="padding-bottom"></td>' +
+		// '<td ><input class="w-100" type="text" value="'+css['white-space']+'" id="white-space"></td>' +
+		// '<td ><input class="w-100" type="text" value="'+css['overflow']+'" id="overflow"></td>' +
+		// '<td ><input class="w-100" type="text" value="'+css['flex']+'" id="flex"></td>' +
+		'</tr>' +
+		'<tr><td colspan="8">&nbsp;</td></tr>' +
+		'<tr>' +
+		'<th colspan="8" class="Title">Extra CSS</th>' +
+		'</tr>' +
+		'<tr>' +
+		'<td colspan="8"><input class="w-100" type="text" value="'+extra+'" id="extra"></td>' +
+		'</tr>' +
+		'</table>';
+
+	$.confirm({
+		title:'',
+		content:content,
+		boxWidth:'60%',
+		useBootstrap: false,
+		escapeKey:'cancel',
+		backgroundDismiss:true,
+		buttons:{
+			ok:{
+				text:cmdConfirm,
+				btnClass:'btn-red',
+				action:function() {
+					let ret=[];
+					$('#CssEditTable').find('input').each(function() {
+						if(this.disabled || this.value=='') {
+							return;
+						}
+						switch(this.type) {
+							case 'text':
+								if(this.id=='extra') {
+									ret.push(this.value);
+								} else {
+									ret.push(this.id+':'+this.value)
+								}
+								break;
+							case 'color':
+								ret.push((this.id=='color-color'?'color':this.id)+':'+this.value+parseInt($('#'+this.id.replace('-color','-alpha')).val()).toString(16));
+						}
+					});
+					let finValue=ret.join(';');
+					OriginalField.val(finValue);
+					$(data).closest('tr').find('.CssResetButton').toggleClass('CssResetDisabled', finValue==$(data).closest('tr').attr('ref'));
+					showAlert(cssReminder)
+				},
+			},
+			cancel:{
+				text:cmdCancel
+			},
+		},
+	});
+	console.log(css, extra);
+}
+function cssHelp(obj) {
+	window.open('https://developer.mozilla.org/en-US/docs/Web/CSS/'+obj.getAttribute('ref'), '_blank');
+}
+
+function adaptTransparency(obj) {
+	$('#'+$(obj).attr('id').replace('alpha','color')).css('opacity',obj.value/255);
+}
+
+function toggleColor(obj) {
+	$('#'+$(obj).attr('ref')+'-color').prop('disabled', !obj.checked);
+	$('#'+$(obj).attr('ref')+'-alpha').prop('disabled', !obj.checked);
+}

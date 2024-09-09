@@ -74,6 +74,7 @@ if(!empty($_REQUEST['Id']) and isset($_REQUEST['RuleId'])) {
 			$Cols[]='ATHL';
 			break;
 		case 'ALFA':
+		case 'CAT':
 		case 'LIST':
 		case 'LSPH':
 			$Cols[] = 'DIVCLAS';
@@ -356,81 +357,98 @@ if(!empty($_REQUEST['Id']) and isset($_REQUEST['RuleId'])) {
 			$Cols[]='BYE';
 			$Cols[]='ENDS';
 
-			$Select = "SELECT MAX(RrLevGroups) as MaxGroups, max(RrLevLevel) as MaxLevels, max(RrLevGroupArchers) as MaxComponents 
-				FROM RoundRobinLevel 
-				where RrLevTeam=0 and RrLevTournament={$_SESSION['TourId']}";
-			$Rs=safe_r_sql($Select);
+            $Levels=[];
+            $EventNames=[];
+            $Select="select EvCode, EvEventName, EvTeamEvent, RrLevName, RrLevLevel
+                from Events
+                inner join RoundRobinLevel on RrLevTournament=EvTournament and RrLevEvent=EvCode and RrLevTeam=EvTeamEvent
+                where RrLevTournament={$_SESSION['TourId']}
+                order by EvTeamEvent, EvProgr, RrLevLevel";
+            $q=safe_r_sql($Select);
+            while($r=safe_fetch($q)) {
+                $Levels[$r->EvTeamEvent][$r->EvCode][$r->RrLevLevel]=$r->RrLevName;
+                $EventNames[$r->EvCode]=$r->EvEventName;
+            }
 
-			if($MaxPhase=safe_fetch($Rs) and $MaxPhase->MaxLevels) {
-				// there are some finals!
+            $ResCols[$i]['header']=get_text('TVFilterEventInd','Tournament');
+            $ResCols[$i+1]['header']=get_text('TVFilterPhaseIndFinal','Tournament');
 
-				$tmp=array();
+            if($IskGroup=getModuleParameter('ISK', 'Sequence') OR $IskGroup=getModuleParameter('ISK-NG', 'Sequence')) {
+                foreach($IskGroup as $Group => $sequence) {
+                    if(!is_numeric($Group)) {
+                        // this is the old sequences system still used by the ISK ... so not supported
+                        break;
+                    }
+                    $ResCols[$i]['data'][] = '<input type="checkbox" name="d_TVEventInd[]"'
+                        . (in_array("##".$Group."##", $Arr_EventIndRule) ? ' checked' : '')
+                        . ' value="##'.$Group.'##"><b>Follow Group '.chr(65+$Group).'</b>';
+                    $ResCols[$i+1]['data'][]='<span style="font-size:150%">&nbsp;</span>';
+                }
+            }
 
-				// while ($MaxPhase->Phase>1) {
-				// 	$txt=get_text($MaxPhase->Phase . '_Phase');
-				// 	if($MaxPhase->Phase==64) $txt = get_text('48_Phase') . '-' . get_text('64_Phase');
-				// 	elseif($MaxPhase->Phase==32) $txt = get_text('24_Phase') . '-' . get_text('32_Phase');
-				// 	elseif($MaxPhase->Phase==16) $txt = get_text('12_Phase') . '-' . get_text('16_Phase');
-				// 	$tmp[] = '<input type="checkbox" name="d_TVPhaseInd[]" disabled="disabled" value="'.$MaxPhase->Phase.'"><span style="color:#e0e0e0;">' . $txt . '</span>';
-				//
-				// 	$MaxPhase->Phase=namePhase($MaxPhase->Phase, ceil($MaxPhase->Phase/2));
-				//
-				// }
-				// $tmp[] = '<input type="checkbox" name="d_TVPhaseInd[]" value="1"><span>' . get_text('1_Phase') . '</span>';
-				// $tmp[] = '<input type="checkbox" name="d_TVPhaseInd[]" value="0"><span>' . get_text('0_Phase') . '</span>';
+            $OldTeam=-1;
+            foreach($Levels as $Team => $Events) {
+                if($OldTeam!=$Team) {
+                    $OldTeam=$Team;
+                    $ResCols[$i]['data'][] = '<span class="Header"><b>'.get_text('IndTeam-'.$Team).'</b></span>';
+                    $ResCols[$i+1]['data'][]='<span><b>'.get_text('IndTeam-'.$Team).'</b></span>';
+                }
 
-				$OrgPhases=implode('&nbsp;', $tmp);
+                foreach($Events as $EvCode => $Levs) {
+                    $ResCols[$i]['data'][] = '<input type="checkbox" name="d_TVEventInd[]"'
+                        . (in_array($EvCode, $Arr_EventIndRule) ? ' checked' : '')
+                        . ' value="' . $EvCode . '">' . get_text($EventNames[$EvCode],'','',true)
+                        . ' (' . $EvCode . ')';
+                    $tmp=[];
+                    foreach($Levs as $LevelId=>$LevelName) {
+                        $tmp[] = '<input type="checkbox" name="d_TVPhaseInd['.$EvCode.'][]" value="'.$LevelId.'" id="id_'.$EvCode.'_'.$LevelId.'" '.((!empty($Arr_PhaseIndRule[$EvCode]) && in_array($LevelId, $Arr_PhaseIndRule[$EvCode])) ? 'checked="checked"' : '').'><span>' . $LevelName . '</span>';
+                    }
+                    $ResCols[$i+1]['data'][]=implode('&nbsp;', $tmp);
+                }
+            }
 
-				$Select = "SELECT EvCode, EvEventName, greatest(PhId, PhLevel) as EvFinalFirstPhase
-					FROM Events
-					INNER JOIN Phases on PhId=EvFinalFirstPhase and (PhIndTeam & pow(2,EvTeamEvent))>0
-					WHERE EvTournament={$_SESSION['TourId']} and EvTeamEvent=0 and EvFinalFirstPhase>0 and EvElimType=5
-					ORDER BY EvTeamEvent ASC, EvProgr ";
-
-				$Rs=safe_r_sql($Select);
-
-				$ResCols[$i]['header']=get_text('TVFilterEventInd','Tournament');
-				$ResCols[$i+1]['header']=get_text('TVFilterPhaseIndFinal','Tournament');
-				if (safe_num_rows($Rs)) {
-					if($IskGroup=getModuleParameter('ISK', 'Sequence') OR $IskGroup=getModuleParameter('ISK-NG', 'Sequence')) {
-						foreach($IskGroup as $Group => $sequence) {
-							if(!is_numeric($Group)) {
-								// this is the old sequences system still used by the ISK ... so not supported
-								break;
-							}
-							$ResCols[$i]['data'][] = '<input type="checkbox" name="d_TVEventInd[]"'
-								. (in_array("##".$Group."##", $Arr_EventIndRule) ? ' checked' : '')
-								. ' value="##'.$Group.'##">Follow Group '.chr(65+$Group);
-							$ResCols[$i+1]['data'][]='<span style="font-size:150%">&nbsp;</span>';
-						}
-					}
-
-					while ($r=safe_fetch($Rs)) {
-						$ResCols[$i]['data'][] = '<input type="checkbox" name="d_TVEventInd[]"'
-							. (in_array($r->EvCode, $Arr_EventIndRule) ? ' checked' : '')
-							. ' value="' . $r->EvCode . '">' . get_text($r->EvEventName,'','',true)
-							. ' (' . $r->EvCode . ')';
-
-						$tmp = $OrgPhases;
-
-						while ($r->EvFinalFirstPhase>1) {
-							$tmp=str_replace('name="d_TVPhaseInd[]" disabled="disabled" value="'.$r->EvFinalFirstPhase.'"><span style="color:#e0e0e0;">', 'name="d_TVPhaseInd['.$r->EvCode.'][]" value="'.$r->EvFinalFirstPhase.'" id="id_'.$r->EvCode.'_'.$r->EvFinalFirstPhase.'"><span>', $tmp);
-							if(!empty($Arr_PhaseIndRule[$r->EvCode]) && in_array($r->EvFinalFirstPhase, $Arr_PhaseIndRule[$r->EvCode])) $tmp=str_replace('name="d_TVPhaseInd['.$r->EvCode.'][]" value="'.$r->EvFinalFirstPhase.'"', 'name="d_TVPhaseInd['.$r->EvCode.'][]" value="'.$r->EvFinalFirstPhase.'" checked="checked"', $tmp);
-
-							$r->EvFinalFirstPhase=namePhase($r->EvFinalFirstPhase, ceil($r->EvFinalFirstPhase/2));
-						}
-						$tmp=str_replace('name="d_TVPhaseInd[]" value="1">', 'name="d_TVPhaseInd['.$r->EvCode.'][]" value="1" id="id_'.$r->EvCode.'_1">', $tmp);
-						if(!empty($Arr_PhaseIndRule[$r->EvCode]) && in_array(1, $Arr_PhaseIndRule[$r->EvCode])) {
-							$tmp=str_replace('name="d_TVPhaseInd['.$r->EvCode.'][]" value="1"', 'name="d_TVPhaseInd['.$r->EvCode.'][]" value="1" checked="checked"', $tmp);
-						}
-						$tmp=str_replace('name="d_TVPhaseInd[]" value="0">', 'name="d_TVPhaseInd['.$r->EvCode.'][]" value="0" id="id_'.$r->EvCode.'_0">', $tmp);
-						if(!empty($Arr_PhaseIndRule[$r->EvCode]) && in_array(0, $Arr_PhaseIndRule[$r->EvCode])) {
-							$tmp=str_replace('name="d_TVPhaseInd['.$r->EvCode.'][]" value="0"', 'name="d_TVPhaseInd['.$r->EvCode.'][]" value="0" checked="checked"', $tmp);
-						}
-						$ResCols[$i+1]['data'][]=$tmp;
-					}
-				}
-			}
+//			$Select = "SELECT MAX(RrLevGroups) as MaxGroups, max(RrLevLevel) as MaxLevels, max(RrLevGroupArchers) as MaxComponents
+//				FROM RoundRobinLevel
+//				where RrLevTeam=0 and RrLevTournament={$_SESSION['TourId']}";
+//			$Rs=safe_r_sql($Select);
+//
+//			if($MaxPhase=safe_fetch($Rs) and $MaxPhase->MaxLevels) {
+//				// there are some Round Robins!
+//				$tmp=array();
+//				foreach(range(1, $MaxPhase->MaxLevels) as $Phase) {
+//                    $txt=get_text('LevelNum', 'RoundRobin', $Phase);
+//                    $tmp[] = '<input type="checkbox" name="d_TVPhaseInd[]" disabled="disabled" value="'.$Phase.'"><span style="color:#e0e0e0;">' . $txt . '</span>';
+//                }
+//
+//				$OrgPhases=implode('&nbsp;', $tmp);
+//
+//				$Select = "SELECT EvCode, EvEventName, EvElim1 as MaxLevel
+//					FROM Events
+//					WHERE EvTournament={$_SESSION['TourId']} and EvTeamEvent=0 and EvElimType=5
+//					ORDER BY EvTeamEvent ASC, EvProgr ";
+//
+//				$Rs=safe_r_sql($Select);
+//
+//				if (safe_num_rows($Rs)) {
+//
+//					while ($r=safe_fetch($Rs)) {
+//						$ResCols[$i]['data'][] = '<input type="checkbox" name="d_TVEventInd[]"'
+//							. (in_array($r->EvCode, $Arr_EventIndRule) ? ' checked' : '')
+//							. ' value="' . $r->EvCode . '">' . get_text($r->EvEventName,'','',true)
+//							. ' (' . $r->EvCode . ')';
+//
+//						$tmp = $OrgPhases;
+//
+//						foreach(range(1, $r->MaxLevel) as $Phase) {
+//							$tmp=str_replace('name="d_TVPhaseInd[]" disabled="disabled" value="'.$Phase.'"><span style="color:#e0e0e0;">', 'name="d_TVPhaseInd['.$r->EvCode.'][]" value="'.$Phase.'" id="id_'.$r->EvCode.'_'.$Phase.'"><span>', $tmp);
+//							if(!empty($Arr_PhaseIndRule[$r->EvCode]) && in_array($Phase, $Arr_PhaseIndRule[$r->EvCode])) {
+//                                $tmp=str_replace('name="d_TVPhaseInd['.$r->EvCode.'][]" value="'.$Phase.'"', 'name="d_TVPhaseInd['.$r->EvCode.'][]" value="'.$Phase.'" checked="checked"', $tmp);
+//                            }
+//						}
+//						$ResCols[$i+1]['data'][]=$tmp;
+//					}
+//				}
+//			}
 
 			$i++;
 			// select schedules
@@ -587,16 +605,20 @@ if($Cols) {
 			$ResCols[$i]['data'][] = $col ;
 		} elseif($col=='COMP') {
 			$compareTo='0';
-			foreach($Arr_ColumnsRule as $sub) {
-				if(substr($sub,0,4)==$col) $compareTo=substr($sub,5);
-			}
+            if(is_array($Arr_ColumnsRule)) {
+                foreach($Arr_ColumnsRule as $sub) {
+                    if(substr($sub,0,4)==$col) $compareTo=substr($sub,5);
+                }
+            }
 			$ResCols[$i]['data'][] = '<input type="text" size="2" name="d_TVColumns[' . $col . ']"'
 					. ' value="' . $compareTo . '">' . get_text('TvView'.$col,'Tournament') ;
 		} elseif($col=='FIXED') {
 			$compareTo='0';
-			foreach($Arr_ColumnsRule as $sub) {
-				if(substr($sub,0,5)==$col) $compareTo=substr($sub,6);
-			}
+			if(is_array($Arr_ColumnsRule)) {
+                foreach($Arr_ColumnsRule as $sub) {
+                    if(substr($sub,0,5)==$col) $compareTo=substr($sub,6);
+                }
+            }
 			$ResCols[$i]['data'][] = '<input type="text" size="2" name="d_TVColumns[' . $col . ']"'
 					. ' value="' . $compareTo . '">' . get_text('TvView'.$col,'Tournament') ;
 		} elseif($col=='WIDTH') {

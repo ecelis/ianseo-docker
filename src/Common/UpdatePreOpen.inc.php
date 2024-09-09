@@ -162,6 +162,21 @@ function UpdatePreOpen($TournamentID) {
         to_save_version($TournamentID, '2023-03-20 05:26:04');
     }
 
+    if($version<'2023-11-16 10:30:00') {
+        updateArrowstrings_20231116($TournamentID);
+        to_save_version($TournamentID, '2023-11-16 10:30:00');
+    }
+
+    if($version<'2024-01-08 10:30:00') {
+        updateLancaster_20240108($TournamentID);
+        to_save_version($TournamentID, '2024-01-08 10:30:00');
+    }
+
+    if($version<'2024-01-14 12:55:00') {
+        updateSevereBug_20240114($TournamentID);
+        to_save_version($TournamentID, '2024-01-14 12:55:00');
+    }
+
     to_save_version($TournamentID, $DbVersion);
 }
 

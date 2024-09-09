@@ -235,6 +235,7 @@ if(!empty($_REQUEST['items'])) {
 }
 $PAGE_TITLE=get_text('MenuLM_QrCodesGates');
 $ONLOAD =' onload="showWifiPart();"';
+$IncludeJquery = true;
 $JS_SCRIPT=array(
 		phpVars2js(array(
 			'WifiSSID' => get_text('ISK-WifiSSID','Api'),
@@ -242,7 +243,6 @@ $JS_SCRIPT=array(
             'WifiUse' => get_text('ISK-WifiUse','Api'),
             'WifiTargetRange' => get_text('ISK-WifiTargetRange','Api'),
 		)),
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 		'<script type="text/javascript" src="./QRcodes.js"></script>',
 );
 

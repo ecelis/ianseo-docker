@@ -27,10 +27,10 @@
 		body {position: absolute;margin:0; padding:0;top:0;bottom:0;left:0;right:0;}
 		#PopupContent {height:100%; width:100%;margin:0; padding:0;background-color:'.$BackColor.'; }
 		#FlagContent {position: relative;height:100%; width:100%;background-color:'.$BackColor.';
-		'.($BackPhoto ? 'background-image:url("'.$BackPhoto.'");' : '').'
-			background-position:"center center";
-			background-repeat:"no-repeat";
-			background-size:"cover";
+		'.($BackPhoto ? 'background-image:url('.$BackPhoto.');' : '').'
+			background-position:center center;
+			background-repeat:no-repeat;
+			background-size:cover;
 		}
 		.p-pole {position:absolute; width:3%; text-align:right; overflow:hidden;}
 		.f-flag {position:absolute; text-align:left; width: 22%; vertical-align:top; overflow:hidden;}
@@ -63,4 +63,3 @@
 	echo '</div>';
 
 	include('Common/Templates/tail-min.php');
-?>

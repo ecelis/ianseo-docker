@@ -22,15 +22,31 @@
 */
 
 $JSON=array('error' => 1, 'msg' => 'Generic Error');
-
 require_once(dirname(dirname(__FILE__)) . '/config.php');
-require_once('Qualification/Fun_Qualification.local.inc.php');
-require_once('Common/Lib/Fun_Phases.inc.php');
-require_once('Common/OrisFunctions.php');
+if(isset($_REQUEST["ToCode"]) AND $ToId=getIdFromCode($_REQUEST["ToCode"])) {
+    CreateTourSession($ToId);
+    $Credentials=getModuleParameter('SendToIanseo', 'Credentials', (object)array('OnlineId' => 0, 'OnlineAuth' => ''));
+    if($Credentials and $Credentials->OnlineId>0) {
+        require_once('Common/Lib/CommonLib.php');
+        if($ErrorMessage=CheckCredentials($Credentials->OnlineId, $Credentials->OnlineAuth, 'Tournament/'.basename(__FILE__))) {
+            JsonOut($JSON);
+        }
+    } else {
+        JsonOut($JSON);
+    }
+
+    $_REQUEST['oris']=$_SESSION['ISORIS'];
+    $q=safe_r_SQL("SELECT * FROM `TourRecords` WHERE `TrTournament` = " . StrSafe_DB($_SESSION['TourId']));
+    $_REQUEST['showRecords'] = (safe_num_rows($q) > 0);
+}
 
 if(!CheckTourSession() or checkACL(AclInternetPublish, AclReadWrite, false)!=AclReadWrite or IsBlocked(BIT_BLOCK_PUBBLICATION)) {
     JsonOut($JSON);
 }
+
+require_once('Qualification/Fun_Qualification.local.inc.php');
+require_once('Common/Lib/Fun_Phases.inc.php');
+require_once('Common/OrisFunctions.php');
 
 $URL=$CFG->IanseoServer.'Upload-Competition.php';
 
@@ -231,6 +247,14 @@ if(empty($_REQUEST['btnDelOnline'])) {
         }
     }
 
+    // Robin, Team
+    if(!empty($_REQUEST['RobinTeam'])) {
+        $RET->IR=new StdClass();
+        foreach($_REQUEST['RobinTeam'] as $Event) {
+            $RET->IR->{$Event}=getRobin(['team'=>substr($Event,1,1), 'events'=>[substr($Event,2)], 'includeTeamRank' => $_SESSION['TourLocSubRule']=='SetFRD12023'],$ORIS);
+        }
+    }
+
     // Qualification, Team
     if(!empty($_REQUEST['QualificationTeam'])) {
         $RET->TQ=new StdClass();
@@ -270,11 +294,17 @@ if(empty($_REQUEST['btnDelOnline'])) {
     // Final Rank, Team
     if(!empty($_REQUEST['FinalTeam'])) {
         $RET->TF=new StdClass();
+        if($ORIS) {
+            $RET->TFC = new StdClass();
+        }
         foreach($_REQUEST['FinalTeam'] as $Event) {
 	        if($IsRunArchery) {
 		        $RET->TF->{$Event}=getRankingRunTeams([substr($Event,2)], '');
 	        } else {
 				$RET->TF->{$Event}=getRankingTeams(substr($Event,2),$ORIS);
+                if($ORIS) {
+                    $RET->TFC->{$Event} = getTeamsComponentsLog(substr($Event, 2));
+                }
 	        }
         }
     }
@@ -290,24 +320,31 @@ if(empty($_REQUEST['btnDelOnline'])) {
     }
 
     // Standing Record
+
     if(!empty($_REQUEST['RECSTD'])) {
-		$RET->RECSTD=getStandingRecords(true);
+        $q=safe_r_sql("SELECT count(*) as Involved FROM TourRecords WHERE TrTournament={$_SESSION['TourId']}");
+        if($r=safe_fetch($q) and $r->Involved) {
+            $RET->RECSTD = getStandingRecords(true);
+        }
     }
 
-    // Medallists
+    // Record Broken
     if(!empty($_REQUEST['RECBRK'])) {
-		$RET->RECBRK=getBrokenRecords(true);
+        $q=safe_r_sql("SELECT count(*) as Involved FROM RecBroken WHERE RecBroTournament={$_SESSION['TourId']}");
+        if($r=safe_fetch($q) and $r->Involved) {
+            $RET->RECBRK = getBrokenRecords(true);
+        }
     }
 } else {
 	// request to delete the selected items
     $RET->delete=array();
 
-    if(!empty($_REQUEST['ENS'])) $RET->delete[]='ENS'; // List by targets
-    if(!empty($_REQUEST['ENE'])) $RET->delete[]='ENE'; // List by targets
+    if(!empty($_REQUEST['ENS'])) $RET->delete[]='ENS'; // List by Targets
+    if(!empty($_REQUEST['ENE'])) $RET->delete[]='ENE'; // List by Events
     if(!empty($_REQUEST['ENC'])) $RET->delete[]='ENC'; // List by Countries
     if(!empty($_REQUEST['ENA'])) $RET->delete[]='ENA'; // List by Entries
-    if(!empty($_REQUEST['STC'])) $RET->delete[]='STC'; // List by Countries
-    if(!empty($_REQUEST['STE'])) $RET->delete[]='STE'; // List by Entries
+    if(!empty($_REQUEST['STC'])) $RET->delete[]='STC'; // Stats of Countries
+    if(!empty($_REQUEST['STE'])) $RET->delete[]='STE'; // Stats of Entries
     if(!empty($_REQUEST['IC'])) $RET->delete[]='IC'; // Ranking by Category, Individual (local rules apply)
     if(!empty($_REQUEST['TC'])) $RET->delete[]='TC'; // Ranking by Category, Teams (local rules apply)
     if(!empty($_REQUEST['QualificationInd'])) foreach($_REQUEST['QualificationInd'] as $Event) $RET->delete[]=''.$Event; // Qualification, Individual
@@ -317,7 +354,9 @@ if(empty($_REQUEST['btnDelOnline'])) {
 	if(!empty($_REQUEST['BracketsInd'])) foreach($_REQUEST['BracketsInd'] as $Event) $RET->delete[]=''.$Event; // Brackets, Individual
     if(!empty($_REQUEST['BracketsTeam'])) foreach($_REQUEST['BracketsTeam'] as $Event) $RET->delete[]=''.$Event; // Brackets, Team
     if(!empty($_REQUEST['FinalInd'])) foreach($_REQUEST['FinalInd'] as $Event) $RET->delete[]=''.$Event; // Final Rank, Individual
-    if(!empty($_REQUEST['FinalTeam'])) foreach($_REQUEST['FinalTeam'] as $Event) $RET->delete[]=''.$Event; // Brackets, Team
+    if(!empty($_REQUEST['FinalTeam'])) foreach($_REQUEST['FinalTeam'] as $Event) $RET->delete[]=''.$Event; // Final Rank, Team
+    if(!empty($_REQUEST['RobinInd'])) foreach($_REQUEST['RobinInd'] as $Event) $RET->delete[]=''.$Event; // Round Robin, Individual
+    if(!empty($_REQUEST['RobinTeam'])) foreach($_REQUEST['RobinTeam'] as $Event) $RET->delete[]=''.$Event; // Round Robin, Team
     if(!empty($_REQUEST['MEDSTD'])) $RET->delete[]='MEDSTD'; // Medal standing
     if(!empty($_REQUEST['MEDLST'])) $RET->delete[]='MEDLST'; // Medallists
 }

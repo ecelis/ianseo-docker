@@ -14,6 +14,7 @@ $lang['CreateRecords']='Dan nye rekorder';
 $lang['DeleteSingleRecord']='Bekræft at du ønsker at slette denne rekord';
 $lang['DialogDeleteText']='Bekræft at du ikke længere vil overvåge disse rekorder';
 $lang['DialogDeleteTitle']='Stop Rekord-overvågning';
+$lang['DialogUpdateAreasText']='You are about to update Record Areas and/or Class Equivalences with the current values as of today, eventually voiding current setting. This action cannot be undone!';
 $lang['DialogUpdateText']='Dette vil opdatere alle rekorder for denne region og muligvis overskrive/slette manuelle ændringer';
 $lang['DialogUpdateTitle']='Opdater/nulstil område rekorder';
 $lang['DownloadDate']='Download dato';

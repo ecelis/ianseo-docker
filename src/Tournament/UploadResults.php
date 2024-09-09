@@ -63,6 +63,7 @@ $outputIndAbs='';
 $outputTeamAbs='';
 $outputElim='';
 $outputRobin='';
+$outputRobinTeam='';
 $outputIndFin='';
 $outputTeamFin='';
 $outputIndBra='';
@@ -86,9 +87,9 @@ if(!$IsRunArchery) {
     FROM Events
     inner join Individuals i1 on i1.IndTournament=EvTournament and i1.IndEvent=EvCode
     inner join Qualifications on QuId=IndId
-    left join Individuals i2 on i2.IndTournament=EvTournament and i2.IndEvent=EvCode and i2.IndRankFinal=1
-    left join Individuals i3 on i3.IndTournament=EvTournament and i3.IndEvent=EvCode and i3.IndRankFinal=3
-    WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=0
+    left join Individuals i2 on i2.IndTournament=EvTournament and i2.IndEvent=EvCode and i2.IndRankFinal=EvWinnerFinalRank
+    left join Individuals i3 on i3.IndTournament=EvTournament and i3.IndEvent=EvCode and i3.IndRankFinal=(EvWinnerFinalRank+2)
+    WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=0 and EvCodeParentWinnerBranch=0
     group by EvCode
     ORDER BY EvProgr ";
 
@@ -154,12 +155,12 @@ if(!$IsRunArchery) {
 	}
 
 	// select the ACTUAL Team Events
-	$Sql = "SELECT max(t1.TeTimeStamp) as LastUpdate, max(t1.TeHits) as Arrows, min(t1.TeHits) as MinArrows, EvCode, EvEventName, EvFinalFirstPhase, EvMedals, ifnull(t2.TeCoId,t3.TeCoId) as HasMedal, (t2.TeCoId is NOT NULL) as HasGoldMedal, EvShootOff
+	$Sql = "SELECT max(t1.TeTimeStamp) as LastUpdate, EvElimType, EvTeamEvent, EvE1ShootOff, max(t1.TeHits) as Arrows, min(t1.TeHits) as MinArrows, EvCode, EvEventName, EvFinalFirstPhase, EvMedals, ifnull(t2.TeCoId,t3.TeCoId) as HasMedal, (t2.TeCoId is NOT NULL) as HasGoldMedal, EvShootOff
     FROM Events 
     inner join Teams t1 on t1.TeEvent=EvCode and t1.TeTournament=EvTournament
-    left join Teams t2 on t2.TeEvent=EvCode and t2.TeTournament=EvTournament and t2.TeRankFinal=1
-    left join Teams t3 on t3.TeEvent=EvCode and t3.TeTournament=EvTournament and t3.TeRankFinal=3
-    WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=1
+    left join Teams t2 on t2.TeEvent=EvCode and t2.TeTournament=EvTournament and t2.TeRankFinal=EvWinnerFinalRank
+    left join Teams t3 on t3.TeEvent=EvCode and t3.TeTournament=EvTournament and t3.TeRankFinal=(EvWinnerFinalRank+2)
+    WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=1 and EvCodeParentWinnerBranch=0
     group by EvCode 
     ORDER BY EvProgr";
 
@@ -177,6 +178,41 @@ if(!$IsRunArchery) {
 		$BraCode='TB' . $MyRowEv->EvCode;
 
 		$outputTeamAbs .='<div style="display:flex;margin-bottom:0.5em;align-items:center;"><div><input type="checkbox" name="QualificationTeam[]" value="' . $QualCode . '"></div><div>' . $MyRowEv->EvCode . '&nbsp;-&nbsp;' . $MyRowEv->EvEventName . '<br/>'.$MyRowEv->MinArrows.($MyRowEv->MinArrows== $MyRowEv->Arrows ? '' : '-'.$MyRowEv->Arrows).' / '.substr($MyRowEv->LastUpdate,0,-3).'</div></div>';
+
+		// Field/3D eliminations and Pools...
+		switch($MyRowEv->EvElimType) {
+			case 0:
+				// do nothing
+				break;
+			// case 3:
+			// case 4:
+			// 	// Pools
+			// 	if($MyRow->EvShootOff) {
+			// 		${'Elim'.$MyRow->EvElimType}=1;
+			// 		$ElimCode='IP' . $MyRow->EvCode.$MyRow->EvElimType;
+			// 		$outputElim .='<input type="checkbox" name="EliminationInd[]" value="'.$ElimCode.'">' . $MyRow->EvCode . '&nbsp;-&nbsp;' . $MyRow->EvEventName . '<br/>';
+			// 	}
+			// 	break;
+			case 5:
+				// RoundRobin
+				if($MyRowEv->EvE1ShootOff) {
+					$Robin=1;
+					$ElimCode='R' .$MyRowEv->EvTeamEvent. $MyRowEv->EvCode;
+					$outputRobinTeam .='<input type="checkbox" name="RobinTeam[]" value="'.$ElimCode.'">' . $MyRowEv->EvCode . '&nbsp;-&nbsp;' . $MyRowEv->EvEventName . '<br/>';
+				}
+				break;
+			// default:
+			// 	if ($MyRow->EvElim1>0 || $MyRow->EvElim2>0) {
+			// 		if(!$Elim1) {
+			// 			$Elim1=1;
+			// 		}
+			// 		if($MyRow->EvElim2) {
+			// 			$Elim2=1;
+			// 		}
+			// 		$ElimCode='IE' . $MyRow->EvCode;
+			// 		$outputElim .='<input type="checkbox" name="EliminationInd[]" value="'.$ElimCode.'">' . $MyRow->EvCode . '&nbsp;-&nbsp;' . $MyRow->EvEventName . '<br/>';
+			// 	}
+		}
 
 		// solo chi ha la fase > 0 va avanti
 		if(!$MyRowEv->EvFinalFirstPhase or in_array($MyRowEv->EvCode, $_SESSION['MenuFinT'])) {
@@ -208,14 +244,13 @@ $JS_SCRIPT=array(
         'StrDelete' => get_text('CmdDelete','Tournament'),
         'StrUrl' => get_text('URL','Tournament'),
         )),
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>',
     '<script type="text/javascript" src="./UploadResults.js"></script>',
     '<link type="text/css" rel="stylesheet" href="./UploadResults.css" />',
-    '<link type="text/css" rel="stylesheet" href="'.$CFG->ROOT_DIR.'Common/css/font-awesome.css" />',
     );
 
 $PAGE_TITLE=get_text('Send2Ianseo','Tournament');
+$IncludeFA = true;
+$IncludeJquery = true;
 
 include('Common/Templates/head.php');
 
@@ -396,21 +431,31 @@ if($IsRunArchery) {
 		$st='off';
 		$ic='right';
 	}
-	echo '<tr class="tit_Robin'.($outputRobin ? '' : ' hidden').'"><th colspan="4" class="AccordionToggle" ref="ROBIN" status="'.$st.'" onclick="toggleAccordion(this)"><i class="fa fa-lg fa-caret-'.$ic.' mr-2"></i>'.get_text('R-Session', 'Tournament').'</th></tr>';
+	echo '<tr class="tit_Robin'.(($outputRobin or $outputRobinTeam) ? '' : ' hidden').'"><th colspan="4" class="AccordionToggle" ref="ROBIN" status="'.$st.'" onclick="toggleAccordion(this)"><i class="fa fa-lg fa-caret-'.$ic.' mr-2"></i>'.get_text('R-Session', 'Tournament').'</th></tr>';
 	echo '<tbody id="Tbody-ROBIN" class="'.$cl.'">';
 	// if($Robin) {
 	//     $ElimCode='RL';
 	// 	$outputRobin='<input type="checkbox" name="RobinStartlist[]" value="'.$ElimCode.'"  class="removeAfterUpload">' . get_text('StartlistSession', 'Tournament') . ' '.get_text('R-Session','Tournament'). '<br/>' . $outputRobin;
 	// }
-	echo '<tr class="tit_Elim'.($outputRobin ? '' : ' hidden').'">';
+	echo '<tr class="tit_Robin'.(($outputRobin or $outputRobinTeam) ? '' : ' hidden').'">';
 	echo '<td class="Bold Left Deletable">';
-	echo '<input type="checkbox" id="allResultRobin" onclick="setAllCheck(\'RobinInd[]\',this.id);">&nbsp;';
-	echo get_text('R-Session','Tournament');
+	if($outputRobin) {
+		echo '<input type="checkbox" id="allResultRobin" onclick="setAllCheck(\'RobinInd[]\',this.id);">&nbsp;';
+		echo get_text('R-Session','Tournament');
+	}
 	echo '</td>';
 	echo '<td class="Left Deletable InBook">';
-	echo $outputRobin ? $outputRobin : '&nbsp;';
+	echo $outputRobin ?: '&nbsp;';
 	echo '</td>';
-	echo '<td colspan="2" class="Left">&nbsp;</td>';
+	echo '<td class="Bold Left Deletable">';
+	if($outputRobinTeam) {
+		echo '<input type="checkbox" id="allResultRobin" onclick="setAllCheck(\'RobinTeam[]\',this.id);">&nbsp;';
+		echo get_text('R-Session','Tournament');
+	}
+	echo '</td>';
+	echo '<td class="Left Deletable InBook">';
+	echo $outputRobinTeam ?: '&nbsp;';
+	echo '</td>';
 	echo '</tr>';
 
 	echo '</tbody>';
@@ -488,10 +533,10 @@ if($IsRunArchery) {
     <td colspan="2" class="Bold Center Deletable"><div class="tit_Book'.($ShowFinalBook ? '' : ' hidden').'"><input type="checkbox" name="BOOK" class="removeAfterUpload" onclick="SelectBook(this)">'.get_text('CompleteResultBook').'</div></td>
     <td class="Bold Center Deletable InBook"><div class="tit_Med'.($ShowMedals ? '' : ' hidden').'"><input type="checkbox" name="MEDLST">'.get_text('MedalList').'</div></td>
     </tr>';
-	echo '<tr class="OrisShow tit_MedBook">
-    <td class="Bold Center Deletable InBook"><div class="tit_Med"><input type="checkbox" name="RECSTD" class="removeAfterUpload">'.get_text('StatRecordsStanding','Tournament').'</div></td>
-    <td colspan="2" class="Bold Center Deletable InBook"><div class="tit_Book"><input type="checkbox" name="STF" class="removeAfterUpload">'.get_text('StaffOnField','Tournament').'</div></td>
-    <td class="Bold Center Deletable InBook"><div class="tit_Med"><input type="checkbox" name="RECBRK" class="removeAfterUpload">'.get_text('StatRecordsBroken','Tournament').'</div></td>
+	echo '<tr class="OrisShow tit_RecBook">
+    <td class="Bold Center Deletable InBook"><div class="tit_Rec"><input type="checkbox" name="RECSTD" class="removeAfterUpload">'.get_text('StatRecordsStanding','Tournament').'</div></td>
+    <td colspan="2" class="Bold Center Deletable InBook"><div class="tit_Staff"><input type="checkbox" name="STF" class="removeAfterUpload">'.get_text('StaffOnField','Tournament').'</div></td>
+    <td class="Bold Center Deletable InBook"><div class="tit_Rec"><input type="checkbox" name="RECBRK" class="removeAfterUpload">'.get_text('StatRecordsBroken','Tournament').'</div></td>
     </tr>';
 }
 

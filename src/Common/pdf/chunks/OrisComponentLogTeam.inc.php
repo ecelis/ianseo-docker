@@ -1,6 +1,7 @@
 <?php
 
-$pdf->setDocUpdate($PdfData->rankData['meta']['lastUpdate']);
+$pdf->setDocUpdate($PdfData->LastUpdate);
+$pdf->setPhase($PdfData->Description);
 
 $First=true;
 foreach($PdfData->rankData['sections'] as $Event => $section) {
@@ -44,12 +45,12 @@ foreach($PdfData->rankData['sections'] as $Event => $section) {
         }
 
 		if(count($item['previousAthletes'])) {
-			$dataRow[] = $item['previousAthletes'][0]['athlete'] . ($section['meta']['mixedTeam'] ? ' ('.get_text(($item['previousAthletes'][0]['gender']?'ShortFemale':'ShortMale'), 'Tournament').')' : '');
+			$dataRow[] = $item['previousAthletes'][0]['athlete'] . ($section['meta']['mixedTeam'] ? ' ('.($item['previousAthletes'][0]['gender'] ? $PdfData->GenderShortF : $PdfData->GenderShortM).')' : '');
 		} else {
 			$dataRow[]='';
 		}
         if(count($item['nextAthletes'])) {
-            $dataRow[] = $item['nextAthletes'][0]['athlete'] . ($section['meta']['mixedTeam'] ? ' ('.get_text(($item['nextAthletes'][0]['gender']?'ShortFemale':'ShortMale'), 'Tournament').')' : '');
+            $dataRow[] = $item['nextAthletes'][0]['athlete'] . ($section['meta']['mixedTeam'] ? ' ('.($item['nextAthletes'][0]['gender'] ? $PdfData->GenderShortF : $PdfData->GenderShortM).')' : '');
         } else {
             $dataRow[]='';
         }
@@ -62,12 +63,12 @@ foreach($PdfData->rankData['sections'] as $Event => $section) {
 			for($k=1; $k < $NumComponenti; $k++) {
                 $dataRow=array('','');
                 if($k<count($item['previousAthletes'])) {
-                    $dataRow[] = $item['previousAthletes'][$k]['athlete'] . ($section['meta']['mixedTeam'] ? ' ('.get_text(($item['previousAthletes'][$k]['gender']?'ShortFemale':'ShortMale'), 'Tournament').')' : '');
+                    $dataRow[] = $item['previousAthletes'][$k]['athlete'] . ($section['meta']['mixedTeam'] ? ' ('.($item['previousAthletes'][$k]['gender'] ? $PdfData->GenderShortF : $PdfData->GenderShortM).')' : '');
                 } else {
                     $dataRow[]='';
                 }
                 if($k<count($item['nextAthletes'])) {
-                    $dataRow[] = $item['nextAthletes'][$k]['athlete'] . ($section['meta']['mixedTeam'] ? ' ('.get_text(($item['nextAthletes'][$k]['gender']?'ShortFemale':'ShortMale'), 'Tournament').')' : '');
+                    $dataRow[] = $item['nextAthletes'][$k]['athlete'] . ($section['meta']['mixedTeam'] ? ' ('.($item['nextAthletes'][$k]['gender'] ? $PdfData->GenderShortF : $PdfData->GenderShortM).')' : '');
                 } else {
                     $dataRow[]='';
                 }

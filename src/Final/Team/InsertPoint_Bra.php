@@ -32,14 +32,14 @@ while($r=safe_fetch($q)) {
 }
 $PAGE_TITLE=get_text('MenuLM_Data insert (Bracket view)');
 
+$IncludeJquery = true;
 $JS_SCRIPT=array(
 	phpVars2js(array('CmdEnable' => get_text('CmdEnable'), 'CmdDisable'=>get_text('CmdDisable'), 'ROOT_DIR' => $CFG->ROOT_DIR)),
     '<script type="text/javascript" src="../../Common/ajax/ObjXMLHttpRequest.js"></script>',
     '<script type="text/javascript" src="../../Common/js/Fun_JS.inc.js"></script>',
-    '<script type="text/javascript" src="../../Common/js/jquery-3.2.1.min.js"></script>',
     '<script type="text/javascript" src="Fun_JS.js"></script>',
     '<script type="text/javascript" src="Fun_AJAX_InsertPoint_Bra.js"></script>',
-    );
+);
 
 include('Common/Templates/head.php');
 

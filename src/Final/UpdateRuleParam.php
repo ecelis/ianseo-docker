@@ -35,6 +35,10 @@ $q=safe_r_sql("select * from Events $Where");
 $r=safe_fetch($q);
 
 switch($_REQUEST['fld']) {
+	case 'teamode':
+		$SQL="update Events set EvTeamCreationMode=" . intval($_REQUEST['val']) . $Where;
+		$RedoBrackets=true;
+		break;
 	case 'persons':
 		$SQL="update Events set EvMaxTeamPerson=" . intval($_REQUEST['val']) . $Where;
 		$RedoBrackets=true;
@@ -65,7 +69,7 @@ switch($_REQUEST['fld']) {
 	case 'golds':
 		$SQL="update Events set EvGolds=" . StrSafe_DB($_REQUEST['val']) . $Where;
 		break;
-	case 'xnine':
+	case 'xnines':
 		$SQL="update Events set EvXNine=" . StrSafe_DB($_REQUEST['val']) . $Where;
 		break;
 	case 'goldschars':
@@ -73,6 +77,15 @@ switch($_REQUEST['fld']) {
 		break;
 	case 'xninechars':
 		$SQL="update Events set EvXNineChars=" . StrSafe_DB(getLettersFromPrintList(strtoupper($_REQUEST['val']), $r->EvFinalTargetType)) . $Where;
+		break;
+	case 'checkGolds':
+		$SQL="update Events set EvCheckGolds=" . intval($_REQUEST['val']) . $Where;
+		break;
+	case 'checkXnines':
+		$SQL="update Events set EvCheckXNines=" . intval($_REQUEST['val']) . $Where;
+		break;
+	case 'parentWinner':
+		$SQL="update Events set EvCodeParentWinnerBranch=" . intval($_REQUEST['val']) . $Where;
 		break;
 	case 'parent':
 		// check the parent code really exists

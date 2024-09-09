@@ -94,8 +94,6 @@ $lang['RaspControl']='覆盆子控制';
 $lang['RaspDevice']='装置';
 $lang['RasUrl']='服务网址';
 $lang['StickyAlreadySet']='不同局的粘连组已完成设置！';
-$lang['TVCss3Divider']='分配器';
-$lang['TVCss3Loser']='输者修正';
 $lang['WAToolbox-MissingParams']='缺失参数';
 $lang['WAToolbox-NoCompCode']='缺失比赛代码';
 ?>

@@ -1,4 +1,5 @@
 <?php
+$lang['Anomalies']='不具合';
 $lang['ErrCodeExists']='大会コードが重複しています！';
 $lang['ErrConnection']='サーバー $a に接続出来ません！';
 $lang['ErrEmptyFields']='空欄にしないで下さい！';

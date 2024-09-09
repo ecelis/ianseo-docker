@@ -181,7 +181,14 @@ function getStartListQuery($ORIS=false, $Event='', $Elim=false, $Filled=false, $
 					inner join Tournament on ToId=FinTournament
 					left join FinSchedule on FinMatchNo=FSMatchNo and FinEvent=FSEvent and FinTournament=FSTournament and FSTeamEvent=0
 					left JOIN Entries ON FinAthlete=EnId
-					left JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament
+					left JOIN Countries on CoId=
+                        case EvTeamCreationMode 
+                            when 0 then EnCountry
+                            when 1 then EnCountry2
+                            when 2 then EnCountry3
+                            else EnCountry
+                        end
+                        AND EnTournament=CoTournament
 					LEFT JOIN Rankings on EnTournament=RankTournament and RankEvent=FinEvent and RankTeam=0 and EnCode=RankCode and ToIocCode='FITA' and EnIocCode in ('', 'FITA') and RankIocCode='FITA'
 					LEFT JOIN DocumentVersions on EnTournament=DvTournament AND DvFile = 'ELIM'
 					WHERE
@@ -239,7 +246,14 @@ function getStartListQuery($ORIS=false, $Event='', $Elim=false, $Filled=false, $
 					inner join Tournament on ToId=FinTournament
 					left join FinSchedule on FinMatchNo=FSMatchNo and FinEvent=FSEvent and FinTournament=FSTournament and FSTeamEvent=0
 					left JOIN Entries ON FinAthlete=EnId
-					left JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament
+					left JOIN Countries ON CoId=
+                        case EvTeamCreationMode 
+                            when 0 then EnCountry
+                            when 1 then EnCountry2
+                            when 2 then EnCountry3
+                            else EnCountry
+                        end
+                        AND EnTournament=CoTournament
 					LEFT JOIN Rankings on EnTournament=RankTournament and RankEvent=FinEvent and RankTeam=0 and EnCode=RankCode and ToIocCode='FITA' and EnIocCode in ('', 'FITA') and RankIocCode='FITA'
 					LEFT JOIN DocumentVersions on EnTournament=DvTournament AND DvFile = 'ELIM'
 					WHERE
@@ -421,7 +435,7 @@ function getStartListQuery($ORIS=false, $Event='', $Elim=false, $Filled=false, $
 			$MyQuery.= " AND EventName!='' ";
 			$MyQuery.= " ORDER BY EvProgr, EventName,".($bisTargets ? "((AtTarget-1) % ".$bisModule."), ":"")." AtTargetNo, Athlete ";
 		} else {
-			$MyQuery.= " ORDER BY ".($bisTargets ? "((AtTarget-1) % ".$bisModule."), ":"")." AtTargetNo, NationCode, Athlete, Nation ";
+			$MyQuery.= " ORDER BY SesOrder, ".($bisTargets ? "((AtTarget-1) % ".$bisModule."), ":"")." AtTargetNo, NationCode, Athlete, Nation ";
 		}
 	}
 	return $MyQuery;
@@ -909,12 +923,13 @@ function getStartListCountryQuery($ORIS=false, $Athletes=false, $orderByName=fal
 }
 
 function getStandingRecordsQuery($ORIS=true) {
-	$MyQuery="select distinct EvEventName EventName, EvProgr, EvTeamEvent, EvRecCategory, TrHeaderCode, TrHeader, RecTournament.*
+	$MyQuery="select distinct RtRecCategoryName EventName, MIN(EvProgr) as EvProgr, EvTeamEvent, EvRecCategory, TrHeaderCode, TrHeader, RecTournament.*
 		from Events
 		inner join RecTournament on EvTournament=RtTournament and EvTeamEvent=RtRecTeam
 		inner join TourRecords on TrTournament=EvTournament and TrRecCode=RtRecCode and TrRecTeam=EvTeamEvent and TrRecPara=RtRecPara
 		inner join RecAreas on ReArCode=RtRecCode
 		where EvTournament={$_SESSION['TourId']} and EvMedals=1 and RtRecCategory=if(ReArWaMaintenance=1, EvRecCategory, EvCode) and RtRecTotal>0
+		GROUP BY EvRecCategory, EvTeamEvent, RtRecCode, ReArBitLevel, RtRecPhase, RtRecDistance
 		order by EvTeamEvent, EvProgr, RtRecCode desc, ReArBitLevel desc, RtRecPhase=0, RtRecPhase, RtRecDistance desc";
 	return $MyQuery;
 }
@@ -1183,8 +1198,18 @@ function getStartListCategoryQuery($ORIS=false, $orderByTeam=0, $Events=array())
 			concat(upper(EnFirstName $Collation), ' ', EnName $Collation) AS Athlete, 
 			QuSession AS Session, 
 			SUBSTRING(QuTargetNo,2) AS TargetNo, 
-			upper(c.CoCode) AS NationCode, 
-			upper(c.CoName) AS Nation, 
+			case EvTeamCreationMode
+				when 0 then upper(c.CoCode) 
+				when 1 then upper(c2.CoCode) 
+				when 2 then upper(c3.CoCode) 
+				else upper(c.CoCode) 
+			end as NationCode,
+			case EvTeamCreationMode
+				when 0 then upper(c.CoName) 
+				when 1 then upper(c2.CoName) 
+				when 2 then upper(c3.CoName) 
+				else upper(c.CoName) 
+			end as Nation,
 			upper(c2.CoCode) AS NationCode2, 
 			upper(c2.CoName) AS Nation2, 
 			upper(c3.CoCode) AS NationCode3, 

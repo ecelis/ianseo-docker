@@ -43,7 +43,7 @@ switch($_REQUEST['act']) {
         $JSON['start']=date('Y-m-d m:i:s');
         $JSON['status']='';
         $JSON['finished']=0;
-        file_put_contents($file, json_encode($JSON));
+	    writeStatusFile($file, $JSON);
         JsonOut($JSON);
         break;
     case 'getInfo':
@@ -64,3 +64,8 @@ switch($_REQUEST['act']) {
 }
 
 JsonOut($JSON);
+
+function writeStatusFile($file, $data) {
+	file_put_contents($file.'.tmp', json_encode($data));
+	rename($file.'.tmp', $file);
+}

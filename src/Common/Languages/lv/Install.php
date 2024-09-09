@@ -154,7 +154,6 @@ $lang['SpecialUpdate']='Jums ir "testa" Instalācija. <br/>Tikai izvēlēti liet
 $lang['Start Ianseo']='Doties uz IANSEO!';
 $lang['Status']='Statuss';
 $lang['stdValue']='Vērtība';
-$lang['Suboptimal']='Kaut arī jūsu php.ini failam nav uzstādītas optimālas vērtības <br/>IANSEO darbībai lielākoties vajadzētu būt korektai.<br/> Mēs jums stingri iesakām parametriem uzstādīt optimālās vērtības.';
 $lang['System value']='Sistēmas vērtība';
 $lang['UpdatePrepared']='Jūsu instalācija tūliņ tiks automātiski atjaunota. Pirms sākat, lūdzu atcerieties izveidot "back up" visām sacensībām. Atjaunošanas process var aizņemt daudz laika, kas atkarīgs no pieslēguma un elementiem kas jāatjauno. <br/>Lūdzu atcerieties, ka visi faili kas nav pamatfaili tiks izdzēsti, izņemot mapes «Modules/Custom» saturu.';
 $lang['Updating']='Atjaunināt IANSEO lokālo instalāciju';

@@ -21,8 +21,8 @@ if($PreMatchno>=0) {
 }
 
 $PAGE_TITLE=get_text($TeamEvent ? 'TeamFinal':'IndFinal');
+$IncludeJquery = true;
 $JS_SCRIPT = array(
-    '<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
     '<script src="'.$CFG->ROOT_DIR.'Common/js/keypress-2.1.5.min.js"></script>',
     '<script src="'.$CFG->ROOT_DIR.'Final/Spotting.js"></script>',
     '<link href="'.$CFG->ROOT_DIR.'Final/Spotting.css" rel="stylesheet" type="text/css">',
@@ -96,7 +96,7 @@ if(!empty($GoBack)) {
 		<div><input type="checkbox" id="ActivateKeys" onclick="toggleKeypress()" />'.get_text('KeyPress', 'Tournament').'</div>
 		<div><input type="checkbox" id="MoveNext" checked="checked" />'.get_text('AutoMoveNext', 'Tournament').'</div>
 		<div><input type="button" id="liveButton" value="" onclick="setLive()"/></div>
-		<div id="buttonMove2Next"><input type="button" id="moveWinner" onclick="moveToNextPhase(this)" value="'.get_text('MoveWinner2NextPhase','Tournament').'"></div>
+		<div id="buttonMove2Next"></div>
 		</div>';
     echo ''.
 		'';

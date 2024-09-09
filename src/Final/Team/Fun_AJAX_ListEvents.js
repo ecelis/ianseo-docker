@@ -70,11 +70,15 @@ function UpdatePhase(Event, OldValue, Msg) {
 	per creare un nuovo evento
 	ErrMsg è il messaggio di errore nel caso non si possa proseguire
 */
-function AddEvent(ErrMsg) {
+function AddEvent() {
     if ($('#New_EvCode').val()!='' &&
         $('#New_EvEventName').val()!='' &&
         $('#New_EvProgr').val()!='') {
 
+        if($('#New_EvCode').val().search(/[^0-9a-z_.-]/i)!=-1) {
+            doAlert(InvalidCode);
+            return;
+        }
         var New_EvCode = encodeURIComponent($('#New_EvCode').val());
         var New_EvEventName = encodeURIComponent($('#New_EvEventName').val());
         var New_EvIsPara = ($('#New_EvIsPara:checked').length==1 ? 1 : 0);
@@ -103,6 +107,6 @@ function AddEvent(ErrMsg) {
             location = 'SetEventRules.php?EvCode='+data.new_evcode;
         });
     } else {
-        alert(ErrMsg.replace(/\+/g," "));
+        alert(ErrorRowComplete.replace(/\+/g," "));
     }
 }

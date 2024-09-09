@@ -3,20 +3,23 @@ require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
 require_once("Common/pdf/IanseoPdf.php");
 require_once('Common/Lib/Fun_DateTime.inc.php');
 require_once('Common/Lib/ArrTargets.inc.php');
+require_once('Common/Lib/CommonLib.php');
 require_once('Common/Fun_Sessions.inc.php');
 
 class ScorePDF extends IanseoPdf {
 	var $PrintLogo, $PrintHeader, $PrintDrawing, $PrintFlags, $PrintBarcode, $FillWithArrows=false, $PrintLineNo = true;
+    var $IsRedding=false;
 
 	/**
 	 * If set to true adds a row with EnCode, Date of Birth and Email.
 	 * @var bool [default: false]
 	 */
 	var $GetArcInfo=false;
-	var $PrintTotalCols;
-	var $Indices=array('bis','ter','quat', 'quin', 'sex', 'sept', 'oct');
+	var $PrintTotalCols, $LastUpdate;
 	var $BottomImage=true;
     var $NoTensOnlyX = false;
+    var $ScoreQrPersonal = false;
+    var $QRCode = [];
 
 	//Constructor
 	function __construct($Portrait=true) {
@@ -100,15 +103,21 @@ class ScorePDF extends IanseoPdf {
 		// $ArrowEnds will contain the ends per arrows of each event and distance
 		$Event=(empty($Data["Cat"]) || !trim($Data["Cat"]) ? '--' : $Data["Cat"]);
 		$Session=(empty($Data["Session"]) ? '1' : $Data["Session"]);
-		$CurDist=(empty($Distance) ? 1 : $Distance);
+		$CurDist=(empty($Distance) ? 0 : $Distance);
 		$FirstDist=($Distance==1);
 
 		if(empty($ArrowEnds[$Event][$CurDist])) {
-            if(empty($Data["NumEnds".$CurDist]) OR empty($Data["NumArrows".$CurDist])) {
-                $ArrowEnds[$Event] = getArrowEnds($Session);
-            } else {
-                $ArrowEnds[$Event][$CurDist] = array('ends' => $Data["NumEnds".$CurDist], 'arrows' => $Data["NumArrows".$CurDist]);
-            }
+			if(empty($Data['isField']) or empty($Data["ScoringEnds{$CurDist}"])) {
+				if(empty($Data["NumEnds".$CurDist]) OR empty($Data["NumArrows".$CurDist])) {
+					$ArrowEnds[$Event] = getArrowEnds($Session);
+				} else {
+					$ArrowEnds[$Event][$CurDist] = array('ends' => $Data["NumEnds".$CurDist], 'totEnds' => $Data["NumEnds".$CurDist], 'arrows' => $Data["NumArrows".$CurDist], 'offset'=>0);
+				}
+			} else {
+				$ArrowEnds[$Event][$CurDist] = array('ends' => $Data["ScoringEnds{$CurDist}"], 'totEnds' => $Data["NumEnds".$CurDist], 'arrows' => $Data["NumArrows".$CurDist], 'offset'=>$Data["ScoringOffset".$CurDist]);
+			}
+			$ArrowEnds[$Event][$CurDist]['offset']=($ArrowEnds[$Event][$CurDist]['offset']??0);
+			$ArrowEnds[$Event][$CurDist]['totEnds']=($ArrowEnds[$Event][$CurDist]['totEnds']??$Data["NumEnds".$CurDist]);
 		}
 
 		$prnGolds = (empty($Data["Golds"]) ? $this->prnGolds : $Data["Golds"] );
@@ -134,7 +143,7 @@ class ScorePDF extends IanseoPdf {
 		if($NumArrow==1 AND ($NumEnd%3)==0) {
 			$NumArrow=3;
 			$NumEnd=$NumEnd/3;
-		} else if($NumArrow==1 AND ($NumEnd%5)==0) {
+		} else if($NumArrow==1 AND ($NumEnd%5)==0 AND isset($_SESSION["TourType"]) AND $_SESSION["TourType"]!=49) {
 			$NumArrow=5;
 			$NumEnd=$NumEnd/5;
 		}
@@ -249,10 +258,20 @@ class ScorePDF extends IanseoPdf {
 		}
 
 		//PAGLIONE
+		$Target='';
+		if(!empty($Data["tNo"])) {
+            if(!empty($Data['is3dNFAA'])) {
+                $Target=ReddingGrouping($Data['tNo'],$ArrowEnds[$Event][$CurDist]['totEnds']);
+            } else if(!empty($Data['isField'])) {
+				$Target=CheckBisTargets($Data['tNo'],$ArrowEnds[$Event][$CurDist]['totEnds']);
+			} else {
+				$Target=ltrim($Data["tNo"],'0');
+			}
+		}
 		$this->SetXY($TopX+$Width-(1.4*$CellW), $TopY+($TopOffset*13/24));
 		$this->SetFont($this->FontStd,'B',20);
 		$this->SetColors(true);
-		$this->Cell((1.4*$CellW),$TopOffset*7/24,(!empty($Data["tNo"]) ? ltrim($Data["tNo"],'0') : ' '),0,0,'R',1);
+		$this->Cell((1.4*$CellW),$TopOffset*7/24, $Target,0,0,'R',1);
 		$this->SetXY($TopX+$Width-(1.4*$CellW), $TopY+($TopOffset*10/12));
 		$this->SetFont($this->FontStd,'B',10);
 		$this->SetColors(true);
@@ -279,7 +298,7 @@ class ScorePDF extends IanseoPdf {
 				// prints previous distances
 				for($i=1; $i<$Distance; $i++) {
 					$this->SetXY($TopX + $ArCellW*$NumArrow, $TopY+$TopOffset);
-					$this->Cell($TotalCellW + $EndNumCellW, $CellH, get_text('FlightsDistTotal', 'Tournament', $Data['D'.$i]),0,0,'R',0);
+					$this->Cell($TotalCellW + $EndNumCellW, $CellH, get_text('FlightsDistTotal', 'Tournament', $Data['D'.$i]??''),0,0,'R',0);
 					$this->Cell($TotalCellW, $CellH,($Data['QuD'.$i] ?? ''),1,0,'C',0);
 					$this->Cell($XNineW, $CellH,($Data['QuXD'.$i] ?? ''),1,1,'C',0);
 					$TopOffset+=$CellH;
@@ -296,17 +315,19 @@ class ScorePDF extends IanseoPdf {
 	   	$this->SetFont($this->FontStd,'B',$StdFont);
 		$this->SetColors(false);
 		for($j=1; $j<=$NumArrow; $j++) {
-			$this->Cell($ArCellW, $CellH, $j, 1, 0, 'C', 1);
+			$this->Cell($ArCellW  + ($NumArrow==1 ? $TotalCellW:0), $CellH, $j, 1, 0, 'C', 1);
 		}
 		$this->SetFont($this->FontStd,'B',$StdFontSmall-($CellH*0.5 < 3? 2.5:0));
 		$this->SetColors(true);
-		$this->Cell(($TotalCellW*($NumArrow>5 ? 1.5 : 2))+($this->PrintTotalCols ? $CellW*1.1 : 0)+($XNineW*(($this->NoTensOnlyX or $prnGolds==$prnXNine) ? 1 : 2)), $CellH*0.5, (isset($Data['SesName']) ? ($Data['SesName']!=='' ? $Data['SesName'] : get_text('Session') . ': ' . $Data["Session"]) : '' ),1,1,'R',1);
+		$this->Cell(($TotalCellW*($NumArrow>5 ? 1.5 : 2))+($this->PrintTotalCols ? $CellW*1.1 : 0)+($XNineW*(($this->NoTensOnlyX or $prnGolds==$prnXNine) ? 1 : 2)) - ($NumArrow==1 ? $TotalCellW:0), $CellH*0.5, (isset($Data['SesName']) ? ($Data['SesName']!=='' ? $Data['SesName'] : get_text('Session') . ': ' . $Data["Session"]) : '' ),1,1,'R',1);
 		$this->SetColors(false);
-		$this->SetXY($TopX+$EndNumCellW+($ArCellW*$NumArrow), $TopY+$TopOffset+$CellH * 0.5);
+		$this->SetXY($TopX+$EndNumCellW+($ArCellW*$NumArrow) + ($NumArrow==1 ? $TotalCellW:0), $TopY+$TopOffset+$CellH * 0.5);
 	   	$this->SetFont($this->FontStd,'B', $StdFontSmall-($CellH*0.5 < 3? 2.5:0));
-		$this->Cell($TotalCellW*($NumArrow>5 ? 3/4 : 1), $CellH*0.5, (get_text('TotalProg','Tournament')),1,0,'C',1);
-		$this->Cell($TotalCellW*($NumArrow>5 ? 5/4 : 1), $CellH*0.5, (get_text('TotalShort','Tournament')),1,0,'C',1);
-		if($this->PrintTotalCols) {
+        if($NumArrow>1) {
+            $this->Cell($TotalCellW * ($NumArrow > 5 ? 3 / 4 : 1), $CellH * 0.5, (get_text('TotalProg', 'Tournament')), 1, 0, 'C', 1);
+        }
+        $this->Cell($TotalCellW * ($NumArrow > 5 ? 5 / 4 : 1), $CellH * 0.5, (get_text('TotalShort', 'Tournament')), 1, 0, 'C', 1);
+        if($this->PrintTotalCols) {
 			$this->SetFillColor(0xFF,0xE8,0xE8);
 			$this->Cell($CellW*1.1,$CellH*0.5, (get_text('Total')),1,0,'C',1);
 			$this->SetFillColor(0xE8,0xE8,0xE8);
@@ -318,12 +339,13 @@ class ScorePDF extends IanseoPdf {
 
 // 		DISTANZA => $Data["CurDist"];
 		//RIGHE DELLO SCORE
+        $StopFillingtotals=false;
 		$ScoreMultiLineTotal = 0;
 		$ScoreTotal = 0;
 		$ScoreGold = 0;
 		$ScoreXnine = 0;
 		$StartCell=true;
-		$End=1;
+		$End=(empty($Data['isField']) ? 1 : ((intval($Target)-1+($ArrowEnds[$Event][$CurDist]['offset']))%$ArrowEnds[$Event][$CurDist]['totEnds']) + 1);
 		$HeighEndCell=$CellH*($NumEnd/$ArrowEnds[$Event][$CurDist]['ends']);
 		for($i=1; $i<=$NumEnd; $i++) {
 		   	$this->SetFont($this->FontStd,'B',$StdFont);
@@ -336,19 +358,22 @@ class ScorePDF extends IanseoPdf {
 			$this->SetFont($this->FontStd,'',$StdFontMedium);
 			if(!empty($Data['Arr'.$Distance])) {
 				for($j=0; $j<$NumArrow; $j++) {
-					$this->Cell($ArCellW,$CellH,DecodeFromLetter(substr($Data['Arr'.$Distance],($i-1)*$NumArrow+$j,1)), 1, 0, 'C', 0);
+					$this->Cell($ArCellW+ ($NumArrow==1 ? $TotalCellW:0),$CellH,DecodeFromLetter(substr($Data['Arr'.$Distance],($i-1)*$NumArrow+$j,1)), 1, 0, 'C', 0);
 				}
 			} else {
 				for($j=0; $j<$NumArrow; $j++) {
-					$this->Cell($ArCellW,$CellH,'', 1, 0, 'C', 0);
+					$this->Cell($ArCellW+ ($NumArrow==1 ? $TotalCellW:0),$CellH,'', 1, 0, 'C', 0);
 				}
 			}
+            $StopFillingtotals = (trim(substr(($Data['Arr'.$Distance]??''),($i-1)*$NumArrow,$NumArrow))=='');
 			list($ScoreEndTotal,$ScoreEndGold, $ScoreEndXnine) = ValutaArrowStringGX(substr(($Data['Arr'.$Distance]??''),($i-1)*$NumArrow,$NumArrow),$Data['GoldsChars'], $Data['XNineChars']);
 			$ScoreMultiLineTotal += $ScoreEndTotal;
 			$ScoreTotal += $ScoreEndTotal;
 			$ScoreGold += $ScoreEndGold;
 			$ScoreXnine += $ScoreEndXnine;
-			$this->Cell($TotalCellW*($ArrowEnds[$Event][$CurDist]['arrows']>5 ? 3/4 : 1), $CellH,(empty($Data['Arr'.$Distance]) ? '' : $ScoreEndTotal),1,0,'C',0);
+            if($NumArrow>1) {
+                $this->Cell($TotalCellW * ($ArrowEnds[$Event][$CurDist]['arrows'] > 5 ? 3 / 4 : 1), $CellH, (($StopFillingtotals OR empty($Data['Arr' . $Distance])) ? '' : $ScoreEndTotal), 1, 0, 'C', 0);
+            }
 			$this->SetFont($this->FontStd,'',$StdFont);
 			if(($NumArrow*$i)%$ArrowEnds[$Event][$CurDist]['arrows']) {
 				$this->Cell($TotalCellW*($ArrowEnds[$Event][$CurDist]['arrows']>5 ? 5/4 : 1), $CellH,'',1,0,'C',0);
@@ -357,8 +382,8 @@ class ScorePDF extends IanseoPdf {
 				$StartCell=false;
 			} else {
 				if($ArrowEnds[$Event][$CurDist]['arrows']>5) {
-					$this->Cell($TotalCellW*2/4, $CellH,(empty($Data['Arr'.$Distance]) ? '' : $ScoreMultiLineTotal),1,0,'C',0);
-					$this->Cell($TotalCellW*3/4, $CellH,(empty($Data['Arr'.$Distance]) ? '' : $ScoreTotal),1,0,'C',0);
+					$this->Cell($TotalCellW*2/4, $CellH,(($StopFillingtotals OR empty($Data['Arr'.$Distance])) ? '' : $ScoreMultiLineTotal),1,0,'C',0);
+					$this->Cell($TotalCellW*3/4, $CellH,(($StopFillingtotals OR empty($Data['Arr'.$Distance])) ? '' : $ScoreTotal),1,0,'C',0);
 					$ScoreMultiLineTotal = 0;
 				} else {
 					$this->Cell($TotalCellW, $CellH,(empty($Data['Arr'.$Distance]) ? '' : $ScoreTotal),1,0,'C',0);
@@ -374,7 +399,7 @@ class ScorePDF extends IanseoPdf {
 					$this->Line($x1=$this->getX(), $y1=$this->getY(), $x1-(1.1*$CellW), $y1+$CellH);
 					$this->Line($x1-(1.1*$CellW), $y1, $x1, $y1+$CellH);
 				} else {
-					$this->Cell(1.1*$CellW,$CellH,($Data['Arr'.$Distance] == "" ? '' : $ScoreTotal + $Data['Tot'.$Distance]),1,0,'C',1);
+					$this->Cell(1.1*$CellW,$CellH,(($StopFillingtotals OR empty($Data['Arr'.$Distance])) ? '' : $ScoreTotal + $Data['Tot'.$Distance]),1,0,'C',1);
 					if(!empty($FirstDist) && $Data['Arr'.$Distance] == "") {
 						$this->Line($this->GetX(),$this->GetY(),$this->GetX()-1.1*$CellW,$this->GetY()+$CellH);
 						$this->Line($this->GetX(),$this->GetY()+$CellH,$this->GetX()-1.1*$CellW,$this->GetY());
@@ -387,6 +412,10 @@ class ScorePDF extends IanseoPdf {
 				$this->Cell($XNineW, $CellH,(empty($Data['Arr'.$Distance]) || !$ScoreEndGold ? '' : $ScoreEndGold),1,0,'C',0);
 			}
 			$this->Cell($XNineW, $CellH,(empty($Data['Arr'.$Distance]) || !$ScoreEndXnine ? '' : $ScoreEndXnine),1,1,'C',0);
+
+			if(!empty($Data['isField']) and $End>$ArrowEnds[$Event][$CurDist]['totEnds']) {
+				$End=1;
+			}
 		}
 
 		// CODICE A BARRE
@@ -417,22 +446,22 @@ class ScorePDF extends IanseoPdf {
 		$this->SetXY($TopX + $BCode, $TopY+$TopOffset+$CellH*($NumEnd +1));
 	   	$this->SetFont($this->FontStd,'B',11);
 		$this->Cell(($NumArrow+($this->PrintTotalCols ? 1.5 : 2.2))*$CellW - $BCode + ($ArrowEnds[$Event][$CurDist]['arrows']>5 ? $TotalCellW/4 : 0),$CellH, (get_text('Total') . " "),0,0,'R',0);
-		$this->Cell($TotalCellW*($ArrowEnds[$Event][$CurDist]['arrows']>5 ? 3/4 : 1),$CellH,(empty($Data['Arr'.$Distance])? '' : $ScoreTotal),1,0,'C',0);
+		$this->Cell($TotalCellW*($ArrowEnds[$Event][$CurDist]['arrows']>5 ? 3/4 : 1),$CellH,(($StopFillingtotals OR empty($Data['Arr'.$Distance]))? '' : $ScoreTotal),1,0,'C',0);
 		if($this->FillWithArrows && $ErScoreTotal)
 			$this->Line($x1 = $this->getx() - (($this->PrintTotalCols ? 1 : 1.4)*$CellW*($ArrowEnds[$Event][$CurDist]['arrows']>5 ? 3/4 : 1)), $y1=$this->gety()+$CellH, $x1+($this->PrintTotalCols ? 1 : 1.4)*$CellW*($ArrowEnds[$Event][$CurDist]['arrows']>5 ? 3/4 : 1), $y1-$CellH);
 		if($this->PrintTotalCols) {
 			$this->SetFillColor(0xFF,0xE8,0xE8);
-			$this->Cell(1.1*$CellW,$CellH,($Data['Arr'.$Distance] == "" ? '' : $ScoreTotal + $Data['Tot'.$Distance]),1,0,'C',1);
+			$this->Cell(1.1*$CellW,$CellH,(($StopFillingtotals OR empty($Data['Arr'.$Distance])) ? '' : $ScoreTotal + $Data['Tot'.$Distance]),1,0,'C',1);
 			$this->SetFillColor(0xE8,0xE8,0xE8);
 		}
 		$this->SetFont($this->FontStd,'B',9);
 		if(!($this->NoTensOnlyX or $prnGolds==$prnXNine)) {
-			$this->Cell($XNineW,$CellH,(empty($Data['Arr'.$Distance]) ? '' : $ScoreGold),1,0,'C',0);
+			$this->Cell($XNineW,$CellH,(($StopFillingtotals OR empty($Data['Arr'.$Distance])) ? '' : $ScoreGold),1,0,'C',0);
 			if($this->FillWithArrows && $ErScoreGold) {
 				$this->Line($x1 = $this->getx() - 0.7*$CellW, $y1=$this->gety()+$CellH, $x1+0.7*$CellW, $y1-$CellH);
 			}
 		}
-		$this->Cell($XNineW,$CellH,(empty($Data['Arr'.$Distance]) ? '' : $ScoreXnine),1,0,'C',0);
+		$this->Cell($XNineW,$CellH,(($StopFillingtotals OR empty($Data['Arr'.$Distance])) ? '' : $ScoreXnine),1,0,'C',0);
 		if($this->FillWithArrows && $ErScoreXNine) {
 			$this->Line($x1 = $this->getx() - 0.7*$CellW, $y1=$this->gety()+$CellH, $x1+0.7*$CellW, $y1-$CellH);
 		}
@@ -443,8 +472,8 @@ class ScorePDF extends IanseoPdf {
 			$Tot=0;
 			$TotX=0;
 			for($i=1; $i<=$Distance; $i++) {
-				$Tot+=$Data['QuD'.$i];
-				$TotX+=$Data['QuXD'.$i];
+				$Tot+=$Data['QuD'.$i]??0;
+				$TotX+=$Data['QuXD'.$i]??0;
 			}
 			$this->SetX($TopX + $ArCellW*$NumArrow);
 			$this->Cell($TotalCellW + $EndNumCellW, $CellH, get_text('RunningTotal', 'Tournament', ($Data['D'.$i] ?? '')),0,0,'R',0);
@@ -571,13 +600,29 @@ class ScorePDF extends IanseoPdf {
 		global $CFG;
 		static $ArrowEnds=array();
 
+        if($FillWithArrows=$this->FillWithArrows) {
+            if($CurDist>1) {
+                foreach(range(1, $CurDist-1) as $k) {
+                    if(strlen(trim(str_replace(' ', '', $Data['Arr'.$k])))!=$Data['NumArrows'.$k]) {
+                        $FillWithArrows=false;
+                    }
+                }
+            }
+        }
+
 		$prnAppInfo=($SesFirstTarget!=1);
 
 		// $ArrowEnds will contain the ends per arrows of each event and distance
         //$CurDist=(empty($CurDist) ? 1 : $CurDist);
-		$NumEnd=$Data['NumEnds'.$CurDist]/2;
+        $ScoringEnds=$Data['ScoringEnds'.$CurDist]?:$Data['NumEnds'.$CurDist];
+        $FlipEnd=$Data['NumEnds'.$CurDist];
+        if($this->IsRedding) {
+            $NumEnd=$ScoringEnds;
+        } else {
+            $NumEnd=$ScoringEnds/2;
+        }
 		if($SesTar4Session==0 || $SesTar4Session!=$Data['NumEnds'.$CurDist]) {
-			$SesTar4Session = $Data['NumEnds'.$CurDist];
+			$SesTar4Session = $Data['ScoringEnds'.$CurDist]?:$Data['NumEnds'.$CurDist];
 		}
 
 		$FirstDist=($CurDist==1);
@@ -588,7 +633,7 @@ class ScorePDF extends IanseoPdf {
 			$NumEnd*=2;
 		}
 		$isNfaa = false;
-		if($_SESSION['TourLocRule']=='NFAA' AND $SesTar4Session==51) {
+		if($_SESSION['TourLocRule']=='NFAA' AND $ScoringEnds==51) {
 			$isNfaa = true;
 			$NumEnd=17;
 		}
@@ -600,163 +645,218 @@ class ScorePDF extends IanseoPdf {
 		//PARAMETRI CALCOLATI
 		$TopOffset=30;
 		$BottomImage=0;
-		$TargetNo=(!empty($Data["AtTarget"]) ? intval($Data["AtTarget"]) : 1);
-		$TargetNoApp=(!empty($Data["AtTarget"]) ? intval($Data["AtTarget"]) : 1);
+		$TargetNo=(!empty($Data["AtTarget"]) ? intval($Data["AtTarget"]) : 1)+$Data["ScoringOffset{$CurDist}"];
+		$TargetNoApp=(!empty($Data["AtTarget"]) ? intval($Data["AtTarget"]) : 1)+$Data["ScoringOffset{$CurDist}"];
 
-		if($TargetNo-($SesFirstTarget-1)>$SesTar4Session) {
-			$TargetNo = (($TargetNo-1) % $SesTar4Session) + $SesFirstTarget;
+		if($TargetNo-($SesFirstTarget-1)>$FlipEnd) {
+			$TargetNo = (($TargetNo-1) % $FlipEnd) + $SesFirstTarget;
 		}
-		if($TargetNoApp>$SesTar4Session) {
-			$TargetNoApp = (($TargetNoApp-1) % $SesTar4Session) + 1;
+		if($TargetNoApp>$FlipEnd) {
+			$TargetNoApp = (($TargetNoApp-1) % $FlipEnd) + 1;
 		}
 		//HEADER LOGO SX & Dx
 		$TmpLeft = 0;
 		$TmpRight = 0;
-		if($this->PrintLogo) {
-			if(file_exists($IM=$CFG->DOCUMENT_PATH.'TV/Photos/'.$_SESSION['TourCodeSafe'].'-ToLeft.jpg')) {
-				$im=getimagesize($IM);
-				$this->Image($IM, $TopX, $TopY, 0, ($TopOffset/2));
-				$TmpLeft = (1 + ($im[0] * ($TopOffset/2) / $im[1]));
-			}
-			if(file_exists($IM=$CFG->DOCUMENT_PATH.'TV/Photos/'.$_SESSION['TourCodeSafe'].'-ToRight.jpg')) {
-				$im=getimagesize($IM);
-				$TmpRight = ($im[0] * 15 / $im[1]);
-				$this->Image($IM, ($TopX+$Width-$TmpRight), $TopY, 0, 15);
-				$TmpRight++;
-			}
-			//IMMAGINE DEGLI SPONSOR
-			if($this->BottomImage and file_exists($IM=$CFG->DOCUMENT_PATH.'TV/Photos/'.$_SESSION['TourCodeSafe'].'-ToBottom.jpg')) {
-				$BottomImage=7.5;
-				$im=getimagesize($IM);
-				$imgW = $Width;
-				$imgH = $imgW * $im[1] /$im[0] ;
-				if($imgH > $BottomImage) {
-					$imgH = $BottomImage;
-					$imgW = $imgH * $im[0] /$im[1] ;
-				}
-				$this->Image($IM, ($TopX+($Width-$imgW)/2), ($TopY+$Height-$imgH), $imgW, $imgH);
-			}
+        $imgH=0;
+        $HeadWidth=empty($Data['PersonalScore']) ? $Width : $this->getPageWidth()-$this->getSideMargin()*2;
+        if($this->PrintLogo) {
+            if(empty($Data['PersonalScore']) or $CurDist==1) {
+                if(file_exists($IM=$CFG->DOCUMENT_PATH.'TV/Photos/'.$_SESSION['TourCodeSafe'].'-ToLeft.jpg')) {
+                    $im=getimagesize($IM);
+                    $this->Image($IM, $TopX, $TopY, 0, ($TopOffset/2));
+                    $TmpLeft = (1 + ($im[0] * ($TopOffset/2) / $im[1]));
+                }
+                if(file_exists($IM=$CFG->DOCUMENT_PATH.'TV/Photos/'.$_SESSION['TourCodeSafe'].'-ToRight.jpg')) {
+                    $im=getimagesize($IM);
+                    $TmpRight = ($im[0] * 15 / $im[1]);
+                    $this->Image($IM, ($TopX+$HeadWidth-$TmpRight), $TopY, 0, 15);
+                    $TmpRight++;
+                }
+                //IMMAGINE DEGLI SPONSOR
+                if($this->BottomImage and file_exists($IM=$CFG->DOCUMENT_PATH.'TV/Photos/'.$_SESSION['TourCodeSafe'].'-ToBottom.jpg')) {
+                    $BottomImage=7.5;
+                    $im=getimagesize($IM);
+                    $imgW = $HeadWidth;
+                    $imgH = $imgW * $im[1] /$im[0] ;
+                    if($imgH > $BottomImage) {
+                        $imgH = $BottomImage;
+                        $imgW = $imgH * $im[0] /$im[1] ;
+                    }
+                    $this->Image($IM, ($TopX+($HeadWidth-$imgW)/2), ($TopY+$Height-$imgH), $imgW, $imgH);
+                }
+            } elseif($this->BottomImage and file_exists($IM=$CFG->DOCUMENT_PATH.'TV/Photos/'.$_SESSION['TourCodeSafe'].'-ToBottom.jpg')) {
+                $BottomImage=7.5;
+                $imgH = $BottomImage;
+            }
 		}
 
 		$CellW = ((($Width-5)/2) / ($NumArrow+5));
+        if(!empty($Data['PersonalScore']) or !empty($Data['MonoDistance'])) {
+            $CellW = ($Width / ($NumArrow+5));
+        }
 		if($isNfaa) {
 			$CellW = ((($Width-10)/3) / ($NumArrow+5)) ;
 		}
-		$CellH = ($Height-41-$BottomImage)/(ceil($NumEnd)+3);
+		$CellH = ($Height-41-$BottomImage)/(ceil($NumEnd)+3+($this->IsRedding?2:0));
 		$FontSize=min(10, $CellH/(1.3*0.352778));
 
 		// CODICE A BARRE
 		$BCode=0;
-		if($this->PrintBarcode and !empty($Data['EnCode'])) {
-			if($Data['EnCode'][0]=='_') $Data['EnCode']='UU'.substr($Data['EnCode'], 1);
-			$txt=$Data['EnCode'].'-'.$Data['Div'].'-'.$Data['Cls'];
-			if(!empty($Data['ElCode'])) {
-				$txt=$Data['EnCode'].'-'.$Data['ElPhase'].'-'.$Data['ElCode'];
-			}
-			if(!empty($CurDist)) {
-				$txt.='-'.$CurDist;
-			}
-			$BCode=60;
-			$this->SetXY(10+$Width-$TmpRight-$BCode, $TopY);
-			$this->SetFont('barcode','',28);
-			$this->Cell($BCode-5, $CellH, mb_convert_encoding('*' . $txt, "UTF-8","cp1252") . "*",0,0,'C',0);
-			$this->SetFont($this->FontStd,'',7);
-			$this->SetXY(10+$Width-$TmpRight-$BCode, $TopY+9);
-			$this->Cell($BCode-5, $CellH, mb_convert_encoding($txt, "UTF-8","cp1252"),0,0,'C',0);
-		}
+        if($this->PrintBarcode and !empty($Data['EnCode'])) {
+            if($this->IsRedding) {
+                if($Data['EnCode'][0]=='_') $Data['EnCode']='UU'.substr($Data['EnCode'], 1);
+                $txtOrg=$Data['EnCode'].'-'.$Data['Div'].'-'.$Data['Cls'];
+                if(!empty($Data['ElCode'])) {
+                    $txtOrg=$Data['EnCode'].'-'.$Data['ElPhase'].'-'.$Data['ElCode'];
+                }
+                $txt=$txtOrg;
+                if(!empty($CurDist)) {
+                    $txt.='-'.$CurDist;
+                }
+                $this->SetXY($TopX, $TopY+$Height-$imgH-2.25*$CellH);
+                $this->SetFont('barcode','',20);
+                $this->Cell((empty($Data['PersonalScore']) and empty($Data['MonoDistance'])) ? ($Width-5)/2 : $Width, $CellH, mb_convert_encoding('*' . $txt, "UTF-8","cp1252") . "*",0,0,'C',0);
+                $this->SetFont($this->FontStd,'',7);
+                $this->SetXY($TopX, $TopY+$Height-$imgH-1*$CellH);
+                $this->Cell((empty($Data['PersonalScore']) and empty($Data['MonoDistance'])) ? ($Width-5)/2 : $Width, $CellH, mb_convert_encoding($txt, "UTF-8","cp1252"),0,0,'C',0);
 
-		//TESTATA GARA
-		if($this->PrintHeader)
-		{
-			$this->SetColors(true);
-	    	$this->SetFont($this->FontStd,'B',9);
-			$this->SetXY($TopX+$TmpLeft,$TopY);
-			$this->MultiCell($Width-$TmpLeft-$TmpRight-$BCode, 4, ($this->Name ?? ''), 0, 'L', 0);
-    		$this->SetFont($this->FontStd,'',7);
-			$this->SetXY($TopX+$TmpLeft, $this->GetY());
-			if($this->GetStringWidth($this->Where . ", " . TournamentDate2String($this->WhenF,$this->WhenT))>=$Width-$TmpLeft-$TmpRight)
-			{
-				$this->MultiCell($Width-$TmpLeft-$TmpRight-$BCode, 4, $this->Where, 0, 'L', 0);
-				$this->SetXY($TopX+$TmpLeft, $this->GetY());
-				$this->MultiCell($Width-$TmpLeft-$TmpRight-$BCode, 4, TournamentDate2String($this->WhenF,$this->WhenT), 0, 'L', 0);
-			}
-			else
-				$this->MultiCell($Width-$TmpLeft-$TmpRight-$BCode, 4, $this->Where . ", " . TournamentDate2String($this->WhenF,$this->WhenT), 0, 'L', 0);
-		}
+                if($CurDist==1 and empty($Data['PersonalScore']) and empty($Data['MonoDistance'])) {
+                    $txt=$txtOrg.'-2';
+                    $this->SetXY($TopX+5+($Width-5)/2, $TopY+$Height-$imgH-2.25*$CellH);
+                    $this->SetFont('barcode','',20);
+                    $this->Cell(($Width-5)/2, $CellH, mb_convert_encoding('*' . $txt, "UTF-8","cp1252") . "*",0,0,'C',0);
+                    $this->SetFont($this->FontStd,'',7);
+                    $this->SetXY($TopX+5+($Width-5)/2, $TopY+$Height-$imgH-1*$CellH);
+                    $this->Cell(($Width-5)/2, $CellH, mb_convert_encoding($txt, "UTF-8","cp1252"),0,0,'C',0);
 
-		//DATI ATLETA
-		$FlagOffset=0.2*$CellW;
-		$this->SetXY($TopX+0.2*$CellW, $TopY+($TopOffset*7/12));
-		if($this->PrintFlags and !empty($Data['CoCode'])) {
-			if(is_file($file= $CFG->DOCUMENT_PATH.'TV/Photos/'.$_SESSION['TourCodeSafe'].'-Fl-'.$Data['CoCode'].'.jpg')) {
-				$H=$TopOffset*3/8;
-				$W=$H*3/2;
-				$OrgY=$this->gety();
-				$this->Image($file, $TopX, $this->gety(), $W, $H, 'JPG', '', '', true, 300, '', false, false, 1, true);
-				$FlagOffset=$W+1;
-			}
-		}
+                }
+            } else {
+                if($Data['EnCode'][0]=='_') $Data['EnCode']='UU'.substr($Data['EnCode'], 1);
+                $txt=$Data['EnCode'].'-'.$Data['Div'].'-'.$Data['Cls'];
+                if(!empty($Data['ElCode'])) {
+                    $txt=$Data['EnCode'].'-'.$Data['ElPhase'].'-'.$Data['ElCode'];
+                }
+                if(!empty($CurDist)) {
+                    $txt.='-'.$CurDist;
+                }
+                $BCode=60;
+                $this->SetXY(10+$Width-$TmpRight-$BCode, $TopY);
+                $this->SetFont('barcode','',28);
+                $this->Cell($BCode-5, $CellH, mb_convert_encoding('*' . $txt, "UTF-8","cp1252") . "*",0,0,'C',0);
+                $this->SetFont($this->FontStd,'',7);
+                $this->SetXY(10+$Width-$TmpRight-$BCode, $TopY+9);
+                $this->Cell($BCode-5, $CellH, mb_convert_encoding($txt, "UTF-8","cp1252"),0,0,'C',0);
+            }
+        }
 
-		$this->SetXY($FlagOffset+$TopX, $TopY+($TopOffset*7/12));
-		$this->SetFont($this->FontStd,'',8);
-		$this->SetColors(false);
-		$this->Cell($this->GetStringWidth((get_text('Archer') . ": ")),$TopOffset/6, (get_text('Archer') . ": "),'B',0,'L',0);
-		$this->SetFont($this->FontStd,'B',$FontSize);
-		$this->SetColors(true);
-		$this->Cell($Width-(($prnAppInfo ? 3.4 : 1.9) * $CellW)-$this->GetStringWidth((get_text('Archer') . ": "))-$FlagOffset,$TopOffset/6, (array_key_exists("Ath",$Data) ? ($Data["Ath"] ?? '') : ' '),'B',0,'L',0);
-		$this->SetXY($FlagOffset+$TopX, $TopY+($TopOffset*19/24));
-		$this->SetFont($this->FontStd,'',8);
-		$this->SetColors(false);
-		$this->Cell($this->GetStringWidth((get_text('Country') . ": ")),$TopOffset/6, (get_text('Country') . ": "),'B',0,'L',0);
-		$this->SetFont($this->FontStd,'B',$FontSize);
-		$this->SetColors(true);
+        //TESTATA GARA
+        if(empty($Data['PersonalScore']) or $CurDist==1) {
+            if($this->PrintHeader)
+            {
+                $this->SetColors(true);
+                $this->SetFont($this->FontStd,'B',9);
+                $this->SetXY($TopX+$TmpLeft,$TopY);
+                $this->MultiCell($HeadWidth-$TmpLeft-$TmpRight-$BCode, 4, ($this->Name ?? ''), 0, 'L', 0);
+                $this->SetFont($this->FontStd,'',7);
+                $this->SetXY($TopX+$TmpLeft, $this->GetY());
+                if($this->GetStringWidth($this->Where . ", " . TournamentDate2String($this->WhenF,$this->WhenT))>=$HeadWidth-$TmpLeft-$TmpRight)
+                {
+                    $this->MultiCell($HeadWidth-$TmpLeft-$TmpRight-$BCode, 4, $this->Where, 0, 'L', 0);
+                    $this->SetXY($TopX+$TmpLeft, $this->GetY());
+                    $this->MultiCell($HeadWidth-$TmpLeft-$TmpRight-$BCode, 4, TournamentDate2String($this->WhenF,$this->WhenT), 0, 'L', 0);
+                }
+                else
+                    $this->MultiCell($HeadWidth-$TmpLeft-$TmpRight-$BCode, 4, $this->Where . ", " . TournamentDate2String($this->WhenF,$this->WhenT), 0, 'L', 0);
+            }
 
-		$CellTmpWidth=$Width-(($prnAppInfo ? 3.4 : 1.9) * $CellW)-$this->GetStringWidth((get_text('Country') . ": "))-$FlagOffset;
-		if(array_key_exists("Noc",$Data)) {
-			$str=$Data['CoCode'].' -';
-			$strW=$this->GetStringWidth($str);
-			$this->Cell($strW, $TopOffset/6, $str,'B',0,'L',0);
-			$this->Cell($CellTmpWidth-$strW, $TopOffset/6, ($Data['CoName'] ?? ''),'B',0,'L',0);
-		} else {
-			$this->Cell($CellTmpWidth,$TopOffset/6, ' ','B',0,'L',0);
-		}
-		//APP INFO
-		if($prnAppInfo) {
-			$this->SetXY($TopX+$Width-(3.4*$CellW), $TopY+($TopOffset*13/24));
-			$this->SetFont($this->FontStd,'I',16);
-			$this->SetColors(true);
-			$HeaderTarget = ' ';
-			if(array_key_exists("tNo",$Data)) {
-				$HeaderTarget = trim($Data["tNo"],'0');
-				if(!empty($Data["AtTarget"]) and $TargetNoApp!=intval($Data["AtTarget"])) {
-					$HeaderTarget = $TargetNoApp . substr($Data["tNo"],-1,1) . '-' . $this->Indices[ceil($Data["AtTarget"]/$SesTar4Session)-2];
-				}
-			}
-			$this->Cell((1.9*$CellW),$TopOffset*7/24, $HeaderTarget,'TLR',0,'R',1);
-			$this->SetXY($TopX+$Width-(3.4*$CellW), $TopY+($TopOffset*10/12));
-			$this->SetFont($this->FontStd,'I',8);
-			$this->SetColors(true);
-			$this->Cell((1.9*$CellW),($TopOffset*2/12), 'ISK App','BLR',0,'C',1);
+            //DATI ATLETA
+            $FlagOffset=0;
+            $this->SetXY($TopX+0.2*$CellW, $TopY+($TopOffset*7/12));
+            if($this->PrintFlags and !empty($Data['CoCode'])) {
+                $FlagOffset=0.2*$CellW;
+                if(is_file($file= $CFG->DOCUMENT_PATH.'TV/Photos/'.$_SESSION['TourCodeSafe'].'-Fl-'.$Data['CoCode'].'.jpg')) {
+                    $H=$TopOffset*3/8;
+                    $W=$H*3/2;
+                    $OrgY=$this->gety();
+                    $this->Image($file, $TopX, $this->gety(), $W, $H, 'JPG', '', '', true, 300, '', false, false, 1, true);
+                    $FlagOffset=$W+1;
+                }
+            }
 
-		}
+            $TargetTopBoxWidth=($prnAppInfo ? 3.4 : 1.9) * $CellW;
+            $TargetBottomBoxWidth=1.4*$CellW;
+            if($this->IsRedding) {
+                $TargetTopBoxWidth=1.7 * $CellW;
+                $TargetBottomBoxWidth=1.7 * $CellW;
+            }
 
-		//PAGLIONE
-		$this->SetXY($TopX+$Width-(1.4*$CellW), $TopY+($TopOffset*13/24));
-		$this->SetFont($this->FontStd,'B',20);
-		$this->SetColors(true);
-		$HeaderTarget = ' ';
-		if(array_key_exists("tNo",$Data)) {
-			$HeaderTarget = trim($Data["tNo"],'0');
-			if(!empty($Data["AtTarget"]) and $TargetNo!=intval($Data["AtTarget"])) {
-				$HeaderTarget = $TargetNo . substr($Data["tNo"],-1,1) . '-' . ($this->Indices[ceil($Data["AtTarget"]/(2*$NumEnd))-2]??'');
-			}
-		}
+            $OldPad=$this->getCellPaddings();
+            $this->setCellPaddings(0, $OldPad['T'], 0, $OldPad['B']);
+            $this->SetXY($FlagOffset+$TopX, $TopY+($TopOffset*7/12));
+            $this->SetFont($this->FontStd,'',8);
+            $this->SetColors(false);
+            $StrWidth=$this->GetStringWidth(get_text('Archer') . ": ");
+            $this->Cell($StrWidth,$TopOffset/6, (get_text('Archer') . ": "),'B',0,'L',0);
+            $this->SetFont($this->FontStd,'B',$FontSize);
+            $this->SetColors(true);
+            $this->Cell($HeadWidth-$TargetTopBoxWidth-$StrWidth-$FlagOffset-1,$TopOffset/6, (array_key_exists("Ath",$Data) ? ($Data["Ath"] ?? '') : ' '),'B',0,'L',0);
 
-		$this->Cell((1.4*$CellW),$TopOffset*7/24, $HeaderTarget,0,0,'R',1);
-		$this->SetXY($TopX+$Width-(1.4*$CellW), $TopY+($TopOffset*10/12));
-		$this->SetFont($this->FontStd,'B',$FontSize);
-		$this->SetColors(true);
-		$this->Cell((1.4*$CellW),$TopOffset*2/12,(array_key_exists("Cat",$Data) ? $Data["Cat"] : ' '),'T',0,'C',1);
+            $this->SetXY($FlagOffset+$TopX, $TopY+($TopOffset*19/24));
+            $this->SetFont($this->FontStd,'',8);
+            $this->SetColors(false);
+            $StrWidth=$this->GetStringWidth(get_text('Country') . ": ");
+            $this->Cell($StrWidth,$TopOffset/6, (get_text('Country') . ": "),'B',0,'L',0);
+            $this->SetFont($this->FontStd,'B',$FontSize);
+            $this->SetColors(true);
+            $CellTmpWidth=$HeadWidth-($TargetTopBoxWidth)-$StrWidth-$FlagOffset-1;
+            if(array_key_exists("Noc",$Data)) {
+                $str=$Data['CoCode'].' -';
+                $strW=$this->GetStringWidth($str);
+                $this->Cell($strW, $TopOffset/6, $str,'B',0,'L',0);
+                $this->Cell($CellTmpWidth-$strW, $TopOffset/6, ($Data['CoName'] ?? ''),'B',0,'L',0);
+            } else {
+                $this->Cell($CellTmpWidth,$TopOffset/6, ' ','B',0,'L',0);
+            }
+            $this->setCellPaddings($OldPad['L'], $OldPad['T'], $OldPad['R'], $OldPad['B']);
+
+            //APP INFO
+            if($prnAppInfo) {
+                $this->SetXY($TopX+$HeadWidth-(3.4*$CellW), $TopY+($TopOffset*13/24));
+                $this->SetFont($this->FontStd,'I',16);
+                $this->SetColors(true);
+                $HeaderTarget = ' ';
+                if(array_key_exists("tNo",$Data)) {
+                    $HeaderTarget = trim($Data["tNo"],'0');
+                    if(!empty($Data["AtTarget"]) and $TargetNoApp!=intval($Data["AtTarget"])) {
+                        $HeaderTarget = CheckBisTargets($Data["tNo"], $Data['NumEnds'.$CurDist]);
+                    }
+                }
+                $this->Cell((1.9*$CellW),$TopOffset*7/24, $HeaderTarget,'TLR',0,'R',1);
+                $this->SetXY($TopX+$HeadWidth-(3.4*$CellW), $TopY+($TopOffset*10/12));
+                $this->SetFont($this->FontStd,'I',8);
+                $this->SetColors(true);
+                $this->Cell((1.9*$CellW),($TopOffset*2/12), 'ISK App','BLR',0,'C',1);
+
+            }
+
+            //PAGLIONE
+            $this->SetXY($TopX+$HeadWidth-($TargetBottomBoxWidth), $TopY+($TopOffset*13/24));
+            $this->SetFont($this->FontStd,'B',20);
+            $this->SetColors(true);
+            $HeaderTarget = ' ';
+            if(array_key_exists("tNo",$Data)) {
+                $HeaderTarget = trim($Data["tNo"],'0');
+                if(!empty($Data["AtTarget"]) and $TargetNo!=intval($Data["AtTarget"])) {
+                    $HeaderTarget = CheckBisTargets($Data["tNo"], $Data['NumEnds'.$CurDist]);
+                }
+            }
+
+            $this->Cell(($TargetBottomBoxWidth),$TopOffset*7/24, $HeaderTarget,0,0,'R',1);
+            $this->SetXY($TopX+$HeadWidth-($TargetBottomBoxWidth), $TopY+($TopOffset*10/12));
+            $this->SetFont($this->FontStd,'B',$FontSize);
+            $this->SetColors(true);
+            $this->Cell(($TargetBottomBoxWidth),$TopOffset*2/12,(array_key_exists("Cat",$Data) ? $Data["Cat"] : ' '),'T',0,'C',1);
+        }
 
 		// TODO: investigate this
 		$prnAppInfo=false;
@@ -764,6 +864,9 @@ class ScorePDF extends IanseoPdf {
 		// recalculate the cell widths
 		$TotalCells=$NumArrow + 3.3 + ($prnAppInfo?0.8:0) + ($NumArrow>1 ? 1.5 : 0) + ($prnXNine ? 1 : 0) + ($this->PrintTotalCols?1.5:0);
 		$NewCellW = ((($Width-5-($isNfaa?5:0))/(2+($isNfaa?1:0))) / ($TotalCells));
+        if(!empty($Data['PersonalScore']) or !empty($Data['MonoDistance'])) {
+    		$NewCellW = ($Width / ($TotalCells));
+        }
 
 		$ArCellW=$NewCellW;
 		$EndNumCellW=0.8*$NewCellW;
@@ -803,6 +906,9 @@ class ScorePDF extends IanseoPdf {
 		$ScoreTotal = 0;
 		$ScoreGold = 0;
 		$ScoreXnine = 0;
+        if($this->IsRedding and $CurDist==3) {
+            $ScoreTotal=$Data['QuD1']+$Data['QuD2'];
+        }
 		//RIGHE DELLO SCORE 1
 		for($i=1; $i<=ceil($NumEnd); $i++) {
 			$this->SetXY($TopX, $TopY+$TopOffset+$CellH*$i);
@@ -814,21 +920,28 @@ class ScorePDF extends IanseoPdf {
 			$this->Cell($EndNumCellW,$CellH, ($this->PrintLineNo ? $TargetNo : ''),1,0,'C',1);
 			$this->SetFont($this->FontStd,'',($isNfaa ? 8 : $FontSize));
 			for($j=0; $j<$NumArrow; $j++) {
-				$this->Cell($ArCellW,$CellH, $this->FillWithArrows ?  DecodeFromLetter(substr($Data["Arr".$CurDist], (($TargetNo-1)%(2*$NumEnd))*$NumArrow+$j, 1)) : '', 1, 0, 'C', 0);
-			}
-			list($ScoreEndTotal,$ScoreEndGold, $ScoreEndXnine) = ValutaArrowStringGX(substr($Data["Arr".$CurDist],(($TargetNo-1)%(2*$NumEnd))*$NumArrow,$NumArrow), $Data['GoldsChars'], $Data['XNineChars']);
+                $ArValue='';
+                if($this->FillWithArrows) {
+                    $ArValue=DecodeFromLetter(substr($Data["Arr".$CurDist], (($TargetNo-1)%($FlipEnd))*$NumArrow+$j, 1));
+                    if(!trim($ArValue)) {
+                        $FillWithArrows=false;
+                    }
+                }
+				$this->Cell($ArCellW,$CellH, $ArValue, 1, 0, 'C', 0);
+            }
+			list($ScoreEndTotal,$ScoreEndGold, $ScoreEndXnine) = ValutaArrowStringGX(substr($Data["Arr".$CurDist],(($TargetNo-1)%($FlipEnd))*$NumArrow,$NumArrow), $Data['GoldsChars'], $Data['XNineChars']);
 			$ScoreTotal += $ScoreEndTotal;
 			$ScoreGold += $ScoreEndGold;
 			$ScoreXnine += $ScoreEndXnine;
-			if(!strlen(trim(substr($Data["Arr".$CurDist],(($TargetNo-1)%(2*$NumEnd))*$NumArrow,$NumArrow)))) {
+			if(!strlen(trim(substr($Data["Arr".$CurDist],(($TargetNo-1)%($FlipEnd))*$NumArrow,$NumArrow)))) {
 				$ScoreEndTotal='';
 				$ScoreEndGold='';
 				$ScoreEndXnine='';
 			}
 			if($NumArrow>1) {
-				$this->Cell($TotalCellW,$CellH,($this->FillWithArrows ? $ScoreEndTotal : ''),1,0,'C',0);
+				$this->Cell($TotalCellW,$CellH,($FillWithArrows ? $ScoreEndTotal : ''),1,0,'C',0);
 			}
-			$this->Cell($TotalCellW,$CellH,(($this->FillWithArrows && $Data["Arr".$CurDist]) ? $ScoreTotal : ''),1,0,'C',0);
+			$this->Cell($TotalCellW,$CellH,(($FillWithArrows && $Data["Arr".$CurDist]) ? $ScoreTotal : ''),1,0,'C',0);
 			if($this->PrintTotalCols) {
 				$this->SetFillColor(0xFF,0xE8,0xE8);
 				$this->Cell($TotalCellW,$CellH,($Data['Arr'.$CurDist] == "" ? '' : $ScoreTotal + $Data['Tot'.$CurDist]),1,0,'C',1);
@@ -838,20 +951,74 @@ class ScorePDF extends IanseoPdf {
 				}
 				$this->SetFillColor(0xE8,0xE8,0xE8);
 			}
-			$this->Cell($XNineW,$CellH,($this->FillWithArrows ? $ScoreEndGold : ''),1,0,'C',0);
+			$this->Cell($XNineW,$CellH,($FillWithArrows ? $ScoreEndGold : ''),1,0,'C',0);
 			if($prnXNine) {
-				$this->Cell($XNineW, $CellH, ($this->FillWithArrows ? $ScoreEndXnine : ''), 1, 0, 'C', 0);
+				$this->Cell($XNineW, $CellH, ($FillWithArrows ? $ScoreEndXnine : ''), 1, 0, 'C', 0);
 			}
 			$this->ln();
-			if(++$TargetNo-($SesFirstTarget-1)>$SesTar4Session) {
-				$TargetNo = $SesFirstTarget;
+			if(++$TargetNo-($SesFirstTarget-1)>$FlipEnd) {
+				$TargetNo = $FlipEnd;
 			}
-			if(++$TargetNoApp>$SesTar4Session) {
+			if(++$TargetNoApp>$FlipEnd) {
 				$TargetNoApp= 1;
 			}
 			//NFAA
 			$TargetNo=$TargetNoApp;
 		}
+
+        if($this->IsRedding) {
+            // print score total
+            $this->dy(1);
+            $OldLine=$this->GetLineWidth();
+            $this->SetLineWidth(0.5);
+            $this->SetXY($TopX, $TopY+$TopOffset+$CellH*($NumEnd+1)+1);
+            // if($isNfaa){
+            // 	$this->SetXY($TopX+($Width-5)*2/3+5+(empty($prnXNine) ? $XNineW:0), $TopY+$TopOffset+$CellH*($NumEnd+1)+1);
+            // }
+            $this->SetFont($this->FontStd,'B',$FontSize);
+            $this->Cell($EndNumCellW+$NumArrow*$ArCellW,$CellH, (get_text('Total') . " "),0,0,'R',0);
+            $Total='';
+            if($FillWithArrows) {
+                $Total=$ScoreTotal;
+                if($CurDist==3) {
+                    $Total=$Data['QuD1']+$Data['QuD2']+$Data['QuD3'];
+                }
+            }
+            $this->Cell($TotalCellW, $CellH, $Total,1,0,'C',0);
+//            if($this->PrintTotalCols) {
+//                $this->SetFillColor(0xFF,0xE8,0xE8);
+//                $this->Cell($TotalCellW,$CellH, ($Data['Arr'.$CurDist] == "" ? '' : $ScoreTotal + $Data['Tot'.$CurDist]),1,0,'C',1);
+//                if(!empty($FirstDist) && $Data['Arr'.$CurDist] == "") {
+//                    $this->SetLineWidth($OldLine);
+//                    $this->Line($this->GetX(),$this->GetY(),$this->GetX()-$TotalCellW,$this->GetY()+$CellH);
+//                    $this->Line($this->GetX(),$this->GetY()+$CellH,$this->GetX()-$TotalCellW,$this->GetY());
+//                    $this->SetLineWidth(0.5);
+//                }
+//                $this->SetFillColor(0xE8,0xE8,0xE8);
+//            }
+
+            $this->Cell($XNineW,$CellH,($FillWithArrows ? $ScoreGold : ''),1,0,'C',0);
+
+            if($prnXNine) {
+                $this->Cell($XNineW, $CellH, ($FillWithArrows ? $ScoreXnine : ''), 1, 0, 'C', 0);
+            }
+            $this->SetLineWidth($OldLine);
+            if(!empty($Data['PersonalScore']) or !empty($Data['MonoDistance'])) {
+                $this->setXY($TopX, $TopY+$TopOffset+$CellH*($NumEnd+3+($this->IsRedding?1:0))+1);
+                $this->SetFont($this->FontFix,'BI',6);
+                $this->Cell(4, 3, '', 0, 0, 'C', 0);
+                $this->Cell($Width/2-7, 3, (get_text('Archer')), 'B', 0, 'L', 0);
+                $this->Cell(6, 3, '', 0, 0, 'C', 0);
+                $this->Cell($Width/2-7,3,(get_text('Scorer')),'B',1,'L',0);
+                $this->SetLineWidth($OldLine);
+
+                return;
+            }
+        }
+
+        if($this->IsRedding and !empty($Data['MonoDistance'])) {
+            return;
+        }
 
 //#### SCORE 2 ####////
 		//HEADER DELLO SCORE 2
@@ -859,82 +1026,94 @@ class ScorePDF extends IanseoPdf {
 		if($isNfaa) {
 			$ScoreOffset=$TopX+($Width-10)/3+5;
 		}
-		$this->SetXY($ScoreOffset, $TopY+$TopOffset);
-	   	$this->SetFont($this->FontStd,'I',($isNfaa ? 8 : $FontSize));
-		$this->SetFillColor(0xF8,0xF8,0xF8);
-		$this->SetColors(true,true);
-		$this->Cell($EndNumCellW+($prnAppInfo?$EndNumCellW:0),$CellH,(!empty($Data["D".$CurDist]) && $this->FillWithArrows ? $Data["D".$CurDist] : (array_key_exists("Dist",$Data) ? $Data["Dist"] : ' ')),0,0,'C',(array_key_exists("Dist",$Data) ? 1 : 0));
-		$this->SetFillColor(0xE8,0xE8,0xE8);
-	   	$this->SetFont($this->FontStd,'B',($isNfaa ? 8 : $FontSize));
-		$this->SetColors(false);
-		for($j=0; $j<$NumArrow; $j++) {
-			$this->Cell($ArCellW,$CellH, ($j+1), 1, 0, 'C', 1);
-		}
-	   	$this->SetFont($this->FontStd,'B',($isNfaa ? 8 : $FontSize));
-		if($NumArrow>1) {
-			$this->Cell($TotalCellW,$CellH, (get_text('TotalProg','Tournament')),1,0,'C',1);
-		}
-		$this->Cell($TotalCellW,$CellH, (get_text('TotalShort','Tournament')),1,0,'C',1);
-		if($this->PrintTotalCols) {
-			$this->SetFillColor(0xFF,0xE8,0xE8);
-			$this->Cell($TotalCellW,$CellH, (get_text('Total')),1,0,'C',1);
-			$this->SetFillColor(0xE8,0xE8,0xE8);
-		}
-		$this->Cell($XNineW,$CellH, ($prnGolds),1,0,'C',1);
-		if($prnXNine) {
-			$this->Cell($XNineW, $CellH, ($prnXNine), 1, 0, 'C', 1);
-		}
-		$this->ln();
+        if($this->IsRedding and $CurDist==1) {
+            $CurDist=2;
+        }
+        if(!$this->IsRedding or $CurDist!=3) {
+            $this->SetXY($ScoreOffset, $TopY+$TopOffset);
+            $this->SetFont($this->FontStd,'I',($isNfaa ? 8 : $FontSize));
+            $this->SetFillColor(0xF8,0xF8,0xF8);
+            $this->SetColors(true,true);
+            $this->Cell($EndNumCellW+($prnAppInfo?$EndNumCellW:0),$CellH,(!empty($Data["D".$CurDist]) && ($FillWithArrows or $this->IsRedding) ? $Data["D".$CurDist] : (array_key_exists("Dist",$Data) ? $Data["Dist"] : ' ')),0,0,'C',(array_key_exists("Dist",$Data) ? 1 : 0));
+            $this->SetFillColor(0xE8,0xE8,0xE8);
+            $this->SetFont($this->FontStd,'B',($isNfaa ? 8 : $FontSize));
+            $this->SetColors(false);
+            for($j=0; $j<$NumArrow; $j++) {
+                $this->Cell($ArCellW,$CellH, ($j+1), 1, 0, 'C', 1);
+            }
+            $this->SetFont($this->FontStd,'B',($isNfaa ? 8 : $FontSize));
+            if($NumArrow>1) {
+                $this->Cell($TotalCellW,$CellH, (get_text('TotalProg','Tournament')),1,0,'C',1);
+            }
+            $this->Cell($TotalCellW,$CellH, (get_text('TotalShort','Tournament')),1,0,'C',1);
+            if($this->PrintTotalCols) {
+                $this->SetFillColor(0xFF,0xE8,0xE8);
+                $this->Cell($TotalCellW,$CellH, (get_text('Total')),1,0,'C',1);
+                $this->SetFillColor(0xE8,0xE8,0xE8);
+            }
+            $this->Cell($XNineW,$CellH, ($prnGolds),1,0,'C',1);
+            if($prnXNine) {
+                $this->Cell($XNineW, $CellH, ($prnXNine), 1, 0, 'C', 1);
+            }
+            $this->ln();
 
-		//RIGHE DELLO SCORE 2
-		for($i=1; $i<=$NumEnd; $i++) {
-			$this->SetXY($ScoreOffset, $TopY+$TopOffset+$CellH*$i);
-			if($prnAppInfo) {
-				$this->SetFont($this->FontStd,'I',7);
-				$this->Cell($EndNumCellW, $CellH, ($this->PrintLineNo ? '# '.$TargetNoApp : ''), 1, 0, 'C', 0);
-			}
-			$this->SetFont($this->FontStd,'B',($isNfaa ? 8 : $FontSize));
-			$this->Cell($EndNumCellW,$CellH,($this->PrintLineNo ? $TargetNo : ''),1,0,'C',1);
-			$this->SetFont($this->FontStd,'',($isNfaa ? 8 : $FontSize));
-			for($j=0; $j<$NumArrow; $j++) {
-				$this->Cell($ArCellW,$CellH, ($this->FillWithArrows ?  DecodeFromLetter(substr($Data["Arr".$CurDist], (($TargetNo-1)%(2*$NumEnd))*$NumArrow+$j, 1)) : ''), 1, 0, 'C', 0);
-			}
-			list($ScoreEndTotal,$ScoreEndGold, $ScoreEndXnine) = ValutaArrowStringGX(substr($Data["Arr".$CurDist],(($TargetNo-1)%(2*$NumEnd))*$NumArrow,$NumArrow),$Data['GoldsChars'], $Data['XNineChars']);
-			$ScoreTotal += $ScoreEndTotal;
-			$ScoreGold += $ScoreEndGold;
-			$ScoreXnine += $ScoreEndXnine;
-			if(!strlen(trim(substr($Data["Arr".$CurDist],(($TargetNo-1)%(2*$NumEnd))*$NumArrow,$NumArrow)))) {
-				$ScoreEndTotal='';
-				$ScoreEndGold='';
-				$ScoreEndXnine='';
-			}
-			if($NumArrow>1) {
-				$this->Cell($TotalCellW, $CellH, ($this->FillWithArrows ? $ScoreEndTotal : ''), 1, 0, 'C', 0);
-			}
-			$this->Cell($TotalCellW,$CellH,(($this->FillWithArrows && $Data["Arr".$CurDist]) ? $ScoreTotal : ''),1,0,'C',0);
-			if($this->PrintTotalCols) {
-				$this->SetFillColor(0xFF,0xE8,0xE8);
-				$this->Cell($TotalCellW,$CellH,($Data['Arr'.$CurDist] == "" ? '' : $ScoreTotal + $Data['Tot'.$CurDist]),1,0,'C',1);
-				if(!empty($FirstDist) && $Data['Arr'.$CurDist] == "") {
-					$this->Line($this->GetX(),$this->GetY(),$this->GetX()-$TotalCellW,$this->GetY()+$CellH);
-					$this->Line($this->GetX(),$this->GetY()+$CellH,$this->GetX()-$TotalCellW,$this->GetY());
-				}
-				$this->SetFillColor(0xE8,0xE8,0xE8);
-			}
-			$this->Cell($XNineW,$CellH,($this->FillWithArrows ? $ScoreEndGold : ''),1,0,'C',0);
-			if($prnXNine) {
-				$this->Cell($XNineW, $CellH, ($this->FillWithArrows ? $ScoreEndXnine : ''), 1, 0, 'C', 0);
-			}
-			$this->ln();
-			if(++$TargetNo-($SesFirstTarget-1)>$SesTar4Session) {
-				$TargetNo = $SesFirstTarget;
-			}
-			if(++$TargetNoApp>$SesTar4Session) {
-				$TargetNoApp= 1;
-			}
-			//NFAA
-			$TargetNo=$TargetNoApp;
-		}
+            //RIGHE DELLO SCORE 2
+            for($i=1; $i<=$NumEnd; $i++) {
+                $this->SetXY($ScoreOffset, $TopY+$TopOffset+$CellH*$i);
+                if($prnAppInfo) {
+                    $this->SetFont($this->FontStd,'I',7);
+                    $this->Cell($EndNumCellW, $CellH, ($this->PrintLineNo ? '# '.$TargetNoApp : ''), 1, 0, 'C', 0);
+                }
+                $this->SetFont($this->FontStd,'B',($isNfaa ? 8 : $FontSize));
+                $this->Cell($EndNumCellW,$CellH,($this->PrintLineNo ? $TargetNo : ''),1,0,'C',1);
+                $this->SetFont($this->FontStd,'',($isNfaa ? 8 : $FontSize));
+                for($j=0; $j<$NumArrow; $j++) {
+                    $ArValue='';
+                    if($this->FillWithArrows) {
+                        $ArValue=DecodeFromLetter(substr($Data["Arr".$CurDist], (($TargetNo-1)%($FlipEnd))*$NumArrow+$j, 1));
+                        if(!trim($ArValue)) {
+                            $FillWithArrows=false;
+                        }
+                    }
+                    $this->Cell($ArCellW,$CellH, $ArValue, 1, 0, 'C', 0);
+                }
+                list($ScoreEndTotal,$ScoreEndGold, $ScoreEndXnine) = ValutaArrowStringGX(substr($Data["Arr".$CurDist],(($TargetNo-1)%($FlipEnd))*$NumArrow,$NumArrow),$Data['GoldsChars'], $Data['XNineChars']);
+                $ScoreTotal += $ScoreEndTotal;
+                $ScoreGold += $ScoreEndGold;
+                $ScoreXnine += $ScoreEndXnine;
+                if(!strlen(trim(substr($Data["Arr".$CurDist],(($TargetNo-1)%($FlipEnd))*$NumArrow,$NumArrow)))) {
+                    $ScoreEndTotal='';
+                    $ScoreEndGold='';
+                    $ScoreEndXnine='';
+                }
+                if($NumArrow>1) {
+                    $this->Cell($TotalCellW, $CellH, ($FillWithArrows ? $ScoreEndTotal : ''), 1, 0, 'C', 0);
+                }
+                $this->Cell($TotalCellW,$CellH,(($FillWithArrows && $Data["Arr".$CurDist]) ? ($this->IsRedding ? $Data['Tot'.$CurDist] : $ScoreTotal) : ''),1,0,'C',0);
+                if($this->PrintTotalCols) {
+                    $this->SetFillColor(0xFF,0xE8,0xE8);
+                    $this->Cell($TotalCellW,$CellH,($Data['Arr'.$CurDist] == "" ? '' : $ScoreTotal + $Data['Tot'.$CurDist]),1,0,'C',1);
+                    if(!empty($FirstDist) && $Data['Arr'.$CurDist] == "") {
+                        $this->Line($this->GetX(),$this->GetY(),$this->GetX()-$TotalCellW,$this->GetY()+$CellH);
+                        $this->Line($this->GetX(),$this->GetY()+$CellH,$this->GetX()-$TotalCellW,$this->GetY());
+                    }
+                    $this->SetFillColor(0xE8,0xE8,0xE8);
+                }
+                $this->Cell($XNineW,$CellH,($FillWithArrows ? $ScoreEndGold : ''),1,0,'C',0);
+                if($prnXNine) {
+                    $this->Cell($XNineW, $CellH, ($FillWithArrows ? $ScoreEndXnine : ''), 1, 0, 'C', 0);
+                }
+                $this->ln();
+                if(++$TargetNo-($SesFirstTarget-1)>$FlipEnd) {
+                    $TargetNo = $FlipEnd;
+                }
+                if(++$TargetNoApp>$FlipEnd) {
+                    $TargetNoApp= 1;
+                }
+                //NFAA
+                $TargetNo=$TargetNoApp;
+            }
+        }
 //#### SCORE 3 - SOLO NFAA ####////
 		//HEADER DELLO SCORE 3
 		if($isNfaa) {
@@ -944,7 +1123,7 @@ class ScorePDF extends IanseoPdf {
 			$this->SetFont($this->FontStd, 'I', 8);
 			$this->SetFillColor(0xF8, 0xF8, 0xF8);
 			$this->SetColors(true, true);
-			$this->Cell($EndNumCellW+($prnAppInfo?$EndNumCellW:0), $CellH, (!empty($Data["D" . $CurDist]) && $this->FillWithArrows ? $Data["D" . $CurDist] : (array_key_exists("Dist", $Data) ? $Data["Dist"] : ' ')), 0, 0, 'C', (array_key_exists("Dist", $Data) ? 1 : 0));
+			$this->Cell($EndNumCellW+($prnAppInfo?$EndNumCellW:0), $CellH, (!empty($Data["D" . $CurDist]) && $FillWithArrows ? $Data["D" . $CurDist] : (array_key_exists("Dist", $Data) ? $Data["Dist"] : ' ')), 0, 0, 'C', (array_key_exists("Dist", $Data) ? 1 : 0));
 			$this->SetFillColor(0xE8, 0xE8, 0xE8);
 			$this->SetFont($this->FontStd, 'B', 8);
 			$this->SetColors(false);
@@ -978,7 +1157,7 @@ class ScorePDF extends IanseoPdf {
 				$this->Cell($EndNumCellW, $CellH, ($this->PrintLineNo ? $TargetNo : ''), 1, 0, 'C', 1);
 				$this->SetFont($this->FontStd, '', 8);
 				for ($j = 0; $j < $NumArrow; $j++) {
-					$this->Cell($ArCellW, $CellH, ($this->FillWithArrows ? DecodeFromLetter(substr($Data["Arr" . $CurDist], (($TargetNo - 1) % (2 * $NumEnd)) * $NumArrow + $j, 1)) : ''), 1, 0, 'C', 0);
+					$this->Cell($ArCellW, $CellH, ($FillWithArrows ? DecodeFromLetter(substr($Data["Arr" . $CurDist], (($TargetNo - 1) % (2 * $NumEnd)) * $NumArrow + $j, 1)) : ''), 1, 0, 'C', 0);
 				}
 				list($ScoreEndTotal, $ScoreEndGold, $ScoreEndXnine) = ValutaArrowStringGX(substr($Data["Arr" . $CurDist], (($TargetNo - 1) % (2 * $NumEnd)) * $NumArrow, $NumArrow), $this->goldsChars, $this->xNineChars);
 				$ScoreTotal += $ScoreEndTotal;
@@ -990,9 +1169,9 @@ class ScorePDF extends IanseoPdf {
 					$ScoreEndXnine = '';
 				}
 				if ($NumArrow > 1) {
-					$this->Cell($TotalCellW, $CellH, (($this->FillWithArrows && $Data["Arr".$CurDist]) ? $ScoreEndTotal : ''), 1, 0, 'C', 0);
+					$this->Cell($TotalCellW, $CellH, (($FillWithArrows && $Data["Arr".$CurDist]) ? $ScoreEndTotal : ''), 1, 0, 'C', 0);
 				}
-				$this->Cell($TotalCellW, $CellH, ($this->FillWithArrows ? $ScoreTotal : ''), 1, 0, 'C', 0);
+				$this->Cell($TotalCellW, $CellH, ($FillWithArrows ? $ScoreTotal : ''), 1, 0, 'C', 0);
 				if($this->PrintTotalCols) {
 					$this->SetFillColor(0xFF,0xE8,0xE8);
 					$this->Cell($TotalCellW,$CellH,($Data['Arr'.$CurDist] == "" ? '' : $ScoreTotal + $Data['Tot'.$CurDist]),1,0,'C',1);
@@ -1002,16 +1181,16 @@ class ScorePDF extends IanseoPdf {
 					}
 					$this->SetFillColor(0xE8,0xE8,0xE8);
 				}
-				$this->Cell($XNineW, $CellH, ($this->FillWithArrows ? $ScoreEndGold : ''), 1, 0, 'C', 0);
+				$this->Cell($XNineW, $CellH, ($FillWithArrows ? $ScoreEndGold : ''), 1, 0, 'C', 0);
 				if($prnXNine) {
-					$this->Cell($XNineW, $CellH, ($this->FillWithArrows ? $ScoreEndXnine : ''), 1, 0, 'C', 0);
+					$this->Cell($XNineW, $CellH, ($FillWithArrows ? $ScoreEndXnine : ''), 1, 0, 'C', 0);
 				}
 				$this->ln();
 
-				if(++$TargetNo-($SesFirstTarget-1)>$SesTar4Session) {
-					$TargetNo = $SesFirstTarget;
+				if(++$TargetNo-($SesFirstTarget-1)>$FlipEnd) {
+					$TargetNo = $FlipEnd;
 				}
-				if(++$TargetNoApp>$SesTar4Session) {
+				if(++$TargetNoApp>$FlipEnd) {
 					$TargetNoApp= 1;
 				}
 				//NFAA
@@ -1028,65 +1207,70 @@ class ScorePDF extends IanseoPdf {
         //     $ErScoreGold = ($Data["QuGD"] != $ScoreGold);
         //     $ErScoreXNine = ($Data["QuXD"] != $ScoreXnine);
         // }
-		$ErScoreTotal = empty($CurDist) ? '' : (($Data['Arr'.$CurDist]??'') and ($Data["QuD{$CurDist}"]??0)!=$ScoreTotal);
-		$ErScoreGold  = empty($CurDist) ? '' : (($Data["QuGD{$CurDist}"]??0)!=$ScoreGold);
-		$ErScoreXNine = empty($CurDist) ? '' : (($Data["QuXD{$CurDist}"]??0)!=$ScoreXnine);
 
-		//TOTALE GENERALE
-		$OldLine=$this->GetLineWidth();
-		$this->SetLineWidth(0.5);
-		$this->SetXY($TopX + $Width - $TotalCellW*3 - $XNineW*($prnXNine ? 2 : 1) - ($this->PrintTotalCols ? $TotalCellW : 0), $TopY+$TopOffset+$CellH*($NumEnd+1)+1);
-		// if($isNfaa){
-		// 	$this->SetXY($TopX+($Width-5)*2/3+5+(empty($prnXNine) ? $XNineW:0), $TopY+$TopOffset+$CellH*($NumEnd+1)+1);
-		// }
-	   	$this->SetFont($this->FontStd,'B',$FontSize);
-		$this->Cell($TotalCellW*2,$CellH, (get_text('Total') . " "),0,0,'R',0);
-		$this->Cell($TotalCellW,$CellH,($this->FillWithArrows ? $ScoreTotal : ''),1,0,'C',0);
-		if($this->FillWithArrows && $ErScoreTotal) {
-			$this->Line($x1 = $this->getx(), $y1=$this->gety()+$CellH, $x1-($TotalCellW), $y1-$CellH);
-		}
-		if($this->PrintTotalCols) {
-			$this->SetFillColor(0xFF,0xE8,0xE8);
-			$this->Cell($TotalCellW,$CellH, ($Data['Arr'.$CurDist] == "" ? '' : $ScoreTotal + $Data['Tot'.$CurDist]),1,0,'C',1);
-			if(!empty($FirstDist) && $Data['Arr'.$CurDist] == "") {
-				$this->SetLineWidth($OldLine);
-				$this->Line($this->GetX(),$this->GetY(),$this->GetX()-$TotalCellW,$this->GetY()+$CellH);
-				$this->Line($this->GetX(),$this->GetY()+$CellH,$this->GetX()-$TotalCellW,$this->GetY());
-				$this->SetLineWidth(0.5);
-			}
-			$this->SetFillColor(0xE8,0xE8,0xE8);
-		}
+        if(!$this->IsRedding or $CurDist!=3) {
 
-		$this->Cell($XNineW,$CellH,($this->FillWithArrows ? $ScoreGold : ''),1,0,'C',0);
-		if($this->FillWithArrows && $ErScoreGold) {
-			$this->Line($x1 = $this->getx(), $y1=$this->gety()+$CellH, $x1-($XNineW), $y1-$CellH);
-		}
+            $ErScoreTotal = (empty($CurDist) or $this->IsRedding) ? '' : (($Data['Arr'.$CurDist]??'') and ($Data["QuD{$CurDist}"]??0)!=$ScoreTotal);
+            $ErScoreGold  = (empty($CurDist) or $this->IsRedding) ? '' : (($Data["QuGD{$CurDist}"]??0)!=$ScoreGold);
+            $ErScoreXNine = (empty($CurDist) or $this->IsRedding) ? '' : (($Data["QuXD{$CurDist}"]??0)!=$ScoreXnine);
 
-		if($prnXNine) {
-			$this->Cell($XNineW, $CellH, ($this->FillWithArrows ? $ScoreXnine : ''), 1, 0, 'C', 0);
-			if($this->FillWithArrows && $ErScoreXNine) {
-				$this->Line($x1 = $this->getx(), $y1=$this->gety(), $x1+($XNineW), $y1+$CellH);
-			}
-		}
-		$this->ln();
+            //TOTALE GENERALE
+            $OldLine=$this->GetLineWidth();
+            $this->SetLineWidth(0.5);
+            $this->SetXY($TopX + $Width - $TotalCellW*3 - $XNineW*($prnXNine ? 2 : 1) - ($this->PrintTotalCols ? $TotalCellW : 0), $TopY+$TopOffset+$CellH*($NumEnd+1)+1);
+            // if($isNfaa){
+            // 	$this->SetXY($TopX+($Width-5)*2/3+5+(empty($prnXNine) ? $XNineW:0), $TopY+$TopOffset+$CellH*($NumEnd+1)+1);
+            // }
+            $this->SetFont($this->FontStd,'B',$FontSize);
+            $this->Cell($TotalCellW*2,$CellH, (get_text('Total') . " "),0,0,'R',0);
+            $this->Cell($TotalCellW,$CellH,($FillWithArrows ? (($this->IsRedding && !$Data['Tot'.$CurDist]) ? '' : $ScoreTotal) : ''),1,0,'C',0);
+            if($FillWithArrows && $ErScoreTotal and !$this->IsRedding) {
+                $this->Line($x1 = $this->getx(), $y1=$this->gety()+$CellH, $x1-($TotalCellW), $y1-$CellH);
+            }
+            if($this->PrintTotalCols) {
+                $this->SetFillColor(0xFF,0xE8,0xE8);
+                $this->Cell($TotalCellW,$CellH, ($Data['Arr'.$CurDist] == "" ? '' : $ScoreTotal + $Data['Tot'.$CurDist]),1,0,'C',1);
+                if(!empty($FirstDist) && $Data['Arr'.$CurDist] == "" and !$this->IsRedding) {
+                    $this->SetLineWidth($OldLine);
+                    $this->Line($this->GetX(),$this->GetY(),$this->GetX()-$TotalCellW,$this->GetY()+$CellH);
+                    $this->Line($this->GetX(),$this->GetY()+$CellH,$this->GetX()-$TotalCellW,$this->GetY());
+                    $this->SetLineWidth(0.5);
+                }
+                $this->SetFillColor(0xE8,0xE8,0xE8);
+            }
 
-		if($this->FillWithArrows and ($ErScoreTotal or $ErScoreGold or $ErScoreXNine)) {
-			$this->SetXY($TopX+($Width-5)/2+5, $TopY+$TopOffset+$CellH*($NumEnd+2)+1);
-			$this->Cell(($NumArrow+2.2)*$CellW,$CellH, (get_text('SignedTotal', 'Tournament') . " "),0,0,'R',0);
+            $this->Cell($XNineW,$CellH,($FillWithArrows ? $ScoreGold : ''),1,0,'C',0);
+            if($FillWithArrows && $ErScoreGold) {
+                $this->Line($x1 = $this->getx(), $y1=$this->gety()+$CellH, $x1-($XNineW), $y1-$CellH);
+            }
 
-			$this->Cell($TotalCellW,$CellH, ($Data["QuD"] ?? ''),1,0,'C',0);
-			$this->Cell($XNineW,$CellH, ($Data["QuGD"] ?? ''),1,0,'C',0);
-			if($prnXNine) {
-				$this->Cell($XNineW, $CellH, ($Data["QuXD"] ?? ''), 1, 0, 'C', 0);
-			}
-			$this->ln();
-		} else {
-			$this->ln($CellH);
-		}
+            if($prnXNine) {
+                $this->Cell($XNineW, $CellH, ($FillWithArrows ? $ScoreXnine : ''), 1, 0, 'C', 0);
+                if($FillWithArrows && $ErScoreXNine) {
+                    $this->Line($x1 = $this->getx(), $y1=$this->gety(), $x1+($XNineW), $y1+$CellH);
+                }
+            }
+            $this->ln();
+
+            if($FillWithArrows and ($ErScoreTotal or $ErScoreGold or $ErScoreXNine)) {
+                $this->SetXY($TopX+($Width-5)/2+5, $TopY+$TopOffset+$CellH*($NumEnd+2)+1);
+                $this->Cell(($NumArrow+2.2)*$CellW,$CellH, (get_text('SignedTotal', 'Tournament') . " "),0,0,'R',0);
+
+                $this->Cell($TotalCellW,$CellH, ($Data["QuD".$CurDist] ?? ''),1,0,'C',0);
+                $this->Cell($XNineW,$CellH, ($Data["QuGD".$CurDist] ?? ''),1,0,'C',0);
+                if($prnXNine) {
+                    $this->Cell($XNineW, $CellH, ($Data["QuXD".$CurDist] ?? ''), 1, 0, 'C', 0);
+                }
+                $this->ln();
+            } else {
+                $this->ln($CellH);
+            }
+        }
 
 		$this->SetLineWidth(0.2);
 
 		//FIRME
+        $this->setXY($TopX, $TopY+$TopOffset+$CellH*($NumEnd+3+($this->IsRedding?1:0))+1);
 		$this->SetFont($this->FontFix,'BI',6);
 		$this->Cell(4, 3, '', 0, 0, 'C', 0);
 		$this->Cell($Width/2-7, 3, (get_text('Archer')), 'B', 0, 'L', 0);
@@ -1213,7 +1397,7 @@ class ScorePDF extends IanseoPdf {
 		if(array_key_exists("tNo",$Data)) {
 			$HeaderTarget = trim($Data["tNo"],'0');
 			if(!empty($Data["AtTarget"]) and $TargetNo!=intval($Data["AtTarget"])) {
-				$HeaderTarget = $TargetNo . substr($Data["tNo"],-1,1) . '-' . $this->Indices[ceil($Data["AtTarget"]/(2*$NumEnd))-2];
+				$HeaderTarget = CheckBisTargets($Data["tNo"], $NumEndTotal);
 			}
 		}
 
@@ -1429,52 +1613,67 @@ $Data["Dist"] : ' '),0,0,'C',(array_key_exists("Dist",$Data) ?
 		$this->dy(2);
 		$Y=$this->GetY();
 		$this->SetFont('','b', 14);
-		$this->cell(0,0, 'Shooting Report', '', 1, 'C');
-
-		$this->SetFont('','', 10);
+		$this->cell(0,0, get_text('ShootingReport', 'RunArchery'), '', 1, 'C');
 		$this->dy(2);
-		$this->cell(15,0, 'Race N°', '',0,'R');
-		$this->cell(15,0, '', 'B');
-		$this->cell(15,0, 'Format', '', 0, 'R');
-		$this->cell(30,0, '', 'B');
-		$this->cell(27,0, 'Spotter Name', '', 0,'R');
-		$this->cell(0,0, '', 'B', 1);
 
-		$this->dy(2);
-		$this->cell(30,0, 'Race Name', '', 0, 'R');
-		$this->cell(45,0, '', 'B');
-		$this->cell(27,0, 'Allocated Target', '', 0,'R');
+		$this->SetFont('','', 8);
+		$this->cell(12,0, get_text('RaceNum', 'RunArchery'), '',0,'R');
+		$this->cell(10,0, '', 'B');
+        $this->cell(22,0, get_text('SpotterName', 'RunArchery'), '', 0,'R');
+        $this->cell(60,0, '', 'B', 0);
+		$this->cell(20,0, get_text('RaceName', 'RunArchery'), '', 0, 'R');
+		$this->cell(40,0, '', 'B');
+		$this->cell(12,0, get_text('Target'), '', 0,'R');
 		$this->cell(0,0, '', 'B', 1);
 		$this->dy(2);
 
 		$this->SetFont('','', 9);
 
-		$CellH=($Height+$TopY-12-$this->getY()-$BottomImage)/$Data['rows'];
+		$CellH=($Height+$TopY-14-$this->getY()-$BottomImage)/$Data['rows'];
 		$Circle=min(7,$CellH)/2;
 		$CircleYOffset=$CellH/2;
 		$CellHits=$Circle*$Data['targets']*2+2;
 
 		// actual score
-		$this->cell(20,12, 'BIB', '1',0,'C');
-		$this->cell(16,5, 'Shooting', 'LTR',0,'C');
-		$this->cell($CellHits+8,12, 'TARGETS HIT', '1',0,'C');
-		$this->cell(15,8, "Arrows", 'LTR',0,'C');
-		$this->cell(15,8, 'Penalty', 'LTR',0,'C');
-		$this->cell(0,12, 'Notes', '1',0,'C');
+		$this->cell(20,13, get_text('Bib', 'RunArchery'), '1',0,'C');
+		$this->cell(16,5, get_text('Shooting', 'RunArchery'), 'LTR',0,'C');
+		$this->cell($CellHits+8,8, get_text('TargetsHit','RunArchery'), 'LTR',0,'C');
+		$this->writeHTMLCell(15,13, null, null, get_text('ArrowsShot', 'RunArchery'), 1,0,false, true, 'C');
+		$this->writeHTMLCell(15,13, null, null, get_text('PenaltyLoops', 'RunArchery'), 1,0,false, true,'C');
+		$this->writeHTMLCell(0,13, null, null, get_text('Notes', 'Tournament').'<div style="text-align: left"><b>A</b>: '.get_text('Accepted', 'RunArchery').'&nbsp;&nbsp;&nbsp;<b>R</b>: '.get_text('Rejected', 'RunArchery').'<br/><b>W</b>: '.get_text('Withdrawn', 'RunArchery').'</div>', 1,0,false, true, 'C');
 		$this->ImageSVG(dirname(__DIR__).'/Images/standing.svg', 31.5, $this->GetY()+4, 5);
 		$this->ImageSVG(dirname(__DIR__).'/Images/kneed.svg', 39.5, $this->GetY()+5.5, 5);
-		$this->SetXY(46+$CellHits,$this->getY()+5);
-		$this->cell(8,7, "#", '',0,'C');
-		$this->cell(15,7, "Shot", 'LBR',0,'C');
-		$this->cell(15,7, 'Loops', 'LBR',0,'C');
-		$this->SetY($this->getY()+7);
+		$this->SetXY(46,$this->getY()+5);
+        $L=$CellHits/$Data['targets'];
+        for($j=0; $j<$Data['targets']; $j++ ) {
+            $this->cell($L, 8, chr(65+$j), $j ? '' : 'L', 0, 'C');
+        }
+		$this->cell(8,8, "#", 'BR',0,'C');
+		$this->SetY($this->getY()+8);
 
 		$L=47+$Circle;
+        $Rect=($CellH-3)/2;
+        $this->SetFont('','', 7);
 		for($i=0;$i<$Data['rows'];$i++) {
 			// creates the circles for the targets
 			for($j=0; $j<$Data['targets']; $j++ ) {
 				$this->Circle($L+$j*$Circle*2, $this->getY()+$CircleYOffset, $Circle);
 			}
+
+            // sets the 3 letters
+            $this->Rect(75+$CellHits+$this->getSideMargin(), $this->GetY()+1, $Rect, $Rect);
+            $this->Rect(75+$CellHits+$this->getSideMargin(), $this->GetY()+2+$Rect, $Rect, $Rect);
+            $this->Rect(75+$CellHits+$this->getSideMargin()+$Rect*2+2, $this->GetY()+2+$Rect, $Rect, $Rect);
+            $OrgX=$this->GetX();
+            $OrgY=$this->GetY();
+            $this->setXY($OrgX+$CellHits+74.5+$Rect, $OrgY+0.35);
+            $this->cell(5, $CellH/2, 'A');
+            $this->setXY($OrgX+$CellHits+74.5+$Rect, $OrgY+$CellH/2-0.2);
+            $this->cell(5, $CellH/2, 'R');
+            $this->setXY($OrgX+$CellHits+74.5+$Rect*2+5, $OrgY+$CellH/2-0.2);
+            $this->cell(5, $CellH/2, 'W');
+
+            $this->setXY($OrgX, $OrgY);
 			$this->cell(20,$CellH, '', '1',0,'C');
 			$this->cell(8,$CellH, '', '1',0,'C');
 			$this->cell(8,$CellH, '', '1',0,'C');
@@ -1483,6 +1682,110 @@ $Data["Dist"] : ' '),0,0,'C',(array_key_exists("Dist",$Data) ?
 			$this->cell(15,$CellH, '', '1',0,'C');
 			$this->cell(15,$CellH, '', '1',0,'C');
 			$this->cell(0,$CellH, '', '1',1,'C');
+		}
+	}
+
+    function DrawScoreRunArcheryDelays($Data=array()) {
+		$TopY=$Data['top'];
+		$Width=$this->getPageWidth()-$this->getSideMargin()*2;
+		$Height=$Data['height'];
+		//PARAMETRI CALCOLATI
+		$TopOffset=30;
+		$BottomImage=0;
+
+		// draw a separation line...
+		if($TopY-10>0) {
+			$this->Line(0,$TopY-10, $this->getPageWidth(), $TopY-10);
+		}
+
+		//HEADER LOGO SX & Dx
+		$TmpLeft = 0;
+		$TmpRight = 0;
+		if($this->PrintLogo) {
+			if(file_exists($IM=$this->ToPaths['ToLeft']) ) {
+				$im=getimagesize($IM);
+				$this->Image($IM, 10, $TopY, 0, ($TopOffset/2));
+				$TmpLeft = (1 + ($im[0] * ($TopOffset/2) / $im[1]));
+			}
+			if(file_exists($IM=$this->ToPaths['ToRight']) ) {
+				$im=getimagesize($IM);
+				$TmpRight = ($im[0] * ($TopOffset/2) / $im[1]);
+				$this->Image($IM, (10+$Width-$TmpRight), $TopY, 0, $TopOffset/2);
+				$TmpRight++;
+			}
+			//IMMAGINE DEGLI SPONSOR
+			// Sponsors disabled if QRCodes are to be printed!!!
+			if($this->BottomImage and file_exists($IM=$this->ToPaths['ToBottom'])) {
+				$BottomImage=7.5;
+				$im=getimagesize($IM);
+				$imgW = $Width;
+				$imgH = $imgW * $im[1] / $im[0] ;
+				if($imgH > $BottomImage) {
+					$imgH = $BottomImage;
+					$imgW = $imgH * $im[0] / $im[1] ;
+				}
+				$this->Image($IM, (10+($Width-$imgW)/2), ($TopY+$Height-$imgH), $imgW, $imgH);
+			}
+		}
+
+
+		//TESTATA GARA
+		if($this->PrintHeader) {
+			$tmpPad=$this->getCellPaddings();
+			$this->SetCellPadding(0);
+			$this->SetColors(true);
+			$this->SetFont($this->FontStd,'B',9);
+			$this->SetXY(10+$TmpLeft,$TopY);
+			$this->MultiCell($Width-$TmpLeft-$TmpRight, 4, $this->Name, 0, 'L', 0);
+			$this->SetFont($this->FontStd,'',7);
+			$this->SetXY(10+$TmpLeft, $this->GetY());
+			if($this->GetStringWidth($this->Where . ", " . TournamentDate2String($this->WhenF,$this->WhenT))>=$Width-$TmpLeft-$TmpRight) {
+				$this->MultiCell($Width-$TmpLeft-$TmpRight, 4, $this->Where, 0, 'L', 0);
+				$this->SetXY(10+$TmpLeft, $this->GetY());
+				$this->MultiCell($Width-$TmpLeft-$TmpRight, 4, TournamentDate2String($this->WhenF,$this->WhenT), 0, 'L', 0);
+			} else {
+				$this->MultiCell($Width-$TmpLeft-$TmpRight, 4, $this->Where . ", " . TournamentDate2String($this->WhenF,$this->WhenT), 0, 'L', 0);
+			}
+			$this->SetCellPaddings($tmpPad['L'], $tmpPad['T'], $tmpPad['R'], $tmpPad['B']);
+		}
+
+		$this->dy(2);
+		$Y=$this->GetY();
+		$this->SetFont('','b', 14);
+		$this->cell(0,0, get_text('DelaysReport', 'RunArchery'), '', 1, 'C');
+		$this->dy(2);
+
+		$this->SetFont('','', 8);
+		$this->cell(12,0, get_text('RaceNum', 'RunArchery'), '',0,'R');
+		$this->cell(10,0, '', 'B');
+        $this->cell(22,0, get_text('OfficialName', 'RunArchery'), '', 0,'R');
+        $this->cell(70,0, '', 'B', 0);
+		$this->cell(20,0, get_text('RaceName', 'RunArchery'), '', 0, 'R');
+		$this->cell(0,0, '', 'B', 1);
+		$this->dy(2);
+
+		$this->SetFont('','', 9);
+
+		$CellH=($Height+$TopY-14-$this->getY()-$BottomImage)/$Data['rows'];
+
+		// actual score
+		$this->cell(20,13, get_text('Bib', 'RunArchery'), '1',0,'C');
+		$this->cell(50,7, get_text('StopwatchTime', 'RunArchery'), 'LTR',0,'C', 0, '', 1, false, 'T', 'B');
+		$this->writeHTMLCell(25,13, null, null, get_text('TimeToDeduct', 'RunArchery'), 1,0,false, true, 'C');
+		$this->cell(0,13, get_text('Notes', 'Tournament'), 1,0,'C');
+		$this->SetXY($this->getSideMargin()+20,$this->getY()+7);
+		$this->cell(25,6, get_text('Start', 'RunArchery'), 'BR',0,'C');
+		$this->cell(25,6, get_text('End', 'RunArchery'), 'LBR',0,'C');
+		$this->SetY($this->getY()+6);
+
+        $Rect=($CellH-3)/2;
+        $this->SetFont('','', 7);
+		for($i=0;$i<$Data['rows'];$i++) {
+			$this->cell(20, $CellH, '', '1',0,'C');
+			$this->cell(25, $CellH, '', '1',0,'C');
+			$this->cell(25, $CellH, '', '1',0,'C');
+			$this->cell(25, $CellH, '', '1',0,'C');
+			$this->cell(0, $CellH, '', '1',1,'C');
 		}
 	}
 	function DrawScoreRunArcheryLoop($Data=array()) {
@@ -1547,63 +1850,56 @@ $Data["Dist"] : ' '),0,0,'C',(array_key_exists("Dist",$Data) ?
 		$this->dy(3);
 		$Y=$this->GetY();
 		$this->SetFont('','b', 14);
-		$this->cell(0,0, 'Penalty Loops Report', '', 1, 'C');
+		$this->cell(0,0, get_text('PenaltyLoopsReport', 'RunArchery'), '', 1, 'C');
+        $this->dy(2);
 
-		$this->SetFont('','', 10);
-		$this->dy(3);
-		$this->cell(15,0, 'Race N°', '',0,'R');
-		$this->cell(15,0, '', 'B');
-		$this->cell(15,0, 'Format', '', 0, 'R');
-		$this->cell(30,0, '', 'B');
-		$this->SetX($this->getX()+2);
-		$this->cell(0,0, 'Race Official\'s Name', '', 1,'C');
+        $this->SetFont('','', 8);
+        $this->cell(12,0, get_text('RaceNum', 'RunArchery'), '',0,'R');
+        $this->cell(10,0, '', 'B');
+        $this->cell(22,0, get_text('OfficialName', 'RunArchery'), '', 0,'R');
+        $this->cell(70,0, '', 'B', 0);
+        $this->cell(20,0, get_text('RaceName', 'RunArchery'), '', 0, 'R');
+        $this->cell(0,0, '', 'B', 1);
+        $this->dy(2);
 
-		$this->dy(2);
-		$this->cell(30,0, 'Race Name', '', 0, 'R');
-		$this->cell(45,0, '', 'B');
-		$this->SetX($this->getX()+2);
-		$this->cell(0,0, '', 'B', 1);
-		$this->dy(3);
+        $this->SetFont('','', 9);
 
-		$this->SetFont('','', 9);
-
-		$CellH=($Height+$TopY-12-$this->getY()-$BottomImage)/($Data['rows']??20);
+		$CellH=($Height+$TopY-13-$this->getY()-$BottomImage)/($Data['rows']??20);
+        $Circle=($CellH)/2;
+        $Loops=$Circle*4+5;
+        $L=26+$this->getSideMargin();
 
 		// actual sheet
 		// header row 1
-		$this->cell(25,12, 'BIB', '1',0,'C');
-		$this->cell(15,4, 'Relay', 'LTR',0,'C','','',1,'','','B');
-		$this->cell(30,6, 'Counting Loops', 'LTR',0,'C','','',1,'','','B');
-		$this->cell(15,6, "Loops", 'LTR',0,'C','','',1,'','','B');
+		$this->cell(25,12, get_text('Bib', 'RunArchery'), '1',0,'C');
+		$this->cell($Loops+10,12, get_text('CountingLoops', 'RunArchery'), 'LTR',0,'C');
+		$this->cell(25,12, get_text('Notes', 'Tournament'), 1,0,'C');
 		$this->SetFont('','B', 9);
-		$this->cell(0,4, 'Post competition Checking (by judge)', '1',0,'C');
+		$this->cell(0,4, get_text('PostCheckByJudges', 'RunArchery'), '1',0,'C');
 		$this->SetFont('','', 9);
 
 		// header row 2
-		$this->setXY(35,$this->GetY()+4);
-		$this->cell(15,4, 'A B C', 'LR',0,'C');
-		$this->setX(95);
-		$this->cell(15,4, 'Due', 'LTR',0,'C','','',1,'','','B');
-		$this->cell(0,8, 'Notes', '1',0,'C');
+		$this->setXY($this->getSideMargin()+$Loops+60,$this->GetY()+4);
+		$this->cell(10,4, get_text('DueLoops-Due', 'RunArchery'), 'LTR',0,'C','','',1,'','','B');
+		$this->cell(0,8, get_text('Notes', 'Tournament'), '1',0,'C');
 
-		$this->setXY(50, $this->GetY()+2);
-		$this->cell(30,6, 'eg "|" per loop', 'LBR',0,'C','','',1,'','','T');
-		$this->cell(15,6, "Done", 'LBR',0,'C','','',1,'','','T');
-
-		// header row 3
-		$this->setXY(35, $this->GetY()+2);
-		$this->cell(15,4, '1 2 3', 'LBR',0,'C','','',1,'','','T');
-		$this->setX(95);
-		$this->cell(15,4, 'Loops', 'LBR',0,'C','','',1,'','','T');
+		$this->setXY($this->getSideMargin()+$Loops+60, $this->GetY()+4);
+		$this->cell(10,4, get_text('DueLoops-Loops', 'RunArchery'), 'LBR',0,'C','','',1,'','','T');
 
 		$this->setY($this->GetY()+4);
 
 		for($i=0;$i<($Data['rows']??20);$i++) {
+            // circles
+            for($j=0; $j<4; $j++ ) {
+//                $this->Circle($L+$j*$Circle*2, $this->getY()+1+$Circle, $Circle);
+                $this->RoundedRect($L+$j*($Circle+1), $this->getY()+1, $Circle, $CellH-2, 2);
+            }
+
+            $this->cell(25,$CellH, '', '1');
+			$this->cell($Loops,$CellH, '', '1');
+			$this->cell(10,$CellH, '', '1');
 			$this->cell(25,$CellH, '', '1');
-			$this->cell(15,$CellH, '', '1');
-			$this->cell(30,$CellH, '', '1');
-			$this->cell(15,$CellH, '', '1');
-			$this->cell(15,$CellH, '', '1');
+			$this->cell(10,$CellH, '', '1');
 			$this->cell(0,$CellH, '', '1',1);
 		}
 	}

@@ -25,15 +25,15 @@ if(!$EVENT) {
     cd_redirect('ListEvent.php');
 }
 
+$IncludeJquery = true;
 $JS_SCRIPT=array(
     phpVars2js(array(
         'StrResetElimError' => get_text('ResetElimError', 'Tournament'),
         'StrResetElim' => get_text('ChangeElimWarning'),
         'EVENT' => $_REQUEST['Event'],
         )),
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
     '<script type="text/javascript" src="./ListEvents-Eliminations.js"></script>',
-    );
+);
 
 include('Common/Templates/head.php');
 

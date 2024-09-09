@@ -262,7 +262,8 @@ function getLUEChanges($TourId) {
 		return array(
 			'0'=>array('key'=>'0','descr'=>get_text('StandardElabTeamMode','Tournament')),
 			'1'=>array('key'=>'1','descr'=>get_text('FieldElabTeamMode','Tournament')),
-			'2'=>array('key'=>'2','descr'=>get_text('3DElabTeamMode','Tournament'))
+			'2'=>array('key'=>'2','descr'=>get_text('3DElabTeamMode','Tournament')),
+			'127'=>array('key'=>'127','descr'=>get_text('HideDivClassTeam','Tournament')),
 		);
 	}
 

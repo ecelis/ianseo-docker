@@ -8,7 +8,7 @@ $OldTarget='';
 $First=true;
 $OldTeam='#@#@#';
 $OldEvent='#@#@#';
-foreach($PdfData->Data['Items'] as $Group) {
+foreach($PdfData->Data['Items']??[] as $Group) {
 	foreach($Group as $MyRow) {
 		if($OldEvent != $MyRow->EventCode) {
 			$pdf->setEvent($MyRow->EventName);

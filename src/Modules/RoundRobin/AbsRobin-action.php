@@ -42,7 +42,7 @@ switch($_REQUEST['act']) {
 			// get the Qual => Level 1 events
 			$SQL[]= "SELECT 0 as EvPhase, 0 as EvGroup, EvProgr, EvCode, EvEventName, RrLevGroups*RrLevGroupArchers as EvNumQualified, 0 as EvExtraQualified, 0 as GroupSoSolved, EvE1ShootOff as LevelSoSolved, EvShootOff as FinalSoSolved, GROUP_CONCAT(DISTINCT itemNoT) as SoCt, '' as SoExtraCt
 	        FROM Events
-	        inner join RoundRobinLevel on RrLevTournament=EvTournament and RrLevTeam=EvTeamEvent and RrLevEvent=EvCode and RrLevLevel=1
+	        inner join RoundRobinLevel on RrLevTournament=EvTournament and RrLevTeam=EvTeamEvent and RrLevEvent=EvCode and RrLevLevel=1 and EvCodeParentWinnerBranch=0
 	        LEFT JOIN (
 			SELECT TeEvent, CONCAT_WS('|', COUNT(*), TeSO) as itemNoT
 	            FROM `Teams` 
@@ -57,7 +57,7 @@ switch($_REQUEST['act']) {
 			// get the Qual => Level 1 events
 			$SQL[]= "SELECT 0 as EvPhase, 0 as EvGroup, EvProgr, EvCode, EvEventName, RrLevGroups*RrLevGroupArchers as EvNumQualified, 0 as EvExtraQualified, 0 as GroupSoSolved, EvE1ShootOff as LevelSoSolved, EvShootOff as FinalSoSolved, GROUP_CONCAT(DISTINCT itemNoI) as SoCt, '' as SoExtraCt
 	        FROM Events
-	        inner join RoundRobinLevel on RrLevTournament=EvTournament and RrLevTeam=EvTeamEvent and RrLevEvent=EvCode and RrLevLevel=1
+	        inner join RoundRobinLevel on RrLevTournament=EvTournament and RrLevTeam=EvTeamEvent and RrLevEvent=EvCode and RrLevLevel=1 and EvCodeParentWinnerBranch=0
 	        LEFT JOIN (
 	            SELECT IndEvent, CONCAT_WS('|', COUNT(*), IndSO) as itemNoI
 	            FROM `Individuals` 
@@ -75,7 +75,7 @@ switch($_REQUEST['act']) {
        		RrGrSoSolved GroupSoSolved, RrLevSoSolved LevelSoSolved, 0 FinalSoSolved, 
        		concat_ws(',', CtNoGroup, SoNoGroup) as SoCt, concat_ws(',', CtNoLevel, SoNoLevel) as SoExtraCt
         FROM Events
-		inner join RoundRobinLevel on RrLevTournament=EvTournament and RrLevTeam=$Team and RrLevEvent=EvCode
+		inner join RoundRobinLevel on RrLevTournament=EvTournament and RrLevTeam=$Team and RrLevEvent=EvCode and EvCodeParentWinnerBranch=0
         inner join RoundRobinGroup on RrGrTournament=RrLevTournament and RrGrTeam=RrLevTeam and RrGrEvent=RrLevEvent and RrGrLevel=RrLevLevel
         left join (
             select RrPartEvent Lev2Event, max(RrPartSourceRank) Lev2Qual, RrPartSourceLevel as Lev2SourceLevel, RrPartSourceGroup as Lev2SourceGroup
@@ -268,8 +268,9 @@ switch($_REQUEST['act']) {
 			}
 
 			// select the last qualification rank for the level
-			$q = safe_r_sql("select least(max(RrPartSourceRank), ActParts) as LastQualified 
+			$q = safe_r_sql("select least(max(RrPartSourceRank), ActParts) as LastQualified, EvFinalTargetType
 				from RoundRobinParticipants 
+                inner join Events on EvTournament=RrPartTournament and EvCode=RrPartEvent and EvTeamEvent=RrPartTeam
 				inner join (
 				    select count(*) as ActParts, RrPartLevel as ActLevel, ".($soGroup ? "RrPartGroup" : "0")." as ActGroup
 				    from RoundRobinParticipants 
@@ -333,7 +334,7 @@ switch($_REQUEST['act']) {
 							$tmpValue['tiebreak'] = '';
 							$tmpValue['closest'] = 0;
 							foreach ($T[$IdSubTeam] as $k => $v) {
-								$tmpValue['tiebreak'] .= GetLetterFromPrint(str_replace('*','', $v));
+								$tmpValue['tiebreak'] .= GetLetterFromPrint(str_replace('*','', $v), 'T', $r->EvFinalTargetType);
 							}
 							$tmpValue['tiebreak'] = trim($tmpValue['tiebreak']);
 							if (isset($C[$IdSubTeam])) {
@@ -356,14 +357,14 @@ switch($_REQUEST['act']) {
 					}
 
 					// resets all the levels/groups assignments for this event...
-					safe_w_sql("update RoundRobinParticipants set RrPartGroupRank=0, RrPartGroupRankBefSO=0, RrPartLevelRank=0, RrPartLevelRankBefSO=0, RrPartPoints=0, RrPartTieBreaker=0, RrPartParticipant=0, RrPartSubTeam=0,
+					safe_w_sql("update RoundRobinParticipants set RrPartGroupRank=0, RrPartGroupRankBefSO=0, RrPartLevelRank=0, RrPartLevelRankBefSO=0, RrPartPoints=0, RrPartTieBreaker=0, RrPartTieBreaker2=0, RrPartParticipant=0, RrPartSubTeam=0,
 						RrPartGroupTieBreak='', RrPartGroupTbClosest=0, RrPartGroupTbDecoded='', RrPartLevelTieBreak='', RrPartLevelTbClosest=0, RrPartLevelTbDecoded='',
 						RrPartIrmType=0, RrPartGroupTiesForSO=0, RrPartGroupTiesForCT=0, RrPartDateTime=now(), RrPartLevelTiesForSO=0, RrPartLevelTiesForCT=0
 						where RrPartTournament={$_SESSION['TourId']} and RrPartTeam=$Team and RrPartEvent=".StrSafe_DB($soEvent));
 					safe_w_sql("update RoundRobinMatches set RrMatchAthlete=0, RrMatchSubTeam=0, RrMatchRank=0, RrMatchScore=0, RrMatchSetScore=0, RrMatchSetPoints='', RrMatchSetPointsByEnd='',
 							RrMatchWinnerSet=0, RrMatchTie=0, RrMatchArrowstring='', RrMatchTiebreak='', RrMatchTbClosest=0, RrMatchTbDecoded='', RrMatchArrowPosition='', RrMatchTiePosition='', RrMatchWinLose=0,
 							RrMatchFinalRank=0, RrMatchDateTime=0, RrMatchSyncro=0, RrMatchLive=0, RrMatchStatus=0, RrMatchShootFirst=0, RrMatchVxF=0, RrMatchConfirmed=0, RrMatchNotes='',
-							RrMatchRecordBitmap=0, RrMatchIrmType=0, RrMatchCoach=0, RrMatchRoundPoints=0,RrMatchTieBreaker=0
+							RrMatchRecordBitmap=0, RrMatchIrmType=0, RrMatchCoach=0, RrMatchRoundPoints=0, RrMatchTieBreaker=0, RrMatchTieBreaker2=0
 						where RrMatchTournament={$_SESSION['TourId']} and RrMatchTeam=$Team and RrMatchEvent=".StrSafe_DB($soEvent));
 					safe_w_sql("update RoundRobinGroup set RrGrSoSolved=0 
 						where RrGrTournament={$_SESSION['TourId']} and RrGrTeam=$Team and RrGrEvent=".StrSafe_DB($soEvent));
@@ -420,7 +421,7 @@ switch($_REQUEST['act']) {
 							$closest=0;
 							$decoded='';
 							foreach ($T[$IdSubTeam] as $k => $v) {
-								$tiebreak .= GetLetterFromPrint(str_replace('*','', $v));
+								$tiebreak .= GetLetterFromPrint(str_replace('*','', $v), 'T', $r->EvFinalTargetType);
 							}
 							$tiebreak = trim($tiebreak);
 							if (isset($C[$IdSubTeam])) {
@@ -754,8 +755,8 @@ switch($_REQUEST['act']) {
 
 		// other levels...
 		// count the number of people OK for the group selection
-		$SQL="select RrLevGroups, RrGrSoSolved, RrPartGroupRank, RrPartGroupRankBefSO, RrPartParticipant, RrPartSubTeam, RrPartGroup, RrPartPoints, RrPartTieBreaker, RrPartGroupTieBreak, RrPartGroupTbClosest,
-       		RrPartGroupTiesForSO, RrPartGroupTiesForCT, RrPartLevelTiesForSO, RrPartLevelTiesForCT, EvEventName, RrLevEnds, RrLevArrows, RrLevSO, RrLevTieBreakSystem,
+		$SQL="select RrLevGroups, RrGrSoSolved, RrPartGroupRank, RrPartGroupRankBefSO, RrPartParticipant, RrPartSubTeam, RrPartGroup, RrPartPoints, RrPartTieBreaker, RrPartTieBreaker2, RrPartGroupTieBreak, RrPartGroupTbClosest,
+       		RrPartGroupTiesForSO, RrPartGroupTiesForCT, RrPartLevelTiesForSO, RrPartLevelTiesForCT, EvEventName, RrLevEnds, RrLevArrows, RrLevSO, RrLevTieBreakSystem, RrLevTieBreakSystem2,
 			coalesce(EnId, CoId, 0)  as id, coalesce(concat(upper(EnFirstName),' ', EnName), concat(CoCode, '/',RrPartSubTeam), '') as athlete, coalesce(EnCoCode, CoName,'') as country,
        		IrmType, IrmId, RrLevSoSolved
 			from RoundRobinLevel
@@ -887,7 +888,7 @@ switch($_REQUEST['act']) {
 			$row['country']=$r->country;
 			$row['points']=$r->RrPartPoints;
 			$row['untie1']=$r->RrPartTieBreaker;
-			$row['untie2']='';
+			$row['untie2']=$r->RrPartTieBreaker2;
 			$row['arrows']=[];
 			$row['closest']='';
 
@@ -930,8 +931,8 @@ switch($_REQUEST['act']) {
 				}
 
 				// gets the best ranked according to selection
-				$SQL="select RrLevSoSolved, RrPartLevelRank, RrPartLevelRankBefSO, RrPartParticipant, RrPartSubTeam, 0 as RrPartGroup, RrPartPoints, RrPartTieBreaker, RrPartLevelTieBreak, RrPartLevelTbClosest, 
-		            GroupTies, EvEventName, RrLevEnds, RrLevArrows, RrLevSO, MaxQualified, RrLevTieBreakSystem,
+				$SQL="select RrLevSoSolved, RrPartLevelRank, RrPartLevelRankBefSO, RrPartParticipant, RrPartSubTeam, 0 as RrPartGroup, RrPartPoints, RrPartTieBreaker, RrPartTieBreaker2, RrPartLevelTieBreak, RrPartLevelTbClosest, 
+		            GroupTies, EvEventName, RrLevEnds, RrLevArrows, RrLevSO, MaxQualified, RrLevTieBreakSystem, RrLevTieBreakSystem2,
 					coalesce(EnId, CoId, 0)  as id, coalesce(concat(upper(EnFirstName),' ', EnName), concat(CoCode, '/',RrPartSubTeam), '') as athlete, coalesce(EnCoCode, CoName,'') as country,
 		            IrmType, IrmId
 					from RoundRobinLevel
@@ -1067,7 +1068,7 @@ switch($_REQUEST['act']) {
 					$row['country']=$r->country;
 					$row['points']=$r->RrPartPoints;
 					$row['untie1']=$r->RrPartTieBreaker;
-					$row['untie2']='';
+					$row['untie2']=$r->RrPartTieBreaker2;
 					$row['arrows']=[];
 					$row['closest']='';
 
@@ -1150,7 +1151,7 @@ switch($_REQUEST['act']) {
 
 			// reset all the following levels!
 			// resets all the levels/groups assignments for this event...
-			safe_w_sql("update RoundRobinParticipants set RrPartGroupRank=0, RrPartGroupRankBefSO=0, RrPartLevelRank=0, RrPartLevelRankBefSO=0, RrPartPoints=0, RrPartTieBreaker=0, RrPartParticipant=0, RrPartSubTeam=0,
+			safe_w_sql("update RoundRobinParticipants set RrPartGroupRank=0, RrPartGroupRankBefSO=0, RrPartLevelRank=0, RrPartLevelRankBefSO=0, RrPartPoints=0, RrPartTieBreaker=0, RrPartTieBreaker2=0, RrPartParticipant=0, RrPartSubTeam=0,
 				RrPartGroupTieBreak='', RrPartGroupTbClosest=0, RrPartGroupTbDecoded='', RrPartLevelTieBreak='', RrPartLevelTbClosest=0, RrPartLevelTbDecoded='',
 				RrPartIrmType=0, RrPartGroupTiesForSO=0, RrPartGroupTiesForCT=0, RrPartDateTime=now(), RrPartLevelTiesForSO=0, RrPartLevelTiesForCT=0
 				where RrPartTournament={$_SESSION['TourId']} and RrPartTeam=$Team and RrPartEvent=".StrSafe_DB($Event));

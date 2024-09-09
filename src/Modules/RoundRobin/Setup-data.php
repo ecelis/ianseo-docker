@@ -71,6 +71,9 @@ switch($_REQUEST['act']) {
 			'winPoints'     =>array('text'=>get_text('WinPoints', 'RoundRobin'),'val'=>($LEVEL->RrLevWinPoints ?? 2)),
 			'tiePoints'     =>array('text'=>get_text('TiePoints', 'RoundRobin'),'val'=>($LEVEL->RrLevTiePoints ?? 1)),
 			'tieBreakSystem'=>array('text'=>get_text('TiebreakSystem', 'RoundRobin'),'val'=>($LEVEL->RrLevTieBreakSystem ?? 1)),
+			'tieBreakSystem2'=>array('text'=>get_text('TiebreakSystem', 'RoundRobin'),'val'=>($LEVEL->RrLevTieBreakSystem2 ?? 0)),
+			'checkGolds'    =>array('text'=>get_text('CheckGoldsInMatch', 'Tournament'),'val'=>($LEVEL->RrLevCheckGolds ?? 0)),
+			'checkXNines'   =>array('text'=>get_text('CheckXNinesInMatch', 'Tournament'),'val'=>($LEVEL->RrLevCheckXNines ?? 0)),
 		);
 		$JSON['tieBreakOptions']=array(
 			array('val' => 1, 'text' => get_text('TiebreakSystem-1', 'RoundRobin')),
@@ -108,7 +111,7 @@ switch($_REQUEST['act']) {
 			from Events 
 			inner join RoundRobinLevel on RrLevLevel=$Level and RrLevTournament=EvTournament and RrLevTeam=EvTeamEvent and RrLevEvent=EvCode
 			where EvTeamEvent=$Team and EvElimType=5 and EvTournament={$_SESSION['TourId']} and (EvTeamEvent,EvCOde)!=($Team, ".StrSafe_DB($Event).") and EvElim1={$EVENT->EvElim1} and EvFinalFirstPhase={$EVENT->EvFinalFirstPhase}
-			group by EvElim1, RrLevArrows, RrLevEnds, RrLevSO, RrLevTieAllowed, RrLevWinPoints, RrLevTiePoints, RrLevTieBreakSystem, RrLevGroups, RrLevGroupArchers");
+			group by EvElim1, RrLevArrows, RrLevEnds, RrLevSO, RrLevTieAllowed, RrLevWinPoints, RrLevTiePoints, RrLevTieBreakSystem, RrLevTieBreakSystem2, RrLevGroups, RrLevGroupArchers");
 		while($r=safe_fetch($q)) {
 			$r->text.=" ({$r->RrLevGroups} ".get_text('Groups', 'RoundRobin')." - {$r->RrLevGroupArchers} ".get_text('GroupArchersShort','RoundRobin').")";
 			$JSON['copyfrom'][]=$r;
@@ -159,6 +162,7 @@ switch($_REQUEST['act']) {
 			"RrLevWinPoints=".intval($_REQUEST['WinPoints']),
 			"RrLevTiePoints=".intval($_REQUEST['TiePoints']),
 			"RrLevTieBreakSystem=".intval($_REQUEST['TieBreakSystem']),
+			"RrLevTieBreakSystem2=".intval($_REQUEST['TieBreakSystem2']),
 		);
 		safe_w_SQL("update RoundRobinLevel set ".implode(',',$SQL2)." where $Key");
 		if(safe_w_affected_rows()) {

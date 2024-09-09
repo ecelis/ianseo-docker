@@ -22,7 +22,7 @@ function SetElimArrowValue($Phase, $Event, $Target, $ArIndex, $ArSymbol, $Output
 
 	if(empty($CompId)) $CompId=$_SESSION['TourId'];
 
-	$q=safe_r_sql("select el.*, if(ElElimPhase=0, EvE1Arrows, EvE2Arrows) EvElimArrows, if(ElElimPhase=0, EvE1Ends, EvE2Ends) EvElimEnds
+	$q=safe_r_sql("select el.*, if(ElElimPhase=0, EvE1Arrows, EvE2Arrows) EvElimArrows, if(ElElimPhase=0, EvE1Ends, EvE2Ends) EvElimEnds, EvFinalTargetType
 		from Eliminations el
 		INNER JOIN Events on ElEventCode=EvCode and ElTournament=EvTournament and EvTeamEvent=0
 		where ElElimPhase=".($Phase[1]-1)."
@@ -44,7 +44,7 @@ function SetElimArrowValue($Phase, $Event, $Target, $ArIndex, $ArSymbol, $Output
 			$JsonResult["curendscore"] = ValutaArrowString(substr($Arrowstring, intval($ArIndex/$r->EvElimArrows)*$r->EvElimArrows, $r->EvElimArrows));
 			$JsonResult['error']      = 2;
 		} else {
-			$xx=GetLetterFromPrint($ArSymbol);
+			$xx=GetLetterFromPrint($ArSymbol, 'T', $r->EvFinalTargetType);
 			$Arrowstring[$ArIndex]=str_pad($xx, 1, ' ', STR_PAD_RIGHT);
 
 			$JsonResult['error']      = 0;

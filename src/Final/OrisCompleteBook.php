@@ -91,26 +91,32 @@ if($cbIndFinal || $cbTeamFinal) {
 	include 'OrisMedalList.php';
 	$pdf->SetAutoPageBreak(true,OrisPDF::bottomMargin+$pdf->extraBottomMargin);
 	include 'OrisMedalStanding.php';
+    $pdf->endPage();
 }
 
 include 'Partecipants/OrisCountry.php';
+$pdf->endPage();
 
 if($cbIndFinal || $cbIndElim) {
     include 'Final/Individual/OrisRanking.php';
+    $pdf->endPage();
 }
 
 if($cbIndFinal) {
 	include 'Final/Individual/OrisBracket.php';
 	$BracketsInd = clone $PdfData;
 	$pdf->SetAutoPageBreak(true,OrisPDF::bottomMargin+$pdf->extraBottomMargin);
+    $pdf->endPage();
 }
 
 if($cbIndElim) {
     include 'Elimination/OrisIndividual.php';
+    $pdf->endPage();
 }
 
 if($cbIndFinal) {
     include 'Qualification/OrisIndividual.php';
+    $pdf->endPage();
 }
 
 if($cbTeamFinal) {
@@ -139,6 +145,7 @@ if($cbIndFinal) {
 	$pdf->SetAutoPageBreak(true,(OrisPDF::bottomMargin+$pdf->extraBottomMargin));
 
 	include(PdfChunkLoader('OrisScoreIndividual.inc.php'));
+    $pdf->endPage();
 }
 if($cbTeamFinal) {
     if(empty($BracketsTeam)) {
@@ -157,22 +164,30 @@ if($cbTeamFinal) {
 	$pdf->SetAutoPageBreak(true,(OrisPDF::bottomMargin+$pdf->extraBottomMargin));
 
 	include(PdfChunkLoader('OrisScoreTeam.inc.php'));
+    $pdf->endPage();
+
+    $PdfData=getTeamsComponentsLog();
+    include(PdfChunkLoader('OrisComponentLogTeam.inc.php'));
+    $pdf->endPage();
 }
 
 // Standing and broken records
 $q=safe_r_sql("SELECT count(*) as Involved FROM TourRecords WHERE TrTournament={$_SESSION['TourId']}");
 if($r=safe_fetch($q) and $r->Involved) {
 	include('Partecipants/OrisStatRecStanding.php');
+    $pdf->endPage();
 }
 $q=safe_r_sql("SELECT count(*) as Involved FROM RecBroken WHERE RecBroTournament={$_SESSION['TourId']}");
 if($r=safe_fetch($q) and $r->Involved) {
 	include('Partecipants/OrisStatRecBroken.php');
+    $pdf->endPage();
 }
 
 // competition officials
 $q=safe_r_sql("SELECT count(*) as Involved FROM TournamentInvolved WHERE TiTournament={$_SESSION['TourId']}");
 if($r=safe_fetch($q) and $r->Involved) {
 	include('Tournament/OrisStaffField.php');
+    $pdf->endPage();
 }
 
 $pdf->endPage();
@@ -200,7 +215,7 @@ $pdf->SetFont('freesans', '', 9.5);
 
 // add a simple Table Of Content at first page
 // (check the example n. 59 for the HTML version)
-$pdf->addTOC(1, 'courier', '. ', 'INDEX', 'B');
+$pdf->addTOC(1, 'courier', '.', 'INDEX', 'B');
 
 // end of TOC page
 $pdf->endTOCPage();

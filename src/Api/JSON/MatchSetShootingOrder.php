@@ -85,7 +85,7 @@ if($EvType) {
 $JSON['Error']=false;
 
 // triggers JACK to notify shootng first changed
-runJack("FinShootingFirst", $TourId, array("Event"=>$EvCode ,"Team"=>$EvType,"MatchNo"=>$MatchL ,"TourId"=>$TourId));
+runJack("FinShootingFirst", $TourId, array("Event"=>$EvCode , "Team"=>$EvType, "MatchNo"=>$MatchL, "End"=>$End, "TourId"=>$TourId));
 
 SendResult($JSON);
 

@@ -115,7 +115,7 @@ $JS_SCRIPT[]='
 	.txtGray {color:gray;}
 	';
 $JS_SCRIPT[]='</style>';
-$JS_SCRIPT[] = '<link href="'.$CFG->ROOT_DIR.'Common/css/font-awesome.css" rel="stylesheet" type="text/css">';
+$IncludeFA = true;
 
 include('Common/Templates/head.php');
 
@@ -174,8 +174,9 @@ if($Match) {
     $Win2='';
     $Score1=($Match->matchMode ? $Match->setScore1:$Match->score1);
     $Score2=($Match->matchMode ? $Match->setScore2:$Match->score2);
-    $TB1=ValutaArrowStringSO($Match->tiebreak1);
-    $TB2=ValutaArrowStringSO($Match->tiebreak2);
+    $XChar=($Match->checkGolds ? $Match->goldChars : ($Match->checkXNines? $Match->xNineChars : null));
+    $TB1=ValutaArrowStringSO($Match->tiebreak1, $XChar, $XChar ? 'A' : null);
+    $TB2=ValutaArrowStringSO($Match->tiebreak2, $XChar, $XChar ? 'A' : null);
     $Closest1=($Match->tiebreak1!=strtoupper($Match->tiebreak1) or $Match->closest1);
     $Closest2=($Match->tiebreak2!=strtoupper($Match->tiebreak2) or $Match->closest2);
 
@@ -203,8 +204,15 @@ if($Match) {
 		echo '<div class="LetteraGrande td">'.str_replace("|",",&nbsp;",$Match->setPoints1).'</div>';
 		echo '</div>';
 	}
-	echo '<div class="th"><div>'.get_text('ShotOffShort', 'Tournament').'</div><div class="LetteraGrande td">'.(!empty(trim($Match->tiebreak1)) ? (strlen(trim($Match->tiebreak1))>1 ? implode(DecodeFromString(trim($Match->tiebreak1), false),',') : DecodeFromString(trim($Match->tiebreak1), false)):'&nbsp;').'</div></div>';
-
+    if($Match->checkGolds) {
+        echo '<div class="th"><div>'.$Match->goldLabel.'</div><div class="LetteraGrande td">'.$Match->golds1.'</div></div>';
+    }
+    if($Match->checkXNines) {
+        echo '<div class="th"><div>'.$Match->xNineLabel.'</div><div class="LetteraGrande td">'.$Match->xnines1.'</div></div>';
+    }
+	if($Match->tiebreak1 or $Match->tiebreak2) {
+		echo '<div class="th"><div>'.get_text('ShotOffShort', 'Tournament').'</div><div class="LetteraGrande td">'.implode(',', DecodeFromString(trim($Match->tiebreak1), false, true)).'</div></div>';
+	}
 	if($Closest1 or $Closest2) {
         echo '<div class="th"><div>'.get_text('ClosestShort', 'Tournament').'</div><div class="LetteraGrande td">'.($Closest1 ? '<i class="fa fa-check-circle txtGreen"></i>' :'&nbsp;').'</div></div>';
     }
@@ -222,7 +230,15 @@ if($Match) {
 		echo '<div class="LetteraGrande td">'.str_replace("|",",&nbsp;",$Match->setPoints2).'</div>';
 		echo '</div>';
 	}
-	echo '<div class="th"><div>'.get_text('ShotOffShort', 'Tournament').'</div><div class="LetteraGrande td">'.(!empty(trim($Match->tiebreak2)) ? (strlen(trim($Match->tiebreak2))>1 ? implode(DecodeFromString(trim($Match->tiebreak2), false),',') : DecodeFromString(trim($Match->tiebreak2), false)):'&nbsp;').'</div></div>';
+    if($Match->checkGolds) {
+        echo '<div class="th"><div>'.$Match->goldLabel.'</div><div class="LetteraGrande td">'.$Match->golds2.'</div></div>';
+    }
+    if($Match->checkXNines) {
+        echo '<div class="th"><div>'.$Match->xNineLabel.'</div><div class="LetteraGrande td">'.$Match->xnines2.'</div></div>';
+    }
+	if($Match->tiebreak1 or $Match->tiebreak2) {
+		echo '<div class="th"><div>'.get_text('ShotOffShort', 'Tournament').'</div><div class="LetteraGrande td">'.implode(',', DecodeFromString(trim($Match->tiebreak2), false, true)).'</div></div>';
+	}
 
 	if($Closest1 or $Closest2) {
 		echo '<div class="th"><div>'.get_text('ClosestShort', 'Tournament').'</div><div class="LetteraGrande td">'.($Closest2 ? '<i class="fa fa-check-circle txtGreen"></i>' :'&nbsp;').'</div></div>';
@@ -327,6 +343,9 @@ function ConfirmMatch($Match) {
 			and {$prefix}Event='$Match->event'
 			and {$prefix}Matchno in ($Match->match1, $Match->match2) ";
 	safe_w_sql($SQL);
+    if(safe_w_affected_rows()) {
+	    updateOdfTiming('O', $_SESSION['TourId'], $Match->event, $Match->teamEvent, $Match->match1);
+    }
 
 	// sends the events for the confirmation of the match
 	runJack("MatchFinished", $_SESSION['TourId'], array("Event"=>$Match->event ,"Team"=>$Match->teamEvent,"MatchNo"=>min($Match->match1, $Match->match2) ,"TourId"=>$_SESSION['TourId']));
@@ -338,6 +357,7 @@ function ConfirmMatch($Match) {
 		move2NextPhase(null, $Match->event, $Match->match1);
 	}
 
-	runJack("FinConfirmEnd", $_SESSION['TourId'], array("Event"=>$Match->event ,"Team"=>$Match->teamEvent,"MatchNo"=>min($Match->match1, $Match->match2) ,"TourId"=>$_SESSION['TourId']));
-	//runJack("MatchConfirmed", $_SESSION['TourId'], array("Event"=>$Match->event ,"Team"=>$Match->teamEvent,"MatchNo"=>min($Match->match1, $Match->match2) ,"TourId"=>$_SESSION['TourId']));
+	runJack("FinConfirmEnd", $_SESSION['TourId'], array("Event"=>$Match->event, "Team"=>$Match->teamEvent, "MatchNo"=>min($Match->match1, $Match->match2), "Side"=>0, "TourId"=>$_SESSION['TourId']));
+//ToBeVerified    runJack("FinConfirmEnd", $_SESSION['TourId'], array("Event"=>$Match->event, "Team"=>$Match->teamEvent, "MatchNo"=>min($Match->match1, $Match->match2), "Side"=>1, "TourId"=>$_SESSION['TourId']));
+	runJack("MatchConfirmed", $_SESSION['TourId'], array("Event"=>$Match->event ,"Team"=>$Match->teamEvent,"MatchNo"=>min($Match->match1, $Match->match2), "TourId"=>$_SESSION['TourId']));
 }

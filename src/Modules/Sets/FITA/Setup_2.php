@@ -28,4 +28,3 @@ $DistanceInfoArray=array(array(6, 6), array(6, 6),array(6, 6), array(6, 6),array
 
 require_once('Setup_Target.php');
 
-?>

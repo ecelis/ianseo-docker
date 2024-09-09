@@ -30,97 +30,114 @@ $Tie_Error = array();	// Contiene gl'indici delle tendine Tie con errore
 $Score_Error = array(); // contiene gl'indici degli score che superano il max
 $Set_Error = array(); // contiene gl'indici dei set che superano il max
 
-if(!empty($_REQUEST['Score']) and !IsBlocked(BIT_BLOCK_TEAM)) {
-    // Update dei punti e dei tie
-    foreach($_REQUEST['Score'] as $Event => $Matches) {
-        $Field=$_REQUEST['MatchMode'][$Event] ? 'TfSetScore' : 'TfScore';
-        // get the match maximum values
-        $MaxScores=GetMaxScores($Event, $_REQUEST['Phase'][$Event]*2, 1);
-        foreach($Matches as $Match => $Score) {
-	        $Score=intval($Score);
+if(!IsBlocked(BIT_BLOCK_TEAM)) {
+    if(!empty($_REQUEST['Score'])) {
+        // Update dei punti e dei tie
+        foreach($_REQUEST['Score'] as $Event => $Matches) {
+            $Field=$_REQUEST['MatchMode'][$Event] ? 'TfSetScore' : 'TfScore';
+            // get the match maximum values
+            $MaxScores=GetMaxScores($Event, $_REQUEST['Phase'][$Event]*2, 1);
+            foreach($Matches as $Match => $Score) {
+                $Score=intval($Score);
 
-            if ($Score > ($MaxScores['MaxSetPoints'] ? $MaxScores['MaxSetPoints'] : $MaxScores['MaxMatch']) ) {
-                $Score_Error[$Event][$Match]=true;
-            } else {
-                // Start the update query syntax
-                $Update = "UPDATE TeamFinals SET $Field=$Score";
+                if ($Score > ($MaxScores['MaxSetPoints'] ? $MaxScores['MaxSetPoints'] : $MaxScores['MaxMatch']) ) {
+                    $Score_Error[$Event][$Match]=true;
+                } else {
+                    // Start the update query syntax
+                    $Update = "UPDATE TeamFinals SET $Field=$Score";
 
-                // if set event, check the set scores
-                if($_REQUEST['MatchMode'][$Event] and !empty($_REQUEST['Points'][$Event][$Match])) {
-                    $setPoints=array();
-                    $setScore=0;
-                	foreach($_REQUEST['Points'][$Event][$Match] as $k => $v) {
-                		if(strlen($v)>0) {
-                			if(!is_numeric($v) or $v>$MaxScores['MaxEnd']) {
-                                $Set_Error[$Event][$Match]=true;
-			                } else {
-		                        $setPoints[]=intval($v);
-		                        $setScore+=intval($v);
-			                }
-		                }
+                    // if set event, check the set scores
+                    if($_REQUEST['MatchMode'][$Event] and !empty($_REQUEST['Points'][$Event][$Match])) {
+                        $setPoints=array();
+                        $setScore=0;
+                        foreach($_REQUEST['Points'][$Event][$Match] as $k => $v) {
+                            if(strlen($v)>0) {
+                                if(!is_numeric($v) or $v>$MaxScores['MaxEnd']) {
+                                    $Set_Error[$Event][$Match]=true;
+                                } else {
+                                    $setPoints[]=intval($v);
+                                    $setScore+=intval($v);
+                                }
+                            }
+                        }
+                        $Update.= ", TfSetPoints='" . ($setPoints ? implode("|",$setPoints) : '') . "', TfScore=$setScore";
                     }
-                    $Update.= ", TfSetPoints='" . ($setPoints ? implode("|",$setPoints) : '') . "', TfScore=$setScore";
+
+                    // Check if we have a tie set
+                    if(isset($_REQUEST['Tie'][$Event][$Match])) {
+                        // SO Arows
+                        $tiebreak = '';
+
+                        foreach ($_REQUEST['TieArrows'][$Event][$Match] as $TieKey => $TieValue) {
+                            $tiebreak.=GetLetterFromPrint($TieValue, $MaxScores['Arrows']);
+                        }
+                        $Update.= ", TfTieBreak=" . StrSafe_DB($tiebreak);
+
+                        // Closest status
+                        $Update.= ", TfTbClosest=" . (empty($_REQUEST['Closest'][$Event][$Match]) ? 0 : 1);
+
+                        // split the SO arrows in Decoded ends
+                        $Params=getEventArrowsParams($Event,getPhase($Match),1);
+                        $TbDecoded=array();
+                        $tiebreak=rtrim($tiebreak);
+                        $idx=0;
+                        while($SoEnd=substr($tiebreak, $idx, $Params->so)) {
+                            if($Params->so>1) {
+                                $TbDecoded[]=ValutaArrowString($SoEnd);
+                            } else {
+                                $TbDecoded[]=DecodeFromLetter($SoEnd);
+                            }
+                            $idx+=$Params->so;
+                        }
+                        $Update.= ", TfTbDecoded='" . ($TbDecoded ? implode(",",$TbDecoded).(!empty($_REQUEST['Closest'][$Event][$Match]) ? '+' : '') : '') . "'";
+
+                        // check if it is an IRM
+                        if(substr($_REQUEST['Tie'][$Event][$Match], 0, 4)=='irm-') {
+                            // IRM "low" status (DNF/DNS)
+                            $Update.= ", TfIrmType=" . intval(substr($_REQUEST['Tie'][$Event][$Match], 4));
+                        } else {
+                            // check if the opponent has a bye or something...
+                            $opp=($Match%2 ? $Match-1 : $Match+1);
+                            $Tie=intval($_REQUEST['Tie'][$Event][$Match]);
+                            if($Tie>0 and intval($_REQUEST['Tie'][$Event][$opp])>0) {
+                                $Tie_Error[$Event][$Match] = true;
+                            } else {
+                                $Update .= ", TfTie=$Tie";
+                            }
+                        }
+                    }
+
+                    $Update .=", TfDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " WHERE TfEvent='$Event' AND TfMatchNo=$Match AND TfTournament=" . StrSafe_DB($_SESSION['TourId']);
+                    safe_w_sql($Update);
                 }
-
-                // Check if we have a tie set
-                if(isset($_REQUEST['Tie'][$Event][$Match])) {
-                    // SO Arows
-					$tiebreak = '';
-
-					foreach ($_REQUEST['TieArrows'][$Event][$Match] as $TieKey => $TieValue) {
-						$tiebreak.=(GetLetterFromPrint($TieValue)!=' ' ? GetLetterFromPrint($TieValue) : ' ');
-					}
-					$Update.= ", TfTieBreak=" . StrSafe_DB($tiebreak);
-
-	                // Closest status
-	                $Update.= ", TfTbClosest=" . (empty($_REQUEST['Closest'][$Event][$Match]) ? 0 : 1);
-
-					// split the SO arrows in Decoded ends
-	                $Params=getEventArrowsParams($Event,getPhase($Match),1);
-	                $TbDecoded=array();
-	                $tiebreak=rtrim($tiebreak);
-	                $idx=0;
-	                while($SoEnd=substr($tiebreak, $idx, $Params->so)) {
-	                	if($Params->so>1) {
-			                $TbDecoded[]=ValutaArrowString($SoEnd);
-		                } else {
-			                $TbDecoded[]=DecodeFromLetter($SoEnd);
-		                }
-	                	$idx+=$Params->so;
-	                }
-                    $Update.= ", TfTbDecoded='" . ($TbDecoded ? implode(",",$TbDecoded).(!empty($_REQUEST['Closest'][$Event][$Match]) ? '+' : '') : '') . "'";
-
-                	// check if it is an IRM
-	                if(substr($_REQUEST['Tie'][$Event][$Match], 0, 4)=='irm-') {
-		                // IRM "low" status (DNF/DNS)
-		                $Update.= ", TfIrmType=" . intval(substr($_REQUEST['Tie'][$Event][$Match], 4));
-	                } else {
-						// check if the opponent has a bye or something...
-						$opp=($Match%2 ? $Match-1 : $Match+1);
-						$Tie=intval($_REQUEST['Tie'][$Event][$Match]);
-						if($Tie>0 and intval($_REQUEST['Tie'][$Event][$opp])>0) {
-	                        $Tie_Error[$Event][$Match] = true;
-						} else {
-	                        $Update .= ", TfTie=$Tie";
-						}
-	                }
-                }
-
-                $Update .=", TfDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " WHERE TfEvent='$Event' AND TfMatchNo=$Match AND TfTournament=" . StrSafe_DB($_SESSION['TourId']);
-                safe_w_sql($Update);
             }
         }
-    }
 
-	// Execute next phase
-    foreach($_REQUEST['Phase'] as $event => $phase) move2NextPhaseTeam($phase, $event);
+        // Execute next phase
+        foreach($_REQUEST['Phase'] as $event => $phase) move2NextPhaseTeam($phase, $event);
+    } elseif(!empty($_REQUEST['Tie'])) {
+        foreach($_REQUEST['Tie'] as $Event => $MatchNos) {
+            foreach($MatchNos as $MatchNo => $Tie) {
+                switch($Tie) {
+                    case '0':
+                        $Update = "UPDATE TeamFinals SET TfTie=0";
+                        $Update .=", TfDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " WHERE TfEvent='$Event' AND TfMatchNo=$MatchNo AND TfTournament=" . StrSafe_DB($_SESSION['TourId']);
+                        safe_w_sql($Update);
+                        break;
+                }
+            }
+        }
+
+        // Execute next phase
+        foreach($_REQUEST['Phase'] as $event => $phase) move2NextPhaseTeam($phase, $event);
+    }
 }
 
 $PAGE_TITLE=get_text('MenuLM_Data insert (Table view)');
 
+$IncludeJquery = true;
 $JS_SCRIPT=array(
 	phpVars2js(array('ROOT_DIR' => $CFG->ROOT_DIR)),
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
     '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Final/Individual/Fun_JS.js"></script>',
     '<script type="text/javascript" src="./InsertPoint2.js"></script>',
 	'<style>
@@ -151,7 +168,7 @@ if(!empty($_REQUEST['x_Session']) and $_REQUEST['x_Session']!=-1) {
 	$useSession=true;
 
 	$ComboArr=array();
-	ComboSession('Teams', 'x_Session', $ComboArr);
+	ApiComboSession(['T'], 'x_Session', $ComboArr);
 
 // schedule attuale
 	$actual=array_search($_REQUEST['x_Session'],$ComboArr);
@@ -270,6 +287,9 @@ if (safe_num_rows($Rs)>0) {
             // queste due solo per i nomi e gli score del turno successivo (e volendo precedente)
                 $PrecPhase=$PP;
                 $NextPhase=$NP;
+            } else {
+                $PrecPhase=getPhase(intval($MyRow->GrMatchNo*2));
+                $NextPhase=getPhase(intval($MyRow->GrMatchNo/2));
             }
 
             print '<a class="Link mr-5" href="javascript:ChangePhase(\'' . $PP . '\',' . $Sch. ');">' . get_text('PrecPhase') . '</a>'

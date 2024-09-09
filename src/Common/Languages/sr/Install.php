@@ -111,7 +111,6 @@ $lang['SpecialUpdate']='Imate "test" instalaciju.<br/>Ovu opciju imaju samo odab
 $lang['Start Ianseo']='Idi na IANSEO!';
 $lang['Status']='Status';
 $lang['stdValue']='Vrednost';
-$lang['Suboptimal']='Iako Vaš php.ini fajl nije podešen za optimalne vrednosti, <br/>IANSEO bi trebao da bude funkcionalan za većinu opcija. <br/>Predlažemo da podesite parametre na optimalnu vrednost.';
 $lang['System value']='Sistemska vrednost';
 $lang['UpdatePrepared']='Vaša instalacija će se sada automatski ažurirati. Ne zaboravite da napravite backup svi takmičenja pre početka ažuriranja. Proces može da traje duže ukoliko imate sporiji pristup internetu i treba ažurirati više elemenata.<br/>Svi fajlovi koji ne pripadaju instalaciji će biti uklonjeni osim sadržaja foldera «Modules/Custom».';
 $lang['Updating']='Ažuriranje lokalne Ianseo instalacije';

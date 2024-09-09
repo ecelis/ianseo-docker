@@ -99,6 +99,9 @@ function updateComboGroup() {
             $.each(data.r, function() {
                 $('#spotRound').append('<option value="'+this.k+'">'+this.v+'</option>');
             });
+            if(data.r.length==1) {
+                PreRound='1';
+            }
             $('#spotRound').val(PreRound);
 
             if(PreGroup!='' && PreRound!='') {
@@ -130,6 +133,9 @@ function updateComboMatch() {
                 $('#spotMatch').append('<option value="'+this.k+'">'+this.v+'</option>');
             });
 
+            if(data.items.length==1) {
+                PreMatch=data.items[0].k;
+            }
             $('#spotMatch').val(PreMatch);
             if(PreMatch!='') {
                 buildScorecard();
@@ -140,27 +146,47 @@ function updateComboMatch() {
 }
 
 function toggleTarget() {
-    // $('#Target').toggleClass('Hidden', $('#spotTarget:checked').length==0);
+    $('#Target').toggleClass('Hidden', $('#spotTarget:checked').length==0);
     buildScorecard();
 }
 
 function toggleAlternate() {
     if($('.Alternate:hidden').length>4) {
-    //     $('.Alternate').show();
-    //     var Ends=$('table.Scorecard').attr('ends');
-    //     var Arrows=$('table.Scorecard').attr('arrows');
-    //     var SO=$('table.Scorecard').attr('so');
-    //     var tabindex=1;
-    //     $('.ShootsFirst:checked').each(function() {
-    //         // gets the rows set as shooting first and set them as alternates
-    //         // r1=$()
-    //     });
-    // } else {
+        $('.Alternate').show();
+        var Ends=$('table.Scorecard').attr('ends');
+        var Arrows=$('table.Scorecard').attr('arrows');
+        var SO=$('table.Scorecard').attr('so');
+        var tabindex=1;
+        $('.ShootsFirst:checked').each(function() {
+            // gets the rows set as shooting first and set them as alternates
+            // r1=$()
+        });
+    } else {
         $('.Alternate').hide();
         $('[tabindexorg]').each(function() {
             this.prop('tabindex', this.attr('tabindexorg'));
         });
     }
+}
+
+function swapOpponents() {
+    let form={
+        act:'swapOpponents',
+        team:$('#spotTeam').val(),
+        event:$('#spotEvent').val(),
+        level:$('#spotLevel').val(),
+        group:$('#spotGroup').val(),
+        round:$('#spotRound').val(),
+        match:$('#spotMatch').val(),
+        };
+    $.getJSON(WebDir+'Modules/RoundRobin/Spotting-action.php', form, function (data) {
+        if(data.error!=0) {
+            showAlert(data.msg);
+            return;
+        }
+
+        buildScorecard();
+    });
 }
 
 // some global variables needed to spot
@@ -170,9 +196,10 @@ function buildScorecard() {
     $('#Spotting').hide();
     $('.ActiveArrow').toggleClass('ActiveArrow', false);
     $('#Target').toggleClass('TargetL', false).toggleClass('TargetR', false);
+    $('.SwapOpponents').addClass('d-none');
 
-	if($('#ActivateKeys').is(':checked')==false && $('#spotTarget').is(':checked')) {
-		$('#ActivateKeys').prop('checked', 'checked').click();
+    if($('#ActivateKeys').is(':checked')==false && $('#spotTarget').is(':checked')) {
+        $('#ActivateKeys').prop('checked', 'checked').click();
 	}
 
     let form={
@@ -210,6 +237,8 @@ function buildScorecard() {
         $('#IrmSelectR').val(data.irmR);
         $('#IrmSelectR').attr('initial', data.irmR);
         $('#IrmSelectR').attr('ref', data.matchnoR);
+        $('.SwapOpponents').removeClass('d-none');
+        $('.SwapOpponents input').prop('checked', data.swapped==1);
 
         $('#buttonMove2Next').html(data.move2next);
 
@@ -235,7 +264,7 @@ function buildScorecard() {
             $('#OpponentNameR').toggleClass('Confirmed', data.winner=='R');
             $('#ScorecardL').toggleClass('Confirmed', data.winner=='L');
             $('#ScorecardR').toggleClass('Confirmed', data.winner=='R');
-            $('#confirmMatch').attr('disabled', true);
+            $('#confirmMatch').addClass('d-none');
         }
 
         if(form.target==1) {
@@ -337,11 +366,11 @@ function buildScorecard() {
 	        $('.arrowcell').on('click', function() {
 		        selectArrow($(this).find('input')[0]);
 	        });
-	        $('#Spotting input[type="text"]').prop('disabled', true);
+	        $('#Spotting input[type="text"]').prop('readonly', true);
         }
 
-        $('#MatchAlternate').prop('checked', false).closest('div').hide();
-        $('#liveButton').closest('div').hide();
+        // $('#MatchAlternate').prop('checked', false).closest('div').hide();
+        // $('#liveButton').closest('div').hide();
 
         // simulate call on the first arrow of each match to check the stars if any on loading the scorecard
 	    updateArrow($('[id^="Arrow["]')[0], null);
@@ -367,10 +396,14 @@ function updateArrow(obj, position) {
         GetDataJSON.ArrowPosition=1;
     }
     GetDataJSON[obj.id]=obj.value;
-	$('input[type="checkbox"].Closest:checked').each(function() {
-		GetDataJSON.Closest=this.value;
-	})
-	if(Preparation) {
+    if(GetDataJSON.changed) {
+        // this will automatically reset the closest to center
+        $('input[type="checkbox"].Closest:checked').prop('checked', false);
+    }
+    $('input[type="checkbox"].Closest:checked').each(function() {
+        GetDataJSON.Closest=this.value;
+    })
+    if(Preparation) {
 		GetDataJSON.noUpdate=1;
 	}
 	if(position) {
@@ -399,12 +432,13 @@ function updateArrow(obj, position) {
 
         var expand=$('.SVGTarget').attr('convert');
         var TgtCenter=$('.SVGTarget').attr('OrgSize')/2;
-        if(typeof data.p.id != 'undefined') {
+        if(typeof data.p.id != 'undefined' && data.p.data!=[]) {
         	$('.SVGTarget [id="'+data.p.id.replace(/\[/g,'\\[').replace(/\]/g,'\\]')+'"]').attr('cx', data.p.data.X*expand + TgtCenter).attr('cy', data.p.data.Y*expand + TgtCenter);
         }
 
         if(position) {
         	let nextIndex=parseInt($(obj).attr('tabIndex'));
+            console.log(nextIndex);
         	if($('#MoveNext').is(':checked')) {
 		        nextIndex++;
 	        }
@@ -415,7 +449,7 @@ function updateArrow(obj, position) {
         }
 
         if(GetDataJSON.changed || data.changed==1) {
-            $('[id="'+data.confirm+'"]').attr('disabled', false);
+            $('[id="'+data.confirm+'"]').removeClass('d-none');
         }
 
         if(data.newSOPossible) {
@@ -442,22 +476,34 @@ function updateArrow(obj, position) {
             $('.StarRaiserSO').hide();
             $('.StarRaiserArrows').show();
         }
-        if(data.starsL) {
+        if(data.starsL || data.starsR) {
 	        $('[ref="ScorecardL"]').show();
-	        $('[ref="ConfirmL"]').prop('disabled', true);
+	        $('[ref="ScorecardR"]').show();
+	        $('#confirmEnd').addClass('d-none');
         } else {
 	        $('[ref="ScorecardL"]').hide();
-	        $('[ref="ConfirmL"]').prop('disabled', false);
-        }
-        if(data.starsR) {
-	        $('[ref="ScorecardR"]').show();
-	        $('[ref="ConfirmR"]').prop('disabled', true);
-        } else {
 	        $('[ref="ScorecardR"]').hide();
-	        $('[ref="ConfirmR"]').prop('disabled', false);
+	        $('#confirmEnd').removeClass('d-none');
         }
+        $('#confirmEnd').toggleClass('done', data.endConfirmed).toggleClass('d-none', data.winner!='');
+        $('#confirmMatch').toggleClass('done', data.matchConfirmed).toggleClass('d-none', data.winner=='');
 
-        if(data.showClosest) {
+        // if(data.starsL) {
+	    //     $('[ref="ScorecardL"]').show();
+	    //     $('[ref="ConfirmL"]').prop('disabled', true);
+        // } else {
+	    //     $('[ref="ScorecardL"]').hide();
+	    //     $('[ref="ConfirmL"]').prop('disabled', false);
+        // }
+        // if(data.starsR) {
+	    //     $('[ref="ScorecardR"]').show();
+	    //     $('[ref="ConfirmR"]').prop('disabled', true);
+        // } else {
+	    //     $('[ref="ScorecardR"]').hide();
+	    //     $('[ref="ConfirmR"]').prop('disabled', false);
+        // }
+
+        if(data.showClosest || data.ClosestL || data.ClosestR) {
 	        $('.ClosestSpan').show();
         } else {
 	        $('.ClosestSpan').hide();
@@ -541,26 +587,34 @@ function selectArrow(obj, noselect) {
     obj.select();
 }
 
-// function setLive() {
-//     var spType = ($('#spotType').val()=='Team' ? '1' : '0');
-//     var spEvent = $('#spotCode').val();
-//     var spMatch = $('#spotMatch').val();
-//
-//
-//     $.getJSON(WebDir+"Modules/RoundRobin/Spotting-action.php?d_Event=" + spEvent + "&d_Match="  +  spMatch + "&d_Team=" + spType, function(data) {
-//         if(data.error==0) {
-//             if(data.isLive) {
-//                 $('#liveButton').val(TurnLiveOff).toggleClass('Live', true);
-//             } else {
-//                 $('#liveButton').val(TurnLiveOn).toggleClass('Live', false);
-//             }
-//         } else {
-//             alert(data.msg);
-//         }
-//     });
-// }
+function setLive() {
+    let form={
+        team:$('#spotTeam').val(),
+        event:$('#spotEvent').val(),
+        level:$('#spotLevel').val(),
+        group:$('#spotGroup').val(),
+        round:$('#spotRound').val(),
+        match:$('#spotMatch').val(),
+        act:'setLive',
+    }
 
-function ConfirmEnd(obj) {
+    $.getJSON(WebDir+"Modules/RoundRobin/Spotting-action.php", form, function(data) {
+        if(data.error==0) {
+            if(data.isLive) {
+                $('#liveButton').val(TurnLiveOff).toggleClass('Live', true);
+            } else {
+                $('#liveButton').val(TurnLiveOn).toggleClass('Live', false);
+            }
+        } else {
+            alert(data.msg);
+        }
+    });
+}
+
+function confirmEnd(obj) {
+    if($(obj).hasClass('done')) {
+        return;
+    }
     var form={
         team:$('#spotTeam').val(),
         event:$('#spotEvent').val(),
@@ -582,7 +636,7 @@ function ConfirmEnd(obj) {
             }
 
             // sets the the confirmation!
-            obj.disabled=true;
+            $(obj).addClass('done');
 
             $('#OpponentNameL').toggleClass('Winner', data.winner=='L');
             $('#OpponentNameR').toggleClass('Winner', data.winner=='R');
@@ -591,16 +645,17 @@ function ConfirmEnd(obj) {
             $('.Confirmed').toggleClass('Confirmed', false);
 
 
-            $('#confirmMatch').attr('disabled', true);
-            if(data.winner!='') {
-                // match is over, asks confirmation
-                $('#confirmMatch').attr('disabled', false);
-            }
+            // match is over, asks confirmation
+            $('#confirmMatch').toggleClass('d-none', data.winner=='');
+            $(obj).toggleClass('d-none', data.winner!='');
         }
     });
 }
 
 function confirmMatch(obj) {
+    if($(obj).hasClass('done')) {
+        return;
+    }
     var form={
         team:$('#spotTeam').val(),
         event:$('#spotEvent').val(),
@@ -621,8 +676,8 @@ function confirmMatch(obj) {
             if(data.winner!='') {
                 $('.ActiveArrow').toggleClass('ActiveArrow', false);
                 $('#Target').toggleClass('TargetL', false).toggleClass('TargetR', false);
-                obj.disabled=true;
             }
+            $('#confirmMatch').addClass('done').toggleClass('d-none', data.winner=='');
         }
     });
 }
@@ -712,10 +767,12 @@ function toggleKeypressNew() {
 function toggleKeypress() {
 	keyPressedActive=!keyPressedActive;
 	$('#ActivateKeys')[0].checked=keyPressedActive;
-    if(keyPressedActive)
+    if(keyPressedActive) {
+        $('.arrowcell input').addClass('disabled');
         $('#keypadLegenda').show();
-    else {
+    } else {
         $('#keypadLegenda').hide();
+        $('.arrowcell input').removeClass('disabled');
     }
 
 	if(keyPressedActive) {
@@ -728,7 +785,7 @@ function toggleKeypress() {
 		$('.arrowcell').on('click', function() {
 				selectArrow($(this).find('input')[0]);
 			});
-		$('#Spotting input[type="text"]').prop('disabled', true);
+		$('#Spotting input[type="text"]').prop('readonly', true);
 
 		// creates the definitions
 
@@ -892,6 +949,14 @@ function toggleKeypress() {
             setValue('11');
         });
 
+		KeyListener.simple_combo("shift f", function() {
+			setValue('12');
+		});
+
+        KeyListener.simple_combo("f", function() {
+            setValue('12');
+        });
+
 		KeyListener.simple_combo("num_add", function() {
 			setValue('X');
 		});
@@ -907,7 +972,7 @@ function toggleKeypress() {
 		KeyListener.simple_combo("shift q", function() {
 			// confirm left end
 			var obj=$('[ref="ConfirmL"]');
-			if(obj.length && !obj.prop('disabled')) {
+			if(obj.length && !obj.prop('readonly')) {
 				ConfirmEnd(obj[0]);
 			}
 		});
@@ -915,7 +980,7 @@ function toggleKeypress() {
 		KeyListener.simple_combo("shift e", function() {
 			// confirm left end
 			var obj=$('[ref="ConfirmR"]');
-			if(obj.length && !obj.prop('disabled')) {
+			if(obj.length && !obj.prop('readonly')) {
 				ConfirmEnd(obj[0]);
 			}
 		});
@@ -923,7 +988,7 @@ function toggleKeypress() {
 		KeyListener.simple_combo("shift w", function() {
 			// confirm left end
 			var obj=$('#confirmMatch');
-			if(obj.length && !obj.prop('disabled')) {
+			if(obj.length && !obj.prop('readonly')) {
 				confirmMatch(obj[0]);
 			}
 		});
@@ -934,7 +999,7 @@ function toggleKeypress() {
 		// KeyListener = new window.keypress.Listener();
 
 		// makes all inputs acive
-		$('#Spotting input[type="text"]').prop('disabled', false);
+		$('#Spotting input[type="text"]').prop('readonly', false);
 		$('.arrowcell').off('click');
 
 		// focus on the active cell
@@ -1054,37 +1119,19 @@ function removeStars(obj) {
 }
 
 function toggleClosest(obj) {
-	var spType = ($('#spotType').val()=='Team' ? '1' : '0');
-	var spEvent = $('#spotCode').val();
-	var spMatch = $('#spotMatch').val();
-
-	// execute the toggle
-	$.getJSON(WebDir+'Modules/RoundRobin/Spotting-action.php?team=' + spType + '&event=' + spEvent + '&match=' + spMatch + '&closest='+(obj.checked ? obj.value : ''), function(data) {
-		if(data.error==0) {
-			$('#OpponentNameL').toggleClass('Winner', data.winner=='L');
-			$('#OpponentNameR').toggleClass('Winner', data.winner=='R');
-			$('#ScorecardL').toggleClass('Winner', data.winner=='L');
-			$('#ScorecardR').toggleClass('Winner', data.winner=='R');
-			$('.Confirmed').toggleClass('Confirmed', false);
-
-			$(data.t).each(function() {
-				$('[id="'+this.id+'"]').html(this.val);
-			});
-
-			if(data.newSOPossible) {
-				$('.newSoNeeded').show();
-			} else {
-				$('.newSoNeeded').hide();
-			}
-
-			$('#ClosestL').prop('checked', data.ClosestL==1);
-			$('#ClosestR').prop('checked', data.ClosestR==1);
-
-			if(data.showClosest) {
-				$('.ClosestSpan').show();
-			} else {
-				$('.ClosestSpan').hide();
-			}
-		}
-	});
+    let matchno=$(obj).closest('.Scorecard').attr('matchno');
+    let found='';
+    if(obj.id=='ClosestL') {
+        $('#ClosestR').prop('checked', false);
+    } else {
+        $('#ClosestL').prop('checked', false);
+    }
+    $($('[id^="Arrow\['+matchno+'\]\[1\]"]').get().reverse()).each(function() {
+        if(this.value!='') {
+            this.focus();
+            found=this;
+            return false;
+        }
+    });
+    updateArrow(found);
 }

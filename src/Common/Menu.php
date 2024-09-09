@@ -116,7 +116,7 @@ function get_which_menu($on=false) {
             $ret['COMP']['EXPT'][] = get_text('MenuLM_Export Tournament') . '|' . $CFG->ROOT_DIR . 'Tournament/TournamentExport.php';
             $ret['COMP']['EXPT'][] = get_text('MenuLM_Export Tournament Photo') . '|' . $CFG->ROOT_DIR . 'Tournament/TournamentExport.php?Complete=1';
             if (ProgramRelease == 'HEAD') $ret['COMP']['EXPT'][] = get_text('MenuLM_Export Entries') . '|' . $CFG->ROOT_DIR . 'Partecipants/EntriesExchange.php';
-            if($_SESSION['TourType']==6 AND $_SESSION['TourRealWhenFrom']>='2022-11-01' AND $_SESSION['TourRealWhenTo']<='2023-02-05') {
+            if($_SESSION['TourType']==6 AND $_SESSION['TourRealWhenFrom']>='2023-10-27' AND $_SESSION['TourRealWhenTo']<='2024-02-05') {
                 $ret['COMP']['EXPT'][] = get_text('MenuLM_ExportIndoorWorldSeries') . '|' . $CFG->ROOT_DIR . 'Qualification/ExportIWS.php';
             }
             $ret['COMP'][] = MENU_DIVIDER;
@@ -320,6 +320,7 @@ function get_which_menu($on=false) {
 					// $ret['ROBIN'][] = MENU_DIVIDER;
 					$ret['ROBIN'][] = get_text('MenuLM_Data insert (Table view)') . '|' . $CFG->ROOT_DIR . 'Modules/RoundRobin/InsertPoint.php';
 					// $ret['ROBIN'][] = get_text('MenuLM_Arrow by Arrow (Advanced user)') . '|' . $CFG->ROOT_DIR . 'Modules/RoundRobin/WriteArrows.php';
+					$ret['ROBIN'][] = get_text('MenuLM_Swaps').'|'.$CFG->ROOT_DIR.'Final/SwapMatches.php';
 					$ret['ROBIN'][] = get_text('MenuLM_Spotting') . '|' . $CFG->ROOT_DIR . 'Modules/RoundRobin/Spotting.php';
 				}
 				if ($acl[AclRobin] >= AclReadOnly) {
@@ -355,6 +356,7 @@ function get_which_menu($on=false) {
                     $ret['FINI'][] = get_text('MenuLM_Data insert (Bracket view)') . '|' . $CFG->ROOT_DIR . 'Final/Individual/InsertPoint_Bra.php';
                     $ret['FINI'][] = get_text('MenuLM_Data insert (Table view)') . '|' . $CFG->ROOT_DIR . 'Final/Individual/InsertPoint1.php';
                     $ret['FINI'][] = get_text('MenuLM_Arrow by Arrow (Advanced user)') . '|' . $CFG->ROOT_DIR . 'Final/WriteArrows.php';
+                    $ret['FINI'][] = get_text('MenuLM_Swaps').'|'.$CFG->ROOT_DIR.'Final/SwapMatches.php';
                     $ret['FINI'][] = get_text('MenuLM_Spotting') . '|' . $CFG->ROOT_DIR . 'Final/Spotting.php';
                 }
                 if($acl[AclIndividuals] >= AclReadOnly) {
@@ -392,6 +394,7 @@ function get_which_menu($on=false) {
                     $ret['FINT'][] = get_text('MenuLM_Data insert (Bracket view)') . '|' . $CFG->ROOT_DIR . 'Final/Team/InsertPoint_Bra.php';
                     $ret['FINT'][] = get_text('MenuLM_Data insert (Table view)') . '|' . $CFG->ROOT_DIR . 'Final/Team/InsertPoint1.php';
                     $ret['FINT'][] = get_text('MenuLM_Arrow by Arrow (Advanced user)') . '|' . $CFG->ROOT_DIR . 'Final/WriteArrows.php';
+                    $ret['FINT'][] = get_text('MenuLM_Swaps').'|'.$CFG->ROOT_DIR.'Final/SwapMatches.php';
                     $ret['FINT'][] = get_text('MenuLM_Spotting') . '|' . $CFG->ROOT_DIR . 'Final/Spotting.php?Team=1';
                 }
                 if ($acl[AclTeams] >= AclReadOnly) {
@@ -412,7 +415,7 @@ function get_which_menu($on=false) {
             if($_SESSION['TourType']>=6 AND $_SESSION['TourType']<=8 AND $_SESSION['TourLocRule']=='IT') {
                 $ret['PRNT'][] = get_text('SubClassRank','Tournament') . '|' . $CFG->ROOT_DIR . 'Qualification/PrnIndividual.php?SubClassRank=on&SubClassClassRank=on|||PrintOut';
             }
-            $ret['PRNT'][] = get_text('MenuLM_Div/Class Result List') . '|' . $CFG->ROOT_DIR . 'Qualification/PrintOut.php';
+            $ret['PRNT'][] = get_text('MenuLM_Category Result List') . '|' . $CFG->ROOT_DIR . 'Qualification/PrintOut.php';
             $ret['PRNT'][] = get_text('MenuLM_Qualification Round') . '|' . $CFG->ROOT_DIR . 'Qualification/PrintOutAbs.php';
             $ret['PRNT'][] = MENU_DIVIDER;
         }
@@ -501,7 +504,7 @@ function get_which_menu($on=false) {
 	}
 
 	$ret['MODS'][] = get_text('MenuLM_Modules');
-	if(ProgramRelease!='HEAD' AND (empty($_SESSION['AUTH_ENABLE']) OR !empty($_SESSION['AUTH_ROOT']))) {
+	if(empty($_SESSION['AUTH_ENABLE']) OR !empty($_SESSION['AUTH_ROOT'])) {
 	    $ret['MODS'][] = ''.get_text('MenuLM_Update') .'|'.$CFG->ROOT_DIR.'Update/';
     }
 	//$ret['MODS'][] = get_text('MenuLM_SearchModules') .'|'.$CFG->ROOT_DIR.'Modules/';
@@ -576,22 +579,11 @@ function get_which_run_menu($on=false) {
             $ret['COMP'][] = get_text('MenuLM_Scheduling') . '|' . $CFG->ROOT_DIR . 'Scheduler/index.php';
         }
         if ($acl[AclCompetition] == AclReadWrite) {
-            $ret['COMP'][] = get_text('MenuLM_Training') . '|' . $CFG->ROOT_DIR . 'Final/ManTraining.php';
             $ret['COMP'][] = MENU_DIVIDER;
             $ret['COMP']['FIN'][] = get_text('MenuLM_RunArcherySetup') . '';
             $ret['COMP']['FIN'][] = get_text('MenuLM_Manage Events') . '|' . $CFG->ROOT_DIR . 'Final/ListEvents.php';
-            $ret['COMP']['FIN'][] = get_text('MenuLM_Archers on Targets') . '|' . $CFG->ROOT_DIR . 'Final/PhaseDetails.php';
-            $ret['COMP']['FIN'][] = get_text('MenuLM_Arr4Set') . '|' . $CFG->ROOT_DIR . 'Final/PhaseDetails.php?option=ArrowPhase';
-            //$ret['COMP']['FIN'][] = get_text('PhasesDetails', 'Tournament') . '|' . $CFG->ROOT_DIR . 'Final/PhaseDetails.php';
-            $ret['COMP']['FIN'][] = get_text("MenuLM_Target's Number") . '|' . $CFG->ROOT_DIR . 'Final/ManTarget.php';
-            $ret['COMP']['FIN'][] = get_text('MenuLM_Scheduling') . '|' . $CFG->ROOT_DIR . 'Final/ManSchedule.php';
-            // $ret['COMP']['FIN'][] = get_text('MenuLM_Training') . '|' . $CFG->ROOT_DIR . 'Final/ManTraining.php';
-            if (!defined('hideRunning')) {
-				$ret['COMP']['FIN'][] = get_text('MenuLM_RunningEvents') . '|' . $CFG->ROOT_DIR . 'Final/RunningEvent.php';
-            }
-        }
-        if ($acl[AclCompetition] >= AclReadOnly) {
-            $ret['COMP'][] = get_text('MenuLM_Final Field of Play Layout') . '|' . $CFG->ROOT_DIR . 'Final/FopSetup.php|||PrintOut';
+            $ret['COMP']['FIN'][] = get_text('MenuLM_Draw') . '|' . $CFG->ROOT_DIR . 'RunArchery/SetTarget.php';
+            $ret['COMP']['FIN'][] = get_text('ExportChips', 'RunArchery') . '|' . $CFG->ROOT_DIR . 'RunArchery/ExportChips.php';
         }
         $ret['COMP'][] = MENU_DIVIDER;
         if ($acl[AclRoot] == AclReadWrite) {
@@ -599,13 +591,6 @@ function get_which_run_menu($on=false) {
             $ret['COMP']['BLOCK'][] = get_text('MenuLM_Lock setup') . '|' . $CFG->ROOT_DIR . 'Tournament/BlockTour.php';
             $ret['COMP']['BLOCK'][] = get_text('MenuLM_Lock manage') . '|' . $CFG->ROOT_DIR . 'Tournament/AccessControlList/index.php';
         }
-        // if ($acl[AclCompetition] == AclReadWrite) {
-        //     $ret['COMP']['REPT'][] = get_text('MenuLM_Final report');
-        //     $ret['COMP']['REPT'][] = get_text('MenuLM_EditFinalReport') . '|' . $CFG->ROOT_DIR . 'Tournament/FinalReport/index.php';
-        //     $ret['COMP']['REPT'][] = get_text('MenuLM_PrintFinalReport') . '|' . $CFG->ROOT_DIR . 'Tournament/FinalReport/PDFReport.php|||PrintOut';
-        //     $ret['COMP']['REPT'][] = get_text('MenuLM_CheckList') . '|' . $CFG->ROOT_DIR . 'Tournament/FinalReport/PDFCheckList.php|||PrintOut';
-        //     $ret['COMP'][] = MENU_DIVIDER;
-        // }
         if ($acl[AclCompetition] >= AclReadOnly) {
             $ret['COMP']['EXPT'][] = get_text('MenuLM_Export') . '|' . $CFG->ROOT_DIR . 'Tournament/TournamentExport.php?Complete=1';
             $ret['COMP']['EXPT'][] = get_text('Export2Fitarco', 'Tournament') . '|' . $CFG->ROOT_DIR . 'Tournament/Export2Fitarco.php';
@@ -636,13 +621,6 @@ function get_which_run_menu($on=false) {
             $ret['PART'][] = get_text('MenuLM_Athlete Status Management') . '|' . $CFG->ROOT_DIR . 'Partecipants/ManStatus.php';
             $ret['PART'][] = get_text('MenuLM_Athletes Participation to Ind/Team Event') . '|' . $CFG->ROOT_DIR . 'Partecipants/ManEventAccess.php';
             // $ret['PART'][] = get_text('MenuLM_IrmManagement') . '|' . $CFG->ROOT_DIR . 'Partecipants/ManIrmStatus.php';
-            $ret['PART']['TARG'][] = get_text('MenuLM_Target') . '';
-            $ret['PART']['TARG'][] = get_text('MenuLM_Draw') . '|' . $CFG->ROOT_DIR . 'RunArchery/SetTarget.php';
-            $ret['PART']['TARG'][] = MENU_DIVIDER;
-            $ret['PART']['TARG'][] = get_text('MenuLM_MoveSession') . '|' . $CFG->ROOT_DIR . 'RunArchery/MoveSession.php';
-            // $ret['PART']['TARG'][] = get_text('MenuLM_MoveTarget') . '|' . $CFG->ROOT_DIR . 'Partecipants/MoveTarget.php';
-            // $ret['PART']['TARG'][] = get_text('MenuLM_TargetFromRank') . '|' . $CFG->ROOT_DIR . 'Partecipants/TargetFromRank.php';
-            $ret['PART']['TARG'][] = get_text('MenuLM_DeleteTarget') . '|' . $CFG->ROOT_DIR . 'RunArchery/DeleteTarget.php';
             $ret['PART'][] = MENU_DIVIDER;
         }
         if ($acl[AclCompetition] >= AclReadOnly OR $acl[AclAccreditation] >= AclReadOnly OR $acl[AclRoot] >= AclReadOnly) {
@@ -872,9 +850,9 @@ function get_which_run_menu($on=false) {
         //     $ret['PRNT'][] = get_text('MenuLM_PrintAwards') . '|' . $CFG->ROOT_DIR . 'Tournament/PDFAward.php|||PrintOut';
         //     $ret['PRNT'][] = MENU_DIVIDER;
         // }
-        // if ($acl[AclCompetition] == AclReadWrite) {
-        //     $ret['PRNT'][] = get_text('MenuLM_Print Sign') . '|' . $CFG->ROOT_DIR . 'Common/Sign';
-        // }
+        if ($acl[AclCompetition] == AclReadWrite) {
+            $ret['PRNT'][] = get_text('MenuLM_Print Sign') . '|' . $CFG->ROOT_DIR . 'Common/Sign';
+        }
 		//
 		// /** HHT MENU **/
         // if ($_SESSION['MenuHHT'] AND ($acl[AclQualification] == AclReadWrite OR $acl[AclIndividuals] == AclReadWrite OR $acl[AclTeams] == AclReadWrite)) {

@@ -15,7 +15,7 @@ if($TourId == 0) {
     $JSON['error']=false;
 }
 
-if($IskSequence=getModuleParameter('ISK', 'Sequence','',$TourId)) {
+if($IskSequence=getModuleParameter('ISK', 'Sequence','',$TourId) OR  $IskSequence=getModuleParameter('ISK-NG', 'Sequence','',$TourId)) {
     if(!isset($IskSequence['session'])) {
         $IskSequence=current($IskSequence);
     }

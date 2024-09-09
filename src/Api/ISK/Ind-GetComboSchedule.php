@@ -13,7 +13,7 @@ $error=0;
 
 $IskSequence=getModuleParameter('ISK', 'Sequence', array('type' => '', 'session'=>'', 'distance'=>0, 'maxdist'=>0, 'end'=>0));
 
-foreach(getScheduledSessions('API', $_SESSION['TourId'], !empty($_REQUEST["onlyToday"])) as $myRow) {
+foreach(getApiScheduledSessions(['TourId' => $_SESSION['TourId'], 'OnlyToday' => !empty($_REQUEST["onlyToday"])]) as $myRow) {
     // skip elimination for now
     //if($myRow->keyValue[0]=='E') continue;
     $MaxEnds=$myRow->MaxEnds;

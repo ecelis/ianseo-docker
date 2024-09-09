@@ -8,556 +8,176 @@ var Cache = new Array();	// cache per l'update
 	per aggiungere una coppia DivClass
 	Event è l'evento a cui aggiungere la coppia
 */
-function AddEventRule(Event)
-{
-	if (XMLHttp) {
-		try {
-			if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT) {
-				var Num=document.getElementById('New_EcNumber').value;
-				var OptDiv=document.getElementById('New_EcDivision').options;
-				var OptCl=document.getElementById('New_EcClass').options;
-                var OptSubCl=document.getElementById('New_EcSubClass').options;
+function AddEventRule(Event) {
+	let Num=$('#New_EcNumber').val()??0;
+	let OptDiv=$('#New_EcDivision').val();
+	let OptCl=$('#New_EcClass').val();
+	let OptSubCl=$('#New_EcSubClass').val();
+	let OptAddOns=$('#New_EcExtraAddons').val();
 
-				if (OptDiv.selectedIndex>=0 && OptCl.selectedIndex>=0 && Num.search(/[1-9]{1}[0-9]{0,2}/)!=-1 && (document.getElementById('New_EcSubClass').disabled || OptSubCl.selectedIndex>=0)) {
-					var QueryString = 'EvCode=' + Event + '&EcNumber=' + Num;
+	if (OptDiv.length>0 && OptCl.length>0 && Num!=0 && ($('#New_EcSubClass:disabled').length>0 || OptSubCl.length>0)) {
+		let QueryString = 'EvCode=' + Event + '&Num=' + Num;
+		$(OptDiv).each(function() {
+			QueryString += '&New_EcDivision[]=' + this;
+		});
 
-					for (i=0;i<OptDiv.length;++i) {
-                        if (OptDiv[i].selected) {
-                            QueryString += '&New_EcDivision[]=' + OptDiv[i].value;
-                        }
-                    }
+		$(OptCl).each(function() {
+			QueryString += '&New_EcClass[]=' + this;
+		});
 
-					for (i=0;i<OptCl.length;++i) {
-                        if (OptCl[i].selected) {
-                            QueryString += '&New_EcClass[]=' + OptCl[i].value;
-                        }
-                    }
-
-                    if(document.getElementById('New_EcSubClass').disabled) {
-                        QueryString += '&New_EcSubClass[]=';
-                    } else {
-                        for (i = 0; i < OptSubCl.length; ++i) {
-                            if (OptSubCl[i].selected) {
-                                QueryString += '&New_EcSubClass[]=' + OptSubCl[i].value;
-                            }
-                        }
-                    }
-
-					XMLHttp.open("GET","AddEventRule.php?" + QueryString,true);
-// 					document.getElementById('idOutput').innerHTML="AddEventRule.php?" + QueryString;
-					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-					XMLHttp.onreadystatechange=AddEventRule_StateChange;
-					XMLHttp.send(null);
-				}
-			}
-		} catch (e) {
-		}
-	}
-}
-
-function AddEventRule_StateChange() {
-	// se lo stato � Complete vado avanti
-	if (XMLHttp.readyState==XHS_COMPLETE) {
-	// se lo status di HTTP � ok vado avanti
-		if (XMLHttp.status==200) {
-			try {
-				AddEventRule_Response();
-			} catch(e) {
-			}
+		if($('#New_EcSubClass:disabled').length>0) {
+			QueryString += '&New_EcSubClass[]=';
 		} else {
+			$(OptSubCl).each(function() {
+				QueryString += '&New_EcSubClass[]=' + this;
+			});
 		}
+		if($('#New_EcExtraAddons:disabled').length>0) {
+			QueryString += '&New_EcExtraAddons=0';
+		} else {
+			let addOnValue = 0
+			$(OptAddOns).each(function() {
+				addOnValue += parseInt(this);
+			});
+			QueryString += '&New_EcExtraAddons=' + addOnValue;
+		}
+
+		$.getJSON("AddEventRule.php?" + QueryString, function(data) {
+			if (data.error==0) {
+				let firstRow=true;
+				$(data.rules).each(function() {
+					if(firstRow) {
+						$('#tbody').append('<tr id="Div_' + Event + '_' + this[0] + '" class="Divider"><td colspan="'+(6+AddOnsEnabled)+'"></td></tr>');
+					}
+					$('#tbody').append('<tr id="Row_' + Event + '_' + this[0] + '_' + this[1] + this[2] + this[3] + this[4] + '">' +
+						(firstRow ? '<td class="Center" rowspan="'+data.rules.length+'">'+this[6]+'</td>' : '')+
+						'<td class="Center">'+this[1]+'</td>' +
+						'<td class="Center">'+this[2]+'</td>' +
+						'<td class="Center">'+this[3]+'</td>' +
+						(AddOnsEnabled ? '<td class="Center">'+this[5]+'</td>' : '') +
+						'<td class="Center"><img src="../../Common/Images/drop.png" alt="Delete" title="Delete" onclick="DeleteEventPartialRule(\'' + Event + '\',\'' + this[0] + '\',\'' + this[1] + '\',\'' + this[2] + '\',\'' + this[3] + '\',\'' + this[4] + '\')"></td>' +
+						(firstRow ? '<td class="Center" rowspan="'+data.rules.length+'"><img src="../../Common/Images/drop.png" alt="Delete" title="Delete" onclick="DeleteEventRule(\'' + Event + '\',\'' + this[0] + '\')"></td>':'') +
+						'</tr>');
+					firstRow = false;
+				});
+
+				$('#New_EcNumber').val('');
+				$('#New_EcDivision').val([]);
+				$('#New_EcClass').val([]);
+				$('#New_EcSubClass').val([]);
+				$('#New_EcExtraAddons').val([]);
+			}
+		});
 	}
 }
 
-function AddEventRule_Response() {
-	// leggo l'xml
-	var XMLResp=XMLHttp.responseXML;
-
-// intercetto gli errori di IE e Opera
-	if (!XMLResp || !XMLResp.documentElement)
-		throw("XML non valido:\n"+XMLResp.responseText);
-
-// Intercetto gli errori di Firefox
-	var XMLRoot;
-	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
-		throw("XML non valido:\n");
-
-	XMLRoot = XMLResp.documentElement;
-
-	var Error=XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
-
-	if (Error==0) {
-		var EvCode = XMLRoot.getElementsByTagName('evcode').item(0).firstChild.data;
-		var New_Group = XMLRoot.getElementsByTagName('new_group').item(0).firstChild.data;
-		var New_EcNumber = XMLRoot.getElementsByTagName('new_number').item(0).firstChild.data;
-		var Arr_Rules = XMLRoot.getElementsByTagName('new_rule');
-		var ConfirmMsg = XMLRoot.getElementsByTagName('confirm_msg').item(0).firstChild.data;
-		var tbody=document.getElementById('tbody');
-
-	/*
-		aggiungo le nuove regole
-	*/
-
-	// divider
-		if (New_Group!=1) {
-			var NewRow = document.createElement('tr');
-			NewRow.id='Div_' + EvCode + '_' + New_Group;
-
-			var TD_Divider = document.createElement('td');
-			TD_Divider.colSpan=6;
-
-			NewRow.appendChild(TD_Divider);
-			tbody.appendChild(NewRow);
-		}
-
-		for (i=0;i<Arr_Rules.length;++i) {
-			var Div='';
-			var Cl='';
-			var DivCl=Arr_Rules.item(i).firstChild.data.split('|')
-
-			NewDiv=DivCl[0];
-			NewCl=DivCl[1];
-            NewSubCl=DivCl[2];
-
-			var NewRow = document.createElement('TR');
-			NewRow.id='Row_' + EvCode + '_' + New_Group + '_' + NewDiv + '_' + NewCl + '_' + NewSubCl;
-// 			document.getElementById('idOutput').innerHTML+=NewRow.id + '<br>';
-
-			if (i==0) {
-				var TD_Number = document.createElement('TD');
-				TD_Number.rowSpan=Arr_Rules.length;
-				TD_Number.className='Center';
-				TD_Number.innerHTML=New_EcNumber;
-
-				NewRow.appendChild(TD_Number);
-			}
-
-			var TD_Div = document.createElement('TD');
-			TD_Div.className='Center';
-			TD_Div.innerHTML=NewDiv;
-
-			var TD_Cl = document.createElement('TD');
-			TD_Cl.className='Center';
-			TD_Cl.innerHTML=NewCl;
-
-            var TD_SubCl = document.createElement('TD');
-            TD_SubCl.className='Center';
-            TD_SubCl.innerHTML=NewSubCl;
-
-			var TD_DelCl = document.createElement('TD');
-			TD_DelCl.className='Center';
-			TD_DelCl.innerHTML='<a href="' + window.location.href.split('?')[0] + '?EvCode=' + EvCode + '&DelRow=' + NewCl + '~' + NewDiv + '~' + NewSubCl + '"><img src="../../Common/Images/drop.png" border="0" alt="#" title="#"></a>';
-
-			NewRow.appendChild(TD_Div);
-			NewRow.appendChild(TD_Cl);
-            NewRow.appendChild(TD_SubCl);
-			NewRow.appendChild(TD_DelCl);
-
-
-			if (i==0) {
-				var TD_Delete = document.createElement('TD');
-				TD_Delete.rowSpan=Arr_Rules.length;
-				TD_Delete.className='Center';
-				TD_Delete.innerHTML
-					= '<a href="javascript:DeleteEventRule(\'' + EvCode + '\',' + New_Group + ');"><img src="../../Common/Images/drop.png" border="0" alt="#" title="#"></a>';
-				NewRow.appendChild(TD_Delete);
-			}
-
-
-			tbody.insertBefore(NewRow,document.getElementById('RowDiv'));
-		}
-
-		document.getElementById('New_EcDivision').selectedIndex=-1;
-		document.getElementById('New_EcClass').selectedIndex=-1;
-        document.getElementById('New_EcSubClass').selectedIndex=-1;
-		document.getElementById('New_EcNumber').value='';
-	}
-}
-
-/*
-	Invia la get a DeleteEventRule.php
-	Elimina la regola identificata dai parametri
-*/
-function DeleteEventRule(Event,DelGroup)
-{
-	if (XMLHttp)
-	{
-		try
-		{
-			if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
-			{
-				var QueryString
-					= 'EvCode=' + Event + '&'
-					+ 'DelGroup=' + DelGroup;
-
-				XMLHttp.open("GET","DeleteEventRule.php?" + QueryString,true);
-// 				document.getElementById('idOutput').innerHTML="DeleteEventRule.php?" + QueryString;
-				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-				XMLHttp.onreadystatechange=DeleteEventRule_StateChange;
-				XMLHttp.send(null);
-			}
-		}
-		catch (e)
-		{
-  			//alert('Error: ' + e.toString());
-		}
-	}
-}
-
-function DeleteEventRule_StateChange()
-{
-	// se lo stato � Complete vado avanti
-	if (XMLHttp.readyState==XHS_COMPLETE)
-	{
-	// se lo status di HTTP � ok vado avanti
-		if (XMLHttp.status==200)
-		{
-			try
-			{
-				DeleteEventRule_Response();
-			}
-			catch(e)
-			{
-				//alert('Error: ' + e.toString());
-			}
-		}
-		else
-		{
-			//alert('Error: ' +XMLHttp.statusText);
-		}
-	}
-}
-
-function DeleteEventRule_Response()
-{
-	// leggo l'xml
-	var XMLResp=XMLHttp.responseXML;
-
-// intercetto gli errori di IE e Opera
-	if (!XMLResp || !XMLResp.documentElement)
-		throw("XML non valido:\n"+XMLResp.responseText);
-
-// Intercetto gli errori di Firefox
-	var XMLRoot;
-	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
-		throw("XML non valido:\n");
-
-	XMLRoot = XMLResp.documentElement;
-
-	var Error=XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
-
-	if (Error==0)
-	{
-		var Event=XMLRoot.getElementsByTagName('event').item(0).firstChild.data;
-		var Group=XMLRoot.getElementsByTagName('group').item(0).firstChild.data;
-
-		var tbody=document.getElementById('tbody');
-
-		var Arr_Rows = tbody.getElementsByTagName('tr');
-
-// 		for (var i=0;i<Arr_Rows.length;++i)
-// 		{
-// 			var id=Arr_Rows.item(i).id;
-// 			document.getElementById('idOutput').innerHTML+=id + '+<br>';
-// 		}
-
-		for (var i=Arr_Rows.length-1;i>=0;--i)
-		{
-			var id=Arr_Rows.item(i).id;
-// 			document.getElementById('idOutput').innerHTML+=id + '-<br>';
-			if (id)
-			{
-				var SplittedId=id.split('_');
-
-				if (SplittedId[1]==Event && SplittedId[2]==Group)
-				{
- 					tbody.removeChild(document.getElementById(id));
-
+function DeleteEventPartialRule(Event, DelGroup, Div, Cl, SubCl, AddOns) {
+	let form={
+		Div: Div,
+		Cl: Cl,
+		SubCl: SubCl,
+		AddOns: AddOns,
+		DelGroup: DelGroup,
+		EvCode: Event
+	};
+	$.getJSON('DeleteEventRule.php', form, function(data) {
+		if (data.error==0) {
+			const numComponents = $("tr[id^=Row_" + Event + '_' + DelGroup + "] td[rowspan]").html();
+			$("tr[id^=Row_" + Event + '_' + DelGroup + '_' + Div + Cl + SubCl + AddOns + "]").remove();
+			const newRS = $("tr[id^=Row_" + Event + '_' + DelGroup + "]").length;
+			if(newRS!=0) {
+				if ($("tr[id^=Row_" + Event + '_' + DelGroup + "] td[rowspan]").length) {
+					$("tr[id^=Row_" + Event + '_' + DelGroup + "] td[rowspan]").attr('rowspan', newRS);
+				} else {
+					$("tr[id^=Row_" + Event + '_' + DelGroup + "]:first").prepend('<td class="Center" rowspan="' + newRS + '">' + numComponents + '</td>');
+					$("tr[id^=Row_" + Event + '_' + DelGroup + "]:first").append('<td class="Center" rowspan="' + newRS + '"><img src="../../Common/Images/drop.png" alt="Delete" title="Delete" onclick="DeleteEventRule(\'' + Event + '\',\'' + DelGroup + '\')"></td>');
 				}
+			} else {
+				$("tr[id^=Div_" + Event + '_' + DelGroup + "]").remove();
 			}
 		}
-	}
+	});
 }
 
-function SetPartialTeam(Event)
-{
-	if (XMLHttp)
-	{
-		try
-		{
-			if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
-			{
-
-				var QueryString
-					= 'EvCode=' + Event
-					+ '&EvPartial=' + document.getElementById('d_EvPartialTeam').value;
-
-				XMLHttp.open("GET","SetPartialTeam.php?" + QueryString,true);
-				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-				XMLHttp.onreadystatechange=SetPartialTeam_StateChange;
-				XMLHttp.send(null);
-			}
+function DeleteEventRule(Event,DelGroup){
+	let form={
+		DelGroup: DelGroup,
+		EvCode: Event
+	};
+	$.getJSON('DeleteEventRule.php', form, function(data) {
+		if (data.error==0) {
+			$("tr[id^=Div_" + Event + '_' + DelGroup + "]").remove();
+			$("tr[id^=Row_" + Event + '_' + DelGroup + "]").remove();
 		}
-		catch (e)
-		{
- 			document.getElementById('idOutput').innerHTML='Error: ' + e.toString();
-		}
-	}
+	});
 }
 
-function SetPartialTeam_StateChange()
-{
-	// se lo stato � Complete vado avanti
-	if (XMLHttp.readyState==XHS_COMPLETE)
-	{
-	// se lo status di HTTP � ok vado avanti
-		if (XMLHttp.status==200)
-		{
-			try
-			{
-				SetPartialTeam_Response();
-			}
-			catch(e)
-			{
-// 				document.getElementById('idOutput').innerHTML+='<br>Error: ' + e.toString();
-			}
+function SetPartialTeam(Event) {
+	let form={
+		EvPartial: parseInt($('#d_EvPartialTeam').val()),
+		EvCode: Event
+	};
+	$.getJSON('SetPartialTeam.php', form, function(data) {
+		if (data.error==0) {
+			$('#d_EvPartialTeam').removeClass('error');
+		} else {
+			$('#d_EvPartialTeam').addClass('error');
 		}
-		else
-		{
-//  			document.getElementById('idOutput').innerHTML+='<br>Error: ' +XMLHttp.statusText;
-		}
-	}
-}
-
-function SetPartialTeam_Response()
-{
-	// leggo l'xml
-	var XMLResp=XMLHttp.responseXML;
-
-// intercetto gli errori di IE e Opera
-	if (!XMLResp || !XMLResp.documentElement)
-		throw("XML non valido:\n"+XMLResp.responseText);
-
-// Intercetto gli errori di Firefox
-	var XMLRoot;
-	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
-		throw("XML non valido:\n");
-
-	XMLRoot = XMLResp.documentElement;
-
-	var Error=XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
-
-	if(Error==1)
-		SetStyle('d_EvPartialTeam','warning');
-	else
-		SetStyle('d_EvPartialTeam','');
+	});
 }
 
 function SetMultiTeam(Event) {
-	if (XMLHttp) {
-		try {
-			if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT) {
-				var isMulti = parseInt(document.getElementById('d_EvMultiTeam').value);
-				var numMulti = parseInt(document.getElementById('d_EvMultiTeamNo').value);
-				if(isMulti==0) {
-					document.getElementById('d_EvMultiTeamNo').value = 0;
-					numMulti =0;
-				}
-				var QueryString = 'EvCode=' + Event + '&EvMulti=' + isMulti + '&NumMulti=' + numMulti;
-				XMLHttp.open("GET","SetMultiTeam.php?" + QueryString,true);
-				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-				XMLHttp.onreadystatechange=SetMultiTeam_StateChange;
-				XMLHttp.send(null);
-			}
-		} catch (e) {
- 			document.getElementById('idOutput').innerHTML='Error: ' + e.toString();
+	let form={
+		EvMulti: parseInt($('#d_EvMultiTeam').val()),
+		NumMulti: parseInt($('#d_EvMultiTeamNo').val()),
+		EvCode: Event
+	};
+	$.getJSON('SetMultiTeam.php', form, function(data) {
+		if (data.error==0) {
+			$('#d_EvMultiTeam').removeClass('error');
+			$('#d_EvMultiTeamNo').removeClass('error');
+		} else {
+			$('#d_EvMultiTeam').addClass('error');
+			$('#d_EvMultiTeamNo').addClass('error');
 		}
-	}
+	});
 }
 
-function SetMultiTeam_StateChange() {
-	if (XMLHttp.readyState==XHS_COMPLETE) {
-		if (XMLHttp.status==200) {
-			try	{
-				SetMultiTeam_Response();
-			} catch(e) {}
+function SetMixedTeam(Event) {
+	let form={
+		EvMixed: parseInt($('#d_EvMixedTeam').val()),
+		EvCode: Event
+	};
+	$.getJSON('SetMixedTeam.php', form, function(data) {
+		if (data.error==0) {
+			$('#d_EvMixedTeam').removeClass('error');
+		} else {
+			$('#d_EvMixedTeam').addClass('error');
 		}
-	}
+	});
 }
 
-function SetMultiTeam_Response()
-{
-	// leggo l'xml
-	var XMLResp=XMLHttp.responseXML;
-
-// intercetto gli errori di IE e Opera
-	if (!XMLResp || !XMLResp.documentElement)
-		throw("XML non valido:\n"+XMLResp.responseText);
-
-// Intercetto gli errori di Firefox
-	var XMLRoot;
-	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
-		throw("XML non valido:\n");
-
-	XMLRoot = XMLResp.documentElement;
-
-	var Error=XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
-
-	if(Error==1)
-		SetStyle('d_EvMultiTeam','warning');
-	else
-		SetStyle('d_EvMultiTeam','');
+function SetTeamCreationMode(Event) {
+	let form={
+		EvTeamCreationMode: parseInt($('#d_EvTeamCreationMode').val()),
+		EvCode: Event
+	};
+	$.getJSON('SetTeamCreationMode.php', form, function(data) {
+		if (data.error==0) {
+			$('#d_EvTeamCreationMode').removeClass('error');
+		} else {
+			$('#d_EvTeamCreationMode').addClass('error');
+		}
+	});
 }
 
-function SetMixedTeam(Event)
-{
-	if (XMLHttp)
-	{
-		try
-		{
-			if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
-			{
-
-				var QueryString
-					= 'EvCode=' + Event
-					+ '&EvMixed=' + document.getElementById('d_EvMixedTeam').value;
-
-				XMLHttp.open("GET","SetMixedTeam.php?" + QueryString,true);
-				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-				XMLHttp.onreadystatechange=SetMixedTeam_StateChange;
-				XMLHttp.send(null);
-			}
-		}
-		catch (e)
-		{
-		}
-	}
-}
-
-function SetMixedTeam_StateChange()
-{
-	// se lo stato � Complete vado avanti
-	if (XMLHttp.readyState==XHS_COMPLETE)
-	{
-	// se lo status di HTTP � ok vado avanti
-		if (XMLHttp.status==200)
-		{
-			try
-			{
-				SetMixedTeam_Response();
-			}
-			catch(e)
-			{
-// 				document.getElementById('idOutput').innerHTML+='<br>Error: ' + e.toString();
-			}
-		}
-		else
-		{
-//  			document.getElementById('idOutput').innerHTML+='<br>Error: ' +XMLHttp.statusText;
-		}
-	}
-}
-
-function SetMixedTeam_Response()
-{
-	// leggo l'xml
-	var XMLResp=XMLHttp.responseXML;
-
-// intercetto gli errori di IE e Opera
-	if (!XMLResp || !XMLResp.documentElement)
-		throw("XML non valido:\n"+XMLResp.responseText);
-
-// Intercetto gli errori di Firefox
-	var XMLRoot;
-	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
-		throw("XML non valido:\n");
-
-	XMLRoot = XMLResp.documentElement;
-
-	var Error=XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
-
-	if(Error==1)
-		SetStyle('d_EvMixedTeam','warning');
-	else
-		SetStyle('d_EvMixedTeam','');
-}
-
-
-function SetTeamCreationMode(Event)
-{
-	if (XMLHttp)
-	{
-		try
-		{
-			if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
-			{
-
-				var QueryString
-					= 'EvCode=' + Event
-					+ '&EvTeamCreationMode=' + document.getElementById('d_EvTeamCreationMode').value;
-
-				XMLHttp.open("GET","SetTeamCreationMode.php?" + QueryString,true);
-				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-				XMLHttp.onreadystatechange=SetTeamCreationMode_StateChange;
-				XMLHttp.send(null);
-			}
-		}
-		catch (e)
-		{
-		}
-	}
-}
-
-function SetTeamCreationMode_StateChange()
-{
-	// se lo stato � Complete vado avanti
-	if (XMLHttp.readyState==XHS_COMPLETE)
-	{
-	// se lo status di HTTP � ok vado avanti
-		if (XMLHttp.status==200)
-		{
-			try
-			{
-				SetTeamCreationMode_Response();
-			}
-			catch(e)
-			{
-// 				document.getElementById('idOutput').innerHTML+='<br>Error: ' + e.toString();
-			}
-		}
-		else
-		{
-//  			document.getElementById('idOutput').innerHTML+='<br>Error: ' +XMLHttp.statusText;
-		}
-	}
-}
-
-function SetTeamCreationMode_Response()
-{
-	// leggo l'xml
-	var XMLResp=XMLHttp.responseXML;
-
-// intercetto gli errori di IE e Opera
-	if (!XMLResp || !XMLResp.documentElement)
-		throw("XML non valido:\n"+XMLResp.responseText);
-
-// Intercetto gli errori di Firefox
-	var XMLRoot;
-	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
-		throw("XML non valido:\n");
-
-	XMLRoot = XMLResp.documentElement;
-
-	var Error=XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
-
-	if(Error==1)
-		SetStyle('d_EvTeamCreationMode','warning');
-	else
-		SetStyle('d_EvTeamCreationMode','');
-}
 
 function enableSubclass(obj) {
     document.getElementById('New_EcSubClass').disabled = !obj.checked;
+}
+
+function enableAddOns(obj) {
+	document.getElementById('New_EcExtraAddons').disabled = !obj.checked;
 }
 
 function showAdvanced() {
@@ -567,7 +187,13 @@ function showAdvanced() {
 }
 
 function UpdateData(obj) {
-    $.getJSON('../UpdateRuleParam.php?'+obj.id+'&val='+$(obj).val(), function(data) {
+	let form={
+		val:$(obj).val(),
+	};
+	if(obj.type=='checkbox') {
+		form.val=obj.checked ? 1 : 0;
+	}
+    $.getJSON('../UpdateRuleParam.php?'+obj.id, form, function(data) {
         if (data.error!=0) {
             alert(data.msg);
         }

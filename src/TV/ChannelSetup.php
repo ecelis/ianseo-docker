@@ -3,22 +3,22 @@ require_once(dirname(dirname(__FILE__)) . '/config.php');
 require_once('Common/Lib/CommonLib.php');
 
 $PAGE_TITLE=get_text('MenuLM_TV Channels');
+$IncludeFA = true;
+$IncludeJquery = true;
 $JS_SCRIPT=array(
-	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.6.0.min.js"></script>',
-	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>',
-	'<script type="text/javascript" src="./ChannelSetup.js"></script>'
+	'<script type="text/javascript" src="./ChannelSetup.js"></script>',
+    '<link href="./ChannelSetup.css" rel="stylesheet" type="text/css">',
+    phpVars2js(
+        array(
+        'MsgAddChannel' => get_text('NewChannel','Tournament'),
+        'MsgAddSplit' => get_text('NewSplit','Tournament'),
+        'MsgDelChannel' => get_text('DeleteChannel','Tournament'),
+        'MsgDelSplit' => get_text('DeleteSplit','Tournament'),
+        'CmdCancel' => get_text('CmdCancel'),
+        'CmdConfirm' => get_text('Confirm', 'Tournament'),
+        )
+    )
 );
-$JS_SCRIPT[]= '<link href="'.$CFG->ROOT_DIR.'Common/css/font-awesome.css" rel="stylesheet" type="text/css">';
-$JS_SCRIPT[]= '<link href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css" rel="stylesheet" type="text/css">';
-$JS_SCRIPT[]= '<link href="./ChannelSetup.css" rel="stylesheet" type="text/css">';
-$JS_SCRIPT[]= phpVars2js(array(
-	'MsgAddChannel' => get_text('NewChannel','Tournament'),
-	'MsgAddSplit' => get_text('NewSplit','Tournament'),
-	'MsgDelChannel' => get_text('DeleteChannel','Tournament'),
-	'MsgDelSplit' => get_text('DeleteSplit','Tournament'),
-	'CmdCancel' => get_text('CmdCancel'),
-	'CmdConfirm' => get_text('Confirm', 'Tournament'),
-));
 
 // get all the TV rules
 $Rules=array();

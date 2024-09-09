@@ -161,9 +161,9 @@ while($MyRow=safe_fetch($Rs) ) {
 	$Events[$MyRow->EvCode] = $MyRow->EvEventName;
 }
 
+$IncludeJquery = true;
 $JS_SCRIPT=array(
 	phpVars2js(array("WebDir" => $CFG->ROOT_DIR, "AllEvents" => get_text('AllEvents'))),
-	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 	'<script type="text/javascript" src="./PrintScore.js"></script>',
 	);
 
@@ -203,7 +203,7 @@ echo '</tr>';
  *
  *********************************/
 echo '<tr>';
-echo '<td colspan="4" class="Center">' . ComboSession('Robin') . '</td>';
+echo '<td colspan="4" class="Center">' . ApiComboSession(['R']) . '</td>';
 echo '</tr>';
 
 /**********************************

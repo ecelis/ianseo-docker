@@ -128,7 +128,6 @@ $lang['SpecialUpdate']='Tiene una instalación de "prueba". <br/> Solo los usuar
 $lang['Start Ianseo']='Ir a IANSEO!';
 $lang['Status']='Estado';
 $lang['stdValue']='Valor';
-$lang['Suboptimal']='Aunque su archivo php.ini no está configurado con valores óptimos, <br/> IANSEO debería funcionar correctamente para la mayoría de sus funcionalidades. <br/> Le recomendamos encarecidamente que configure los parámetros con el valor óptimo.';
 $lang['System value']='Valor del sistema';
 $lang['UpdatePrepared']='Su instalación será actualizada automáticamente. Recuerde hacer un respaldo de todas las competencias antes de comenzar. El tiempo de actualización puede llevar tiempo, dependiendo de la conexión y los elementos que necesitan actualizarse.
 <br/>Recuerde que se eliminará cualquier archivo que no sea original, aparte del contenido del directorio "Modules/Custom".';

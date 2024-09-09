@@ -31,6 +31,12 @@ if(!empty($_REQUEST["Content"])) {
         if (!empty($Options['FinalRanking'])) {
             $SQL[] = 'IceContent=' . StrSafe_DB($Options['FinalRanking']);
         }
+        if (isset($Options['WRank'])) {
+            $SQL[] = 'IceContent=' . StrSafe_DB($Options['WRank']);
+        }
+        if (isset($Options['ExtraAddOns'])) {
+            $SQL[] = 'IceContent=' . StrSafe_DB($Options['ExtraAddOns']);
+        }
 		if (!empty($Options['Category'])) {
 			$SQL[] = 'IceContent=' . StrSafe_DB($Options['Category']);
 		}
@@ -40,6 +46,12 @@ if(!empty($_REQUEST["Content"])) {
 		if (!empty($Options['Club'])) {
 			$SQL[] = 'IceContent=' . StrSafe_DB($Options['Club']);
 		}
+        if (!empty($Options['Club2'])) {
+            $SQL[] = 'IceContent=' . StrSafe_DB($Options['Club2']);
+        }
+        if (!empty($Options['Club3'])) {
+            $SQL[] = 'IceContent=' . StrSafe_DB($Options['Club3']);
+        }
 		if (!empty($Options['AthQrCode'])) {
 			$SQL[] = 'IceContent=' . StrSafe_DB($Options['AthQrCode']);
 		}

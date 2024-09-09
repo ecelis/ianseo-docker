@@ -400,7 +400,8 @@ switch($TourType) {
 	case 6:  // Indoor 18 m - 2 Distances
 		CreateTargetFace($TourId, $i++, '40cm (1-big 10)', '%', '1', 1, 40, 1, 40);  // big 10
 		CreateTargetFace($TourId, $i++, 'Trispot Comp 40cm', 'REG-^(C|GC)(D|C|H|V|JD|JH|MO|WO)', '1', 4, 40, 4, 40);  // small 10
-		CreateTargetFace($TourId, $i++, '60cm (1-big 10)', 'REG-((^R|^BB|^BH|^LB|^GR|^GB|^GI)JE)', '1', 1, 60, 1, 60);  // big 10
+		//CreateTargetFace($TourId, $i++, '60cm (1-big 10)', 'REG-((^R|^BB|^BH|^LB|^GR|^GB|^GI)JE)', '1', 1, 60, 1, 60);  // big 10
+		CreateTargetFace($TourId, $i++, '60cm (1-big 10)', 'REG-((^R|^BB|^GR|^GB)JE)|(^LB|^BH|^GI).*[^I]$', '1', 1, 60, 1, 60);  // big 10 (ML-18.10.2023)
 		CreateTargetFace($TourId, $i++, 'Trispot Comp 60cm', 'REG-(^C|^GC)JE', '1', 4, 60, 4, 60);  // small 10
 		CreateTargetFace($TourId, $i++, '80cm (1-small 10)', 'REG-(^C|^GC).I$', '1', 3, 80, 3, 80);  // small 10
 		CreateTargetFace($TourId, $i++, '80cm (1-big 10)', 'REG-(^R|^BB|^BH|^LB|^GR|^GB|^GI).I$', '1', 1, 80, 1, 80);  // big 10
@@ -412,7 +413,8 @@ switch($TourType) {
 	case 7:  // Indoor 25 m - 2 Distances
 		CreateTargetFace($TourId, $i++, '60cm (1-big 10)', '%', '1', 1, 60, 1, 60);  // big 10
 		CreateTargetFace($TourId, $i++, 'Trispot Comp 60cm', 'REG-^(C|GC)(D|C|H|V|JD|JH|MO|WO)', '1', 4, 60, 4, 60);  // small 10
-		CreateTargetFace($TourId, $i++, '80cm (1-big 10)', 'REG-(^(R|BB|LB|BH|GR|GB|GI)(JE|MI)$)', '1', 1, 80, 1, 80);  // big 10
+		//CreateTargetFace($TourId, $i++, '80cm (1-big 10)', 'REG-(^(R|BB|LB|BH|GR|GB|GI)(JE|MI)$)', '1', 1, 80, 1, 80);  // big 10
+		CreateTargetFace($TourId, $i++, '80cm (1-big 10)', 'REG-(^(R|BB|LB|BH|GR|GB)(JE|MI)$)|(^(LB|BH|GB).*[^(MI)])$', '1', 1, 80, 1, 80);  // big 10 (ML-18.10.2023)
 		CreateTargetFace($TourId, $i++, '80cm (1-small 10)', 'REG-(^C|^GC)(JE|MI)$', '1', 3, 80, 3, 80);  // small 10
 		CreateTargetFace($TourId, $i++, '122cm (1-small 10)', 'REG-(^C|^GC)PI$', '1', 3, 122, 3, 122);  // small 10
 		CreateTargetFace($TourId, $i++, '80cm (1-big 10)', 'REG-(^R|^BB|^BH|^LB|^GR|^GB|^GI)PI$', '1', 1, 122, 1, 122);  // big 10
@@ -423,6 +425,7 @@ switch($TourType) {
 		CreateTargetFace($TourId, $i++, '60/40cm (1-big 10)', '%', 1, 1, 60, 1, 60, 1, 40, 1, 40);
 		CreateTargetFace($TourId, $i++, 'Trispot Comp 60/40cm', 'REG-^(C|GC)(D|C|H|V|JD|JH|MO|WO)', 1, 4, 60, 4, 60, 4, 40, 4, 40);
 		CreateTargetFace($TourId, $i++, '80/60cm (1-big 10)', 'REG-(^(R|BB|LB|BH|GR|GB|GI)(JE)$)', '1', 1, 80, 1, 80, 1, 60, 1, 60);  // big 10
+		CreateTargetFace($TourId, $i++, '80/60cm (1-big 10)', 'REG-(^(LB|BH|GI)(D|C|H|V|JD|JH|MO|WO|CH|CD|CD|VH)$)', '1', 1, 80, 1, 80, 1, 60, 1, 60);  // big 10 (ML-18.10.2023)
 		CreateTargetFace($TourId, $i++, '80cm (1-big10)', 'REG-(^(R|BB|LB|BH|GR|GB|GI)(MI)$)', '1', 1, 80, 1, 80, 1, 80, 1, 80);
 		CreateTargetFace($TourId, $i++, '80cm/Trispot Comp 60cm', 'REG-(^C|^GC)(JE)$', '1', 3, 80, 3, 80, 4, 60, 4, 60);  // small 10
 		CreateTargetFace($TourId, $i++, '80cm (1-small 10)', 'REG-(^C|^GC)(MI)$', '1', 3, 80, 3, 80, 3, 80, 3, 80);  // small 10

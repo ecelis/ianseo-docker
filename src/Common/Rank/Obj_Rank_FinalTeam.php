@@ -18,6 +18,7 @@
  * 		eventsC => array(<ev_1>@<calcPhase_1>,<ev_2>@<calcPhase_2>,...,<ev_n>@<calcPhase_n>)			[calculate,non influisce su read]
  * 		eventsR => array(<ev_1>,...,<ev_n>)																[read,non influisce su calculate]
  * 		tournament => #																					[calculate/read]
+ * 		noc => #																					    [read]
  * )
  */
 	class Obj_Rank_FinalTeam extends Obj_Rank
@@ -100,7 +101,8 @@
 				$filter.= "AND IF(EvFinalFirstPhase=0, TeRank, TeRankFinal)<={$this->opts['cutRank']} ";
 
 			$EnFilter  = (empty($this->opts['enid']) ? '' : " AND EnId=" . intval($this->opts['enid'])) ;
-			$EnFilter .= (empty($this->opts['coid']) ? '' : " AND EnCountry=" . intval($this->opts['coid'])) ;
+			$EnFilter .= (empty($this->opts['coid']) ? '' : " AND CoId=" . intval($this->opts['coid'])) ;
+			$EnFilter .= (empty($this->opts['noc']) ? '' : " AND CoCode=" . StrSafe_DB($this->opts['noc'])) ;
 			$EnFilter .= (empty($this->opts['cutRank']) ? '' : " AND IF(EvFinalFirstPhase=0, TeRank, TeRankFinal)<=" . intval($this->opts['cutRank'])) ;
 
 			$Order='';

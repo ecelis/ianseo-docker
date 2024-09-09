@@ -37,10 +37,11 @@ if(!empty($PdfData->Data['Items'])) {
 				// separates the new target
 				$pdf->SamePage($MyRow->SesAth4Target + 2, 3.5, $pdf->lastY); // because we must take into account the last previous row AND the separator
 				$pdf->lastY += 3.5;
-				if($PdfData->BisTarget && ($TgNo > $PdfData->NumEnd))
-					$Col1= 'bis ' . str_pad((substr($MyRow->TargetNo,0,-1)-$PdfData->NumEnd),3,"0",STR_PAD_LEFT) . $Col1;
-				else
-					$Col1=$MyRow->TargetNo . "  #";
+				if($PdfData->BisTarget && ($TgNo > $PdfData->NumEnd)) {
+					$Col1 = CheckBisTargets($MyRow->TargetNo, $PdfData->NumEnd, ' ').'  #';
+				} else {
+					$Col1 = substr($MyRow->TargetNo,0,-1). ' ' . substr($MyRow->TargetNo,-1). "  #";
+				}
 				$OldTarget=$TgNo;
 			}
 

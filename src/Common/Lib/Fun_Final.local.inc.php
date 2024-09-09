@@ -3,6 +3,8 @@ require_once('Common/Lib/Fun_Phases.inc.php');
 require_once('Common/Lib/ArrTargets.inc.php');
 require_once('Common/Lib/Obj_RankFactory.php');
 require_once('Common/Lib/CommonLib.php');
+require_once('Final/Fun_ChangePhase.inc.php');
+
 /**
  * Esegue il passaggio di fase per gli individuali
  *
@@ -349,6 +351,15 @@ require_once('Common/Lib/CommonLib.php');
 					ev1.EvTeamEvent AS teamEvent,
 					ev1.EvMixedTeam AS mixedTeam,
 					ev1.EvElimType AS elimType,
+					ev1.EvCheckGolds as checkGolds, ev1.EvCheckXNines as checkXNines, 
+					if(ev1.EvGoldsChars!='', ev1.EvGoldsChars, ToGoldsChars) as goldChars, 
+					if(ev1.EvXNineChars!='', ev1.EvXNineChars, ToXNineChars) as xNineChars,
+                    if(ev1.EvGolds!='', ev1.EvGolds, ToGolds) as goldLabel,
+					if(ev1.EvXNine!='', ev1.EvXNine, ToXNine) as xNineLabel,
+					f1.FinGolds as golds1,
+					f2.FinGolds as golds2,
+					f1.FinXNines as xnines1,
+					f2.FinXNines as xnines2,
 					IF(f1.FinDateTime>=f2.FinDateTime,f1.FinDateTime,f2.FinDateTime) AS LastUpdate
 			";
 
@@ -385,6 +396,7 @@ require_once('Common/Lib/CommonLib.php');
 					INNER JOIN
 						Events AS ev1
 					ON f1.FinEvent=ev1.EvCode AND ev1.EvTeamEvent=0 AND ev1.EvTournament=" . StrSafe_DB($TourId) . "
+					inner join Tournament on ToId=ev1.EvTournament
 
 					INNER JOIN
 						Grids AS g1
@@ -457,6 +469,15 @@ require_once('Common/Lib/CommonLib.php');
 					tf1.TfLive AS live,
 					ev1.EvTeamEvent AS teamEvent,
 					ev1.EvMixedTeam AS mixedTeam,
+					ev1.EvCheckGolds as checkGolds, ev1.EvCheckXNines as checkXNines, 
+					if(ev1.EvGoldsChars!='', ev1.EvGoldsChars, ToGoldsChars) as goldChars, 
+					if(ev1.EvXNineChars!='', ev1.EvXNineChars, ToXNineChars) as xNineChars, 
+					if(ev1.EvGolds!='', ev1.EvGolds, ToGolds) as goldLabel,
+					if(ev1.EvXNine!='', ev1.EvXNine, ToXNine) as xNineLabel,
+                    tf1.TfGolds as golds1,
+					tf2.TfGolds as golds2,
+					tf1.TfXNines as xnines1,
+					tf2.TfXNines as xnines2,
 					IF(tf1.TfDateTime>=tf2.TfDateTime,tf1.TfDateTime,tf2.TfDateTime) AS LastUpdate
 			";
 
@@ -479,6 +500,7 @@ require_once('Common/Lib/CommonLib.php');
 					INNER JOIN
 						Events AS ev1
 					ON tf1.TfEvent=ev1.EvCode AND ev1.EvTeamEvent=1 AND ev1.EvTournament=" . StrSafe_DB($TourId) . "
+					inner join Tournament on ToId=ev1.EvTournament
 
 					INNER JOIN
 						Grids AS g1
@@ -624,24 +646,30 @@ require_once('Common/Lib/CommonLib.php');
 			";*/
 			if ($OrderBy!="")
 			{
-				$query.="ORDER BY " . $OrderBy . " ";
+				$query.=" ORDER BY " . $OrderBy . " ";
 			}
 		}
 		else		// team
 		{
+			$NamesSql='';
+			if ($OnlyNames==false) {
+				$NamesSql=", tf1.TfScore AS score1,tf1.TfSetScore AS setScore1,tf1.TfSetPoints AS setPoints1,tf1.TfTie AS tie1,tf1.TfArrowstring AS arrowString1,tf1.TfTiebreak AS tiebreak1,tf1.TfTbClosest AS tieclosest1,
+						tf2.TfScore AS score2,tf2.TfSetScore AS setScore2,tf2.TfSetPoints AS setPoints2,tf2.TfTie AS tie2,tf2.TfArrowstring AS arrowString2,tf2.TfTiebreak AS tiebreak2,tf2.TfTbClosest AS tieclosest2,
+						tf1.TfTie AS tie1,tf2.TfTie AS tie2";
+			}
 			$query= "
 				SELECT DISTINCTROW
 					c1.CoCode familyName1,
 					c2.CoCode familyName2,
 					t1.TeRank rank1,
 					t2.TeRank rank2,
-					IF(c1.CoName IS NOT NULL,CONCAT(c1.CoName, IF(tf1.TfSubTeam!='0',CONCAT(' - ',tf1.TfSubTeam),''),''),'') AS name1,
-					IF(c1.CoCode IS NOT NULL,c1.CoCode,'') AS countryCode1,
-					IF(c1.CoName IS NOT NULL,Name1,'') AS countryName1,
+					coalesce(CONCAT(c1.CoName, IF(tf1.TfSubTeam!='0',CONCAT(' - ',tf1.TfSubTeam),'')),'') AS name1,
+					coalesce(c1.CoCode,'') AS countryCode1,
+					coalesce(Name1,'') AS countryName1,
 
-					IF(c2.CoName IS NOT NULL,CONCAT(c2.CoName, IF(tf2.TfSubTeam!='0',CONCAT(' - ',tf2.TfSubTeam),''),''),'') AS name2,
-					IF(c2.CoCode IS NOT NULL,c2.CoCode,'') AS countryCode2,
-					IF(c2.CoName IS NOT NULL,Name2,'') AS countryName2,
+					coalesce(CONCAT(c2.CoName, IF(tf2.TfSubTeam!='0',CONCAT(' - ',tf2.TfSubTeam),'')),'') AS name2,
+					coalesce(c2.CoCode,'') AS countryCode2,
+					coalesce(Name2,'') AS countryName2,
 
 					tf1.TfMatchNo AS match1,
 					tf2.TfMatchNo AS match2,
@@ -657,90 +685,41 @@ require_once('Common/Lib/CommonLib.php');
 					ev1.EvMatchMode AS matchMode,
 					ev1.EvMatchArrowsNo AS matchArrowsNo,
 					UNIX_TIMESTAMP(IF(tf1.TfDateTime>=tf2.TfDateTime,tf1.TfDateTime,tf2.TfDateTime)) AS lastUpdate
-			";
-
-				if ($OnlyNames==false)
-				{
-					$query.="
-						,tf1.TfScore AS score1,tf1.TfSetScore AS setScore1,tf1.TfSetPoints AS setPoints1,tf1.TfTie AS tie1,tf1.TfArrowstring AS arrowString1,tf1.TfTiebreak AS tiebreak1,tf1.TfTbClosest AS tieclosest1,
-						tf2.TfScore AS score2,tf2.TfSetScore AS setScore2,tf2.TfSetPoints AS setPoints2,tf2.TfTie AS tie2,tf2.TfArrowstring AS arrowString2,tf2.TfTiebreak AS tiebreak2,tf2.TfTbClosest AS tieclosest2,
-						tf1.TfTie AS tie1,tf2.TfTie AS tie2
-					";
-				}
-
-			$query.= "
+					$NamesSql
 				FROM
 					TeamFinals AS tf1
-					INNER JOIN
-						TeamFinals AS tf2
-					ON tf1.TfEvent=tf2.TfEvent AND tf1.TfMatchNo=IF((tf1.TfMatchNo % 2)=0,tf2.TfMatchNo-1,tf2.TfMatchNo+1) AND tf1.TfTournament=tf2.TfTournament
-
-                    LEFT JOIN
-					    Teams As t1
-					ON tf1.TfEvent=t1.TeEvent AND tf1.TfTournament=t1.TeTournament AND tf1.TfTeam=t1.TeCoId AND tf1.TfSubTeam=t1.TeSubTeam AND t1.TeFinEvent=1
-
-                    LEFT JOIN
-					    Teams As t2
-					ON tf2.TfEvent=t2.TeEvent AND tf2.TfTournament=t2.TeTournament AND tf2.TfTeam=t2.TeCoId AND tf2.TfSubTeam=t2.TeSubTeam AND t2.TeFinEvent=1
-
-
-					INNER JOIN
-						Events AS ev1
-					ON tf1.TfEvent=ev1.EvCode AND ev1.EvTeamEvent=1 AND ev1.EvTournament=" . StrSafe_DB($_SESSION['TourId']) . "
-
-					INNER JOIN
-						Grids AS g1
-					ON tf1.TfMatchNo=g1.GrMatchNo
-
-					LEFT JOIN
-						Countries AS c1
-					ON tf1.TfTeam=c1.CoId
-
-					LEFT JOIN
-						Countries AS c2
-					ON tf2.TfTeam=c2.CoId
-
-					LEFT JOIN
-						(SELECT TfcCoId, TfcSubTeam, TfcEvent, GROUP_CONCAT(if(EnNameOrder, CONCAT(upper(EnFirstName),' ',EnName), CONCAT(EnName,' ',upper(EnFirstName))) order by EnFirstName SEPARATOR ', ') as Name1
+					INNER JOIN TeamFinals AS tf2 ON tf1.TfEvent=tf2.TfEvent AND tf1.TfMatchNo=IF((tf1.TfMatchNo % 2)=0,tf2.TfMatchNo-1,tf2.TfMatchNo+1) AND tf1.TfTournament=tf2.TfTournament
+                    LEFT JOIN Teams As t1 ON tf1.TfEvent=t1.TeEvent AND tf1.TfTournament=t1.TeTournament AND tf1.TfTeam=t1.TeCoId AND tf1.TfSubTeam=t1.TeSubTeam AND t1.TeFinEvent=1
+                    LEFT JOIN Teams As t2 ON tf2.TfEvent=t2.TeEvent AND tf2.TfTournament=t2.TeTournament AND tf2.TfTeam=t2.TeCoId AND tf2.TfSubTeam=t2.TeSubTeam AND t2.TeFinEvent=1
+					INNER JOIN Events AS ev1 ON tf1.TfEvent=ev1.EvCode AND ev1.EvTeamEvent=1 AND ev1.EvTournament=" . StrSafe_DB($_SESSION['TourId']) . "
+					INNER JOIN Grids AS g1 ON tf1.TfMatchNo=g1.GrMatchNo
+					LEFT JOIN Countries AS c1 ON tf1.TfTeam=c1.CoId
+					LEFT JOIN Countries AS c2 ON tf2.TfTeam=c2.CoId
+					LEFT JOIN (
+						SELECT TfcCoId, TfcSubTeam, TfcEvent, GROUP_CONCAT(if(EnNameOrder, CONCAT(upper(EnFirstName),' ',EnName), CONCAT(EnName,' ',upper(EnFirstName))) order by EnFirstName SEPARATOR ', ') as Name1
 						FROM TeamFinComponent
 						INNER JOIN Entries ON TfcId=EnId
 						WHERE TfcTournament=" . StrSafe_DB($_SESSION['TourId']) . "
-						GROUP BY TfcCoId, TfcSubTeam, TfcEvent) as tfc1
-					ON tf1.TfTeam=tfc1.TfcCoId AND tf1.TfSubTeam=tfc1.TfcSubTeam AND tf1.TfEvent=tfc1.TfcEvent
-
-					LEFT JOIN
-						(SELECT TfcCoId, TfcSubTeam, TfcEvent, GROUP_CONCAT(if(EnNameOrder, CONCAT(upper(EnFirstName),' ',EnName), CONCAT(EnName,' ',upper(EnFirstName))) order by EnFirstName SEPARATOR ', ') as Name2
+						GROUP BY TfcCoId, TfcSubTeam, TfcEvent) as tfc1 ON tf1.TfTeam=tfc1.TfcCoId AND tf1.TfSubTeam=tfc1.TfcSubTeam AND tf1.TfEvent=tfc1.TfcEvent
+					LEFT JOIN (
+						SELECT TfcCoId, TfcSubTeam, TfcEvent, GROUP_CONCAT(if(EnNameOrder, CONCAT(upper(EnFirstName),' ',EnName), CONCAT(EnName,' ',upper(EnFirstName))) order by EnFirstName SEPARATOR ', ') as Name2
 						FROM TeamFinComponent
 						INNER JOIN Entries ON TfcId=EnId
 						WHERE TfcTournament=" . StrSafe_DB($_SESSION['TourId']) . "
-						GROUP BY TfcCoId, TfcSubTeam, TfcEvent) as tfc2
-					ON tf2.TfTeam=tfc2.TfcCoId AND tf2.TfSubTeam=tfc2.TfcSubTeam AND tf2.TfEvent=tfc2.TfcEvent
-
-					LEFT JOIN
-						FinSchedule AS fs1
-					ON tf1.TfMatchNo=fs1.FSMatchNo AND tf1.TfEvent=fs1.FSEvent AND fs1.FSTeamEvent=1 AND tf1.TfTournament=fs1.FSTournament
-
-					LEFT JOIN
-						FinSchedule AS fs2
-					ON tf2.TfMatchNo=fs2.FSMatchNo AND tf2.TfEvent=fs2.FSEvent AND fs2.FSTeamEvent=1 AND tf2.TfTournament=fs2.FSTournament
-
+						GROUP BY TfcCoId, TfcSubTeam, TfcEvent) as tfc2 ON tf2.TfTeam=tfc2.TfcCoId AND tf2.TfSubTeam=tfc2.TfcSubTeam AND tf2.TfEvent=tfc2.TfcEvent
+					LEFT JOIN FinSchedule AS fs1 ON tf1.TfMatchNo=fs1.FSMatchNo AND tf1.TfEvent=fs1.FSEvent AND fs1.FSTeamEvent=1 AND tf1.TfTournament=fs1.FSTournament
+					LEFT JOIN FinSchedule AS fs2 ON tf2.TfMatchNo=fs2.FSMatchNo AND tf2.TfEvent=fs2.FSEvent AND fs2.FSTeamEvent=1 AND tf2.TfTournament=fs2.FSTournament
 				WHERE
 					(tf1.TfTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND (tf1.TfMatchNo % 2)=0
-					AND (c1.CoName IS NOT NULL OR c2.CoName IS NOT NULL)) "
-					. $OtherWhere . "
-			";
+					AND (c1.CoName IS NOT NULL OR c2.CoName IS NOT NULL))
+					$OtherWhere";
 
-			/*$query.="
-				ORDER BY EvProgr ASC,GrMatchNo ASC
-			";*/
-			if ($OrderBy!="")
-			{
-				$query.="ORDER BY " . $OrderBy . " ";
+			if ($OrderBy!="") {
+				$query.=" ORDER BY " . $OrderBy . " ";
 			}
 		}
-		//print $query;
-		$rs=safe_r_sql($query);
 
+		$rs=safe_r_sql($query);
 		return $rs;
 	}
 
@@ -767,72 +746,163 @@ require_once('Common/Lib/CommonLib.php');
  * @return The recordset containing the "live" status of the selected match
  */
 function setLiveSession($TeamEvent, $event, $match, $TourId=0, $Toggle=true) {
-	$prefix = ($TeamEvent ? 'Tf' : 'Fin');
-	if(!$TourId) $TourId=$_SESSION['TourId'];
-	$Where="{$prefix}Tournament=$TourId
+    if($match>256) {
+        if(!$TourId) $TourId=$_SESSION['TourId'];
+
+        $Where="RrMatchTournament=$TourId and RrMatchEvent=".StrSafe_DB($event)." and (RrMatchLevel*1000000)+(RrMatchGroup*10000)+(RrMatchRound*100)+RrMatchMatchNo in ($match, ".($match+1).") and RrMatchTeam=".($TeamEvent ? 1 : 0);
+
+        $sql="select RrMatchLive Live, if(RrMatchScheduledDate>0, RrMatchScheduledDate, '') as RrMatchScheduledDate,
+                concat_ws('|', RrLevName, RrMatchLevel, RrGrName, RrMatchGroup, RrMatchRound) Session,
+                RrMatchRound Distance,
+                if(RrMatchScheduledTime=0, '', date_format(RrMatchScheduledTime, '%H:%i')) Start,
+                (RrMatchLevel*1000000)+(RrMatchGroup*10000)+(RrMatchRound*100) as OrderPhase
+            from RoundRobinMatches
+            inner join RoundRobinGroup on RrGrTournament=RrMatchTournament and RrGrTeam=RrMatchTeam and RrGrEvent=RrMatchEvent and RrGrLevel=RrMatchLevel and RrGrGroup=RrMatchGroup
+            inner join RoundRobinLevel on RrLevTournament=RrMatchTournament and RrLevTeam=RrMatchTeam and RrLevEvent=RrMatchEvent and RrLevLevel=RrMatchLevel            
+            where $Where";
+        $q=safe_r_sql($sql);
+        if($r=safe_fetch($q)) {
+            unsetLiveSession($TourId);
+
+            $date=date('Y-m-d H:i:s');
+            $sql = "UPDATE RoundRobinMatches SET
+                RrMatchLive = 1,
+                RrMatchDateTime='{$date}'
+                WHERE $Where";
+            if(!$r->Live or !$Toggle) {
+                safe_w_sql($sql);
+                if(safe_w_affected_rows()) {
+                    updateOdfTiming('G', $TourId, $event, $TeamEvent, $match);
+                }
+            }
+
+            // Set/unset active session in scheduler
+            if($r->RrMatchScheduledDate) {
+                $ActiveSessions=array();
+                if(!$r->Live or !$Toggle) {
+                    // works reverse as it is the previous state!
+                    $key=$r->RrMatchScheduledDate
+                        .'|'.$r->Start
+                        .'|'.$r->Session
+                        .'|'.$r->Distance
+                        .'|'.$r->OrderPhase;
+                    $ActiveSessions=array($key);
+                }
+                Set_Tournament_Option('ActiveSession', $ActiveSessions, false, $TourId);
+            }
+        }
+
+        $sql = "SELECT RrMatchLive as Live
+            FROM RoundRobinMatches
+            WHERE RrMatchTournament=$TourId
+                and RrMatchTeam=$TeamEvent
+                AND (RrMatchLevel*1000000)+(RrMatchGroup*10000)+(RrMatchRound*100)+RrMatchMatchNo=" . intval($match) . "
+                AND RrMatchEvent=" . StrSafe_DB($event);
+    } else {
+        $prefix = ($TeamEvent ? 'Tf' : 'Fin');
+        if(!$TourId) $TourId=$_SESSION['TourId'];
+        $Where="{$prefix}Tournament=$TourId
 		AND {$prefix}MatchNo IN($match, " . ($match+1) . ")
 		AND {$prefix}Event=" . StrSafe_DB($event);
-	if($match!=-1) {
-		$MatchFilter=" ";
-	}
+        if($match!=-1) {
+            $MatchFilter=" ";
+        }
 
-	$sql="select Sch.*, cast(if(EvWinnerFinalRank>1, EvWinnerFinalRank*100 + GrPhase, 1+(1/(1+GrPhase))) as decimal(15,4)) as OrderBy, {$prefix}Live Live from " . ($TeamEvent ? 'Team' : '') . "Finals Fin
+        $sql="select Sch.*, cast(if(EvWinnerFinalRank>1, EvWinnerFinalRank*100 + GrPhase, 1+(1/(1+GrPhase))) as decimal(15,4)) as OrderBy, {$prefix}Live Live 
+        from " . ($TeamEvent ? 'Team' : '') . "Finals Fin
 		left join (select * from FinSchedule
 			inner join Events on FsEvent=EvCode and FsTeamEvent=EvTeamEvent and FsTournament=EvTournament
 			inner join Grids on FsMatchNo=GrMatchNo
-			where FsTournament=$TourId and FsEvent='$event' and FsTeamEvent=".($TeamEvent ? 1 : 0)." and FsMatchNo = $match and FSScheduledDate>0 and FSScheduledTime>0
+			where FsTournament=$TourId and FsEvent='$event' and FsTeamEvent=".($TeamEvent ? 1 : 0)." and FsMatchNo = $match and FSScheduledDate>0
 			) Sch on true
 		WHERE $Where";
-	$q=safe_r_sql($sql);
-	if($r=safe_fetch($q)) {
-		unsetLiveSession($TourId);
+        $q=safe_r_sql($sql);
+        if($r=safe_fetch($q)) {
+            unsetLiveSession($TourId);
 
-		if(!$r->Live) {
-			$sql = "UPDATE " . ($TeamEvent ? 'Team' : '') . "Finals SET
+            $date=date('Y-m-d H:i:s');
+            if(!$r->Live) {
+                $sql = "UPDATE " . ($TeamEvent ? 'Team' : '') . "Finals SET
 				{$prefix}Live = 1,
-				{$prefix}DateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . "
+				{$prefix}DateTime='{$date}'
 				WHERE $Where";
-			safe_w_sql($sql);
-		} elseif(!$Toggle) {
-			$sql = "UPDATE " . ($TeamEvent ? 'Team' : '') . "Finals SET
+                safe_w_sql($sql);
+
+                if(safe_w_affected_rows()) {
+                    updateOdfTiming('G', $TourId, $event, $TeamEvent, $match);
+                }
+            } elseif(!$Toggle) {
+                $sql = "UPDATE " . ($TeamEvent ? 'Team' : '') . "Finals SET
 				{$prefix}Live = 1,
 				{$prefix}DateTime={$prefix}DateTime
 				WHERE $Where";
-			safe_w_sql($sql);
-		}
+                safe_w_sql($sql);
 
-		// Set/unset active session in scheduler
-		if($r->FSScheduledDate) {
-			$ActiveSessions=array();
-			if(!$r->Live or !$Toggle) {
-				// works reverse as it is the previous state!
-				$key=$r->FSScheduledDate
-					.'|'.substr($r->FSScheduledTime,0,5)
-					.'|'.$r->GrPhase
-					.'|'.$r->EvFinalFirstPhase
-					.'|'.round($r->OrderBy, 4);
-				$ActiveSessions=array($key);
-			}
-			Set_Tournament_Option('ActiveSession', $ActiveSessions, false, $TourId);
-		}
-	}
+                if(safe_w_affected_rows()) {
+                    updateOdfTiming('G', $TourId, $event, $TeamEvent, $match);
+                }
+            }
 
-	$sql = "SELECT {$prefix}Live as Live
-		FROM " . ($TeamEvent ? 'Team' : '') . "Finals
-		WHERE {$prefix}Tournament=$TourId
-		AND {$prefix}MatchNo =" . StrSafe_DB($match) . "
-		AND {$prefix}Event=" . StrSafe_DB($event);
+            // Set/unset active session in scheduler
+            if($r->FSScheduledDate) {
+                $ActiveSessions=array();
+                if(!$r->Live or !$Toggle) {
+                    // works reverse as it is the previous state!
+                    $key=$r->FSScheduledDate
+                        .'|'.substr($r->FSScheduledTime,0,5)
+                        .'|'.$r->GrPhase
+                        .'|'.$r->EvFinalFirstPhase
+                        .'|'.round($r->OrderBy, 4);
+                    $ActiveSessions=array($key);
+                }
+                Set_Tournament_Option('ActiveSession', $ActiveSessions, false, $TourId);
+            }
+        }
+
+        $sql = "SELECT {$prefix}Live as Live
+            FROM " . ($TeamEvent ? 'Team' : '') . "Finals
+            WHERE {$prefix}Tournament=$TourId
+            AND {$prefix}MatchNo =" . StrSafe_DB($match) . "
+            AND {$prefix}Event=" . StrSafe_DB($event);
+    }
 
 	return safe_r_sql($sql);
 }
 
-function unsetLiveSession($TourId) {
-	safe_w_sql("UPDATE Finals SET FinLive='0',
-		FinDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . "
-		WHERE FinTournament=$TourId
-		AND FinLive!='0'");
-	safe_w_sql("UPDATE TeamFinals SET TfLive='0',
-		TfDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . "
-		WHERE TfTournament=$TourId
-		AND TfLive!='0'");
+function unsetLiveSession($TourId, $TeamEvent=-1, $event='', $match=-1) {
+    if($TeamEvent != -1) {
+        if($match>256) {
+            $q=safe_r_SQL("SELECT RrMatchEvent AS Event, RrMatchMatchNo AS MatchNo 
+                FROM RoundRobinMatches
+                WHERE RrMatchTournament=$TourId AND RrMatchEvent='$event' and RrMatchTeam=$TeamEvent AND RrMatchMatchNo IN (".$match.",".($match+1).") AND RrMatchLive=1");
+            if(safe_num_rows($q)) {
+                setLiveSession($TeamEvent, $event, $match, $TourId);
+            }
+        } elseif($TeamEvent == 0) {
+            $q=safe_r_SQL("SELECT FinEvent AS Event, FinMatchNo AS MatchNo FROM Finals
+                WHERE FinTournament=$TourId AND FinEvent='$event' AND FinMatchNo IN (".$match.",".($match+1).") AND FinLive='1'");
+            if(safe_num_rows($q)) {
+                setLiveSession(0, $event, $match, $TourId);
+            }
+        } else {
+            $q=safe_r_SQL("SELECT TfEvent AS Event, TfMatchNo AS MatchNo FROM TeamFinals
+                WHERE TfTournament=$TourId AND TfEvent='$event' AND TfMatchNo IN (".$match.",".($match+1).") AND TfLive='1'");
+            if(safe_num_rows($q)) {
+                setLiveSession(1, $event, $match, $TourId);
+            }
+        }
+    } else {
+        safe_w_sql("UPDATE Finals SET FinLive='0',
+            FinDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . "
+            WHERE FinTournament=$TourId
+            AND FinLive!='0'");
+        safe_w_sql("UPDATE TeamFinals SET TfLive='0',
+            TfDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . "
+            WHERE TfTournament=$TourId
+            AND TfLive!='0'");
+        safe_w_sql("UPDATE RoundRobinMatches SET RrMatchLive='0',
+            RrMatchDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . "
+            WHERE RrMatchTournament=$TourId
+            AND RrMatchLive!='0'");
+    }
 }

@@ -11,9 +11,9 @@ $NumEnd = 0;
 	. "WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " ";*/
 
 $Select
-	= "SELECT (ToElabTeam!=0) as BisTarget, ToNumEnds AS TtNumEnds "
-	. "FROM Tournament "
-	. "WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " ";
+	= "SELECT (ToCategory&12) as BisTarget, ToNumEnds AS TtNumEnds
+		FROM Tournament
+		WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " ";
 $RsTour=safe_r_sql($Select);
 if (safe_num_rows($RsTour)==1)
 {

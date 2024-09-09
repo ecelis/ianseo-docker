@@ -43,6 +43,7 @@ echo '<tr>';
 echo '<td colspan="2" class="Center">';
 echo '<div class="Button" onclick="printSpotter()">' . get_text('PrintSpotterScore','RunArchery') . '</div>';
 echo '<div class="Button" onclick="printLoop()">' . get_text('PrintLoopScore','RunArchery') . '</div>';
+echo '<div class="Button" onclick="printDelays()">' . get_text('PrintDelays','RunArchery') . '</div>';
 echo '</td>';
 echo '</tr>';
 

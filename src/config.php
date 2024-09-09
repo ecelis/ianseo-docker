@@ -26,6 +26,7 @@ $CFG->ExtranetWrapper='https://extranet.worldarchery.sport/';
 $CFG->USERAUTH=false;
 
 $CFG->ODF='';
+$CFG->ACLExcluded=array();
 $CFG->ODF_VERSION='2.10'; // TOKYO 2020 OG as of 22/02/2019
 
 // Defines the rank to assign to DeRanking IRMs (DSQ and DQB)
@@ -46,11 +47,11 @@ date_default_timezone_set('UTC');
 
 $CFG->LANGUAGE_PATH = $CFG->DOCUMENT_PATH . 'Common/Languages/';
 
+@include_once($CFG->DOCUMENT_PATH . 'Common/config.inc.php');
+@include_once('Common/DebugOverrides.php');
 require_once($CFG->DOCUMENT_PATH . 'Common/Fun_DB.inc.php');
 require_once($CFG->DOCUMENT_PATH . 'Common/Globals.inc.php');
 require_once($CFG->DOCUMENT_PATH . 'Common/Lib/Fun_Modules.php');
-@include_once($CFG->DOCUMENT_PATH . 'Common/config.inc.php');
-@include_once('Common/DebugOverrides.php');
 
 // Check if the DB is up to date
 // HAS BEEN MOVED FOR PERFORMANCE!

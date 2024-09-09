@@ -82,16 +82,13 @@ if(!empty($_REQUEST['action']) and preg_match("/^(list|set|bulk|session)$/i",$_R
     JsonOut($JSON);
     die();
 }
-
+$IncludeJquery = true;
 $JS_SCRIPT = array( phpVars2js(array(
     'CmdCancel' => get_text('CmdCancel'),
     'CmdConfirm' => get_text('Confirm', 'Tournament'),
 )),
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>',
     '<script type="text/javascript" src="./PrintoutComments.js"></script>',
     '<link href="./PrintoutComments.css" rel="stylesheet" type="text/css">',
-    '<link href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css" media="screen" rel="stylesheet" type="text/css">',
 );
 include('Common/Templates/head.php');
 echo '<table class="Tabella">';
@@ -105,7 +102,7 @@ echo '<tr>'.
 echo '<tr>'.
     '<th class="smallContainer"><input type="checkbox" id="chkBulk" onclick="chkBulkSelection()"></th>'.
     '<td colspan="4"><select id="cmbSessions"><option value="---">'.get_text('Select', 'Tournament').'</option>';
-    foreach (getScheduledSessions() as $s) {
+    foreach (getApiScheduledSessions() as $s) {
         echo '<option value="'.$s->keyValue.'">'.$s->Description.'</option>';
     }
 echo '</select><input type="button" value="'.	get_text('SelectSession', 'Tournament').'" onclick="selectSession()"></td></tr>';

@@ -24,8 +24,8 @@ if(!empty($_REQUEST['delete']) and $ToId=intval($_REQUEST['delete'])) {
 }
 
 $PAGE_TITLE=get_text('MenuLM_GateControl');
+$IncludeJquery = true;
 $JS_SCRIPT=array(
-	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 	'<script type="text/javascript" src="./GateControl.js"></script>',
 );
 
@@ -59,7 +59,7 @@ foreach($Options as $ToId => $Sessions) {
 
 	// get all the sessions defined by Qualification, Elimination and Matches
 	echo '<td id="Combo-'.$ToId.'">';
-	if($tmp=getScheduledSessions('API', $ToId, true)) {
+	if($tmp=getApiScheduledSessions(['TourId' => $ToId, 'OnlyToday' => true])) {
 		echo '<table><tr><th>Event</th><th>Byes In</th><th>Byes Out</th></tr>';
 			foreach($tmp as $item) {
 				echo '<tr class="rowHover"><td>'.$item->Description.'</td>';

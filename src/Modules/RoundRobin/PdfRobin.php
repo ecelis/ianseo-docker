@@ -13,6 +13,7 @@ $HasMatches=($_REQUEST['IncBrackets']??0);
 
 $options=[
 	'team'=>($_REQUEST['team']??0),
+	'includeTeamRank' => $_SESSION['TourLocSubRule']=='SetFRD12023',
 	];
 if(!empty($_REQUEST['Event'])) {
 	$options['events']=$_REQUEST['Event'];

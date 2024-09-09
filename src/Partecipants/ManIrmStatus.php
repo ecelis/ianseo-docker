@@ -37,9 +37,6 @@ $JS_SCRIPT=array(
 	    'ReqEvent' => isset($_REQUEST['event']) ? $_REQUEST['event'] : '',
 	    'ReqPhase' => isset($_REQUEST['phase']) ? $_REQUEST['phase'] : '',
     )),
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.6.0.min.js"></script>',
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>',
-	'<link href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css" media="screen" rel="stylesheet" type="text/css">',
     '<script type="text/javascript" src="./ManIrmStatus.js"></script>',
     '<style>
 		.disabled {background-color: yellow;}
@@ -52,7 +49,8 @@ $JS_SCRIPT=array(
     );
 
 $PAGE_TITLE=get_text('MenuLM_IrmManagement');
-$IncludeFA=true;
+$IncludeFA = true;
+$IncludeJquery = true;
 
 $Order=empty($_REQUEST['Order']) ? '' : $_REQUEST['Order'];
 

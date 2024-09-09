@@ -1,6 +1,13 @@
 
 
 function ChangeInfo(obj) {
+	if((obj.type=='date' || obj.type=='time')) {
+		if(obj.defaultValue==obj.value) {
+			return;
+		} else {
+			obj.defaultValue=obj.value;
+		}
+	}
 	let form={
 		act:'update',
 	};

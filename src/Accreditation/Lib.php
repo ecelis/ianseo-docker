@@ -43,10 +43,13 @@ function getAccrQuery($Id=0) {
 		$Where[]="EnId=$Id";
 	} else {
 		if(!empty($_REQUEST['txt_Cognome'])) {
-			$Where[]="concat(EnFirstName,' ',EnName, ' ', EnCode) LIKE '%" . $_REQUEST['txt_Cognome'] . "%'";
+			$Where[]="concat(EnFirstName,' ',EnName, ' ', EnCode) LIKE '%" . StrSafe_DB($_REQUEST['txt_Cognome'], true) . "%'";
 		}
 		if(!empty($_REQUEST['txt_Societa'])) {
-			$Where[]="(CoCode LIKE '%" . $_REQUEST['txt_Societa'] . "%' OR CoName LIKE '%" . $_REQUEST['txt_Societa'] . "%')";
+			$Where[]="(CoCode LIKE '%" . StrSafe_DB($_REQUEST['txt_Societa'], true) . "%' OR CoName LIKE '%" . StrSafe_DB($_REQUEST['txt_Societa'], true) . "%')";
+		}
+		if(!empty($_REQUEST['txt_Category'])) {
+			$Where[]="concat(EnDivision, EnClass) LIKE '%" . StrSafe_DB($_REQUEST['txt_Category'], true) . "%'";
 		}
 		if(!empty($_REQUEST['RemoveAcc'])) {
 			if($_SESSION['AccOp'] == -1) {

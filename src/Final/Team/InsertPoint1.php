@@ -8,10 +8,10 @@
 	CheckTourSession(true);
     checkACL(AclTeams, AclReadOnly);
 
+	$IncludeJquery = true;
 	$JS_SCRIPT=array(
 		phpVars2js(array("WebDir" => $CFG->ROOT_DIR)),
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>',
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Final/Fun_AJAX.js"></script>',
         '<script>$(function() {ChangeEvent(1);});</script>',
 		);
@@ -30,7 +30,7 @@
 	<th class="TitleLeft" colspan="2"><?php print get_text('ScheduledMatches', 'Tournament');?></th>
 </tr>
 <tr>
-	<td colspan="2"><?php echo ComboSession('Teams'); ?></td>
+	<td colspan="2"><?php echo ApiComboSession(['T']); ?></td>
 </tr>
 <tr>
 <th class="TitleLeft" colspan="2"><?php print get_text('Event');?></th>

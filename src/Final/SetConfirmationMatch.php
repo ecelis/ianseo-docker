@@ -51,8 +51,9 @@ if($r1=safe_fetch($q) and $r2=safe_fetch($q) and $r1->Winner+$r2->Winner) {
 
 $Error=0;
 
-runJack("FinConfirmEnd", $_SESSION['TourId'], array("Event"=>$Event ,"Team"=>$Team,"MatchNo"=>min($m) ,"TourId"=>$_SESSION['TourId']));
-runJack("MatchFinished", $_SESSION['TourId'], array("Event"=>$Event ,"Team"=>$Team,"MatchNo"=>min($m) ,"TourId"=>$_SESSION['TourId']));
+runJack("FinConfirmEnd", $_SESSION['TourId'], array("Event"=>$Event, "Team"=>$Team, "MatchNo"=>min($m), "Side"=>0, "TourId"=>$_SESSION['TourId']));
+runJack("FinConfirmEnd", $_SESSION['TourId'], array("Event"=>$Event, "Team"=>$Team, "MatchNo"=>min($m), "Side"=>1, "TourId"=>$_SESSION['TourId']));
+runJack("MatchFinished", $_SESSION['TourId'], array("Event"=>$Event, "Team"=>$Team, "MatchNo"=>min($m), "TourId"=>$_SESSION['TourId']));
 
 header('Content-Type: text/xml');
 echo '<response error="'.$Error.'" winner="'.$Winner.'" loser="'.$Loser.'">';

@@ -71,7 +71,10 @@ function Filtra()
 	if (document.getElementById('RemoveAcc').checked==true)
 		RemoveAcc=1;
 
-	window.location.href="Accreditation.php?RemoveAcc=" + RemoveAcc + "&txt_Cognome=" + document.getElementById('txt_Cognome').value + "&txt_Societa=" + document.getElementById('txt_Societa').value;
+	window.location.href="Accreditation.php?RemoveAcc=" + RemoveAcc +
+		"&txt_Cognome=" + document.getElementById('txt_Cognome').value +
+		"&txt_Category=" + document.getElementById('txt_Category').value +
+		"&txt_Societa=" + document.getElementById('txt_Societa').value;
 	//window.location.href="Accreditation.php?txt_Cognome=" + document.getElementById('txt_Cognome').value + "&txt_Societa=" + document.getElementById('txt_Societa').value;
 }
 
@@ -92,4 +95,40 @@ function ResetFilter()
 function SetAcc(Id,NoAcc)
 {
 	window.location.href="Accreditation.php?Command=NoAcc&Id=" + Id + "&NoAcc=" + NoAcc;
+}
+
+function checkSession() {
+	let form={
+		act:'reset',
+		sessions:[],
+		bib:$('#bib').val(),
+		txt_Cognome:$('#txt_Cognome').val(),
+		txt_Societa:$('#txt_Societa').val(),
+		txt_Category:$('#txt_Category').val(),
+		RemoveAcc:$('#RemoveAcc:checked').length,
+	}
+	$('.chk_Turni:checked').each(function() {
+		form.sessions.push(this.value);
+	})
+
+	location.href='?'+$.param(form);
+}
+
+function delAccr(id) {
+	let form={
+		act:'delete',
+		id:id,
+	}
+
+	$.each(['bib', 'txt_Cognome', 'txt_Societa', 'txt_Category'], function() {
+		if($('#'+this).val()) {
+			form[this]=$('#'+this).val();
+		}
+	});
+
+	if($('#RemoveAcc:checked').length) {
+		form.RemoveAcc=$('#RemoveAcc:checked').length;
+	}
+
+	location.href='?'+$.param(form);
 }

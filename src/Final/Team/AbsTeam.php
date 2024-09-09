@@ -75,7 +75,7 @@ if(count($EventCodes) != 0) {
         // check received ranks
         $Events = array_keys($_REQUEST['R']);
         foreach ($_REQUEST['R'] as $Event => $EnIds) {
-            $q = safe_r_sql("select EvFinalFirstPhase, EvNumQualified, EvFirstQualified from Events where EvCode=" . StrSafe_DB($Event) . " and EvTeamEvent=1 and EvTournament='{$_SESSION['TourId']}'");
+            $q = safe_r_sql("select EvFinalFirstPhase, EvNumQualified, EvFirstQualified, EvFinalTargetType from Events where EvCode=" . StrSafe_DB($Event) . " and EvTeamEvent=1 and EvTournament='{$_SESSION['TourId']}'");
             $r = safe_fetch($q);
 
             // Check CT and SO have been done - need to check that in the range of allowed vales, none is present double
@@ -123,7 +123,7 @@ if(count($EventCodes) != 0) {
 			            $Decoded=array();
 			            $idx=0;
                         foreach ($_REQUEST['T'][$Event][$EnId] as $k => $v) {
-                            $tmpValue['tiebreak'] .= GetLetterFromPrint(str_replace('*','',$v));
+                            $tmpValue['tiebreak'] .= GetLetterFromPrint(str_replace('*','',$v), 'T', $r->EvFinalTargetType);
                         }
                         $tmpValue['tiebreak'] = trim($tmpValue['tiebreak']);
                         if (isset($_REQUEST['C'][$Event][$EnId])) {
@@ -178,6 +178,9 @@ if(count($EventCodes) != 0) {
                     $EventHandled[$r->TeEvent] = valueFirstPhase($r->EvFinalFirstPhase);
                 }
                 safe_w_sql("UPDATE TeamFinals SET TfTeam='{$r->TeCoId}', TfSubTeam='{$r->TeSubTeam}', TfDateTime='" . date('Y-m-d H:i:s') . "' WHERE TfEvent='{$r->TeEvent}' AND TfMatchNo={$r->GrMatchNo} AND TfTournament={$r->TeTournament}");
+	            if(safe_w_affected_rows()) {
+					updateOdfTiming('S', $r->TeTournament, $r->TeEvent, 1, $r->GrMatchNo);
+	            }
             }
 
             // Team Components
@@ -338,7 +341,7 @@ if(count($EventCodes) != 0) {
             HAVING  COUNT(*)>1
             ORDER BY TeEvent, TeSO DESC
         ) as sqy ON EvCode=TeEvent ".
-        "WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=1 AND EvFinalFirstPhase!=0 AND EvCodeParent='' " .
+        "WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=1 AND (EvFinalFirstPhase!=0 or EvElimType=5) AND EvCodeParent='' " .
         "GROUP BY EvCode ORDER BY EvProgr ASC ";
     $q=safe_r_SQL($Sql);
     echo '<table class="Tabella">';

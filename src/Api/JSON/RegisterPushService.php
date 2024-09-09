@@ -40,9 +40,10 @@ if(!empty($TourId) && !empty($Address)) {
 	registerJack("FinConfirmEnd", "API-JSON", dirname(__FILE__).'/JackInclude.php', 'JackRunUpdate_MatchUpdate(\'@Event\', @Team, @MatchNo, @TourId);',$TourId);
 	registerJack("FinShootingFirst", "API-JSON", dirname(__FILE__).'/JackInclude.php', 'JackRunUpdate_MatchUpdate(\'@Event\', @Team, @MatchNo, @TourId);',$TourId);
 	registerJack("FinRankUpdate", "API-JSON", dirname(__FILE__).'/JackInclude.php', 'JackRunUpdate_RankUpdate(\'@Event\', @Team, @TourId);',$TourId);
+    registerJack("QRRankUpdate", "API-JSON", dirname(__FILE__).'/JackInclude.php', 'JackRunUpdate_QRRankUpdate(\'@Event\', @Team, @TourId);',$TourId);
 	registerJack("Wind", "API-JSON", dirname(__FILE__).'/JackInclude.php', 'JackRunUpdate_Wind(@WindSpeed, @WindDirection, \'@WindUM\', @TourId);',$TourId);
 	registerJack("ArrowSpeed", "API-JSON", dirname(__FILE__).'/JackInclude.php', 'JackRunUpdate_ArrowSpeed(@ArrowSpeed, \'@ArrowUM\', @TourId);',$TourId);
-	registerJack("Timing", "API-JSON", dirname(__FILE__).'/JackInclude.php', 'JackRunUpdate_Time(@Time, \'@Side\', @TourId);',$TourId);
+	registerJack("Timing", "API-JSON", dirname(__FILE__).'/JackInclude.php', 'JackRunUpdate_Time(@Time, \'@Side\', \'@Color\', @TourId);',$TourId);
 	registerJack("HandShake", "API-JSON", dirname(__FILE__).'/JackInclude.php', 'JackRunUpdate_Check(\''.$ClientId.'\');',$TourId, $tmpInsert);
 	$json_array["Success"] = true;
 	$json_array["Timestamp"] = $_SERVER['REQUEST_TIME'];

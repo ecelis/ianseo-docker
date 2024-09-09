@@ -4,8 +4,8 @@ require_once('Common/Fun_FormatText.inc.php');
 
 if(!empty($_REQUEST['SortByTarget'])) {
 	$SORT=' TargetNo, Printed, FirstName, Name ';
-
 }
+
 $CardType=(empty($_REQUEST['CardType']) ? 'A' : $_REQUEST['CardType']);
 $CardNumber=(empty($_REQUEST['CardNumber']) ? 0 : intval($_REQUEST['CardNumber']));
 

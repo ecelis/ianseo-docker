@@ -22,4 +22,4 @@
     width:13ch;
 }
 
-.d-none {display:none;}
+.d-none {display:none!important;}

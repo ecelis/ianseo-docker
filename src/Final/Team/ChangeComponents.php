@@ -6,7 +6,7 @@ CheckTourSession(true);
 checkACL(AclTeams, AclReadWrite);
 
 $PAGE_TITLE=get_text('ChangeComponents');
-
+$IncludeJquery = true;
 $JS_SCRIPT = array(phpVars2js(array(
         'ROOT_DIR'=>$CFG->ROOT_DIR,
         'cmdEdit' => get_text('Edit', 'Tournament'),
@@ -15,11 +15,8 @@ $JS_SCRIPT = array(phpVars2js(array(
         'Number' => get_text('Number'),
         'TeamComponentsTimestamp' => get_text('TeamComponentsTimestamp', 'Tournament')
     )),
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>',
     '<script type="text/javascript" src="./ChangeComponents.js"></script>',
     '<link href="./ChangeComponents.css" rel="stylesheet" type="text/css">',
-    '<link href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css" media="screen" rel="stylesheet" type="text/css">',
 );
 include('Common/Templates/head.php');
 

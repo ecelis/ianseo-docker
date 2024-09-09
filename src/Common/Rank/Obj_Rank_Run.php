@@ -211,13 +211,20 @@ class Obj_Rank_Run extends Obj_Rank{
 					ToNumEnds,ToNumDist,ToMaxDistScore, ToGolds AS GoldLabel, ToXNine AS XNineLabel, ToDouble,
 					concat(DvMajVersion, '.', DvMinVersion) as DocVersion, date_format(DvPrintDateTime, '%e %b %Y %H:%i UTC') as DocVersionDate, DvNotes as DocNotes
 				FROM RunArcheryRank
+				INNER JOIN Events ON EvCode=RarEvent AND EvTeamEvent=RarTeam AND EvTournament=RarTournament
 			    inner join RunArchery on RaTournament=RarTournament and RaEntry=RarEntry and RaSubTeam=RarSubTeam and RaTeam=RarTeam and RaEvent=RarEvent and RaPhase=RarPhase
 			    inner join IrmTypes on IrmId=RarIrmType
 			    inner join Entries on EnId=RarEntry and EnTournament=RarTournament and EnAthlete=1 AND EnStatus <= 1
-				INNER JOIN Countries NOC ON NOC.CoId=EnCountry AND NOC.CoTournament={$this->tournament}
+				left JOIN Countries NOC ON NOC.CoId=
+				    case EvTeamCreationMode 
+				        when 0 then EnCountry
+				        when 1 then EnCountry2
+				        when 2 then EnCountry3
+				        else EnCountry
+                    end
+                    AND NOC.CoTournament={$this->tournament}
 			    inner join Classes on ClTournament=EnTournament and ClId=EnClass
 				left join ExtraData on EdId=EnId and EdType='Z'
-				INNER JOIN Events ON EvCode=RarEvent AND EvTeamEvent=RarTeam AND EvTournament=RarTournament
 				INNER JOIN Tournament ON ToId=RarTournament
 				LEFT JOIN DocumentVersions on EvTournament=DvTournament AND DvFile = 'RUN-0' and DvEvent=RarEvent
 				LEFT JOIN Flags ON FlIocCode='FITA' and FlCode=CoCode and FlTournament=ToId
@@ -323,14 +330,14 @@ class Obj_Rank_Run extends Obj_Rank{
 					if($myRow->IrmShowRank) {
 						if($myRow->RarArrowTotalPenalty>0) {
 							$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['ArrowShort']=ltrim(date_format(date_create_from_format('U.u', $myRow->RarArrowTotalPenalty), 'H:i:s.v'),'0:');
-							$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['PenaltyTime']=ltrim(date_format(date_create_from_format('U.u', number_format($myRow->RarArrowTotalPenalty+$myRow->RarLoopTotalPenalty, 3)), 'H:i:s.v'),'0:');
+							$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['PenaltyTime']=ltrim(date_format(date_create_from_format('U.u', number_format($myRow->RarArrowTotalPenalty+$myRow->RarLoopTotalPenalty, 3,'.','')), 'H:i:s.v'),'0:');
 						}
 						if($myRow->RarLoopTotalPenalty>0) {
 							$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['LoopShort']=ltrim(date_format(date_create_from_format('U.u', $myRow->RarLoopTotalPenalty), 'H:i:s.v'),'0:');
-							$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['PenaltyTime']=ltrim(date_format(date_create_from_format('U.u', number_format($myRow->RarArrowTotalPenalty+$myRow->RarLoopTotalPenalty, 3)), 'H:i:s.v'),'0:');
+							$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['PenaltyTime']=ltrim(date_format(date_create_from_format('U.u', number_format($myRow->RarArrowTotalPenalty+$myRow->RarLoopTotalPenalty, 3,'.','')), 'H:i:s.v'),'0:');
 						}
 						if($myRow->RarTimeAdjustPlus+$myRow->RarTimeAdjustMinus) {
-							$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['AdjustedTime']=($myRow->RarTimeAdjustPlus<$myRow->RarTimeAdjustMinus ? '-' : '').ltrim(date_format(date_create_from_format('U.u', number_format(abs($myRow->RarTimeAdjustPlus - $myRow->RarTimeAdjustMinus),3)), 'H:i:s.v'),'0:');
+							$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['AdjustedTime']=($myRow->RarTimeAdjustPlus<$myRow->RarTimeAdjustMinus ? '-' : '').ltrim(date_format(date_create_from_format('U.u', number_format(abs($myRow->RarTimeAdjustPlus - $myRow->RarTimeAdjustMinus),3,'.','')), 'H:i:s.v'),'0:');
 						}
 					} else {
 						$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['rank']=$myRow->IrmType;
@@ -481,14 +488,14 @@ class Obj_Rank_Run extends Obj_Rank{
 					if($myRow->IrmShowRank) {
 						if($myRow->RarArrowTotalPenalty>0) {
 							$this->data['sections'][1][$myRow->RarEvent]['phases'][$myRow->RarPhase]['items']["id-{$myRow->TeCoId}-{$myRow->TeSubTeam}"]['ArrowShort']=ltrim(date_format(date_create_from_format('U.u', $myRow->RarArrowTotalPenalty), 'H:i:s.v'),'0:');
-							$this->data['sections'][1][$myRow->RarEvent]['phases'][$myRow->RarPhase]['items']["id-{$myRow->TeCoId}-{$myRow->TeSubTeam}"]['PenaltyTime']=ltrim(date_format(date_create_from_format('U.u', number_format($myRow->RarArrowTotalPenalty+$myRow->RarLoopTotalPenalty,3)), 'H:i:s.v'),'0:');
+							$this->data['sections'][1][$myRow->RarEvent]['phases'][$myRow->RarPhase]['items']["id-{$myRow->TeCoId}-{$myRow->TeSubTeam}"]['PenaltyTime']=ltrim(date_format(date_create_from_format('U.u', number_format($myRow->RarArrowTotalPenalty+$myRow->RarLoopTotalPenalty,3,'.','')), 'H:i:s.v'),'0:');
 						}
 						if($myRow->RarLoopTotalPenalty>0) {
 							$this->data['sections'][1][$myRow->RarEvent]['phases'][$myRow->RarPhase]['items']["id-{$myRow->TeCoId}-{$myRow->TeSubTeam}"]['LoopShort']=ltrim(date_format(date_create_from_format('U.u', $myRow->RarLoopTotalPenalty), 'H:i:s.v'),'0:');
-							$this->data['sections'][1][$myRow->RarEvent]['phases'][$myRow->RarPhase]['items']["id-{$myRow->TeCoId}-{$myRow->TeSubTeam}"]['PenaltyTime']=ltrim(date_format(date_create_from_format('U.u', number_format($myRow->RarArrowTotalPenalty+$myRow->RarLoopTotalPenalty,3)), 'H:i:s.v'),'0:');
+							$this->data['sections'][1][$myRow->RarEvent]['phases'][$myRow->RarPhase]['items']["id-{$myRow->TeCoId}-{$myRow->TeSubTeam}"]['PenaltyTime']=ltrim(date_format(date_create_from_format('U.u', number_format($myRow->RarArrowTotalPenalty+$myRow->RarLoopTotalPenalty,3,'.','')), 'H:i:s.v'),'0:');
 						}
 						if($myRow->RarTimeAdjustPlus+$myRow->RarTimeAdjustMinus) {
-							$this->data['sections'][1][$myRow->RarEvent]['phases'][$myRow->RarPhase]['items']["id-{$myRow->TeCoId}-{$myRow->TeSubTeam}"]['AdjustedTime']=($myRow->RarTimeAdjustPlus<$myRow->RarTimeAdjustMinus ? '-' : '').ltrim(date_format(date_create_from_format('U.u', number_format(abs($myRow->RarTimeAdjustPlus - $myRow->RarTimeAdjustMinus),3)), 'H:i:s.v'),'0:');
+							$this->data['sections'][1][$myRow->RarEvent]['phases'][$myRow->RarPhase]['items']["id-{$myRow->TeCoId}-{$myRow->TeSubTeam}"]['AdjustedTime']=($myRow->RarTimeAdjustPlus<$myRow->RarTimeAdjustMinus ? '-' : '').ltrim(date_format(date_create_from_format('U.u', number_format(abs($myRow->RarTimeAdjustPlus - $myRow->RarTimeAdjustMinus),3,'.','')), 'H:i:s.v'),'0:');
 						}
 					} else {
 						$this->data['sections'][1][$myRow->RarEvent]['phases'][$myRow->RarPhase]['items']["id-{$myRow->TeCoId}-{$myRow->TeSubTeam}"]['rank']=$myRow->IrmType;
@@ -548,13 +555,20 @@ class Obj_Rank_Run extends Obj_Rank{
 					ToNumEnds,ToNumDist,ToMaxDistScore, ToGolds AS GoldLabel, ToXNine AS XNineLabel, ToDouble,
 					concat(DvMajVersion, '.', DvMinVersion) as DocVersion, date_format(DvPrintDateTime, '%e %b %Y %H:%i UTC') as DocVersionDate, DvNotes as DocNotes
 				FROM RunArcheryRank
+				INNER JOIN Events ON EvCode=RarEvent AND EvTeamEvent=RarTeam AND EvTournament=RarTournament
 			    inner join RunArchery on RaTournament=RarTournament and RaEntry=RarEntry and RaSubTeam=RarSubTeam and RaTeam=RarTeam and RaEvent=RarEvent and RaPhase=RarPhase
 			    inner join IrmTypes on IrmId=RarIrmType
 			    inner join Entries on EnId=RarEntry and EnTournament=RarTournament and EnAthlete=1 AND EnStatus <= 1
-				INNER JOIN Countries NOC ON NOC.CoId=EnCountry AND NOC.CoTournament={$this->tournament}
+				left JOIN Countries NOC ON NOC.CoId=
+				    case EvTeamCreationMode 
+				        when 0 then EnCountry
+				        when 1 then EnCountry2
+				        when 2 then EnCountry3
+				        else EnCountry
+                    end
+                    AND NOC.CoTournament={$this->tournament}
 			    inner join Classes on ClTournament=EnTournament and ClId=EnClass
 				left join ExtraData on EdId=EnId and EdType='Z'
-				INNER JOIN Events ON EvCode=RarEvent AND EvTeamEvent=RarTeam AND EvTournament=RarTournament
 				INNER JOIN Tournament ON ToId=RarTournament
 				LEFT JOIN DocumentVersions on EvTournament=DvTournament AND DvFile = 'RUN-0' and DvEvent=RarEvent
 				LEFT JOIN Flags ON FlIocCode='FITA' and FlCode=CoCode and FlTournament=ToId
@@ -660,14 +674,14 @@ class Obj_Rank_Run extends Obj_Rank{
 					if($myRow->IrmShowRank) {
 						if($myRow->RarArrowTotalPenalty>0) {
 							$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['ArrowShort']=ltrim(date_format(date_create_from_format('U.u', $myRow->RarArrowTotalPenalty), 'H:i:s.v'),'0:');
-							$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['PenaltyTime']=ltrim(date_format(date_create_from_format('U.u', number_format($myRow->RarArrowTotalPenalty+$myRow->RarLoopTotalPenalty, 3)), 'H:i:s.v'),'0:');
+							$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['PenaltyTime']=ltrim(date_format(date_create_from_format('U.u', number_format($myRow->RarArrowTotalPenalty+$myRow->RarLoopTotalPenalty, 3,'.','')), 'H:i:s.v'),'0:');
 						}
 						if($myRow->RarLoopTotalPenalty>0) {
 							$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['LoopShort']=ltrim(date_format(date_create_from_format('U.u', $myRow->RarLoopTotalPenalty), 'H:i:s.v'),'0:');
-							$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['PenaltyTime']=ltrim(date_format(date_create_from_format('U.u', number_format($myRow->RarArrowTotalPenalty+$myRow->RarLoopTotalPenalty, 3)), 'H:i:s.v'),'0:');
+							$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['PenaltyTime']=ltrim(date_format(date_create_from_format('U.u', number_format($myRow->RarArrowTotalPenalty+$myRow->RarLoopTotalPenalty, 3,'.','')), 'H:i:s.v'),'0:');
 						}
 						if($myRow->RarTimeAdjustPlus+$myRow->RarTimeAdjustMinus) {
-							$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['AdjustedTime']=($myRow->RarTimeAdjustPlus<$myRow->RarTimeAdjustMinus ? '-' : '').ltrim(date_format(date_create_from_format('U.u', number_format(abs($myRow->RarTimeAdjustPlus - $myRow->RarTimeAdjustMinus),3)), 'H:i:s.v'),'0:');
+							$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['AdjustedTime']=($myRow->RarTimeAdjustPlus<$myRow->RarTimeAdjustMinus ? '-' : '').ltrim(date_format(date_create_from_format('U.u', number_format(abs($myRow->RarTimeAdjustPlus - $myRow->RarTimeAdjustMinus),3,'.','')), 'H:i:s.v'),'0:');
 						}
 					} else {
 						$this->data['sections'][0][$KEY]['phases'][$myRow->RarPhase]['items']["id-{$myRow->EnId}"]['rank']=$myRow->IrmType;

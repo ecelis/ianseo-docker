@@ -38,29 +38,29 @@ function CreateStandardClasses($TourId, $SubRule, $Type='FITA') {
 	switch($SubRule) {
 		case '1':
         case '3':
-            CreateClass($TourId, 1, 10, 12, 1, 'U13W', 'U13W', 'U13 weiblich');
-            CreateClass($TourId, 2, 10, 12, 0, 'U13M', 'U13M', 'U13 männlich');
-            CreateClass($TourId, 3, 10, 12, -1, 'U13', 'U13', 'U13');
+            CreateClass($TourId, 1, 10, 12, 1, 'U13W', 'U13W,U15W,U18W,U21W,W', 'U13 weiblich');
+            CreateClass($TourId, 2, 10, 12, 0, 'U13M', 'U13M,U15M,U18M,U21M,M', 'U13 männlich');
+            CreateClass($TourId, 3, 10, 12, -1, 'U13', 'U13,U15', 'U13');
 
-            CreateClass($TourId, 4, 13, 14, 1, 'U15W', 'U15W,U13W', 'U15 weiblich');
-            CreateClass($TourId, 5, 13, 14, 0, 'U15M', 'U15M,U13M', 'U15 männlich');
-            CreateClass($TourId, 6, 13, 14, -1, 'U15', 'U15,U13', 'U15');
+            CreateClass($TourId, 4, 13, 14, 1, 'U15W', 'U15W,U18W,U21W,W', 'U15 weiblich');
+            CreateClass($TourId, 5, 13, 14, 0, 'U15M', 'U15M,U18M,U21M,M', 'U15 männlich');
+            CreateClass($TourId, 6, 13, 14, -1, 'U15', 'U15', 'U15');
 
-            CreateClass($TourId, 7, 15, 17, 1, 'U18W', 'U18W,U15W,U13W', 'U18 weiblich');
-            CreateClass($TourId, 8, 15, 17, 0, 'U18M', 'U18M,U15M,U13M', 'U18 männlich');
-            CreateClass($TourId, 9, 18, 20, 1, 'U21W', 'U21W,U18W,U13W,U15W', 'U21 weiblich');
-            CreateClass($TourId, 10, 18, 20, 0, 'U21M', 'U21M,U18M,U15M,U13M', 'U21 männlich');
+            CreateClass($TourId, 7, 15, 17, 1, 'U18W', 'U18W,U21W,W', 'U18 weiblich');
+            CreateClass($TourId, 8, 15, 17, 0, 'U18M', 'U18M,U21M,M', 'U18 männlich');
+            CreateClass($TourId, 9, 18, 20, 1, 'U21W', 'U21W,W', 'U21 weiblich');
+            CreateClass($TourId, 10, 18, 20, 0, 'U21M', 'U21M,M', 'U21 männlich');
 
-            CreateClass($TourId, 11, 65, 99, 1, '65W', '65W', '65+ weiblich');
-            CreateClass($TourId, 12, 65, 99, 0, '65M', '65M', '65+ männlich');
+            CreateClass($TourId, 11, 65, 99, 1, '65W', '65W,50W,W', '65+ weiblich');
+            CreateClass($TourId, 12, 65, 99, 0, '65M', '65M,50M,M', '65+ männlich');
             CreateClass($TourId, 13, 65, 99, -1, '65', '65', '65+');
 
-            CreateClass($TourId, 14, 50, 64, 1, '50W', '50W,65W', '50+ weiblich');
-            CreateClass($TourId, 15, 50, 64, 0, '50M', '50M,65M', '50+ männlich');
-            CreateClass($TourId, 16, 50, 64, -1, '50', '50,65', '50+');
+            CreateClass($TourId, 14, 50, 64, 1, '50W', '50W,W', '50+ weiblich');
+            CreateClass($TourId, 15, 50, 64, 0, '50M', '50M,M', '50+ männlich');
+            CreateClass($TourId, 16, 50, 64, -1, '50', '50', '50+');
 
-            CreateClass($TourId, 17, 21, 49, 0, 'M', 'M,U13M,U15M,U21M,U18M,65M,50M', 'Herren');
-            CreateClass($TourId, 18, 21, 49, 1, 'W', 'W,U13W,U15W,U21W,U18W,65W,50W', 'Damen');
+            CreateClass($TourId, 17, 21, 49, 1, 'W', 'W', 'Damen');
+            CreateClass($TourId, 18, 21, 49, 0, 'M', 'M', 'Herren');
 
             break;
 		case '2':

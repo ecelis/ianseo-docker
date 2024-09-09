@@ -53,7 +53,6 @@ $lang['ScheduleNotes']='توضیحات برنامه زمان بندی';
 $lang['ScheduleToday']='برنامه زمان بندی امروز';
 $lang['ScoreLogos']='اضافه کردن تصاویر مسابقه';
 $lang['Search']='جستجو';
-$lang['SendLogos']='ارسال تصاویر مسابقات';
 $lang['SessionSchedule']='برنامه زمان بندی مراحل';
 $lang['Sex']='جنسیت';
 $lang['ShortFemale']='W';

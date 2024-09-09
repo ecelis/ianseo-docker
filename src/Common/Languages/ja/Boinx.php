@@ -1,6 +1,13 @@
 <?php
+$lang['CssArrowCommon']='行射本';
+$lang['CssCountry']='国名';
+$lang['CssCountryCommon']='国名';
+$lang['CssSoPointsCommon']='ｾｯﾄﾎﾟｲﾝﾄ';
 $lang['CssVegasInOutName']='氏名';
+$lang['CssVegasInOutPoints']='ｾｯﾄﾎﾟｲﾝﾄ';
 $lang['CssVegasSOName']='氏名';
+$lang['CssVegasSOPoints']='ｾｯﾄﾎﾟｲﾝﾄ';
+$lang['CssVegasSOTarget']='的番号';
 $lang['Download']='ダウンロード';
 $lang['ScheduleAwards']='表彰式';
 $lang['ScheduleFeed']='RSSフィード';

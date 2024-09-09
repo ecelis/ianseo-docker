@@ -118,23 +118,17 @@ if(count($rankData['sections'])) {
 				$item['athlete'],
 				$item['countryCode']);
 
-			for($i=1; $i<=$section['meta']['numDist'];$i++)
-			{
+			for($i=1; $i<=$section['meta']['numDist'];$i++) {
 				list($rank,$score)=explode('|',$item['dist_' . $i]);
-				if($snapDistance==0)
-				{
+				if($snapDistance==0) {
 					$dataRow[] = $score . "#";
 					$dataRow[] = $rank ? "/" . str_pad($rank,2," ", STR_PAD_LEFT) . "#" : '';
-				}
-				elseif($i<$snapDistance)
+				} else if($i<$snapDistance) {
 					$dataRow[] = $score . "#";
-				else if($i==$snapDistance)
-				{
+				} else if($i==$snapDistance) {
 					list($rankS,$scoreS)=explode('|',$item['dist_Snap']);
 					$dataRow[] = $scoreS . "#";
-				}
-				else
-				{
+				} else {
 					$dataRow[] = "0#";
 				}
 			}
@@ -149,7 +143,7 @@ if(count($rankData['sections'])) {
 
 			if($snapDistance) {
 				$dataRow[] = ($item['scoreSnap']!=$item['score'] ? $item['score'] : "") . "#";
-			} elseif($section['meta']['running']) {
+			} else if($section['meta']['running']) {
 				$dataRow[] = '';
 			} else {
 				$tmpNote = '';
@@ -158,7 +152,7 @@ if(count($rankData['sections'])) {
 					if(strlen(trim($item['tiebreak']))) {
 						$tmpNote .= ' ' . $item['tiebreakDecoded'];
 					}
-				} else if($item['ct']>1) {
+				} else if($item['rank'] < $section['meta']['qualifiedNo']+$section['meta']['firstQualified'] AND $item['ct']>1) {
 					$tmpNote .=  $pdf->CoinTossShort;
 				}
 				if($item['notes']) {
@@ -174,7 +168,3 @@ if(count($rankData['sections'])) {
 	}
 }
 $pdf->Records=array();
-
-
-
-?>

@@ -1331,6 +1331,19 @@ function UpdateTournament($Gara) {
         unset($Gara['FinTrainingEvent']);
     }
 
+    if($Gara['Tournament']['ToDbVersion']<'2023-06-27 14:00:00') {
+		foreach($Gara['FinOdfTiming'] as $k => &$r) {
+			$r['FinOdfGettingReady']=$r['FinOdfPrepare'];
+			$r['FinOdfLive']=$r['FinOdfBegin'];
+			$r['FinOdfUnconfirmed']=$r['FinOdfEnd'];
+			$r['FinOdfOfficial']=$r['FinOdfConfirmed'];
+			unset($r['FinOdfPrepare']);
+			unset($r['FinOdfBegin']);
+			unset($r['FinOdfEnd']);
+			unset($r['FinOdfConfirmed']);
+		}
+    }
+
 	/*
 
 		if($Gara['Tournament']['ToDbVersion']<'YYYY-MM-DD HH:MM:SS') {

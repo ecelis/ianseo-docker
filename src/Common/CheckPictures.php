@@ -194,7 +194,7 @@ function CheckPictures($TourCode='', $open=false, $all=false, $force=false) {
             }
 		}
 	}
-	$q=safe_r_sql("select IceContent, IceOrder, IceType, IceCardType, IceCardNumber from IdCardElements where IceTournament = $TourId and IceType in ('Image', 'RandomImage')");
+	$q=safe_r_sql("select IceContent, IceOrder, IceType, IceCardType, IceCardNumber from IdCardElements where IceTournament = $TourId and IceType in ('Image', 'RandomImage', 'WRankImage', 'ExtraAddOnsImage')");
 	while($r=safe_fetch($q)) {
 		$ImName=$CFG->DOCUMENT_PATH.'TV/Photos/'.$TourCodeSafe.'-'.$r->IceType.'-'.$r->IceCardType.'-'.$r->IceCardNumber.'-'.$r->IceOrder.'.jpg';
 		if($r->IceContent and $im=@imagecreatefromstring($r->IceContent)) {
@@ -377,18 +377,18 @@ function RedrawPictures($TourCode='', $Force=false) {
 	}
 
 	// and the accreditation pictures too...
-	$q=safe_r_sql("select IcBackground from IdCards where IcTournament = $TourId");
-	if($r=safe_fetch($q)) {
-		$ImName=$CFG->DOCUMENT_PATH.'TV/Photos/'.$TourCodeSafe.'-Accreditation.jpg';
-		if($r->IcBackground and $im=@imagecreatefromstring($r->IcBackground)) {
-			if($Force or !file_exists($ImName)) imagejpeg($im, $ImName, 90);
-		} else {
-		    if(file_exists($ImName)) {
+    $q=safe_r_sql("select IcBackground, IcType, IcNumber from IdCards where IcTournament = $TourId");
+    while($r=safe_fetch($q)) {
+        $ImName=$CFG->DOCUMENT_PATH.'TV/Photos/'.$TourCodeSafe.'-'.$r->IcType.'-'.$r->IcNumber.'-Accreditation.jpg';
+        if($r->IcBackground and $im=@imagecreatefromstring($r->IcBackground)) {
+            if($Force or !file_exists($ImName)) imagejpeg($im, $ImName, 90);
+        } else {
+            if(file_exists($ImName)) {
                 @unlink($ImName);
             }
-		}
-	}
-	$q=safe_r_sql("select IceContent, IceType, IceOrder, IceCardType, IceCardNumber from IdCardElements where IceContent>'' and IceTournament = $TourId and IceType in ('Image', 'ImageSvg', 'RandomImage')");
+        }
+    }
+	$q=safe_r_sql("select IceContent, IceType, IceOrder, IceCardType, IceCardNumber from IdCardElements where IceContent>'' and IceTournament = $TourId and IceType in ('Image', 'ImageSvg', 'RandomImage', 'WRankImage', 'ExtraAddOnsImage')");
 	while($r=safe_fetch($q)) {
 		if($r->IceType=='ImageSvg') {
 			$ImName=$CFG->DOCUMENT_PATH.'TV/Photos/'.$TourCodeSafe.'-'.$r->IceType.'-'.$r->IceCardType.'-'.$r->IceCardNumber.'-'.$r->IceOrder.'.svg';

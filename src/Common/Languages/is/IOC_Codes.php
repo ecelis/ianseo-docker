@@ -78,7 +78,6 @@ $lang['SWE']='Svíþjóð';
 $lang['SYR']='Sýrland';
 $lang['THA']='Tæland';
 $lang['TLS']='Austur Tímor';
-$lang['TUR']='Tyrkland';
 $lang['UAE']='Sameinuðu arabísku furstadæmin';
 $lang['UGA']='Úganda';
 $lang['UKR']='Úkraína';

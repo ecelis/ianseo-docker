@@ -8,7 +8,7 @@ $json_array = Array();
 $tmp=explode('|', $QuTarget);
 if(count($tmp)==3) {
 	// ELIMINATION
-	$SQL="select 'E' as Type, ElTargetNo+0 as Target, ToElabTeam, ElArrowString DiArrowstring, '0' DiDistance, if(ElElimPhase=0, EvE1Ends, EvE2Ends) DiEnds, if(ElElimPhase=0, EvE1Arrows, EvE2Arrows) DiArrows, '' DiName, 
+	$SQL="select 'E' as Type, ElTargetNo+0 as Target, ToCategory&12 as IsField3D, ElArrowString DiArrowstring, '0' DiDistance, if(ElElimPhase=0, EvE1Ends, EvE2Ends) DiEnds, if(ElElimPhase=0, EvE1Arrows, EvE2Arrows) DiArrows, '' DiName, 
        IF(EvGoldsChars='',ToGoldsChars,EvGoldsChars) as GoldsChars, IF(EvXNineChars='',ToXNineChars,EvXNineChars) as XNineChars, IF(EvGolds='',ToGolds,EvGolds) as Golds, IF(EvXNine='',ToXNine,EvXNine) as XNines
 		FROM Eliminations
 		INNER JOIN Entries on EnId = ElId and EnTournament=$CompId
@@ -19,7 +19,7 @@ if(count($tmp)==3) {
 	// QUALIFICATION
 	$Sql=array();
 	for($n=1;$n<=8;$n++) {
-		$Sql[]="SELECT 'Q' as Type, QuTarget as Target, ToElabTeam, QuD{$n}ArrowString DiArrowstring, DiDistance, DiEnds, DiArrows, Td{$n} DiName, 
+		$Sql[]="SELECT 'Q' as Type, QuTarget as Target, ToCategory&12 as IsField3D, QuD{$n}ArrowString DiArrowstring, DiDistance, DiEnds, DiArrows, Td{$n} DiName, 
             IF(TfGoldsChars{$n}='',IF(TfGoldsChars='',ToGoldsChars,TfGoldsChars),TfGoldsChars{$n}) as GoldsChars, 
             IF(TfXNineChars{$n}='',IF(TfXNineChars='',ToXNineChars,TfXNineChars),TfXNineChars{$n}) as XNineChars, 
             IF(TfGolds='',ToGolds,TfGolds) as Golds, IF(TfXNine='',ToXNine,TfXNine) as XNine
@@ -102,7 +102,7 @@ while($r=safe_fetch($Rs)) {
 		}
 	}
 	// if it is a field/3d needs to detach
-	if($r->ToElabTeam) {
+	if($r->IsField3D) {
 		$Target=($r->Target%$r->DiEnds)-1;
 		$Distance['endscores']=array_merge(array_slice($Distance['endscores'], $Target), array_slice($Distance['endscores'], 0, $Target));
 	}

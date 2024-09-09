@@ -14,6 +14,7 @@ require_once('Common/Lib/ArrTargets.inc.php');
  * 		cutRank => #												[read]
  * 		skipExisting => #											[calculate]
  * 		components => #												[read]
+ * 		noc => #												    [read]
  *
  * )
  *
@@ -144,6 +145,10 @@ require_once('Common/Lib/ArrTargets.inc.php');
 				$filter.=" AND TeCoId=" . intval($this->opts['coid']). " " ;
 			}
 
+			if (!empty($this->opts['noc'])) {
+				$filter.=" AND CoCode=" . StrSafe_DB($this->opts['noc']). " " ;
+			}
+
 			if (!empty($this->opts['enid'])) {
 				$filter.=" AND (TeCoId, TeSubTeam, TeEvent) IN (SELECT TcCoId, TcSubTeam, TcEvent FROM TeamComponent WHERE TcId=" . intval($this->opts['enid']). " AND TcFinEvent=1) " ;
 			}
@@ -215,7 +220,7 @@ require_once('Common/Lib/ArrTargets.inc.php');
 			$q="
 				SELECT
 					TeTournament,CoId,TeSubTeam,CoCode,CoName, CoCaCode, CoMaCode, TeEvent,EvEventName,ToNumEnds,ToNumDist,ToMaxDistScore,FlContAssoc,
-					EvMaxTeamPerson, EvProgr, EvFinalFirstPhase,EvOdfCode, QuConfirm, EvMixedTeam, 
+					EvMaxTeamPerson, EvProgr, EvFinalFirstPhase,coalesce(OdfTrOdfCode,'') as OdfUnitCode, EvOdfCode, QuConfirm, EvMixedTeam, 
 					ClDescription, DivDescription,
 					EnId,EnCode,ifnull(EdExtra,EnCode) as LocalBib, EnSex,EnNameOrder,EnFirstName,upper(EnFirstName) EnFirstNameUpper,EnName,EnClass,EnDivision,EnAgeClass,EnSubClass,EnCoCode,EnDob,
 					coalesce(RrLevGroups*RrLevGroupArchers, EvNumQualified) AS QualifiedNo, EvFirstQualified, EvQualPrintHead,
@@ -267,8 +272,9 @@ require_once('Common/Lib/ArrTargets.inc.php');
 					left join DistanceInformation on EnTournament=DiTournament and DiSession=1 and DiDistance=1 and DiType='Q'
 					LEFT JOIN DocumentVersions DV1 on EvTournament=DV1.DvTournament AND DV1.DvFile = 'QUAL-TEAM' and DV1.DvEvent=''
 					LEFT JOIN DocumentVersions DV2 on EvTournament=DV2.DvTournament AND DV2.DvFile = 'QUAL-TEAM' and DV2.DvEvent=EvCode
-
-
+                    LEFT JOIN  (SELECT OdfTrOdfCode, OdfTrIanseo 
+                        FROM OdfTranslations 
+                        WHERE OdfTrTournament={$this->tournament} and OdfTrInternal='QUAL' and OdfTrType='CODE') OdfUnit on OdfTrIanseo='ALL'  
 					WHERE
 					Teams.TeTournament={$this->tournament}
 					{$filter}
@@ -359,6 +365,7 @@ require_once('Common/Lib/ArrTargets.inc.php');
 							'meta' => array(
 								'event' => $myEv,
 								'odfcode' => $row->EvOdfCode,
+                                'odfUnitcode' => $row->OdfUnitCode ? $row->EvOdfCode.$row->OdfUnitCode : '',
 								'firstPhase' => $row->EvFinalFirstPhase,
 								'descr' => get_text($row->EvEventName,'','',true),
 								'qualifiedNo'=>$row->QualifiedNo,
@@ -470,7 +477,8 @@ require_once('Common/Lib/ArrTargets.inc.php');
 							'quscore' => $row->QuIrmType ? $row->IrmType : $row->QuScore,
 							'qugolds' => $row->QuIrmType ? '' : $row->QuGold,
 							'quxnine' => $row->QuIrmType ? '' : $row->QuXnine,
-							'scoreConfirmed' => $row->QuConfirm==$ConfirmStatus
+							'scoreConfirmed' => $row->QuConfirm==$ConfirmStatus,
+							'arrowString' => $row->DetailedArrows,
 						);
 						$section['items'][count($section['items'])-1]['athletes'][]=$athlete;
 						if(!empty($this->opts['detailedArrowstring'])) {

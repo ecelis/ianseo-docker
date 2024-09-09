@@ -1,6 +1,7 @@
 <?php
 $lang['AutoUpdate']='Auto opdatering';
 $lang['BarRecord']='Vis gennemsnit rekord bar';
+$lang['BrokenRecords']='Rekord slået';
 $lang['ByClub']='Efter klub';
 $lang['ByEvent']='Efter gruppe';
 $lang['ByName']='Navn';
@@ -66,6 +67,8 @@ $lang['Record-OR-avg']='Olympisk rekord gennemsnit';
 $lang['Record-OR-WA']='Olympisk rekord';
 $lang['Record-OR-WA-avg']='Ociansk rekord gennemsnit';
 $lang['Record-WAAF-CR-avg']='Afrikansk rekord gennemsnit';
+$lang['Record-WAAM-CC-GR']='Pan Am Championships Record';
+$lang['Record-WAAM-CC-GR-avg']='Pan Am Championships Record (Avg)';
 $lang['Record-WAAM-CR-avg']='Amerikansk rekord gennemsnit';
 $lang['Record-WAAS-CR-avg']='Asiatisk rekord gennemsnit';
 $lang['Record-WAE-CR-avg']='Europæisk rekord gennemsnit';
@@ -74,6 +77,7 @@ $lang['Record-WR-avg']='Verdens rekord gennemsnit';
 $lang['Record-WR-WA']='Verdensrekord';
 $lang['Record-WR-WA-avg']='Verdensrekord (gennemsnit)';
 $lang['RR_Score']='RR score';
+$lang['StandingRecords']='Bestående rekorder';
 $lang['Teams']='Hold';
 $lang['TypeName']='Indtast det navn du leder efter';
 $lang['ViewIndividualResults']='Vis individuelle resultater';

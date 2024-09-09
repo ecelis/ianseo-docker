@@ -73,6 +73,6 @@ $lang['TeamMode']='Modo a Squadre';
 $lang['Terminal']='HTT';
 $lang['TerminalMode']='Modo Terminale';
 $lang['TotaleScore']='Totale';
-$lang['Volee']='End';
+$lang['Volee']='Volée';
 $lang['VoleeIsPresent']='La volée esiste già';
 ?>

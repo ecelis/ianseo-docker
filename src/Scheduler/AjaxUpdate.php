@@ -201,7 +201,6 @@ function DoISchedule($Item, $Team='0') {
 }
 
 function DoZSchedule($Item) {
-
 	$Field=key($Item);
 	switch($Field) {
 		case 'Day':
@@ -223,11 +222,11 @@ function DoZSchedule($Item) {
 		case 'SubTitle':
 		case 'Text':
 		case 'Targets':
+		case 'Location':
 			$ret=InsertText(current($Item), $Field);
 			break;
 		default:
 // 			debug_svela($Field);
 	}
-	jsonout($ret);
-
+	JsonOut($ret);
 }

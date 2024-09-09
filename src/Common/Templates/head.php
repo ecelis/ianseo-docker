@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <?php
 
-echo '<html>
+echo '<html translate="no">
     <head>
+    <meta name="google" content="notranslate">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>';
 
@@ -34,17 +35,11 @@ if(empty($JS_SCRIPT)) {
 }
 
 if(!empty($IncludeJquery)) {
-	$local_JS[]= '<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.6.0.min.js"></script>';
+	$local_JS[]= '<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.6.4.min.js"></script>';
 	$local_JS[]= '<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>';
 	$local_JS[]= '<link href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css" rel="stylesheet" type="text/css">';
 }
 $local_JS[]= '<script src="'.$CFG->ROOT_DIR.'Common/js/Fun_ResizeImg.inc.js"></script>';
-
-// if(!empty($IncludeJquery)) {
-// 	$local_JS[]= '<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>';
-// 	$local_JS[]= '<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>';
-// 	$local_JS[]= '<link href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css" rel="stylesheet" type="text/css">';
-// }
 
 $JS_SCRIPT = array_merge($local_JS, $JS_SCRIPT);
 

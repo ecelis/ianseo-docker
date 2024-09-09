@@ -132,7 +132,14 @@ require_once('Common/Rank/Obj_Rank_GridInd.php');
 				. "LEFT JOIN Entries a ON FinAthlete=EnId AND FinTournament=EnTournament "
 				. "LEFT JOIN ExtraData ON EdId=EnId AND EdType='Z' "
 				. "LEFT JOIN Qualifications ON QuId=EnId "
-				. "LEFT JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament "
+				. "LEFT JOIN Countries ON CoId=
+                    case EvTeamCreationMode 
+                        when 0 then EnCountry
+                        when 1 then EnCountry2
+                        when 2 then EnCountry3
+                        else EnCountry
+                    end
+                    AND EnTournament=CoTournament "
 				. "LEFT JOIN Entries c ON FinCoach=c.EnId and FinTournament=c.EnTournament "
 				. "LEFT JOIN FinSchedule fs1 ON FinEvent=FSEvent AND FinMatchNo=FSMatchNo AND FinTournament=FSTournament AND FSTeamEvent='0' "
 				. "LEFT JOIN FinSchedule fs2 ON fs2.FSEvent=FinEvent AND fs2.FSMatchNo=case FinMatchNo when 0 then 4 when 1 then 6 when 2 then 4 when 3 then 6 else FinMatchNo*2 end AND fs2.FSTournament=FinTournament AND fs2.FSTeamEvent='0' "
@@ -199,7 +206,14 @@ require_once('Common/Rank/Obj_Rank_GridInd.php');
 				. "LEFT JOIN Entries a ON FinAthlete=EnId AND FinTournament=EnTournament "
 				. "LEFT JOIN ExtraData ON EdId=EnId AND EdType='Z' "
 				. "LEFT JOIN Qualifications ON QuId=EnId "
-				. "LEFT JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament "
+				. "LEFT JOIN Countries ON CoId=
+				    case EvTeamCreationMode 
+				        when 0 then EnCountry
+				        when 1 then EnCountry2
+				        when 2 then EnCountry3
+				        else EnCountry
+                    end
+                    AND EnTournament=CoTournament "
 				. "LEFT JOIN Entries c ON FinCoach=c.EnId and FinTournament=c.EnTournament "
 				. "LEFT JOIN FinSchedule fs1 ON FinEvent=FSEvent AND FinMatchNo=FSMatchNo AND FinTournament=FSTournament AND FSTeamEvent='0' "
 				. "LEFT JOIN FinSchedule fs2 ON fs2.FSEvent=FinEvent AND fs2.FSMatchNo=case FinMatchNo when 0 then 4 when 1 then 6 when 2 then 4 when 3 then 6 else FinMatchNo*2 end AND fs2.FSTournament=FinTournament AND fs2.FSTeamEvent='0' "

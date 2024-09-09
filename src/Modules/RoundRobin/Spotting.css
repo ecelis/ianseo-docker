@@ -76,3 +76,31 @@ tr.SoRaiser {height:2.5em;}
 .StarRaiserSO {display:none;}
 
 .Scorecard input[type="checkbox"] {transform:scale(1.5);margin-right:0.5em;}
+
+.btn {
+    border:1px solid gray;
+    border-radius: 0.25em;
+    display: inline-block;
+    padding:0.25em 0.5em;
+    background-color: var(--row-background);
+}
+.btn-end {
+    background-color: var(--text-primary);
+    border-color: var(--text-primary-hover);
+    color: white;
+}
+.btn-end.done {
+    background-color: initial;
+    color: initial;
+    cursor: not-allowed;
+}
+.btn-match {
+    background-color: var(--text-danger);
+    border-color: var(--text-danger-hover);
+    color: white;
+}
+.btn-match.done {
+    background-color: initial;
+    color: initial;
+    cursor: not-allowed;
+}

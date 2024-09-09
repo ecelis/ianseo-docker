@@ -233,16 +233,23 @@
 				$q .= "0 AS OrderScore, 0 AS OrderGold, 0 AS OrderXnine, ";
 			}
 
-			$q .= "IndTimestamp,
+			$q .= "IndTimestamp,IndRankFinal,
 					ToGolds AS GoldLabel, ToXNine AS XNineLabel,
-					ToDouble, DiEnds, DiArrows
+					ToDouble, DiEnds, DiArrows, ToGoldsChars as QualGoldChars, ToXNineChars as QualXNineChars
 					{$only4zero}
 				FROM Tournament
 				INNER JOIN Entries ON ToId=EnTournament
-				INNER JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament AND EnTournament={$this->tournament}
 				INNER JOIN Qualifications ON EnId=QuId
 				INNER JOIN Individuals ON EnTournament=IndTournament AND EnId=IndId
 				INNER JOIN Events ON EvCode=IndEvent AND EvTeamEvent=0 AND EvTournament=EnTournament
+				left JOIN Countries ON CoId=
+				    case EvTeamCreationMode 
+				        when 0 then EnCountry
+				        when 1 then EnCountry2
+				        when 2 then EnCountry3
+				        else EnCountry
+                    end
+                    AND EnTournament=CoTournament AND EnTournament={$this->tournament}
 				left join ExtraData on EdId=EnId and EdType='Z'
 				LEFT JOIN TournamentDistances ON ToType=TdType AND TdTournament=ToId AND CONCAT(TRIM(EnDivision),TRIM(EnClass)) LIKE TdClasses
 				left join DistanceInformation on EnTournament=DiTournament and DiSession=1 and DiDistance=1 and DiType='Q' ";
@@ -457,7 +464,8 @@
 						'rank' => $tmpRank,
 						'oldRank' => $myRow->OldRank,
 						'rankBeforeSO'=>(isset($myRow->RankBeforeSO) ? $myRow->RankBeforeSO:0),
-						'score' => (!empty($this->opts['runningDist']) && $this->opts['runningDist']>0 ? $myRow->OrderScore : ($myRow->EvRunning==1 ? $myRow->RunningScore: $myRow->Score)),
+                        'finalRank' => $myRow->IndRankFinal,
+                        'score' => (!empty($this->opts['runningDist']) && $this->opts['runningDist']>0 ? $myRow->OrderScore : ($myRow->EvRunning==1 ? $myRow->RunningScore: $myRow->Score)),
 						'completeScore' => $myRow->Score,
 						'gold' => (!empty($this->opts['runningDist']) && $this->opts['runningDist']>0 ? $myRow->OrderGold : $myRow->Gold),
 						'xnine' => (!empty($this->opts['runningDist']) && $this->opts['runningDist']>0 ? $myRow->OrderXnine : $myRow->XNine),

@@ -133,6 +133,7 @@ function export_tournament($TourId, $Complete=false, $InfoSystem='') {
 			'RecBroken' => 'RecBroAthlete',
 			'RunArchery'=>'RaArcher',
 			'TeamComponent' => 'TcId',
+			'TeamFinals' => 'TfCoach',
 			'TeamFinComponent' => 'TfcId',
             'TeamFinComponentLog' => array('TfclIdPrev','TfclIdNext'),
 			'Vegas'=>'VeId',
@@ -325,7 +326,7 @@ function export_tournament($TourId, $Complete=false, $InfoSystem='') {
 					if($v[$Ids] and !empty($switches['E'][$v[$Ids]])) {
 						// the user has an Online ID
 						$Gara[$tab][$k][$Ids]=$switches['E'][$v[$Ids]];
-					} elseif($tab!='Finals' and $tab!='Eliminations') {
+					} elseif($tab!='Finals' and $tab!='Eliminations' and $tab!='TeamFinals') {
 						// unset the record... will be send later on the next cycle
 						unset($Gara[$tab][$k]);
 					}
@@ -354,22 +355,35 @@ function export_tournament($TourId, $Complete=false, $InfoSystem='') {
 					if($v[$flags[1]] and !empty($switches['C'][$v[$flags[1]]])) {
 						// the user has an Online ID
 						$Gara[$tab][$k][$flags[1]]=$switches['C'][$v[$flags[1]]];
-					} elseif($tab!='TeamFinals') {
-						// unset the record... will be send later on the next cycle
-						unset($Gara[$tab][$k]);
+//					} elseif($tab!='TeamFinals') {
+//						// unset the record... will be send later on the next cycle
+//						unset($Gara[$tab][$k]);
 					}
 				} else {
 					// it is an entry ID
 					if($v[$flags[1]] and !empty($switches['E'][$v[$flags[1]]])) {
 						// the user has an Online ID
 						$Gara[$tab][$k][$flags[1]]=$switches['E'][$v[$flags[1]]];
-					} elseif($tab!='Finals' and $tab!='Eliminations') {
-						// unset the record... will be send later on the next cycle
-						unset($Gara[$tab][$k]);
+//					} elseif($tab!='Finals' and $tab!='Eliminations') {
+//						// unset the record... will be send later on the next cycle
+//						unset($Gara[$tab][$k]);
 					}
 				}
 			}
 		}
+
+        // adjust the array-based IDs
+        foreach($Gara['TeamFinals'] as $k=>$line) {
+            if($line['TfShootingArchers']) {
+                $newArchers=[];
+                foreach(json_decode($line['TfShootingArchers']) as $a=>$b) {
+                    if(!empty($switches['E'][$b])) {
+                        $newArchers["$a"]=$switches['E'][$b];
+                    }
+                }
+                $Gara['TeamFinals'][$k]['TfShootingArchers']=json_encode($newArchers);
+            }
+        }
 
 		// adjust ToId
 		if($Complete) $tabs['Flags']='Fl';

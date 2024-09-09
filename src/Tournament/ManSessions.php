@@ -26,7 +26,25 @@
 	$command=isset($_REQUEST['Command']) ? $_REQUEST['Command'] : null;
 
 // tipi sessione
-	$sessionsTypes=GetSessionsTypes();
+	$sessionsTypes=[];
+	foreach(GetSessionsTypes() as $k=>$v) {
+		switch($k) {
+			case 'E':
+				if($_SESSION['MenuElimDo']) {
+					$sessionsTypes[$k]=$v;
+				}
+				break;
+			case 'F':
+				if($_SESSION['MenuFinTDo'] or $_SESSION['MenuFinIDo']) {
+					$sessionsTypes[$k]=$v;
+				}
+				break;
+			default:
+				$sessionsTypes[$k]=$v;
+		}
+	}
+
+
 	if (!is_null($command) && !IsBlocked(BIT_BLOCK_TOURDATA))
 	{
 		if ($command=='SAVE')
@@ -37,6 +55,7 @@
 				'd_SesOrder',
 				'd_SesType',
 				'd_SesName',
+				'd_SesLoc',
 				'd_SesDtStart',
 				'd_SesDtEnd',
 				'd_SesTar4Session',
@@ -96,6 +115,7 @@
 								$newOrder,
 								$toSave['d_SesType'],
 								$toSave['d_SesName'],
+								$toSave['d_SesLoc'],
 								$toSave['d_SesTar4Session'],
 								$toSave['d_SesAth4Target'],
 								$toSave['d_SesFirstTarget'],
@@ -129,6 +149,7 @@
 									$toSave['d_SesOrder'],
 									$toSave['d_SesType'],
 									$toSave['d_SesName'],
+									$toSave['d_SesLoc'],
 									$toSave['d_SesTar4Session'],
 									$toSave['d_SesAth4Target'],
 									$toSave['d_SesFirstTarget'],
@@ -151,6 +172,7 @@
 									$newOrder,
 									$toSave['d_SesType'],
 									$toSave['d_SesName'],
+									$toSave['d_SesLoc'],
 									$toSave['d_SesTar4Session'],
 									$toSave['d_SesAth4Target'],
 									$toSave['d_SesFirstTarget'],
@@ -216,16 +238,9 @@
 
 // combo sessioni
 	$comboSessionsTypes= '<select id="d_SesType" name="d_SesType">' . "\n";
-		foreach ($sessionsTypes as $k => $v)
-		{
-			$toAdd=true;
-			if($k=='E' && !$_SESSION['MenuElimDo'])
-				$toAdd=false;
-			if($k=='F' && !$_SESSION['MenuFinTDo'] && !$_SESSION['MenuFinIDo'])
-				$toAdd=false;
-			if($toAdd)
-				$comboSessionsTypes.='<option value="' . $k . '">' . $v. '</option>' . "\n";
-		}
+	foreach ($sessionsTypes as $k => $v) {
+		$comboSessionsTypes.='<option value="' . $k . '">' . $v. '</option>' . "\n";
+	}
 	$comboSessionsTypes.='</select>' . "\n";
 
 // combo si / no
@@ -281,166 +296,146 @@
 	);
 
 	include('Common/Templates/head.php');
-?>
-<div class="centra">
-    <form id="frmSave" name="frmSave" method="post" action="<?php print $_SERVER['PHP_SELF'];?>">
-        <input type="hidden" name="Command" value="SAVE"/>
-        <input type="hidden" id="d_SesOrder" name="d_SesOrder" value="0"/>
-        <input type="hidden" id="oldKey" name="oldKey" value=""/>
 
-        <table class="Tabella freeWidth">
-            <tr><th colspan="<?php echo (empty($CFG->ODF) ? '9' : '13')?>" class="Title"><?php print get_text('ManSession','Tournament');?></th></tr>
-            <tr>
-                <th style="width:15%;"><?php print get_text('Type','Tournament');?></th>
-                <th style="width:8%;">#</th>
-                <th style="width:57%;"><?php print get_text('Name','Tournament');?></th>
-                <th style="width:5%;"><?php print get_text('SessionStart','Tournament');?></th>
-                <th style="width:5%;"><?php print get_text('SessionEnd','Tournament');?></th>
-                <th style="width:5%;"><?php print get_text('Tar4Session','Tournament');?></th>
-                <th style="width:5%;"><?php print get_text('Ath4Target','Tournament');?></th>
-                <th style="width:5%;"><?php print get_text('FirstTarget','Tournament');?></th>
-                <th style="width:5%;"><?php print get_text('ToFollow','Tournament');?></th>
-                <?php
-                if(!empty($CFG->ODF)) {
-                    echo '<th style="width:5%;">' . get_text('SesOdfCode', 'ODF') . '</th>' .
-                        '<th style="width:5%;">' . get_text('SesOdfPeriod', 'ODF') . '</th>' .
-                        '<th style="width:5%;">' . get_text('SesOdfVenue', 'ODF') . '</th>' .
-                        '<th style="width:5%;">' . get_text('SesOdfLocation', 'ODF') . '</th>';
-                }
-                ?>
-            </tr>
-            <tr>
-                <td class="Center"><?php print $comboSessionsTypes;?></td>
-                <td class="Bold"><div id="orderInEdit"></div></td>
-                <td><input type="text" size="60" id="d_SesName" name="d_SesName" value="" /></td>
-                <td class="Center"><input type="datetime-local" id="d_SesDtStart" name="d_SesDtStart" min="<?php echo $_SESSION["TourRealWhenFrom"]?>T00:00:00" max="<?php echo $_SESSION["TourRealWhenTo"]?>T23:59:00"/></td>
-                <td class="Center"><input type="datetime-local" id="d_SesDtEnd" name="d_SesDtEnd" min="<?php echo $_SESSION["TourRealWhenFrom"]?>T00:00:00" max="<?php echo $_SESSION["TourRealWhenTo"]?>T23:59:00"/></td>
+echo '<div class="centra">';
+echo '<form id="frmSave" name="frmSave" method="post" action="ManSessions.php">';
+echo '<input type="hidden" name="Command" value="SAVE"/>';
+echo '<input type="hidden" id="d_SesOrder" name="d_SesOrder" value="0"/>';
+echo '<input type="hidden" id="oldKey" name="oldKey" value=""/>';
 
-                <td class="Center"><input type="text" size="3" id="d_SesTar4Session" name="d_SesTar4Session" value="0" /></td>
-                <td class="Center"><input type="text" size="3" id="d_SesAth4Target" name="d_SesAth4Target" value="0" /></td>
-                <td class="Center"><input type="text" size="3" id="d_SesFirstTarget" name="d_SesFirstTarget" value="1" /></td>
-                <td class="Center"><?php print $comboFollow;?></td>
-                <?php
-                if(!empty($CFG->ODF)) {
-                    echo '<td class="Center"><input type="text" size="3" id="d_SesOdfCode" name="d_SesOdfCode" value="" /></td>'.
-                        '<td class="Center"><input type="text" size="3" id="d_SesOdfPeriod" name="d_SesOdfPeriod" value="" /></td>'.
-                        '<td class="Center"><input type="text" size="3" id="d_SesOdfVenue" name="d_SesOdfVenue" value="" /></td>'.
-                        '<td class="Center"><input type="text" size="3" id="d_SesOdfLocation" name="d_SesOdfLocation" value="" /></td>';
-                }
-                ?>
-            </tr>
-            <tr>
-                <td colspan="<?php echo (empty($CFG->ODF) ? '9' : '13')?>" class="Center">
-                    <input type="button" id="btnSave" value="<?php print get_text('CmdSave');?>" />
-                    <input type="button" id="btnCancel" value="<?php print get_text('CmdCancel');?>" />
+echo '<table class="Tabella freeWidth">';
+// top of table: fields to fill
+echo '<tr><th colspan="15" class="Title">'.get_text('ManSession','Tournament').'</th></tr>';
+echo '<tr>
+	<th>'.get_text('Type','Tournament').'</th>
+	<th>#</th>
+	<th>'.get_text('Name','Tournament').'</th>
+	<th>'.get_text('Location','Tournament').'</th>
+	<th>'.get_text('SessionStart','Tournament').'</th>
+	<th>'.get_text('SessionEnd','Tournament').'</th>
+	<th>'.get_text('Tar4Session','Tournament').'</th>
+	<th>'.get_text('Ath4Target','Tournament').'</th>
+	<th>'.get_text('FirstTarget','Tournament').'</th>
+	<th>'.get_text('ToFollow','Tournament').'</th>';
+if(!empty($CFG->ODF)) {
+	echo '<th>' . get_text('SesOdfCode', 'ODF') . '</th>
+		<th>' . get_text('SesOdfPeriod', 'ODF') . '</th>
+		<th>' . get_text('SesOdfVenue', 'ODF') . '</th>
+		<th>' . get_text('SesOdfLocation', 'ODF') . '</th>';
+}
+echo '</tr>';
+echo '<tr>
+	<td class="Center">'.$comboSessionsTypes.'</td>
+    <td class="Bold"><div id="orderInEdit"></div></td>
+    <td><input type="text" class="w-100" id="d_SesName" name="d_SesName" value="" /></td>
+    <td><input type="text" class="w-100" id="d_SesLoc" name="d_SesLoc" value="" /></td>
+    <td class="Center"><input type="datetime-local" id="d_SesDtStart" name="d_SesDtStart" min="'.$_SESSION["TourRealWhenFrom"].'T00:00:00" max="'. $_SESSION["TourRealWhenTo"].'T23:59:00"/></td>
+    <td class="Center"><input type="datetime-local" id="d_SesDtEnd" name="d_SesDtEnd" min="'.$_SESSION["TourRealWhenFrom"].'T00:00:00" max="'.$_SESSION["TourRealWhenTo"].'T23:59:00"/></td>
+    <td class="Center"><input type="text" size="3" id="d_SesTar4Session" name="d_SesTar4Session" value="0" /></td>
+    <td class="Center"><input type="text" size="3" id="d_SesAth4Target" name="d_SesAth4Target" value="0" /></td>
+    <td class="Center"><input type="text" size="3" id="d_SesFirstTarget" name="d_SesFirstTarget" value="1" /></td>
+    <td class="Center">'.$comboFollow.'</td>';
+if(!empty($CFG->ODF)) {
+    echo '<td class="Center"><input type="text" size="3" id="d_SesOdfCode" name="d_SesOdfCode" value="" /></td>
+    	<td class="Center"><input type="text" size="3" id="d_SesOdfPeriod" name="d_SesOdfPeriod" value="" /></td>
+    	<td class="Center"><input type="text" size="3" id="d_SesOdfVenue" name="d_SesOdfVenue" value="" /></td>
+    	<td class="Center"><input type="text" size="3" id="d_SesOdfLocation" name="d_SesOdfLocation" value="" /></td>';
+}
+echo '</tr>';
+echo '<tr>
+    <td colspan="15" class="Center">
+        <input type="button" id="btnSave" value="'.get_text('CmdSave').'" />
+        <input type="button" id="btnCancel" value="'.get_text('CmdCancel').'" />
+    </td>
+    </tr>';
+echo '<tr>
+    <td colspan="15" class="Center">
+        <a class="Link" href="ManSessions_kiss.php">:'.get_text('Base').':</a>
+    </td>
+    </tr>';
+
+// for each session type show the defined items
+foreach ($sessions as $k=>$v) {
+	echo '<tr><th colspan="15"  class="Title">' . $k . '</th></tr>';
+	if ($v) {
+		echo '<tr>
+            <th colspan="2">#</th>
+            <th>' . get_text('Name', 'Tournament') . '</th>
+            <th>' . get_text('Location', 'Tournament') . '</th>
+            <th>' . get_text('SessionStart', 'Tournament') . '</th>
+			<th>' . get_text('SessionEnd', 'Tournament') . '</th>
+            <th>' . get_text('Tar4Session', 'Tournament') . '</th>
+            <th>' . get_text('Ath4Target', 'Tournament') . '</th>
+            <th>' . get_text('FirstTarget', 'Tournament') . '</th>
+            <th>' . get_text('ToFollow', 'Tournament') . '</th>';
+		if (!empty($CFG->ODF)) {
+			echo '<th>' . get_text('SesOdfCode', 'ODF') . '</th>' .
+				'<th>' . get_text('SesOdfPeriod', 'ODF') . '</th>' .
+				'<th>' . get_text('SesOdfVenue', 'ODF') . '</th>' .
+				'<th>' . get_text('SesOdfLocation', 'ODF') . '</th>';
+		}
+		echo '</tr>';
+
+		foreach ($v as $s) { // butto fuori le sessioni di tipo $k
+			$id = $s->SesOrder . '_' . $s->SesType;
+			echo '<tr id="row-' . $id . '" style="cursor: pointer;">
+            	<td class="Center"><img class="del-' . $id . '" src="../Common/Images/drop.png" style="cursor:pointer; width: 16px;height: 16px;" /></td>
+                <td class="Right">
+                    <input type="hidden" id="order-' . $id . '" value="' . $s->SesOrder . '" />
+                    <a class="Link" id="link-' . $id . '" href="#">' . $s->SesOrder . '</a>
                 </td>
-            </tr>
-            <tr>
-                <td colspan="<?php echo (empty($CFG->ODF) ? '9' : '13')?>" class="Center">
-                    <a class="Link" href="ManSessions_kiss.php">:<?php print get_text('Base');?>:</a>
+                <td>
+                    <input type="hidden" id="name-' . $id . '" value="' . $s->SesName . '" />
+                    <input type="hidden" id="location-' . $id . '" value="' . $s->SesLocation . '" />
+                    <input type="hidden" id="dtstart-' . $id . '" value="' . str_replace(" ", "T", $s->SesDtStart) . '" />
+                    <input type="hidden" id="dtend-' . $id . '" value="' . str_replace(" ", "T", $s->SesDtEnd) . '" />
+                    ' . $s->SesName . '
                 </td>
-            </tr>
-        </table>
-    </form>
+                <td>' . $s->SesLocation . '</td>
+                <td class="Right">' . (intval($s->SesDtStart) ? substr($s->SesDtStart, 0, -3) : '') . '</td>
+                <td class="Right">' . (intval($s->SesDtEnd) ? substr($s->SesDtEnd, 0, -3) : '') . '</td>
+                <td class="Right">
+                    <input type="hidden" id="tar4session-' . $id . '" value="' . $s->SesTar4Session . '" />
+                    ' . $s->SesTar4Session . '
+                </td>
+                <td class="Right">
+                    <input type="hidden" id="ath4target-' . $id . '" value="' . $s->SesAth4Target . '" />
+                    ' . $s->SesAth4Target . '
+                </td>
+                <td class="Right">
+                    <input type="hidden" id="firstTarget-' . $id . '" value="' . $s->SesFirstTarget . '" />
+                    ' . $s->SesFirstTarget . '
+                </td>
+                <td class="Center">
+                    <input type="hidden" id="follow-' . $id . '" value="' . $s->SesFollow . '" />
+                    ' . ($s->SesFollow == 0 ? get_text('No') : get_text('Yes')) . '
+                </td>';
+			if (!empty($CFG->ODF)) {
+				echo '<td class="Center"><input type="hidden" id="odfcode-' . $id . '" value="' . $s->SesOdfCode . '" />' . $s->SesOdfCode . '</td>';
+				echo '<td class="Center"><input type="hidden" id="odftype-' . $id . '" value="' . $s->SesOdfPeriod . '" />' . $s->SesOdfPeriod . '</td>';
+				echo '<td class="Center"><input type="hidden" id="odfvenue-' . $id . '" value="' . $s->SesOdfVenue . '" />' . $s->SesOdfVenue . '</td>';
+				echo '<td class="Center"><input type="hidden" id="odflocation-' . $id . '" value="' . $s->SesOdfLocation . '" />' . $s->SesOdfLocation . '</td>';
+			}
+			echo '</tr>';
 
-    <br/><br/>
+			if (count($s->schedules) > 0) {
+				foreach ($s->schedules as $schedule) {
+					echo '<tr>
+						<td colspan="2">&nbsp;</td>
+						<td colspan="5">
+							' . $schedule->SchDescr . ':
+							' . dateRenderer($schedule->SchDateStart) . ' (' . $schedule->SchOrder . ') -&gt;
+							' . ($schedule->SchDateEnd == '0000-00-00 00:00:00' ? '...' : dateRenderer($schedule->SchDateEnd)) . '
+						</td>
+					</tr>
+					<tr class="divider"><td colspan="7"></td></tr>';
+				}
+			}
+		}
+	}
+}
+echo '</table>';
+echo '</form>';
+echo '</div>';
 
-    <form method="get" action="">
-        <?php foreach ($sessions as $k=>$v) { // per ogni tipo di sessione ?>
-                <table class="Tabella">
-                    <tr><th colspan="<?php echo (empty($CFG->ODF) ? '9' : '13')?>"  class="Title"><?php print $k;?></th></tr>
-                    <?php if (count($v)>0) { ?>
-                        <tr>
-                            <th style="width:15%;" colspan="2">#</th>
-                            <th><?php print get_text('Name','Tournament');?></th>
-                            <?php
-                                echo '<th style="width:5%;">'. get_text('SessionStart','Tournament') . '</th>';
-                                echo '<th style="width:5%;">'. get_text('SessionEnd','Tournament') . '</th>';
-                            ?>
-                            <th style="width:5%;"><?php print get_text('Tar4Session','Tournament');?></th>
-                            <th style="width:5%;"><?php print get_text('Ath4Target','Tournament');?></th>
-                            <th style="width:5%;"><?php print get_text('FirstTarget','Tournament');?></th>
-                            <th style="width:5%;"><?php print get_text('ToFollow','Tournament');?></th>
-                            <?php
-                            if(!empty($CFG->ODF)) {
-                                echo '<th style="width:5%;">'.get_text('SesOdfCode','ODF').'</th>'.
-                                    '<th style="width:5%;">'.get_text('SesOdfPeriod','ODF').'</th>'.
-                                    '<th style="width:5%;">'.get_text('SesOdfVenue','ODF').'</th>'.
-                                    '<th style="width:5%;">'.get_text('SesOdfLocation','ODF').'</th>';
-                            }
-                            ?>
-                        </tr>
-
-                        <?php foreach ($v as $s) { // butto fuori le sessioni di tipo $k?>
-                            <?php $id=$s->SesOrder . '_' . $s->SesType; ?>
-                            <tr id="row-<?php print $id;?>" style="cursor: pointer;">
-                                <td style="width:3%;" class="Center">
-                                    <img class="del-<?php print $id;?>" src="../Common/Images/drop.png" style="cursor:pointer; width: 16px;height: 16px;" />
-                                </td>
-                                <td class="Right">
-                                    <input type="hidden" id="order-<?php print $id;?>" value="<?php print $s->SesOrder;?>" />
-                                    <a class="Link" id="link-<?php print $id;?>" href="#"><?php print $s->SesOrder;?></a>
-                                </td>
-                                <td>
-                                    <input type="hidden" id="name-<?php print $id;?>" value="<?php print $s->SesName;?>" />
-                                    <input type="hidden" id="dtstart-<?php print $id;?>" value="<?php print str_replace(" ","T",$s->SesDtStart);?>" />
-                                    <input type="hidden" id="dtend-<?php print $id;?>" value="<?php print str_replace(" ","T",$s->SesDtEnd);?>" />
-                                    <?php print $s->SesName; ?>
-
-                                </td>
-                                <?php
-                                    echo '<td class="Right">';
-                                    if(intval($s->SesDtStart)) echo substr($s->SesDtStart,0,-3);
-                                    echo '</td>';
-                                    echo '<td class="Right">';
-                                    if(intval($s->SesDtEnd)) echo substr($s->SesDtEnd,0,-3);
-                                    echo '</td>';
-                                ?>
-
-                                <td class="Right">
-                                    <input type="hidden" id="tar4session-<?php print $id;?>" value="<?php print $s->SesTar4Session;?>" />
-                                    <?php print $s->SesTar4Session;?>
-                                </td>
-                                <td class="Right">
-                                    <input type="hidden" id="ath4target-<?php print $id;?>" value="<?php print $s->SesAth4Target;?>" />
-                                    <?php print $s->SesAth4Target;?>
-                                </td>
-                                <td class="Right">
-                                    <input type="hidden" id="firstTarget-<?php print $id;?>" value="<?php print $s->SesFirstTarget;?>" />
-                                    <?php print $s->SesFirstTarget;?>
-                                </td>
-                                <td class="Center">
-                                    <input type="hidden" id="follow-<?php print $id;?>" value="<?php print $s->SesFollow;?>" />
-                                    <?php print ($s->SesFollow==0 ? get_text('No') : get_text('Yes'));?>
-                                </td>
-                                <?php
-                                if(!empty($CFG->ODF)) {
-                                    echo '<td class="Center"><input type="hidden" id="odfcode-'.$id.'" value="'.$s->SesOdfCode.'" />'.$s->SesOdfCode.'</td>';
-                                    echo '<td class="Center"><input type="hidden" id="odftype-'.$id.'" value="'.$s->SesOdfPeriod.'" />'.$s->SesOdfPeriod.'</td>';
-                                    echo '<td class="Center"><input type="hidden" id="odfvenue-'.$id.'" value="'.$s->SesOdfVenue.'" />'.$s->SesOdfVenue.'</td>';
-                                    echo '<td class="Center"><input type="hidden" id="odflocation-'.$id.'" value="'.$s->SesOdfLocation.'" />'.$s->SesOdfLocation.'</td>';
-                                }
-                                ?>
-                            </tr>
-                            <?php if (count ($s->schedules)>0) { // gli eventi nello scheduler collegati alla sessione ?>
-                                <?php foreach ($s->schedules as $schedule) { ?>
-                                    <tr>
-                                        <td colspan="2">&nbsp;</td>
-                                        <td colspan="5">
-                                            <?php print $schedule->SchDescr;?>:
-                                            <?php print dateRenderer($schedule->SchDateStart); ?> (<?php print $schedule->SchOrder;?>) -&gt;
-                                            <?php print ($schedule->SchDateEnd=='0000-00-00 00:00:00' ? '...' : dateRenderer($schedule->SchDateEnd)); ?>
-                                        </td>
-                                    </tr>
-                                    <tr class="divider"><td colspan="7"></td></tr>
-                                <?php }?>
-                            <?php }?>
-                        <?php } // fine butto fuori le sessioni ?>
-                    <?php } // fine per ogni sessione?>
-                </table>
-            <br/>
-        <?php }?>
-    </form>
-</div>
-<?php
-	include('Common/Templates/tail.php');
+include('Common/Templates/tail.php');

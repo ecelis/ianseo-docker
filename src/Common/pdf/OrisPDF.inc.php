@@ -27,6 +27,7 @@ class OrisPDF extends IanseoPdf {
 	const topStart=45;
 	var $extraBottomMargin=0;
 	var $printPageNo=true;
+    var $CompleteBookTitle='';
 
 
 	//Constructor
@@ -47,7 +48,7 @@ class OrisPDF extends IanseoPdf {
 		if(isset($_REQUEST["ReportCreated"]) && preg_match("/^[0-9]{12}$/i", $_REQUEST["ReportCreated"])) {
             $this->utsReportCreated = mktime(substr($_REQUEST["ReportCreated"], 8, 2), substr($_REQUEST["ReportCreated"], 10, 2), 0, substr($_REQUEST["ReportCreated"], 4, 2), substr($_REQUEST["ReportCreated"], 6, 2), substr($_REQUEST["ReportCreated"], 0, 4));
         } else {
-            $this->utsReportCreated = strtotime("now");
+            $this->utsReportCreated = time();
         }
 
 		$this->SetSubject($DocNumber . ' - ' . $DocTitle);
@@ -79,6 +80,10 @@ class OrisPDF extends IanseoPdf {
 	function SetTextGreen() {
 		$this->SetTextColor(0x4C, 0xC4, 0x17);
 	}
+
+    function SetSymbolColor() {
+        $this->SetTextColor(0x80, 0x80, 0x80);
+    }
 
 
 	function Header() {
@@ -138,7 +143,7 @@ class OrisPDF extends IanseoPdf {
 		$this->Cell(190,7,mb_convert_case($this->Title, MB_CASE_UPPER, "UTF-8"),0,1,'C');
 
 		//Comment if available
-		if($this->EvPhase != '') {
+		if($this->EvComment != '') {
 			$this->SetXY(145,30);
 			$this->SetFont($this->FontStd,'B',8);
 			$this->Cell(60,7,($this->EvComment ?? ''),0,1,'R');
@@ -164,26 +169,30 @@ class OrisPDF extends IanseoPdf {
 			$this->cell(45, $Rows, $Record->TrHeader.' '.$Record->RtRecDistance.':', 'LTB', 0);
 			$this->SetFont('', '');
 			// how much
-			$this->cell(10, $Rows, $Record->RtRecTotal.($Record->RtRecXNine ? '/'.$Record->RtRecXNine : ''), 'TB', 0, 'R');
-			$X=$this->getX();
-			$Y=$this->getY();
-			foreach($Record->RtRecExtra as $k=>$Extra) {
-				$this->SetXY($X, $Y+$k*$this->RecCelHeight);
-				$arc=array();
-				foreach($Extra->Archers as $t => $Archer) {
-					$arc[]=$Archer['Archer'];
-				}
-				// who
-				$this->cell(80, $this->RecCelHeight, implode('/', $arc), 'TB', 0, 'R');
-				// NOC
-				$this->cell(10, $this->RecCelHeight, $Extra->NOC, 'TB', 0);
-				// where (NOC)
-				$this->cell(30, $this->RecCelHeight, $Extra->EventNOC, 'TB', 0, 'R');
-			}
-			// date
-			$this->SetXY($X+120, $Y);
-			$this->cell(0, $Rows, $Record->RtRecDate, 'TBR', 1, 'R');
-
+            if($Record->RtRecTotal!=0) {
+                $this->cell(10, $Rows, $Record->RtRecTotal . ($Record->RtRecXNine ? '/' . $Record->RtRecXNine : ''), 'TB', 0, 'R');
+                $X = $this->getX();
+                $Y = $this->getY();
+                foreach ($Record->RtRecExtra as $k => $Extra) {
+                    $this->SetXY($X, $Y + $k * $this->RecCelHeight);
+                    $arc = array();
+                    foreach ($Extra->Archers as $t => $Archer) {
+                        $arc[] = $Archer['Archer'];
+                    }
+                    // who
+                    $this->cell(80, $this->RecCelHeight, implode('/', $arc), 'TB', 0, 'R');
+                    // NOC
+                    $this->cell(10, $this->RecCelHeight, $Extra->NOC, 'TB', 0);
+                    // where (NOC)
+                    $this->cell(30, $this->RecCelHeight, $Extra->EventNOC, 'TB', 0, 'R');
+                }
+                // date
+                $this->SetXY($X + 120, $Y);
+                $this->cell(0, $Rows, $Record->RtRecDate, 'TBR', 1, 'R');
+            } else {
+                $this->cell(10, $Rows, '-', 'TB', 0, 'R');
+                $this->cell(0, $Rows, '', 'TBR', 1, 'R');
+            }
 			$this->lastY+=$Rows;
 		}
 		$this->lastY+=3;
@@ -314,15 +323,15 @@ class OrisPDF extends IanseoPdf {
 		$this->SetXY(OrisPDF::leftMargin, $this->lastY); // sets the correct location after eventually the reset of lastY made by the setheader in case of a new page
 		for($i=0; $i<count($data); $i++) {
 			$Align='L';
-			if(strstr($data[$i],"#")) {
+			if(strstr($data[$i]??'',"#")) {
 				$Align='R';
-			} elseif(strstr($data[$i],"§")) {
+			} elseif(strstr($data[$i]??'',"§")) {
 				$Align='C';
 			}
-            if(strstr($data[$i],"~")) {
+            if(strstr($data[$i]??'',"~")) {
                 $this->SetFont('', 'B');
             }
-			if(strstr($data[$i], "\n")) {
+			if(strstr($data[$i]??'', "\n")) {
 				$CellData=explode("\n", $data[$i]);
 				$OrgX=$this->GetX();
 				$OrgY=$this->GetY();
@@ -339,9 +348,9 @@ class OrisPDF extends IanseoPdf {
 				$this->SetXY($this->GetX(), $OrgY);
 				//$maxCell = max($maxCell, $this->MultiCell($this->DataSize[min($i,count($this->DataSize)-1)],3.5,str_replace(array("#","§"),"",$data[$i]),0, $Align, 0, 0));
 			} else {
-				$this->Cell($this->DataSize[min($i,count($this->DataSize)-1)],3.5,str_replace(array("#","§","~"),"",$data[$i]),0,0, $Align);
+				$this->Cell($this->DataSize[min($i,count($this->DataSize)-1)],3.5,str_replace(array("#","§","~"),"",$data[$i]??''),0,0, $Align);
 			}
-            if(strstr($data[$i],"~")) {
+            if(strstr($data[$i]??'',"~")) {
                 $this->SetFont('', '');
             }
 		}
@@ -429,7 +438,7 @@ class OrisPDF extends IanseoPdf {
 	    $HeadWidthTitle=20;
 	    $HeadWidthData=$TableScoreWidth-$HeadWidthTitle;
 
-		$Offset=35+($Bottom ? $this::topMargin+($this->getPageHeight()-45-$this->extraBottomMargin-$this::bottomMargin-$this::topMargin)/2 : 0);
+		$Offset=35+($Bottom ? $this::topMargin+($this->getPageHeight()-50-$this->extraBottomMargin-$this::bottomMargin-$this::topMargin)/2 : 0);
 		$this->SetY($Offset, true);
 		$this->SetFont('','B',14);
 		$this->Cell(0,0, $Phase['matchName'], '', '1','C');
@@ -438,7 +447,7 @@ class OrisPDF extends IanseoPdf {
         if($Data['odfMatchName']!=0) {
             $this->Cell(0,0, 'Match Number: ' . $Data['odfMatchName'], '', '1','C');
         }
-		$this->ln();
+		//$this->ln();
         $this->SetFont('','',10);
 
         //line 0: target
@@ -513,7 +522,9 @@ class OrisPDF extends IanseoPdf {
                     $Athlist[0][$ath['id']] = array($k, 0, 0);
                     $AthAvg[0][$k] = 0;
                     $this->SetFont($this->FontSymbol);
+                    $this->SetSymbolColor();
                     $this->Cell(5, $CellHeight, $symbols[$k % 9]);
+                    $this->SetDefaultColor();
                     $this->SetFont($this->FontStd);
                 }
                 $this->Cell($HeadWidthData, $CellHeight, $ath['familyUpperName'] . ' '. $ath['givenName']);
@@ -533,7 +544,9 @@ class OrisPDF extends IanseoPdf {
                     $Athlist[1][$ath['id']] = array($k, 0, 0);
                     $AthAvg[1][$k] = 0;
                     $this->SetFont($this->FontSymbol);
+                    $this->SetSymbolColor();
                     $this->Cell(5, $CellHeight, $symbols[$k % 9]);
+                    $this->SetDefaultColor();
                     $this->SetFont($this->FontStd);
                 }
                 $this->Cell($HeadWidthData, $CellHeight, $ath['familyUpperName'] . ' '. $ath['givenName']);
@@ -612,7 +625,9 @@ class OrisPDF extends IanseoPdf {
                         $Athlist[0][$Data['shootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][2]++;
                         $AthAvg[0][$Athlist[0][$Data['shootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][0]] = $Athlist[0][$Data['shootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][1] / $Athlist[0][$Data['shootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][2];
                         $this->SetFont($this->FontSymbol);
-                        $this->Cell(5, $CellHeight, $symbols[$Athlist[0][$Data['shootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][0]], 'LTB', 0, 'C');
+                        $this->SetSymbolColor();
+                        $this->Cell(5, $CellHeight, (($pts != ' ') ? $symbols[$Athlist[0][$Data['shootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][0]] : ''), 'LTB', 0, 'C');
+                        $this->SetDefaultColor();
                         $this->SetFont($this->FontStd);
                         $this->Cell($CellWidthShort-5, $CellHeight, DecodeFromLetter($pts), 'RTB', 0, 'C');
                     } else {
@@ -626,7 +641,7 @@ class OrisPDF extends IanseoPdf {
 				$Tot+=$endTot[$i];
 		        $this->Cell($CellWidthLong, $CellHeight*$nLines, $endTot[$i],1, 0, 'C');
 	            $this->Cell($ShooterSpacingWidth, $CellHeight*$nLines, ((intval($Data['shootFirst']) & (2**$i)) != 0 ? '<' : ''),0,0,'C');
-		        $this->Cell($CellWidthLong, $CellHeight*$nLines, $Section['matchMode'] ? $endPts[$i] : $Tot,1, 0, 'C');
+		        $this->Cell($CellWidthLong, $CellHeight*$nLines, ($Section['matchMode'] ? ($endPts[$i]??'') : $Tot),1, 0, 'C');
 			} else {
 		        $this->Cell($CellWidthLong, $CellHeight*$nLines, '',1, 0, 'C');
 	            $this->Cell($ShooterSpacingWidth, $CellHeight*$nLines, '');
@@ -638,7 +653,7 @@ class OrisPDF extends IanseoPdf {
             $pts=substr($Data['oppArrowstring'], $i*$Arrows,1);
 			if(trim($pts)) {
 				$OppTot+=$oppEndTot[$i];
-		        $this->Cell($CellWidthLong, $CellHeight*$nLines, $Section['matchMode'] ? $oppEndPts[$i] : $OppTot,1, 0, 'C');
+		        $this->Cell($CellWidthLong, $CellHeight*$nLines, $Section['matchMode'] ? ($oppEndPts[$i]??'') : $OppTot,1, 0, 'C');
                 $this->Cell($ShooterSpacingWidth, $CellHeight*$nLines, ((intval($Data['oppShootFirst']) & (2**$i)) != 0 ? '>' : ''),0,0,'C');
 			} else {
 		        $this->Cell($CellWidthLong, $CellHeight*$nLines, '',1, 0, 'C');
@@ -657,7 +672,9 @@ class OrisPDF extends IanseoPdf {
                         $Athlist[1][$Data['oppShootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][2]++;
                         $AthAvg[1][$Athlist[1][$Data['oppShootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][0]] = $Athlist[1][$Data['oppShootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][1] / $Athlist[1][$Data['oppShootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][2];
                         $this->SetFont($this->FontSymbol);
-                        $this->Cell(5, $CellHeight, $symbols[$Athlist[1][$Data['oppShootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][0]], 'LTB', 0, 'C');
+                        $this->SetSymbolColor();
+                        $this->Cell(5, $CellHeight, (($pts != ' ') ? $symbols[$Athlist[1][$Data['oppShootingArchers'][($i * $Arrows) + ($n * $loopArrows) + $j]][0]] : ''), 'LTB', 0, 'C');
+                        $this->SetDefaultColor();
                         $this->SetFont($this->FontStd);
                         $this->Cell($CellWidthShort-5, $CellHeight, DecodeFromLetter($pts), 'RTB', 0, 'C');
                     } else {
@@ -688,7 +705,9 @@ class OrisPDF extends IanseoPdf {
                         $Athlist[0][$Data['shootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][2]++;
                         $AthAvg[0][$Athlist[0][$Data['shootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][0]] = $Athlist[0][$Data['shootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][1] / $Athlist[0][$Data['shootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][2];
                         $this->SetFont($this->FontSymbol);
+                        $this->SetSymbolColor();
                         $this->Cell(5, $CellHeight, $symbols[$Athlist[0][$Data['shootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][0]], 'LTB', 0, 'C');
+                        $this->SetDefaultColor();
                         $this->SetFont($this->FontStd);
                         $this->Cell($SoWidth-5, $CellHeight, DecodeFromLetter($pts), 'RTB', 0, 'C');
                     } else {
@@ -740,7 +759,9 @@ class OrisPDF extends IanseoPdf {
                         $Athlist[1][$Data['oppShootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][2]++;
                         $AthAvg[1][$Athlist[1][$Data['oppShootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][0]] = $Athlist[1][$Data['oppShootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][1] / $Athlist[1][$Data['oppShootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][2];
                         $this->SetFont($this->FontSymbol);
+                        $this->SetSymbolColor();
                         $this->Cell(5, $CellHeight, $symbols[$Athlist[1][$Data['oppShootingArchers'][($Ends * $Arrows) + ($i * $Rows) + $j]][0]], 'LTB', 0, 'C');
+                        $this->SetDefaultColor();
                         $this->SetFont($this->FontStd);
                         $this->Cell($SoWidth-5, $CellHeight, DecodeFromLetter($pts), 'RTB', 0, 'C');
                     } else {
@@ -775,7 +796,7 @@ class OrisPDF extends IanseoPdf {
         $this->Cell($CellWidthShort*(1+($Arrows/$nLines)), $CellHeight, $Data['oppClosest'] ? $Meta['fields']['closest'] : '');
         $this->SetFont('', '');
 
-        //ifTeams and components, put average
+        //if Teams and components, put average
         if($Team and (count($Athlist[0]) OR count($Athlist[1]))) {
             $this->ln(10);
             $this->SetFont('', 'b');
@@ -784,12 +805,16 @@ class OrisPDF extends IanseoPdf {
             $this->SetFont('', '');
             for ($i=0; $i<max(count($AthAvg[0]),count($AthAvg[1])); $i++) {
                 $this->ln();
-                $this->Cell($CellWidthShort*(1+($Arrows/$nLines))+$CellWidthLong+$ShooterSpacingWidth, $CellHeight, '');
+                $this->setX(($this->getPageWidth()-((2*$CellWidthLong+4*$JudgesLabel)+10))/2);
+                $this->Cell(2*$JudgesLabel, $CellHeight, $TeamComponents[$Data['teamId']][$Data['subTeam']][$i]['familyUpperName'] . ' '. $TeamComponents[$Data['teamId']][$Data['subTeam']][$i]['givenName'], 1,0, 'L');
                 $this->Cell($CellWidthLong, $CellHeight, number_format($AthAvg[0][$i],2,'.',''),1, 0, 'C');
                 $this->SetFont($this->FontSymbol);
+                $this->SetSymbolColor();
                 $this->Cell(10, $CellHeight, $symbols[$i][0], 'LTB', 0, 'C');
+                $this->SetDefaultColor();
                 $this->SetFont($this->FontStd);
                 $this->Cell($CellWidthLong, $CellHeight, number_format($AthAvg[1][$i],2,'.',''),1, 0, 'C');
+                $this->Cell(2*$JudgesLabel, $CellHeight, $TeamComponents[$Data['oppTeamId']][$Data['oppSubTeam']][$i]['familyUpperName'] . ' '. $TeamComponents[$Data['oppTeamId']][$Data['oppSubTeam']][$i]['givenName'], 1,0, 'L');
             }
         }
 

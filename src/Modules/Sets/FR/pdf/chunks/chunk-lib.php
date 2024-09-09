@@ -221,7 +221,7 @@ function writeDataRowPrnIndividualAbs(&$pdf, $item, $distSize, $addSize, $runnin
 	{
 		$pdf->Cell(8, 4 * ($double ? 2 : 1),  $item['hits'], $border.'LR', 0, 'R', 0);
 		$pdf->SetFont($pdf->FontFix,'B',$pdf->FontSizeLines);
-		$pdf->Cell(12, 4 * ($double ? 2 : 1),  number_format($item['score'],3,$pdf->NumberDecimalSeparator,$pdf->NumberThousandsSeparator), $border.'LR', 1, 'R', 0);
+		$pdf->Cell(12, 4 * ($double ? 2 : 1),  is_numeric($item['score'])?number_format($item['score'],3,$pdf->NumberDecimalSeparator,$pdf->NumberThousandsSeparator):$item['score'], $border.'LR', 1, 'R', 0);
 	} else {
 		//Definizione dello spareggio/Sorteggio
 		$pdf->SetFont($pdf->FontStd,'I',5);

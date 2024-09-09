@@ -1,6 +1,7 @@
 <?php
 $lang['AutoUpdate']='Kemaskini Auto';
 $lang['BarRecord']='Tunjukkan Rekod Bar Purata';
+$lang['BrokenRecords']='Rekod Dipecahkan';
 $lang['ByClub']='Mengikut negara/kelab';
 $lang['ByEvent']='Mengikut Acara';
 $lang['ByName']='Mengikut nama';
@@ -76,6 +77,7 @@ $lang['Record-WR-avg']='Purata Rekod Dunia';
 $lang['Record-WR-WA']='Rekod Dunia';
 $lang['Record-WR-WA-avg']='Rekod Purata Dunia';
 $lang['RR_Score']='Skor RR';
+$lang['StandingRecords']='Rekod Semasa';
 $lang['Teams']='Berpasukan';
 $lang['TypeName']='Taipkan nama yang anda cari';
 $lang['ViewIndividualResults']='Lihat Keputusan Individu';

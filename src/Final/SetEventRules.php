@@ -195,6 +195,28 @@ if($TEAM) {
 		</select>
 		</td>';
 	echo '</tr>';
+} else {
+    $comboTeamCreationMode=ComboFromRs(
+        array(
+            array('id'=>0,'descr'=>get_text('SelectedClub-0','Tournament')),
+            array('id'=>1,'descr'=>get_text('SelectedClub-1','Tournament')),
+            array('id'=>2,'descr'=>get_text('SelectedClub-2','Tournament')),
+        ),
+        'id',
+        'descr',
+        1,
+        $RowEv->EvTeamCreationMode,
+        null,
+        'EvTeamCreationMode',
+        null,
+        array(
+            'onChange'=>'UpdateData(this)'
+        )
+    );
+    echo '<tr>';
+    echo '<td class="Center" colspan="4">'.$comboTeamCreationMode.'</td>';
+    echo '</tr>';
+
 }
 
 print '<tr id="RowDiv" class="Divider"><td colspan="'.$ColSpan.'"></td></tr>';

@@ -15,22 +15,21 @@
 class Obj_Rank_TeamComponents extends Obj_Rank {
 /**
  * safeFilter()
- * Protegge con gli apici gli elementi di $this->opts['eventsR']
+ * Protegge con gli apici gli elementi di $this->opts['events']
  *
  * @return mixed: false se non c'è filtro oppure la stringa da inserire nella where delle query
  */
     protected function safeFilter()	{
-        $filter=false;
-        if (array_key_exists('events', $this->opts)) {
-            if (is_array($this->opts['events']) AND count($this->opts['eventsR'])>0) {
-                $filter=array();
-                foreach ($this->opts['events'] as $e) {
-                    $filter[]=StrSafe_DB($e);
-                }
-                $filter="AND EvCode IN(" . implode(',',$filter) . ")";
-            } elseif (gettype($this->opts['events'])=='string' AND trim($this->opts['events'])!='') {
-                $filter="AND EvCode LIKE '" . $this->opts['events'] . "' ";
+        $filter='';
+        if (array_key_exists('events', $this->opts) and $this->opts['events']) {
+            if (is_array($this->opts['events'])) {
+                $filter.=" AND EvCode IN(" . implode(',', StrSafe_DB($this->opts['events'])) . ")";
+            } elseif (gettype($this->opts['events'])=='string') {
+                $filter.=" AND EvCode LIKE " . StrSafe_DB($this->opts['events']);
             }
+        }
+        if (array_key_exists('noc', $this->opts)) {
+            $filter=" AND CoCode = " . StrSafe_DB($this->opts['noc']);
         }
         return $filter;
     }
@@ -56,23 +55,26 @@ class Obj_Rank_TeamComponents extends Obj_Rank {
             $filter = "";
         }
 
-        $filter .= (empty($this->opts['coid']) ? '' : " AND EnCountry=" . intval($this->opts['coid'])) ;
+        $filter .= (empty($this->opts['coid']) ? '' : " AND CoId=" . intval($this->opts['coid'])) ;
 
         $q="SELECT TfclCoId, TfclSubTeam, CoCode, CoName, if(CoNameComplete>'', CoNameComplete, CoName) as CoNameComplete,
                 EvProgr, TfclEvent, TfclTimeStamp, TfclOrder, TfclEvent, EvEventName, EvMixedTeam, EvOdfCode, EvOdfGender, EvFinalPrintHead as PrintHeader,
-                pr.EnId as prId, pr.EnCode as prCode, pr.EnSex as prSex, pr.EnNameOrder as prNameOrder, pr.EnFirstName as prFirstName, upper(pr.EnFirstName) as prFirstNameUpper, pr.EnName as prName, 
-                nx.EnId as nxId, nx.EnCode as nxCode, nx.EnSex as nxSex, nx.EnNameOrder as nxNameOrder, nx.EnFirstName as nxFirstName, upper(nx.EnFirstName) as nxFirstNameUpper, nx.EnName as nxName,
+                pr.EnId as prId, pr.EnCode as prCode, coalesce(pred.EdExtra, pr.EnCode) as prLocalbib, pr.EnSex as prSex, pr.EnNameOrder as prNameOrder, pr.EnFirstName as prFirstName, upper(pr.EnFirstName) as prFirstNameUpper, pr.EnName as prName, 
+                nx.EnId as nxId, nx.EnCode as nxCode, coalesce(nxed.EdExtra, nx.EnCode) as nxLocalbib, nx.EnSex as nxSex, nx.EnNameOrder as nxNameOrder, nx.EnFirstName as nxFirstName, upper(nx.EnFirstName) as nxFirstNameUpper, nx.EnName as nxName,
                 ifnull(concat(DV2.DvMajVersion, '.', DV2.DvMinVersion) ,concat(DV1.DvMajVersion, '.', DV1.DvMinVersion)) as DocVersion,
                 date_format(ifnull(DV2.DvPrintDateTime, DV1.DvPrintDateTime), '%e %b %Y %H:%i UTC') as DocVersionDate,
-                ifnull(DV2.DvNotes, DV1.DvNotes) as DocNotes, EvOdfCode, EvOdfGender
-            FROM `TeamFinComponentLog`
+                ifnull(DV2.DvNotes, DV1.DvNotes) as DocNotes, ToTimeZone
+            FROM Tournament
+            INNER JOIN `TeamFinComponentLog` on ToId=TfclTournament
             INNER JOIN Countries on CoId=TfclCoId AND CoTournament=TfclTournament
             INNER JOIN Entries as pr ON TfclIdPrev=pr.EnId
             INNER JOIN Entries as nx ON TfclIdNext=nx.EnId
             INNER JOIN `Events` ON TfclEvent=EvCode AND TfclTournament=EvTournament AND EvTeamEvent=1
             LEFT JOIN DocumentVersions DV1 on TfclTournament=DV1.DvTournament AND DV1.DvFile = 'C-TEAM' and DV1.DvEvent=''
             LEFT JOIN DocumentVersions DV2 on TfclTournament=DV2.DvTournament AND DV2.DvFile = 'C-TEAM' and DV2.DvEvent=TfclEvent
-            WHERE TfclTournament={$this->tournament} " . $filter . "
+            left join ExtraData pred on pred.EdId=pr.EnId and pred.EdType='Z'
+            left join ExtraData nxed on nxed.EdId=nx.EnId and nxed.EdType='Z'
+            WHERE ToId={$this->tournament} " . $filter . "
             ORDER BY EvProgr, TfclEvent, CoCode, TfclTimeStamp ASC, TfclOrder";
 
         $r=safe_r_sql($q);
@@ -81,12 +83,14 @@ class Obj_Rank_TeamComponents extends Obj_Rank {
         $this->data['meta']['lastUpdate']='0000-00-00 00:00:00';
         $this->data['sections']=array();
 
+        $tz = "+00:00";
         $myEv='';
         $myTeam='';
 
         if(safe_num_rows($r)>0)	{
             $section=null;
             while ($myRow=safe_fetch($r)) {
+                $tz = $myRow->ToTimeZone;
                 if ($myEv!=$myRow->TfclEvent) {
                     if ($myEv!='') {
                         $this->data['sections'][$myEv]=$section;
@@ -151,8 +155,8 @@ class Obj_Rank_TeamComponents extends Obj_Rank {
 
                     $section['items'][$myRow->TfclCoId.'_'.$myRow->TfclSubTeam.'_'.$myRow->TfclTimeStamp]=$item;
 
-                    if ($myRow->TfclTimeStamp>$section['meta']['lastUpdate']) {
-                        $section['meta']['lastUpdate'] = $myRow->TfclTimeStamp;
+                    if ($myRow->TfclTimeStamp>$this->data['meta']['lastUpdate']) {
+                        $this->data['meta']['lastUpdate'] = $myRow->TfclTimeStamp;
                     }
                     $myTeam=$myRow->TfclCoId . $myRow->TfclSubTeam . $myRow->TfclEvent . $myRow->TfclTimeStamp;
                 }
@@ -160,6 +164,7 @@ class Obj_Rank_TeamComponents extends Obj_Rank {
                 $athlete=array(
                     'id' => $myRow->prId,
                     'bib' => $myRow->prCode,
+                    'localbib' => $myRow->prLocalbib,
                     'athlete'=>$myRow->prFirstNameUpper . ' ' . $myRow->prName,
                     'familyname' => $myRow->prFirstName,
                     'familynameUpper' => $myRow->prFirstNameUpper,
@@ -171,6 +176,7 @@ class Obj_Rank_TeamComponents extends Obj_Rank {
                 $athlete=array(
                     'id' => $myRow->nxId,
                     'bib' => $myRow->nxCode,
+	                'localbib' => $myRow->nxLocalbib,
                     'athlete'=>$myRow->nxFirstNameUpper . ' ' . $myRow->nxName,
                     'familyname' => $myRow->nxFirstName,
                     'familynameUpper' => $myRow->nxFirstNameUpper,
@@ -183,6 +189,9 @@ class Obj_Rank_TeamComponents extends Obj_Rank {
 
         // ultimo giro
             $this->data['sections'][$myEv]=$section;
+            $this->data['meta']['lastUpdate'] = (new DateTime($this->data['meta']['lastUpdate']))
+                ->modify(0-intval(substr($tz,0, strpos($tz,':')))*60 + intval(substr($tz,strpos($tz,':')+1,2)).' minutes')
+                ->format('Y-m-d H:i:s');
         }
     }
 }

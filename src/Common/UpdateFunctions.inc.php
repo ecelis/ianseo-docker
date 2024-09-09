@@ -800,3 +800,64 @@ function updateTeamFinComponentsLog_20220320($ToId=0) {
         WHERE `TfcCoId`={$r->TfclCoId} AND `TfcSubTeam`={$r->TfclSubTeam} AND `TfcTournament`={$r->TfclTournament} AND `TfcEvent`= '{$r->TfclEvent}' AND `TfcOrder`!= {$r->TfclOrder}");
     }
 }
+
+function updateArrowstrings_20231116($ToId=0) {
+    safe_w_sql("UPDATE `Qualifications` INNER JOIN Entries ON QuId=EnID SET 
+        QuD1Arrowstring=REPLACE(QuD1Arrowstring,'R','5'),
+        QuD2Arrowstring=REPLACE(QuD2Arrowstring,'R','5'),
+        QuD3Arrowstring=REPLACE(QuD3Arrowstring,'R','5'),
+        QuD4Arrowstring=REPLACE(QuD4Arrowstring,'R','5'),
+        QuD5Arrowstring=REPLACE(QuD5Arrowstring,'R','5'),
+        QuD6Arrowstring=REPLACE(QuD6Arrowstring,'R','5'),
+        QuD7Arrowstring=REPLACE(QuD7Arrowstring,'R','5'),
+        QuD8Arrowstring=REPLACE(QuD8Arrowstring,'R','5') WHERE EnTournament={$ToId}");
+    safe_w_sql("UPDATE `Qualifications` INNER JOIN Entries ON QuId=EnID SET
+        QuD1Arrowstring=REPLACE(QuD1Arrowstring,'S','6'),
+        QuD2Arrowstring=REPLACE(QuD2Arrowstring,'S','6'),
+        QuD3Arrowstring=REPLACE(QuD3Arrowstring,'S','6'),
+        QuD4Arrowstring=REPLACE(QuD4Arrowstring,'S','6'),
+        QuD5Arrowstring=REPLACE(QuD5Arrowstring,'S','6'),
+        QuD6Arrowstring=REPLACE(QuD6Arrowstring,'S','6'),
+        QuD7Arrowstring=REPLACE(QuD7Arrowstring,'S','6'),
+        QuD8Arrowstring=REPLACE(QuD8Arrowstring,'S','6') WHERE EnTournament={$ToId}");
+    safe_w_sql("UPDATE `Qualifications` INNER JOIN Entries ON QuId=EnID SET 
+        QuD1Arrowstring=REPLACE(QuD1Arrowstring,'T','8'),
+        QuD2Arrowstring=REPLACE(QuD2Arrowstring,'T','8'),
+        QuD3Arrowstring=REPLACE(QuD3Arrowstring,'T','8'),
+        QuD4Arrowstring=REPLACE(QuD4Arrowstring,'T','8'),
+        QuD5Arrowstring=REPLACE(QuD5Arrowstring,'T','8'),
+        QuD6Arrowstring=REPLACE(QuD6Arrowstring,'T','8'),
+        QuD7Arrowstring=REPLACE(QuD7Arrowstring,'T','8'),
+        QuD8Arrowstring=REPLACE(QuD8Arrowstring,'T','8') WHERE EnTournament={$ToId}");
+    safe_w_sql("UPDATE `Qualifications` INNER JOIN Entries ON QuId=EnID SET 
+        QuD1Arrowstring=REPLACE(QuD1Arrowstring,'U','7'),
+        QuD2Arrowstring=REPLACE(QuD2Arrowstring,'U','7'),
+        QuD3Arrowstring=REPLACE(QuD3Arrowstring,'U','7'),
+        QuD4Arrowstring=REPLACE(QuD4Arrowstring,'U','7'),
+        QuD5Arrowstring=REPLACE(QuD5Arrowstring,'U','7'),
+        QuD6Arrowstring=REPLACE(QuD6Arrowstring,'U','7'),
+        QuD7Arrowstring=REPLACE(QuD7Arrowstring,'U','7'),
+        QuD8Arrowstring=REPLACE(QuD8Arrowstring,'U','7') WHERE EnTournament={$ToId}");
+}
+
+function updateLancaster_20240108($ToId=0) {
+    safe_w_sql("UPDATE `Qualifications` 
+        inner join Entries on EnId=QuId and EnTournament=$ToId
+        inner join Tournament on ToId=EnTournament and ToLocRule='LANC' 
+        SET QuD1Arrowstring=REPLACE(QuD1Arrowstring,'X','M'), QuD2Arrowstring=REPLACE(QuD2Arrowstring,'X','M'),
+            QuD3Arrowstring=REPLACE(QuD3Arrowstring,'X','M'), QuD4Arrowstring=REPLACE(QuD4Arrowstring,'X','M'),
+            QuD5Arrowstring=REPLACE(QuD5Arrowstring,'X','M'), QuD6Arrowstring=REPLACE(QuD6Arrowstring,'X','M'),
+            QuD7Arrowstring=REPLACE(QuD7Arrowstring,'X','M'), QuD8Arrowstring=REPLACE(QuD8Arrowstring,'X','M')");
+    safe_w_sql("UPDATE `Finals` inner join Tournament on ToId=FinTournament and ToLocRule='LANC' SET FinArrowstring=REPLACE(FinArrowstring,'X','M') where FinTournament=$ToId");
+    safe_w_sql("UPDATE RoundRobinMatches inner join Tournament on ToId=RrMatchTournament and ToLocRule='LANC' SET RrMatchArrowstring=REPLACE(RrMatchArrowstring,'X','M') where RrMatchTournament=$ToId");
+    safe_w_sql("update Tournament set ToGolds='11', ToGoldsChars='M' where ToId=$ToId and ToLocRule='LANC'");
+    safe_w_sql("update Events inner join Tournament on ToId=EvTournament and ToLocRule='LANC' set EvFinalTargetType=if(EvFinalTargetType=24,EvFinalTargetType,25), EvGolds='11', EvGoldsChars='M' where EvTournament=$ToId");
+    safe_w_sql("update TargetFaces inner join Tournament on ToId=TfTournament and ToLocRule='LANC' set TfT1=25, TfT2=25, TfGolds='11', TfGoldsChars='M' where TfTournament=$ToId");
+}
+
+function updateSevereBug_20240114($ToId) {
+    safe_w_sql("UPDATE `TargetFaces` 
+        inner join `Tournament` on ToId=TfTournament and ToLocRule!='LANC'
+        SET TfGolds='', TfGoldsChars=''
+        WHERE  TfTournament=$ToId AND `TfGolds` LIKE '11' AND `TfXNine` = '' AND `TfGoldsChars` LIKE 'M' AND `TfXNineChars` = ''",false,array(1146, 1060));
+}

@@ -7,6 +7,7 @@ require_once('Common/Lib/CommonLib.php');
 CheckTourSession(true);
 
 $PAGE_TITLE=get_text('GetCredentials','Tournament');
+$IncludeJquery = true;
 $JS_SCRIPT = array(
 		phpVars2js(array(
 			'IanseoRequestCodeURI' => $CFG->IanseoServer.'CodeRequest.php',
@@ -27,7 +28,6 @@ $JS_SCRIPT = array(
 			'ErrUnknownNation' => get_text('ErrUnknownNation', 'Errors'),
 			'ErrYellowCard' => get_text('ErrYellowCard', 'Errors'),
 		)),
-		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 		'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Tournament/Fun_CodeRequest.js"></script>',
 );
 

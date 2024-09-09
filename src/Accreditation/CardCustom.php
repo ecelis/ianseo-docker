@@ -2,7 +2,11 @@
 
 require_once(dirname(dirname(__FILE__)) . '/config.php');
 require_once('Common/pdf/LabelPDF.inc.php');
+require_once('Common/Lib/CommonLib.php');
 
+if(isset($_REQUEST['ToCode'])) {
+    $_REQUEST['ToId'] = getIdFromCode($_REQUEST['ToCode']);
+}
 if(!empty($_REQUEST['ToId'])) {
 	CreateTourSession(intval($_REQUEST['ToId']));
 }
@@ -16,8 +20,6 @@ if($Mem=getSystemMemInfo() and !empty($Mem['MemFree'])) {
 
 $CardType=(empty($_REQUEST['CardType']) ? 'A' : $_REQUEST['CardType']);
 $CardNumber=(empty($_REQUEST['CardNumber']) ? 0 : intval($_REQUEST['CardNumber']));
-
-$BisTargets=array('', 'bis','ter','quat', 'quin', 'sex', 'sept', 'oct');
 
 $SpecialFilter='';
 // $SpecialFilter=' and EnCode in (
@@ -95,7 +97,7 @@ $BadgeElements=array();
 
 while ($MyRow=safe_fetch($Rs)) {
 	set_time_limit(30);
-	if($CurrentTour!=$MyRow->EnTournament or $CurrentBadge!=$MyRow->IcNumber) {
+	if($MyRow->EnTournament and ($CurrentTour!=$MyRow->EnTournament or $CurrentBadge!=$MyRow->IcNumber)) {
 		$CurrentCode=$MyRow->ToCode;
 
 		// get the background of the card
@@ -155,6 +157,11 @@ while ($MyRow=safe_fetch($Rs)) {
 		$CurrentTour=$MyRow->EnTournament;
 		$CurrentBadge=$MyRow->IcNumber;
 	}
+
+    if(empty($Badges)) {
+        continue;
+    }
+
 	$pdf->SetDefaultColor();
 
 	if($cntPass==0) {
@@ -169,7 +176,7 @@ while ($MyRow=safe_fetch($Rs)) {
 // 		unset($BackGround->IcBackground);
 		$ElX=$StartX+$BackGround->Options['IdBgX'];
 		$ElY=$StartY+$BackGround->Options['IdBgY'];
-		$pdf->Image($Back, $ElX, $ElY, $BackGround->Options['IdBgW'], $BackGround->Options['IdBgH']);
+		$pdf->Image($Back, $ElX, $ElY, floatval($BackGround->Options['IdBgW']), floatval($BackGround->Options['IdBgH']));
 	}
 
 	if($RndImages) {
@@ -183,7 +190,7 @@ while ($MyRow=safe_fetch($Rs)) {
 		$ElX=$StartX+$Element->Options['X'];
 		$ElY=$StartY+$Element->Options['Y'];
 		if(file_exists($im=$CFG->DOCUMENT_PATH.'TV/Photos/'.$CurrentCode.'-RandomImage-'.$FileExtra.'-'.$Element->IceOrder.'.jpg')) {
-			$pdf->Image($im, $ElX, $ElY, $Element->Options['W'], $Element->Options['H']);
+			$pdf->Image($im, $ElX, $ElY, floatval($Element->Options['W']), floatval($Element->Options['H']));
 		}
 	}
 
@@ -198,24 +205,39 @@ while ($MyRow=safe_fetch($Rs)) {
 			case 'ToRight':
 			case 'ToBottom':
 				if(file_exists($im=$CFG->DOCUMENT_PATH.'TV/Photos/'.$CurrentCode.'-'.$Element->IceType.'.jpg')) {
-					$pdf->Image($im, $ElX, $ElY, $Element->Options['W'], $Element->Options['H']);
+					$pdf->Image($im, $ElX, $ElY, floatval($Element->Options['W']), floatval($Element->Options['H']));
 				}
 				break;
 			case 'Picture':
 				if(file_exists($im=$CFG->DOCUMENT_PATH.'TV/Photos/'.$CurrentCode.'-En-'.$MyRow->EnId.'.jpg')) {
-					$pdf->Image($im, $ElX, $ElY, $Element->Options['W'], $Element->Options['H']);
+					$pdf->Image($im, $ElX, $ElY, floatval($Element->Options['W']), floatval($Element->Options['H']));
 				}
 				break;
 			case 'ImageSvg':
 				if(file_exists($im=$CFG->DOCUMENT_PATH.'TV/Photos/'.$CurrentCode.'-ImageSvg-'.$FileExtra.'-'.$Element->IceOrder.'.svg')) {
-					$pdf->ImageSVG($im, $ElX, $ElY, $Element->Options['W'], $Element->Options['H']);
+					$pdf->ImageSVG($im, $ElX, $ElY, floatval($Element->Options['W']), floatval($Element->Options['H']));
 				}
 				break;
 			case 'Image':
 				if(file_exists($im=$CFG->DOCUMENT_PATH.'TV/Photos/'.$CurrentCode.'-Image-'.$FileExtra.'-'.$Element->IceOrder.'.jpg')) {
-					$pdf->Image($im, $ElX, $ElY, $Element->Options['W'], $Element->Options['H']);
+					$pdf->Image($im, $ElX, $ElY, floatval($Element->Options['W']), floatval($Element->Options['H']));
 				}
 				break;
+            case 'WRankImage':
+                if(($Element->Options['WRank'] == 0 OR $Element->Options['WRank']>=$MyRow->WRank) AND !empty($MyRow->WRank)) {
+                    if (file_exists($im = $CFG->DOCUMENT_PATH . 'TV/Photos/' . $CurrentCode . '-WRankImage-' . $FileExtra . '-' . $Element->IceOrder . '.jpg')) {
+                        $pdf->Image($im, $ElX, $ElY, floatval($Element->Options['W']), floatval($Element->Options['H']));
+                    }
+                }
+                break;
+            case 'ExtraAddOnsImage':
+                $listAddOns = getModuleParameter("ExtraAddOns","AddOnsList", array());
+                if(($MyRow->ExtraAddOns & pow(2,$Element->Options['ExtraAddOns']))!=0 AND array_key_exists($Element->Options['ExtraAddOns'], $listAddOns) AND !empty($listAddOns[$Element->Options['ExtraAddOns']])) {
+                    if (file_exists($im = $CFG->DOCUMENT_PATH . 'TV/Photos/' . $CurrentCode . '-ExtraAddOnsImage-' . $FileExtra . '-' . $Element->IceOrder . '.jpg')) {
+                        $pdf->Image($im, $ElX, $ElY, floatval($Element->Options['W']), floatval($Element->Options['H']));
+                    }
+                }
+                break;
 			case 'Accomodation':
 				$Type='B';
 				$Fill=false;
@@ -252,17 +274,17 @@ while ($MyRow=safe_fetch($Rs)) {
 				$AcX=$ElX;
 				if($MyRow->AcMeal) {
 					$pdf->ImageSVG($CFG->DOCUMENT_PATH . 'Common/Images/eat-'.$Type.'.svg',
-						$AcX, $ElY, 0, $Element->Options['H'], '', 'T');
+						$AcX, $ElY, 0, floatval($Element->Options['H']), '', 'T');
 					$AcX=$pdf->getx()+2;
 				}
 				if($MyRow->AcAccomodation) {
 					$pdf->ImageSVG($CFG->DOCUMENT_PATH . 'Common/Images/bed-'.$Type.'.svg',
-						$AcX, $ElY, 0, $Element->Options['H'], '', 'T');
+						$AcX, $ElY, 0, floatval($Element->Options['H']), '', 'T');
 					$AcX=$pdf->getx()+2;
 				}
 				if($MyRow->AcTransport) {
 					$pdf->ImageSVG($CFG->DOCUMENT_PATH . 'Common/Images/' . $AcTransport['img'][$MyRow->AcTransport] . '-'.$Type.'.svg',
-						$AcX, $ElY, 0, $Element->Options['H']);
+						$AcX, $ElY, 0, floatval($Element->Options['H']));
 				}
 				break;
 // 		if($MyRow->AcAccomodation != 0)
@@ -274,14 +296,14 @@ while ($MyRow=safe_fetch($Rs)) {
 // 				[AcMeal] => 1
 			case 'Flag':
 				if(file_exists($im=$CFG->DOCUMENT_PATH.'TV/Photos/'.$CurrentCode.'-FlSvg-'.$MyRow->NationCode.'.svg')) {
-					$pdf->ImageSVG($im, max(0.15, $ElX), $ElY, $Element->Options['W'], $Element->Options['H']);
+					$pdf->ImageSVG($im, max(0.15, $ElX), $ElY, floatval($Element->Options['W']), floatval($Element->Options['H']));
 					$pdf->SetDrawColor(128);
-					$pdf->Rect(max(0.15, $ElX), $ElY, $Element->Options['W'], $Element->Options['H']);
+					$pdf->Rect(max(0.15, $ElX), $ElY, floatval($Element->Options['W']), floatval($Element->Options['H']));
 					$pdf->SetDrawColor(0);
 				} elseif(file_exists($im=$CFG->DOCUMENT_PATH.'TV/Photos/'.$CurrentCode.'-Fl-'.$MyRow->NationCode.'.jpg')) {
-					$pdf->Image($im, max(0.15, $ElX), $ElY, $Element->Options['W'], $Element->Options['H']);
+					$pdf->Image($im, max(0.15, $ElX), $ElY, floatval($Element->Options['W']), floatval($Element->Options['H']));
 					$pdf->SetDrawColor(128);
-					$pdf->Rect(max(0.15, $ElX), $ElY, $Element->Options['W'], $Element->Options['H']);
+					$pdf->Rect(max(0.15, $ElX), $ElY, floatval($Element->Options['W']), floatval($Element->Options['H']));
 					$pdf->SetDrawColor(0);
 				}
 				break;
@@ -394,19 +416,26 @@ while ($MyRow=safe_fetch($Rs)) {
 				if(!isset($Text)) {
 					switch($Element->IceContent) {
 						case 'FamCaps': $Text=array($MyRow->FamCaps); break;
-						case 'FamCaps-GAlone': $Text=array($MyRow->FamCaps.' '.substr($MyRow->GivCaps, 0, 1)); break;
+						case 'FamCaps-GAlone': $Text=array($MyRow->FamCaps.' '.substr($MyRow->GivCaps, 0, 1).'.'); break;
 						case 'FamCaps-GivCamel': $Text=array($MyRow->FamCaps.' '.$MyRow->GivCamel); break;
 						case 'FamCaps-GivCaps': $Text=array($MyRow->FamCaps.' '.$MyRow->GivCaps); break;
+                        case 'FamCaps-GivCaps-ClubCaps': $Text=array($MyRow->FamCaps.' '.$MyRow->GivCaps.', '.$MyRow->NationCaps); break;
 						case 'FamCamel': $Text=array($MyRow->FamCamel); break;
-						case 'FamCamel-GAlone': $Text=array($MyRow->FamCamel.' '.substr($MyRow->GivCaps, 0, 1)); break;
+						case 'FamCamel-GAlone': $Text=array($MyRow->FamCamel.' '.substr($MyRow->GivCaps, 0, 1).'.'); break;
 						case 'FamCamel-GivCamel': $Text=array($MyRow->FamCamel.' '.$MyRow->GivCamel); break;
+                        case 'FamCaps-GivCamel-ClubCamel': $Text=array($MyRow->FamCamel.' '.$MyRow->GivCamel.', '.$MyRow->Nation); break;
+                        case 'FamCaps-GivCamel-ClubCaps': $Text=array($MyRow->FamCamel.' '.$MyRow->GivCamel.', '.$MyRow->NationCaps); break;
 						case 'GivCamel': $Text=array($MyRow->GivCamel); break;
 						case 'GivCamel-FamCamel': $Text=array($MyRow->GivCamel.' '.$Text=$MyRow->FamCamel); break;
+                        case 'GivCamel-FamCamel-ClubCamel': $Text=array($MyRow->GivCamel.' '.$Text=$MyRow->FamCamel.', '.$MyRow->Nation); break;
 						case 'GivCamel-FamCaps': $Text=array($MyRow->GivCamel.' '.$MyRow->FamCaps); break;
+                        case 'GivCamel-FamCaps-ClubCamel': $Text=array($MyRow->GivCamel.' '.$MyRow->FamCaps.', '.$MyRow->Nation); break;
+                        case 'GivCamel-FamCaps-ClubCaps': $Text=array($MyRow->GivCamel.' '.$MyRow->FamCaps.', '.$MyRow->NationCaps); break;
 						case 'GivCaps': $Text=array($MyRow->GivCaps); break;
 						case 'GivCaps-FamCaps': $Text=array($MyRow->GivCaps.' '.$MyRow->FamCaps); break;
-						case 'GAlone-FamCaps': $Text=array(substr($MyRow->GivCaps, 0, 1).' '.$MyRow->FamCaps); break;
-						case 'GAlone-FamCamel': $Text=array(substr($MyRow->GivCaps, 0, 1)); break;
+                        case 'GivCaps-FamCaps-ClubCaps': $Text=array($MyRow->GivCaps.' '.$MyRow->FamCaps.', '.$MyRow->NationCaps); break;
+						case 'GAlone-FamCaps': $Text=array(substr($MyRow->GivCaps, 0, 1).'. '.$MyRow->FamCaps); break;
+						case 'GAlone-FamCamel': $Text=array(substr($MyRow->GivCaps, 0, 1).'.'); break;
 					}
 				}
 			case 'Club':
@@ -419,6 +448,54 @@ while ($MyRow=safe_fetch($Rs)) {
 						case 'ClubCaps':$Text=array($MyRow->NationCaps); break;
 					}
 				}
+            case 'Club2':
+                if(!isset($Text)) {
+                    if($MyRow->CoId2 != 0) {
+                        switch ($Element->IceContent) {
+                            case 'NocCaps-ClubCamel':
+                                $Text = array($MyRow->NationCode2 . ' ' . $MyRow->Nation2);
+                                break;
+                            case 'NocCaps-ClubCaps':
+                                $Text = array($MyRow->NationCode2 . ' ' . $MyRow->NationCaps2);
+                                break;
+                            case 'NocCaps':
+                                $Text = array($MyRow->NationCode2);
+                                break;
+                            case 'ClubCamel':
+                                $Text = array($MyRow->Nation2);
+                                break;
+                            case 'ClubCaps':
+                                $Text = array($MyRow->NationCaps2);
+                                break;
+                        }
+                    } else {
+                        $Text = array();
+                    }
+                }
+            case 'Club3':
+                if(!isset($Text)) {
+                    if($MyRow->CoId2 != 0) {
+                        switch ($Element->IceContent) {
+                            case 'NocCaps-ClubCamel':
+                                $Text = array($MyRow->NationCode . ' ' . $MyRow->Nation);
+                                break;
+                            case 'NocCaps-ClubCaps':
+                                $Text = array($MyRow->NationCode . ' ' . $MyRow->NationCaps);
+                                break;
+                            case 'NocCaps':
+                                $Text = array($MyRow->NationCode);
+                                break;
+                            case 'ClubCamel':
+                                $Text = array($MyRow->Nation);
+                                break;
+                            case 'ClubCaps':
+                                $Text = array($MyRow->NationCaps);
+                                break;
+                        }
+                    } else {
+                        $Text = array();
+                    }
+                }
 			case 'Category':
 				if(!isset($Text)) {
 					$Code=$MyRow->DivCode.$MyRow->ClassCode.' - ';
@@ -467,6 +544,23 @@ while ($MyRow=safe_fetch($Rs)) {
                         case 'Ordinal':  $Text=array(ordinal($MyRow->RankFinal)); break;
                     }
                 }
+            case 'WRank':
+                if(!isset($Text)) {
+                    if(($Element->IceContent == 0 OR $Element->IceContent>=$MyRow->WRank) AND !empty($MyRow->WRank)) {
+                        $Text = array($MyRow->WRank);
+                    } else {
+                        $Text = array('');
+                    }
+                }
+            case 'ExtraAddOns':
+                if(!isset($Text)) {
+                    $listAddOns = getModuleParameter("ExtraAddOns","AddOnsList", array());
+                    if(($MyRow->ExtraAddOns & pow(2,$Element->IceContent))!=0 AND array_key_exists($Element->IceContent, $listAddOns) AND !empty($listAddOns[$Element->IceContent])) {
+                        $Text = array($listAddOns[$Element->IceContent]);
+                    } else {
+                        $Text = array();
+                    }
+                }
 			case 'Event':
 				if(!isset($Text)) {
 					$Text=array($MyRow->EvCode);
@@ -492,10 +586,7 @@ while ($MyRow=safe_fetch($Rs)) {
 						$Text=array(ltrim($MyRow->TargetNo, '0'));
 						$toCat=(intval($MyRow->ToCategory) & 12);
 						if(!empty($MyRow->RealTarget) and !empty($toCat) and $MyRow->RealTarget>$MyRow->Ends) {
-							$TgtMult=intval(($MyRow->RealTarget-1)/$MyRow->Ends);
-							$Text[0]=($MyRow->RealTarget-($TgtMult*$MyRow->Ends))
-								.$BisTargets[$TgtMult]
-								.substr($Text[0], -1);
+							$Text[0]=CheckBisTargets($MyRow->RealTarget, $MyRow->Ends) . substr($Text[0], -1);
 						}
 					} else {
 						$Text=array('');
@@ -506,10 +597,7 @@ while ($MyRow=safe_fetch($Rs)) {
 					if($MyRow->TargetNo) {
 						$Text=array($MyRow->TargetNo);
 						if(!empty($MyRow->RealTarget) and ($MyRow->ToCategory & 12) and $MyRow->RealTarget>$MyRow->Ends) {
-							$TgtMult=intval(($MyRow->RealTarget-1)/$MyRow->Ends);
-							$Text[0]=($MyRow->RealTarget-($TgtMult*$MyRow->Ends))
-							.$BisTargets[$TgtMult]
-							.substr($Text[0], -1);
+							$Text[0]=CheckBisTargets($MyRow->RealTarget, $MyRow->Ends) . substr($Text[0], -1);
 						}
 						$Text[0] = $MyRow->Session . "-" . $Text[0];
 					} else {
@@ -543,9 +631,9 @@ while ($MyRow=safe_fetch($Rs)) {
 				$WhiteText=false;
 				$BlackText=false;
 				if(!empty($Element->Options['BackCat'])) {
-					$R=hexdec(substr($MyRow->AcColor, 0, 2));
-					$G=hexdec(substr($MyRow->AcColor, 2, 2));
-					$B=hexdec(substr($MyRow->AcColor, 4, 2));
+					$R=hexdec(substr($MyRow->AcColor??'000000', 0, 2));
+					$G=hexdec(substr($MyRow->AcColor??'000000', 2, 2));
+					$B=hexdec(substr($MyRow->AcColor??'000000', 4, 2));
 					//if($Element->IceType=='ColoredArea') {
 						$pdf->SetFillColor($R, $G, $B);
 						$Fill=true;
@@ -646,9 +734,9 @@ while ($MyRow=safe_fetch($Rs)) {
 				break;
 			case 'AthQrCode':
 				$style = array(
-					'border' => 2,
-					'vpadding' => 'auto',
-					'hpadding' => 'auto',
+					'border' => 1,
+					'vpadding' => 2,
+					'hpadding' => 2,
 					'fgcolor' => array(0,0,0),
 					'bgcolor' => array(255,255,255), //array(255,255,255)
 					'module_width' => 1, // width of a single module in points
@@ -713,6 +801,57 @@ while ($MyRow=safe_fetch($Rs)) {
 				}
 				break;
 			case 'TgtSequence':
+                $tmpPhases = getStandardPhases();
+                foreach ($tmpPhases as $kPh=>$vPh) {
+                    if($vPh>$Element->Options['FromPhase'] OR $vPh<$Element->Options['ToPhase']) {
+                        unset($tmpPhases[$kPh]);
+                    }
+                }
+                $BigNameLineWidth=0.5;
+                $R=hexdec(substr($Element->Options['Col'], 1, 2));
+                $G=hexdec(substr($Element->Options['Col'], 3, 2));
+                $B=hexdec(substr($Element->Options['Col'], 5, 2));
+                $pdf->SetTextColor($R,$G,$B);
+                $BigNameColors=array(
+                    0 => array(128),
+                    1 => array(128),
+                    2 => array(251, 191, 21),
+                    4 => array(239, 46, 49),
+                    8 => array(64, 193, 230),
+                    16 => array(33, 81, 168),
+                    32 => array(79, 190, 55),
+                    64 => array(237, 43, 159),
+                );
+                if($Element->IceContent=='BlackWhite') {
+                    $R=hexdec(substr($Element->Options['Col'], 1, 2));
+                    $G=hexdec(substr($Element->Options['Col'], 3, 2));
+                    $B=hexdec(substr($Element->Options['Col'], 5, 2));
+                    $pdf->SetTextColor($R,$G,$B);
+                    if(!empty($Element->Options['BackCol'])) {
+                        $R=hexdec(substr($Element->Options['BackCol'], 1, 2));
+                        $G=hexdec(substr($Element->Options['BackCol'], 3, 2));
+                        $B=hexdec(substr($Element->Options['BackCol'], 5, 2));
+                    }
+                    $BigNameLineWidth=0.05;
+                    $BigNameColors=array(
+                        0 => array($R,$G,$B),
+                        1 => array($R,$G,$B),
+                        2 => array($R,$G,$B),
+                        4 => array($R,$G,$B),
+                        8 => array($R,$G,$B),
+                        16 => array($R,$G,$B),
+                        32 => array($R,$G,$B),
+                        64 => array($R,$G,$B)
+                    );
+                }
+                $OldLineWidth=$pdf->GetLineWidth();
+                $OldColor=$pdf->getDrawColor();
+                $OldCellPadding=$pdf->getCellPaddings();
+                $OldCellHeightRatio=$pdf->getCellHeightRatio();
+                $pdf->SetFont($Element->Options['FontFamily'], $Element->Options['FontStyle'],$Element->Options['Size']);
+                $pdf->SetLineWidth($BigNameLineWidth);
+                $pdf->SetCellPaddings(1,0,1,0);
+                //$pdf->setCellHeightRatio(0);
 				// PArte di riconoscimento EVENTO e Paglione
 				$TgtQuery = 'SELECT
 						EvCode, EvEventName, EvFinalFirstPhase, GrPhase,
@@ -740,68 +879,62 @@ while ($MyRow=safe_fetch($Rs)) {
 
 				$TgtQ=safe_r_sql($TgtQuery);
 				if($TgtR=safe_fetch($TgtQ)) {
-					$BigNameLineWidth=$Element->Options['Size']/20;
-					$BoxWidth=$Element->Options['Size'];
-					$BoxHeight=$Element->Options['Size']/2;
-					$BigNameColors=array(
-						0 => array(128),
-						1 => array(128),
-						2 => array(251, 191, 21),
-						4 => array(239, 46, 49),
-						8 => array(64, 193, 230),
-						16 => array(33, 81, 168),
-						32 => array(79, 190, 55),
-						64 => array(237, 43, 159),
-					);
-					if($Element->IceContent=='BlackWhite') {
-						$BigNameLineWidth=0.05;
-						$BigNameColors=array(
-							0 => array(0),
-							1 => array(0),
-							2 => array(0),
-							4 => array(0),
-							8 => array(0),
-							16 => array(0),
-							32 => array(0),
-							64 => array(0),
-						);
-					}
-					$GoldBox='Gold';
-					$BronzeBox='Bronze';
-					$SemiBox='1/2';
+                    foreach ($tmpPhases as $kPh=>$vPh) {
+                        if($vPh>bitwisePhaseId($TgtR->EvFinalFirstPhase)) {
+                            unset($tmpPhases[$kPh]);
+                        }
+                    }
+                    if(count($tmpPhases)) {
+                        $BoxWidth = floatval($Element->Options['W']) / (count($tmpPhases));
+                        $BoxHeight = $Element->Options['H'];
+                        if($Element->Options['LayoutOrientation']=="1") {
+                            $BoxWidth = $Element->Options['W'];
+                            $BoxHeight = floatval($Element->Options['H']) / (count($tmpPhases));
+                        }
+                        $GoldBox = get_text('0_Phase');
+                        $BronzeBox = get_text('1_Phase');
+                        $SemiBox = get_text('2_Phase');
 
-					$OldLineWidth=$pdf->GetLineWidth();
-					$OldColor=$pdf->getDrawColor();
-					$OldCellPadding=$pdf->getCellPaddings();
-					$pdf->SetFont('','',$Element->Options['Size']);
-					$pdf->SetLineWidth($BigNameLineWidth);
-					$pdf->SetCellPadding(1);
-
-					$pdf->SetXY($ElX+$Element->Options['W']-$BoxWidth, $ElY);
-					if(!empty($TgtR->sGo)) {
-						$pdf->setColorArray('draw', $BigNameColors[0]);
-						$pdf->Cell($BoxWidth, $BoxHeight, $GoldBox . ": " . ltrim($TgtR->sGo, '0'), 1, 0, 'C', 0);
-						$pdf->SetX($pdf->getX() - $BigNameLineWidth - $BoxWidth * 2);
-					}
-					if(!empty($TgtR->sBr)) {
-						$pdf->setColorArray('draw', $BigNameColors[1]);
-						$pdf->Cell($BoxWidth, $BoxHeight, $BronzeBox . ": " . ltrim($TgtR->sBr, '0'), 1, 0, 'C', 0);
-						$pdf->SetX($pdf->getX() - $BigNameLineWidth - $BoxWidth*2);
-					}
-					for($i=2; $i<=valueFirstPhase($TgtR->EvFinalFirstPhase);$i=$i*2) {
-						$pdf->setColorArray('draw', $BigNameColors[$i]);
-						$pdf->Cell($BoxWidth, $BoxHeight, '1/' . namePhase($TgtR->EvFinalFirstPhase,$i) . ': ' . ltrim($TgtR->{'s' . $i},'0'),1,0,'C',0);
-						if(empty($TgtR->{'s' . $i})) { //} OR is_null($TgtR->{'s' . $i})) {
-							$pdf->line($pdf->getX(), $pdf->getY(),$pdf->getX()-$BoxWidth, $pdf->GetY()+$BoxHeight+$BigNameLineWidth*2);
-						}
-						$pdf->SetX($pdf->getX() - $BigNameLineWidth - $BoxWidth*2);
-					}
-
-					$pdf->SetDrawColor($OldColor);
-					$pdf->SetCellPaddings($OldCellPadding['L'], $OldCellPadding['T'],$OldCellPadding['R'],$OldCellPadding['B']);
-
-					$pdf->SetLineWidth($OldLineWidth);
+                        $pdf->SetXY($ElX + $Element->Options['W'] - $BoxWidth, $ElY);
+                        if (!empty($TgtR->sGo) and in_array('0', $tmpPhases)) {
+                            $pdf->setColorArray('draw', $BigNameColors[0]);
+                            $pdf->Cell($BoxWidth, $BoxHeight, $GoldBox . ": " . ltrim($TgtR->sGo, '0'), 1, 0, $Just[$Element->Options['Just']], 0, '', 1, true, 'T', 'M');
+                            if($Element->Options['LayoutOrientation']=="0") {
+                                $pdf->SetX($pdf->getX() - $BigNameLineWidth - $BoxWidth * 2);
+                            } else {
+                                $pdf->SetXY($pdf->getX() - $BoxWidth, $pdf->getY()+$BigNameLineWidth+$BoxHeight);
+                            }
+                        }
+                        if (!empty($TgtR->sBr) and in_array('1', $tmpPhases)) {
+                            $pdf->setColorArray('draw', $BigNameColors[1]);
+                            $pdf->Cell($BoxWidth, $BoxHeight, $BronzeBox . ": " . ltrim($TgtR->sBr, '0'), 1, 0, $Just[$Element->Options['Just']], 0, '', 1, true, 'T', 'M');
+                            if($Element->Options['LayoutOrientation']=="0") {
+                                $pdf->SetX($pdf->getX() - $BigNameLineWidth - $BoxWidth * 2);
+                            } else {
+                                $pdf->SetXY($pdf->getX() - $BoxWidth, $pdf->getY()+$BigNameLineWidth+$BoxHeight);
+                            }
+                        }
+                        for ($i = 2; $i <= valueFirstPhase($TgtR->EvFinalFirstPhase); $i = $i * 2) {
+                            if (in_array($i, $tmpPhases)) {
+                                $pdf->setColorArray('draw', $BigNameColors[$i]);
+                                $pdf->Cell($BoxWidth, $BoxHeight, '1/' . namePhase($TgtR->EvFinalFirstPhase, $i) . ': ' . ltrim($TgtR->{'s' . $i}, '0'), 1, 0, $Just[$Element->Options['Just']], 0, '', 1, true, 'T', 'M');
+                                if (empty($TgtR->{'s' . $i})) { //} OR is_null($TgtR->{'s' . $i})) {
+                                    $pdf->line($pdf->getX(), $pdf->getY(), $pdf->getX() - $BoxWidth, $pdf->GetY() + $BoxHeight + $BigNameLineWidth * 2);
+                                }
+                                if($Element->Options['LayoutOrientation']=="0") {
+                                    $pdf->SetX(max(0, $pdf->getX() - $BigNameLineWidth - $BoxWidth * 2));
+                                } else {
+                                    $pdf->SetXY($pdf->getX() - $BoxWidth, $pdf->getY()+$BigNameLineWidth+$BoxHeight);
+                                }
+                            }
+                        }
+                    }
 				}
+                $pdf->SetDrawColor($OldColor);
+                $pdf->SetTextColor(0x00, 0x00, 0x00);
+                $pdf->SetCellPaddings($OldCellPadding['L'], $OldCellPadding['T'],$OldCellPadding['R'],$OldCellPadding['B']);
+                $pdf->setCellHeightRatio($OldCellHeightRatio);
+                $pdf->SetLineWidth($OldLineWidth);
 
 				break;
 			default:
@@ -822,14 +955,17 @@ while ($MyRow=safe_fetch($Rs)) {
 	}
 
 	$cntPass++;
-	if($cntPass >= count($Badges))
-		$cntPass=0;
+	if($cntPass >= count($Badges)) {
+        $cntPass=0;
+    }
 }
 // 	$pdf->deletePage(1);
 
 safe_free_result($Rs);
 
-if(empty($ReturnAsString)) {
+if(isset($_REQUEST['ToString'])) {
+    echo base64_encode($pdf->Output('ToString','S'));
+} else if(empty($ReturnAsString)) {
 	$pdf->Output();
 }
 

@@ -42,6 +42,7 @@ while($r=safe_fetch($q)) {
 	$Events.='<option value="'.$r->EvCode.'"'.($Event==$r->EvCode ? ' selected="selected"' : '').'>'.$r->EvCode.'-'.$r->EvEventName.'</option>';
 }
 
+$IncludeJquery = true;
 $JS_SCRIPT=array(
 	phpVars2js(array(
 		'strWarningTitle' => get_text('Warning', 'Tournament'),
@@ -50,13 +51,9 @@ $JS_SCRIPT=array(
 		'cmdConfirm' => get_text('Confirm', 'Tournament'),
 		'cmdCancel' => get_text('CmdCancel'),
 	)),
-	//'<script type="text/javascript" src="../../Common/ajax/ObjXMLHttpRequest.js"></script>',
-	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
-	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>',
 	'<script type="text/javascript" src="./Common.js"></script>',
 	'<script type="text/javascript" src="./Setup.js"></script>',
 	'<link rel="stylesheet" href="./RoundRobin.css">',
-	'<link rel="stylesheet" href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css">',
 );
 
 include('Common/Templates/head.php');

@@ -11,15 +11,17 @@ if(file_exists($CFG->DOCUMENT_PATH."Modules/Accreditation/includeAccreditationPi
 	require_once(dirname(dirname(__FILE__)) . '/Modules/Accreditation/includeAccreditationPicture.php');
 }
 
+$TourIds = ((isset($_SESSION['AccreditationTourIds']) and !empty($_SESSION['AccreditationTourIds'])) ? $_SESSION['AccreditationTourIds'] : $_SESSION['TourId']);
 // loads how many accreditation types there are
 $Accreditations=array();
-$q=safe_r_sql("select IcNumber, IcName from IdCards where IcTournament={$_SESSION['TourId']} and IcType='A' order by IcNumber");
-while($r=safe_fetch($q)) {
-    $Accreditations[$r->IcNumber]=$r->IcName;
+foreach (explode(',',$TourIds) as $ToId) {
+    $q = safe_r_sql("select IcTournament, IcNumber, IcName from IdCards where IcTournament={$ToId} and IcType='A' order by IcNumber");
+    while ($r = safe_fetch($q)) {
+        $Accreditations[$r->IcTournament . "|" . $r->IcNumber] = $r->IcName;
+    }
 }
 
 $SpecificCards=array();
-$TourIds = ((isset($_SESSION['AccreditationTourIds']) and !empty($_SESSION['AccreditationTourIds'])) ? $_SESSION['AccreditationTourIds'] : $_SESSION['TourId']);
 foreach (explode(',',$TourIds) as $ToId) {
     $SpecificCards[$ToId]=array();
     if ($Specific = getModuleParameterLike('Accreditation', 'Matches-A-%', $ToId)) {
@@ -35,7 +37,6 @@ foreach (explode(',',$TourIds) as $ToId) {
 $PAGE_TITLE=get_text('TakePicture', 'Tournament');
 $JS_SCRIPT[] = phpVars2js(array('ROOT_DIR' => $CFG->ROOT_DIR, 'AreYouSure'=>get_text('MsgAreYouSure'), 'msgPictureThere' => get_text('PictureThere', 'Tournament')));
 $JS_SCRIPT[] = '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>';
-$JS_SCRIPT[] = '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.6.0.min.js"></script>';
 $JS_SCRIPT[] = '<script type="text/javascript" src="./Fun_AJAX_AccreditationPicture.js"></script>';
 $JS_SCRIPT[] = phpVars2js($param);
 $JS_SCRIPT[] = '<script type="text/javascript">let cardsByCat='.json_encode($SpecificCards).'</script>';
@@ -44,8 +45,27 @@ if($param["source"]==0) {
 } else {
 	$JS_SCRIPT[] = '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Modules/Accreditation/TakePicture.js"></script>';
 }
-$JS_SCRIPT[]='<style>.Reverse td {background-color:#ddd; color:black;}</style>';
+$JS_SCRIPT[]='<style>
+	.Reverse td {background-color:#ddd; color:black;}
+.rotate {
+    position: absolute;
+    width:20vmin;
+    height:auto;
+    top:50%;
+    left:50%;
+    margin-left:-10vmin;
+    margin-top:-10vmin;
+    -webkit-animation:spin 4s linear infinite;
+    -moz-animation:spin 4s linear infinite;
+    animation:spin 4s linear infinite;
+}
+@-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
+@-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
+@keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
+</style>';
 
+$IncludeJquery=true;
+$IncludeFA=true;
 $ONLOAD = ' onLoad="javascript:searchAthletes();'.($param["source"]==0 ? 'setupVideo();':'').'"';
 include('Common/Templates/head' . (isset($_REQUEST["showMenu"]) ? '': '-min') . '.php');
 
@@ -72,6 +92,7 @@ echo '<input type="checkbox" id="showMenu" ' . (isset($_REQUEST["showMenu"]) ? '
 	' onClick="document.location=\'' . $_SERVER["PHP_SELF"]. (isset($_REQUEST["showMenu"]) ? '' : '?showMenu') . '\';">'.get_text('ShowIanseoMenu', 'Tournament');
 if(file_exists($CFG->DOCUMENT_PATH."Modules/Accreditation/AccreditationPictureParameters.php") and empty($_SESSION['ShortMenu']['ACCR'])) {
 	echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="'.$CFG->ROOT_DIR.'Modules/Accreditation/AccreditationPictureParameters.php">'.get_text('AdvancedParams', 'Tournament'). '</a>';
+	echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span onclick="window.BigPicture=window.open(\''.$CFG->ROOT_DIR.'Modules/Accreditation/BigPicture.php\', \'picture\', \'height=1024,width=1024\')">'.get_text('OpenPictureScreen', 'BackNumbers'). '</span>';
 }
 ?>
 </td>
@@ -117,9 +138,9 @@ echo '<div class="Flex-line w-100 mt-2"><div class="w-25"><input type="radio" id
 <tbody id="tbody">
 	<tr>
 		<td style="vertical-align: top; text-align: center;">
-			<input type="button" id="stop-button" value="<?php echo get_text('StopCamera', 'Tournament')?>" onClick="stopVideo();" style="display: none;">
-			<input type="button" id="start-button" value="<?php echo get_text('StartCamera', 'Tournament')?>" onClick="startVideo();" style="display: none;">
-			<br><input id="zoom" type="range" min="1" max="15" style="display:none;" value="1" onChange="changeZoom()"/><br>
+			<input type="button" id="stop-button" value="<?php echo get_text('StopCamera', 'Tournament')?>" onClick="stopVideo();" style="display: none; margin-bottom: 5px;">
+			<input type="button" id="start-button" value="<?php echo get_text('StartCamera', 'Tournament')?>" onClick="startVideo();" style="display: none; margin-bottom: 5px;">
+			<br><i class="fas fa-2x fa-minus-circle mr-3" onclick="subZoom();"></i><input id="zoom" type="range" min="1" max="20" style="display:none;" value="1" onChange="changeZoom()"/><i class="fas fa-2x fa-plus-circle ml-3" onclick="addZoom();"></i><br>
 			<div id="cameraContainer" style="position: relative;" onClick="takePicture();">
 				<video id="CamVideo" crossOrigin="Anonymous" width="100%" autoplay style="position: absolute; top: 0px; left: 0px;" ></video>
  				<img id="ImgCamVideo" crossOrigin="Anonymous" width="100%" style="position: absolute; top: 0px; left: 0px; display:none;">

@@ -16,8 +16,9 @@ $Round=($_REQUEST['round']??'');
 $Match=($_REQUEST['match']??'');
 
 $PAGE_TITLE=get_text('R-Session', 'Tournament');
+$IncludeJquery = true;
+
 $JS_SCRIPT = array(
-    '<script src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
     '<script src="'.$CFG->ROOT_DIR.'Common/js/keypress-2.1.5.min.js"></script>',
     '<script src="'.$CFG->ROOT_DIR.'Modules/RoundRobin/Spotting.js"></script>',
     '<link href="'.$CFG->ROOT_DIR.'Modules/RoundRobin/Spotting.css" rel="stylesheet" type="text/css">',
@@ -41,13 +42,14 @@ $JS_SCRIPT = array(
 include('Common/Templates/head' . (isset($_REQUEST["hideMenu"]) ? '-min': '') . '.php');
 
 echo '<table class="Tabella" id="MatchSelector">';
-    echo '<tr><th class="Title" colspan="8">'.get_text('MenuLM_Spotting').'</th></tr>';
+    echo '<tr><th class="Title" colspan="9">'.get_text('MenuLM_Spotting').'</th></tr>';
     echo '<tr>
             <th colspan="2">'.get_text('Event').'</th>
             <th>'.get_text('Level', 'RoundRobin').'</th>
             <th>'.get_text('Round', 'RoundRobin').'</th>
             <th>'.get_text('Group', 'RoundRobin').'</th>
             <th>'.get_text('Match', 'Tournament').'</th>
+            <th class="SwapOpponents d-none">'.get_text('SwapOpponents', 'Tournament').'</th>
             <th>'.get_text('Target').'</th>
             <th></th>
         </tr>';
@@ -60,6 +62,7 @@ echo '<table class="Tabella" id="MatchSelector">';
             <td class="Center"><select id="spotRound" onchange="updateComboMatch();"></select></td>
             <td class="Center"><select id="spotGroup" onchange="updateComboMatch();"></select></td>
             <td class="Center"><select id="spotMatch"></select></td>
+            <td class="Center SwapOpponents d-none"><input type="checkbox" id="swapOpponents" onclick="swapOpponents()" /></td>
             <td class="Center"><input type="checkbox" id="spotTarget" onclick="toggleTarget()" /></td>
             <td class="Center"><input type="button" value="'.get_text('CmdOk').'" onclick="buildScorecard()"></td>
         </tr>';
@@ -89,7 +92,8 @@ if(!empty($GoBack)) {
 	echo '<tr><td colspan="3" class="Opponents CmdRow"><div class="SpotBackButton" onclick="document.location.href=\''.$GoBack.'\'" >'.get_text('BackBarCodeCheck','Tournament').'</a></div></td></tr>';
 } else {
     echo '<tr><td colspan="3" class="Opponents CmdRow">';
-    echo '<input disabled="disabled" type="button" id="confirmMatch" onclick="confirmMatch(this)" value="'.get_text('ConfirmMatch', 'Tournament').'"/>';
+    echo '<div class="btn btn-end d-none my-2" id="confirmEnd" onclick="confirmEnd(this)">'.get_text('ConfirmEnd', 'Tournament').'</div>';
+    echo '<div class="btn btn-match d-none my-2" id="confirmMatch" onclick="confirmMatch(this)">'.get_text('ConfirmMatch', 'Tournament').'</div>';
     echo '</td></tr>';
     echo '<tr><td colspan="3" class="Opponents CmdRow">';
     echo '<div style="display:flex;justify-content: space-between">
@@ -110,6 +114,7 @@ echo '<tr id="keypadLegenda" class="Hidden"><td colspan="3">'.
     '<div class="Legenda"><div class="value">1 - 9</div>: 1...9, numpad_1 ... numpad_9</div>'.
     '<div class="Legenda"><div class="value">10</div>: numpad_-, T, t</div>'.
     '<div class="Legenda"><div class="value">11</div>: E, e</div>'.
+    '<div class="Legenda"><div class="value">12</div>: F, f</div>'.
     '<div class="Legenda"><div class="value">X</div>: numpad_+, X, x</div>'.
     '<div class="Legenda"><div class="value">*</div>: *, numpad_*, D, d</div>'.
     '<div class="Legenda"><div class="value">[DEL]</div>: numpad_., [DEL], [ESC]</div>'.

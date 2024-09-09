@@ -187,7 +187,7 @@
 					{$MyRank} AS `Rank`, " . (!empty($comparedTo) ? 'IFNULL(QopSubClassRank,0)' : '0') . " as OldRank, Qu{$dd}Score AS Score, Qu{$dd}Gold AS Gold,Qu{$dd}Xnine AS XNine,
 					QuTimestamp,
 					ToGolds AS GoldLabel, ToXNine AS XNineLabel,
-					ToNumDist,ToDouble, QuIrmType, IrmType, IrmShowRank, hasShootOff
+					ToNumDist,ToDouble, QuIrmType, IrmType, IrmShowRank, hasShootOff, FdiDetails
 				FROM Tournament
 				INNER JOIN Entries ON ToId=EnTournament
 				INNER JOIN Countries ON EnCountry=CoId AND EnTournament=CoTournament AND EnTournament={$this->tournament}
@@ -205,12 +205,18 @@
 			if(!empty($comparedTo))
 				$q .= "LEFT JOIN QualOldPositions ON EnId=QopId AND QopHits=" . ($comparedTo>0 ? $comparedTo :  "(SELECT MAX(QopHits) FROM QualOldPositions WHERE QopId=EnId AND QopHits!=QuHits) ") . " ";
 			$q .= "LEFT JOIN SubClass ON EnSubClass=ScId AND ScTournament={$this->tournament}
+				left join (
+					select DiSession as FdiSession, group_concat(concat_ws('|', DiDistance, DiEnds, DiArrows, DiScoringEnds, DiScoringOffset) order by DiDistance separator ',') as FdiDetails
+					from DistanceInformation
+					where DiTournament={$this->tournament} and DiType='Q'
+					group by DiSession
+					) FullDistanceInfo on FdiSession=QuSession
 				WHERE EnAthlete=1 AND EnIndClEvent=1 AND EnStatus <= 1 AND ToId={$this->tournament}
-					{$filter} "
-					. (!empty($this->opts['SubClass'])? " HAVING MyEvent='{$this->opts['SubClass']}' " : '').
-					"
-					ORDER BY
-						$orderBy, FirstName, Name
+				{$filter} "
+				. (!empty($this->opts['SubClass'])? " HAVING MyEvent='{$this->opts['SubClass']}' " : '').
+				"
+				ORDER BY
+					$orderBy, FirstName, Name
 			";
 			//print $q.'<br>';exit;
 
@@ -267,7 +273,19 @@
 							$this->data['meta']['double']=$myRow->ToDouble;
 						}
 
-					// qui ci sono le descrizioni dei campi
+						// adding the full distance info here
+						$FullDistInfo=[];
+						foreach(explode(',',$myRow->FdiDetails) as $d) {
+							$t=explode('|', $d);
+							$FullDistInfo['dist_' . $t[0]]=[
+								'ends'=>$t[1],
+								'arr'=>$t[2],
+								'toShoot'=>($t[3]??0),
+								'offset'=>($t[4]??0),
+							];
+						}
+
+						// qui ci sono le descrizioni dei campi
 						$NumDists=$myRow->ToNumDist;
 						$distFields=array();
 						foreach(range(1,8) as $n)
@@ -314,6 +332,7 @@
                                     get_text($myRow->GenderDescription),
 									$myRow->ScDescription ),
 								'sesArrows'=> array(),
+								'distanceInfo'=>$FullDistInfo,
 								'fields' => $fields,
 								'subClass' => $myRow->EnSubClass,
 								'lastUpdate' => '0000-00-00 00:00:00',

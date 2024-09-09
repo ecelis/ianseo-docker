@@ -7,7 +7,8 @@
 
 	$PAGE_TITLE=get_text('PrintList', 'Tournament');
 
-	$JS_SCRIPT=array('
+	$JS_SCRIPT[]='<script src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>';
+    $JS_SCRIPT[]='
 	<script>
 	function changevisibility(box, who, optdiv, optdiv2) {
 		if(box.checked) {
@@ -20,7 +21,7 @@
 			if(optdiv2!=undefined) document.getElementById(optdiv2).style.display=\'block\';
 		}
 	}
-	</script>');
+	</script>';
 
 	include('Common/Templates/head.php');
 

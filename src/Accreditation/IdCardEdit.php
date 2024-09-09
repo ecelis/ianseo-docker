@@ -15,6 +15,7 @@ require_once('./IdCardEdit-config.php');
 require_once('Common/Fun_FormatText.inc.php');
 require_once('Common/Lib/Fun_DateTime.inc.php');
 require_once('Common/Lib/Fun_Modules.php');
+require_once('Common/Lib/Fun_Phases.inc.php');
 require_once('Common/Lib/CommonLib.php');
 require_once('IdCardEmpty.php');
 
@@ -155,16 +156,13 @@ if(!empty($_FILES['UploadedBgImage']['size'])) {
 
 $RowBn=emptyIdCard(safe_fetch($Rs));
 
+$IncludeJquery = true;
 $JS_SCRIPT=array(
 	phpVars2js(array('CardType' => $CardType, 'CardNumber' => $CardNumber)),
-	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
-	//'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ColorPicker/302pop.js"></script>',
 	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jscolor.js"></script>',
 	'<script type="text/javascript" src="./IdCardEdit.js"></script>',
 	);
-
-//$PAGE_TITLE=get_text('BackNumbers', 'BackNumbers');
 
 include('Common/Templates/head.php');
 
@@ -380,11 +378,13 @@ $Select.='<option value="Target">'.get_text('Target').'</option>';
 $Select.='<option value="SessionTarget">'.get_text('SessionTarget', 'BackNumbers').'</option>';
 // Club
 $Select.='<option value="Club">'.get_text('Club', 'BackNumbers').'</option>';
+$Select.='<option value="Club2">'.get_text('Club2', 'BackNumbers').'</option>';
+$Select.='<option value="Club3">'.get_text('Club3', 'BackNumbers').'</option>';
 // Flag
 $Select.='<option value="Flag">'.get_text('Flag', 'BackNumbers').'</option>';
 // Image
 $Select.='<option value="Image">'.get_text('Image', 'BackNumbers').'</option>';
-// Image
+// ImageSvg
 $Select.='<option value="ImageSvg">'.get_text('ImageSvg', 'BackNumbers').'</option>';
 // RandomImage
 $Select.='<option value="RandomImage">'.get_text('RandomImage', 'BackNumbers').'</option>';
@@ -393,6 +393,15 @@ $Select.='<option value="HLine">'.get_text('HLine', 'BackNumbers').'</option>';
 // Target sequence
 if($CardType=='I' or $CardType=='T') {
 	$Select.='<option value="TgtSequence">'.get_text('TgtSequence', 'BackNumbers').'</option>';
+}
+// World Rankings
+$Select.='<option value="WRank">'.get_text('WRank', 'BackNumbers').'</option>';
+// WRankImage
+$Select.='<option value="WRankImage">'.get_text('WRankImage', 'BackNumbers').'</option>';
+//Extras
+if(module_exists('ExtraAddOns') AND getModuleParameter("ExtraAddOns","AddOnsEnable","0") != "0") {
+    $Select.='<option value="ExtraAddOns">'.get_text('ExtraAddOns', 'BackNumbers').'</option>';
+    $Select.='<option value="ExtraAddOnsImage">'.get_text('ExtraAddOnsImage', 'BackNumbers').'</option>';
 }
 // Diritti di accesso
 if($CardType=='A') {
@@ -462,7 +471,7 @@ function getFieldPos($r) {
 			break;
 
 		case 'ColoredArea':
-			$txt='<textarea onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Text]">'.$r->IceContent.'</textarea>';
+			$txt='<textarea rows="5" cols="40" onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Text]">'.$r->IceContent.'</textarea>';
         case 'AccessGraphics':
 			if(!isset($txt)) $txt= '<img src="'.$CFG->ROOT_DIR.'Common/Images/AccessCodes.png" height="50">';
 		case 'CompName':
@@ -480,10 +489,31 @@ function getFieldPos($r) {
 			}
 		case 'TgtSequence':
 			if(!isset($txt)) {
+                $tmpPhases = getStandardPhases();
+                if(!isset($Options['FromPhase'])) $Options['FromPhase']=$tmpPhases[0];
+                if(!isset($Options['ToPhase'])) $Options['ToPhase']=0;
+                if(!isset($Options['LayoutOrientation'])) $Options['LayoutOrientation']=0;
+
 				$txt='<select onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][TgtSequence]">
 					<option value="BlackWhite"'  .($r->IceContent=='BlackWhite'  ?' selected':'').'>'.get_text('BlackWhite',   'BackNumbers').'</option>
 					<option value="Coloured"'   .($r->IceContent=='Coloured'   ?' selected':'').'>'.get_text('Coloured',    'BackNumbers').'</option>
 					</select>';
+                if(!isset($imInput)) {
+                    $imInput = get_text('PhaseFrom', 'BackNumbers') .
+                        '&nbsp;<select onchange="UpdateRowContent(this)" id="Content[' . $r->IceOrder . '][Options][FromPhase]">';
+                    foreach ($tmpPhases as $vPh) {
+                        $imInput .= '<option value="' . $vPh . '"' . ($Options['FromPhase'] == $vPh ? ' selected' : '') . '>' . get_text($vPh . '_Phase') . '</option>';
+                    }
+                    $imInput .= '</select><br>' . get_text('PhaseTo', 'BackNumbers') . '&nbsp;<select onchange="UpdateRowContent(this)" id="Content[' . $r->IceOrder . '][Options][ToPhase]">';
+                    $tmpPhases = array_reverse($tmpPhases);
+                    foreach ($tmpPhases as $vPh) {
+                        $imInput .= '<option value="' . $vPh . '"' . ($Options['ToPhase'] == $vPh ? ' selected' : '') . '>' . get_text($vPh . '_Phase') . '</option>';
+                    }
+                    $imInput .= '</select><br><br>' . get_text('IdLayout', 'BackNumbers') . '&nbsp;<select onchange="UpdateRowContent(this)" id="Content[' . $r->IceOrder . '][Options][LayoutOrientation]">'.
+                    '<option value="0"' . ($Options['LayoutOrientation'] == "0" ? ' selected' : '') . '>'.get_text('HLayout', 'BackNumbers').'</option>'.
+                    '<option value="1"' . ($Options['LayoutOrientation'] == "1" ? ' selected' : '') . '>'.get_text('VLayout', 'BackNumbers').'</option>'.
+                    '</select>';
+                }
 			}
 		case 'Access':
 			if(!isset($txt)) $txt='0/9*';
@@ -519,16 +549,31 @@ function getFieldPos($r) {
                     <option value="Ordinal"'   .($r->IceContent=='Ordinal'   ?' selected':'').'>'.get_text('RnkOrdinal',    'BackNumbers').'</option>
                 </select>';
             }
-		case 'Category':
-			if(!isset($txt)) {
-				$txt='<select onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Category]">
+        case 'WRank':
+            if(!isset($txt)) {
+                $txt=get_text('WRankFields', 'BackNumbers').'<br><input type="number" onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][WRank]" value="'.$r->IceContent.'">';
+            }
+        case 'Category':
+            if(!isset($txt)) {
+                $txt='<select onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Category]">
 					<option value="">--</option>
 					<option value="CatCode"'   .($r->IceContent=='CatCode'   ?' selected':'').'>'.get_text('EvCode',    'BackNumbers').'</option>
 					<option value="CatCode-EvDescr"'  .($r->IceContent=='CatCode-EvDescr' ? ' selected':'').'>'.get_text('EvCode-EvDescr',   'BackNumbers').'</option>
 					<option value="CatDescr"'  .($r->IceContent=='CatDescr'  ?' selected':'').'>'.get_text('EvDescr',   'BackNumbers').'</option>
 					<option value="CatDescrUpper"' . ($r->IceContent == 'CatDescrUpper' ? ' selected' : '') . '>' . get_text('EvDescrUpper', 'BackNumbers') . '</option>
 					</select>';
-				if(!$r->IceOptions) $Options['BackCat']=1;
+                if(!$r->IceOptions) $Options['BackCat']=1;
+            }
+		case 'ExtraAddOns':
+			if(!isset($txt)) {
+				$txt='<select onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][ExtraAddOns]">';
+                $listAddOns = getModuleParameter("ExtraAddOns","AddOnsList", array());
+                foreach ($listAddOns  as $kAo => $vAo) {
+                    if(!empty($vAo)) {
+                        $txt .= '<option value="' . $kAo . '"' . ($r->IceContent == $kAo ? ' selected' : '') . '>' . $vAo . '</option>';
+                    }
+                }
+                $txt .='</select>';
 			}
 		case 'Athlete':
 			if(!isset($txt)) {
@@ -537,22 +582,31 @@ function getFieldPos($r) {
 					<option value="FamCaps"'   .($r->IceContent=='FamCaps'   ?' selected':'').'>'.get_text('FamCaps',    'BackNumbers').'</option>
 					<option value="FamCaps-GAlone"'  .($r->IceContent=='FamCaps-GAlone'  ?' selected':'').'>'.get_text('FamCaps-GAlone',   'BackNumbers').'</option>
 					<option value="FamCaps-GivCaps"'.($r->IceContent=='FamCaps-GivCaps'?' selected':'').'>'.get_text('FamCaps-GivCaps', 'BackNumbers').'</option>
+					<option value="FamCaps-GivCaps-ClubCaps"'.($r->IceContent=='FamCaps-GivCaps-ClubCaps'?' selected':'').'>'.get_text('FamCaps-GivCaps-ClubCaps', 'BackNumbers').'</option>
 					<option value="FamCaps-GivCamel"'.($r->IceContent=='FamCaps-GivCamel'?' selected':'').'>'.get_text('FamCaps-GivCamel', 'BackNumbers').'</option>
+					<option value="FamCaps-GivCamel-ClubCamel"'.($r->IceContent=='FamCaps-GivCamel-ClubCamel'?' selected':'').'>'.get_text('FamCaps-GivCamel-ClubCamel', 'BackNumbers').'</option>
+					<option value="FamCaps-GivCamel-ClubCaps"'.($r->IceContent=='FamCaps-GivCamel-ClubCaps'?' selected':'').'>'.get_text('FamCaps-GivCamel-ClubCaps', 'BackNumbers').'</option>
 					<option value="FamCamel"'   .($r->IceContent=='FamCamel'   ?' selected':'').'>'.get_text('FamCamel',    'BackNumbers').'</option>
 					<option value="FamCamel-GAlone"'  .($r->IceContent=='FamCamel-GAlone'  ?' selected':'').'>'.get_text('FamCamel-GAlone',   'BackNumbers').'</option>
 					<option value="FamCamel-GivCamel"'.($r->IceContent=='FamCamel-GivCamel'?' selected':'').'>'.get_text('FamCamel-GivCamel', 'BackNumbers').'</option>
 					<option value="GivCamel"'   .($r->IceContent=='GivCamel'   ?' selected':'').'>'.get_text('GivCamel',    'BackNumbers').'</option>
 					<option value="GivCamel-FamCamel"'.($r->IceContent=='GivCamel-FamCamel'?' selected':'').'>'.get_text('GivCamel-FamCamel', 'BackNumbers').'</option>
+					<option value="GivCamel-FamCamel-ClubCamel"'.($r->IceContent=='GivCamel-FamCamel-ClubCamel'?' selected':'').'>'.get_text('GivCamel-FamCamel-ClubCamel', 'BackNumbers').'</option>
 					<option value="GivCamel-FamCaps"'.($r->IceContent=='GivCamel-FamCaps'?' selected':'').'>'.get_text('GivCamel-FamCaps', 'BackNumbers').'</option>
+                    <option value="GivCamel-FamCaps-ClubCamel"'.($r->IceContent=='GivCamel-FamCaps-ClubCamel'?' selected':'').'>'.get_text('GivCamel-FamCaps-ClubCamel', 'BackNumbers').'</option>
+                    <option value="GivCamel-FamCaps-ClubCaps"'.($r->IceContent=='GivCamel-FamCaps-ClubCaps'?' selected':'').'>'.get_text('GivCamel-FamCaps-ClubCaps', 'BackNumbers').'</option>
 					<option value="GivCaps"'.($r->IceContent=='GivCaps'?' selected':'').'>'.get_text('GivCaps', 'BackNumbers').'</option>
 					<option value="GivCaps-FamCaps"'.($r->IceContent=='GivCaps-FamCaps'?' selected':'').'>'.get_text('GivCaps-FamCaps', 'BackNumbers').'</option>
+					<option value="GivCaps-FamCaps-ClubCaps"'.($r->IceContent=='GivCaps-FamCaps-ClubCaps'?' selected':'').'>'.get_text('GivCaps-FamCaps-ClubCaps', 'BackNumbers').'</option>
 					<option value="GAlone-FamCaps"'  .($r->IceContent=='GAlone-FamCaps'  ?' selected':'').'>'.get_text('GAlone-FamCaps',   'BackNumbers').'</option>
 					<option value="GAlone-FamCamel"'  .($r->IceContent=='GAlone-FamCamel'  ?' selected':'').'>'.get_text('GAlone-FamCamel',   'BackNumbers').'</option>
 					</select>';
 			}
 		case 'Club':
+        case 'Club2':
+        case 'Club3':
 			if(!isset($txt)) {
-				$txt='<select onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Club]">
+				$txt='<select onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.']['.$r->IceType.']">
 					<option value="">--</option>
 					<option value="NocCaps-ClubCamel"'.($r->IceContent=='NocCaps-ClubCamel'?' selected':'').'>'.get_text('NocCaps-ClubCamel','BackNumbers').'</option>
 					<option value="NocCaps-ClubCaps"'.($r->IceContent=='NocCaps-ClubCaps'?' selected':'').'>'.get_text('NocCaps-ClubCaps','BackNumbers').'</option>
@@ -561,8 +615,9 @@ function getFieldPos($r) {
 					<option value="ClubCaps"'   .($r->IceContent=='ClubCaps'   ?' selected':'').'>'.get_text('ClubCaps',   'BackNumbers').'</option>
 					</select>';
 			}
-			$ret.= '<td colspan="2">'.$txt.'</td>
-				<td><input size="3" type="text" onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Options][X]" value="'.$Options['X'].'">
+			$ret.= '<td colspan="'.(empty($imInput) ? "2":"1").'">'.$txt.'</td>'.
+                (empty($imInput)  ? '' : '<td>'.$imInput.'</td>').
+				'<td><input size="3" type="text" onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Options][X]" value="'.$Options['X'].'">
 					<br/><input size="3" type="text" onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Options][Y]" value="'.$Options['Y'].'"></td>
 				<td><input size="3" type="text" onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Options][W]" value="'.$Options['W'].'">
 					<br/><input size="3" type="text" onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Options][H]" value="'.$Options['H'].'"></td>
@@ -647,6 +702,8 @@ function getFieldPos($r) {
 			}
 		case 'Image':
 		case 'RandomImage':
+        case 'WRankImage':
+        case 'ExtraAddOnsImage':
 			if(!isset($txt)) $txt="";
 			if(!isset($im)) {
 				$im='';
@@ -661,10 +718,23 @@ function getFieldPos($r) {
 			}
 
 			if(empty($imInput)) {
-				$imInput='';
+				$imInput='&nbsp';
 				if(empty($txt)) {
 					$imInput = '<input type="file" name="Content[' . $r->IceOrder . '][Image]"> <input type="submit" value="'.get_text('CmdUpdate').'">';
 				}
+                if($r->IceType == 'WRankImage') {
+                    $imInput.='<br>'.get_text('WRankFields', 'BackNumbers').'<br><input type="number" onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Options][WRank]" value="'.($Options['WRank']??0).'">';
+                }
+                if($r->IceType == 'ExtraAddOnsImage') {
+                    $imInput.='<select onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Options][ExtraAddOns]">';
+                    $listAddOns = getModuleParameter("ExtraAddOns","AddOnsList",  array());
+                    foreach ($listAddOns  as $kAo => $vAo) {
+                        if(!empty($vAo)) {
+                            $imInput.='<option value="' . $kAo . '"' . (($Options['ExtraAddOns']??0) == $kAo ? ' selected' : '') . '>' . $vAo . '</option>';
+                        }
+                    }
+                    $imInput.='</select>';
+                }
 			}
 			$ret.= '<td>'.(empty($im) ? '' : '<img src="'.$CFG->ROOT_DIR.$im.'" height="50">').$txt.'</td>
 				<td>'.$imInput.'</td>

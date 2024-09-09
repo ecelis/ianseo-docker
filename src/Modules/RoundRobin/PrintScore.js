@@ -12,16 +12,16 @@ function getEvents() {
     };
     if($('#TeamSelector').val()=='-1') {
         history.pushState(null, '', '?');
-        $('#mainTdBody').hide();
+        $('#mainTdBody');
         return;
     } else {
         history.pushState(null, '', '?'+$.param(par));
     }
 
-    $('#EventSelector').empty().hide();
-    $('#LevelSelector').empty().hide();
-    $('#GroupSelector').empty().hide();
-    $('#RoundSelector').empty().hide();
+    $('#EventSelector').empty();
+    $('#LevelSelector').empty();
+    $('#GroupSelector').empty();
+    $('#RoundSelector').empty();
     $.getJSON('./PrintScore-action.php', form, function(data) {
         if(data.error==0) {
             $.each(data.events, function() {
@@ -56,9 +56,9 @@ function getLevels() {
     delete par.act;
 
     history.pushState(null, '', '?'+$.param(par));
-    $('#LevelSelector').empty().hide();
-    $('#GroupSelector').empty().hide();
-    $('#RoundSelector').empty().hide();
+    $('#LevelSelector').empty();
+    $('#GroupSelector').empty();
+    $('#RoundSelector').empty();
     $.getJSON('./PrintScore-action.php', form, function(data) {
         if(data.error==0) {
             $.each(data.levels, function() {
@@ -102,8 +102,8 @@ function getGroups() {
     let par=JSON.parse(JSON.stringify(form));
     delete par.act;
     history.pushState(null, '', '?'+$.param(par));
-    $('#GroupSelector').empty().hide();
-    $('#RoundSelector').empty().hide();
+    $('#GroupSelector').empty();
+    $('#RoundSelector').empty();
     $.getJSON('./PrintScore-action.php', form, function(data) {
         if(data.error==0) {
             $.each(data.groups, function() {
@@ -158,7 +158,7 @@ function getRounds() {
     let par=JSON.parse(JSON.stringify(form));
     delete par.act;
     history.pushState(null, '', '?'+$.param(par));
-    $('#RoundSelector').empty().hide();
+    $('#RoundSelector').empty();
     $.getJSON('./PrintScore-action.php', form, function(data) {
         if(data.error==0) {
             $.each(data.rounds, function() {
@@ -178,8 +178,16 @@ function createScorecards() {
         groups:[],
         rounds:[],
     };
-    $('.includeInForm:checked').each(function() {
-        form[this.id]=1;
+    $('.includeInForm').each(function() {
+        switch(this.type) {
+            case 'checkbox':
+                if($(this).is(':checked')) {
+                    form[this.id] = 1;
+                }
+                break;
+            default:
+                form[this.id]=this.value;
+        }
     });
     $('[name="QRCode\[\]"]:checked').each(function() {
         if(!form.QRCode) {
@@ -187,7 +195,7 @@ function createScorecards() {
         }
         form.QRCode.push(this.value);
     });
-    if($('#ScheduleSelector').val()!='') {
+    if($('#ScheduleSelector').val()!='' && $('#ScheduleSelector').val()!='-1' && $('#ScheduleSelector option').length>0) {
         form.schedule=$('#ScheduleSelector').val();
     } else {
         let go=true;

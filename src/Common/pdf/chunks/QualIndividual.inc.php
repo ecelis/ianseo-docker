@@ -61,5 +61,3 @@ if(count($rankData['sections'])) {
 	if(!isset($isCompleteResultBook))
 		$pdf->DrawShootOffLegend();
 }
-
-?>

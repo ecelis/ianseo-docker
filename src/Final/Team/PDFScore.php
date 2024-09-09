@@ -167,7 +167,7 @@
             $cnt = $WhichScoreEnd-$Start2FirstPhase[$MyRow->EvFinalFirstPhase] + ($NumFasi[$WhichScoreEnd-1] == 1 ? 1:0);
             $bcodeCnt = 0;
 			for($WhichScore = $Start2FirstPhase[$MyRow->EvFinalFirstPhase];$WhichScore<$WhichScoreEnd;$WhichScore++) {
-                $MyRow->{$MatchFasi[$WhichScore]} = ($MyRow->{$MatchFasi[$WhichScore]} % 2 == 1 ? $MyRow->{$MatchFasi[$WhichScore]} - 1 : $MyRow->{$MatchFasi[$WhichScore]});
+                $MyRow->{$MatchFasi[$WhichScore]} = (intval($MyRow->{$MatchFasi[$WhichScore]}) % 2 == 1 ? $MyRow->{$MatchFasi[$WhichScore]} - 1 : $MyRow->{$MatchFasi[$WhichScore]});
 				DrawScore($pdf, $MyRow, $WhichScore, $WhereX[$WhichScore-$Start2FirstPhase[$MyRow->EvFinalFirstPhase]], $WhereY[$WhichScore- $Start2FirstPhase[$MyRow->EvFinalFirstPhase]], $WhichScore==6);
                 if(!empty($_REQUEST['QRCode'])) {
                     foreach($_REQUEST['QRCode'] as $k => $Api) {

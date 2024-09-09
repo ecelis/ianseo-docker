@@ -75,7 +75,7 @@ if($TargetNo) {
 		$SQL="SELECT QuId, QuTargetNo, QuTarget, DIDistance, QuD{$DistanceNum}Arrowstring as Arrowstring, DIEnds, DIArrows, 
                 IF(TfGoldsChars{$DistanceNum}='',IF(TfGoldsChars='',ToGoldsChars,TfGoldsChars),TfGoldsChars{$DistanceNum}) as GoldsChars, 
                 IF(TfXNineChars{$DistanceNum}='',IF(TfXNineChars='',ToXNineChars,TfXNineChars),TfXNineChars{$DistanceNum}) as XNineChars,          
-                ToElabTeam, ToNumEnds from Qualifications
+                ToCategory&12 as IsField3D, ToNumEnds from Qualifications
 			INNER JOIN Entries ON QuId=EnId
 			INNER JOIN Tournament ON ToId=EnTournament
             INNER JOIN TargetFaces on TfId=EnTargetFace and TfTournament=EnTournament
@@ -84,7 +84,7 @@ if($TargetNo) {
 		$q=safe_r_SQL($SQL);
 		$ArrowSearch=safe_fetch($q);
 		if($ArrowSearch) {
-			$tmp = getQualificationTotals($ArrowSearch->QuId, $ArrowSearch->DIDistance, $EndNum, $ArrowSearch->DIArrows, $ArrowSearch->DIEnds, $ArrowSearch->GoldsChars, $ArrowSearch->XNineChars, $ArrowSearch->ToElabTeam ? $ArrowSearch->QuTarget : null);
+			$tmp = getQualificationTotals($ArrowSearch->QuId, $ArrowSearch->DIDistance, $EndNum, $ArrowSearch->DIArrows, $ArrowSearch->DIEnds, $ArrowSearch->GoldsChars, $ArrowSearch->XNineChars, $ArrowSearch->IsField3D ? $ArrowSearch->QuTarget : null);
 			$json_array['curendscore']   = $tmp['curendscore'];
 			$json_array['curscoreatend'] = $tmp['curscoreatend'];
 			$json_array['scoreatend']    = $tmp['scoreatend'];

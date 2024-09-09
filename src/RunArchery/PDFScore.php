@@ -21,7 +21,7 @@ $r=safe_fetch($q);
 
 $pdf = new ScorePDF();
 
-if($PdfType!='printLoop') {
+if($PdfType!='printLoop' and $PdfType!='printDelays') {
 	$Data=[
 		'top'=>10,
 		'height'=>($pdf->getPageHeight()/2)-20,
@@ -35,7 +35,20 @@ if($PdfType!='printLoop') {
 	$pdf->DrawScoreRunArcherySpotter($Data);
 }
 
-if($PdfType!='printSpotter') {
+if($PdfType!='printLoop' and $PdfType!='printSpotter') {
+	$Data=[
+		'top'=>10,
+		'height'=>($pdf->getPageHeight()/2)-20,
+		'rows'=>(int)$r->SesAth4Target,
+	];
+	$pdf->AddPage();
+
+	$pdf->DrawScoreRunArcheryDelays($Data);
+	$Data['top']+=$pdf->getPageHeight()/2;
+	$pdf->DrawScoreRunArcheryDelays($Data);
+}
+
+if($PdfType!='printSpotter' and $PdfType!='printDelays') {
 	$Data = [
 		'top' => 10,
 		'height' => $pdf->getPageHeight() - 20,

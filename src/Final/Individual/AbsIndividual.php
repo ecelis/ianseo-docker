@@ -1,6 +1,6 @@
 <?php
 
-require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
+require_once(dirname(__FILE__, 3) . '/config.php');
 require_once('Common/Fun_FormatText.inc.php');
 require_once('Common/Lib/ArrTargets.inc.php');
 require_once('Common/Lib/Obj_RankFactory.php');
@@ -71,7 +71,7 @@ if(count($EventCodes) != 0) {
         // check received ranks
         $Events = array_keys($_REQUEST['R']);
         foreach ($_REQUEST['R'] as $Event => $EnIds) {
-            $q = safe_r_sql("select EvFinalFirstPhase, EvNumQualified, EvFirstQualified from Events where EvCode=" . StrSafe_DB($Event) . " and EvTeamEvent='0' and EvTournament='{$_SESSION['TourId']}'");
+            $q = safe_r_sql("select EvFinalFirstPhase, EvNumQualified, EvFirstQualified, EvFinalTargetType from Events where EvCode=" . StrSafe_DB($Event) . " and EvTeamEvent='0' and EvTournament='{$_SESSION['TourId']}'");
             $r = safe_fetch($q);
 
             // Check CT and SO have been done - need to check that in the range of allowed vales, none is present double
@@ -116,7 +116,7 @@ if(count($EventCodes) != 0) {
                         $tmpValue['tiebreak'] = '';
                         $tmpValue['closest'] = 0;
                         foreach ($_REQUEST['T'][$Event][$EnId] as $k => $v) {
-                            $tmpValue['tiebreak'] .= GetLetterFromPrint(str_replace('*','',$v));
+                            $tmpValue['tiebreak'] .= GetLetterFromPrint(str_replace('*','',$v), 'T', $r->EvFinalTargetType);
                         }
                         $tmpValue['tiebreak'] = trim($tmpValue['tiebreak']);
                         if (isset($_REQUEST['C'][$Event][$EnId])) {
@@ -172,6 +172,9 @@ if(count($EventCodes) != 0) {
                     $EventHandled[$r->IndEvent] = valueFirstPhase($r->EvFinalFirstPhase);
                 }
                 safe_w_sql("UPDATE Finals SET FinAthlete='{$r->IndId}', FinDateTime='" . date('Y-m-d H:i:s') . "' WHERE FinEvent='{$r->IndEvent}' AND FinMatchNo={$r->GrMatchNo} AND FinTournament={$r->IndTournament}");
+				if(safe_w_affected_rows()) {
+					updateOdfTiming('S', $r->IndTournament, $r->IndEvent, 0, $r->GrMatchNo);
+				}
             }
 
             // Set SO Flag of the events and recalculate status for menu
@@ -231,8 +234,8 @@ if(count($EventCodes) != 0) {
                         '<th class="w-25">' . get_text('Archer') . '</th>' .
                         '<th class="w-20" colspan="2">' . get_text('Country') . '</th>' .
                         '<th class="w-10">' . get_text('Total') . '</th>' .
-                        '<th class="w-5">G</th>' .
-                        '<th class="w-5">X</th>' .
+                        '<th class="w-5">'.$section['meta']['fields']['gold'].'</th>' .
+                        '<th class="w-5">'.$section['meta']['fields']['xnine'].'</th>' .
                         '<th class="w-25">' . get_text('TieArrows') . '</th>' .
                     '</tr>';
 
@@ -347,7 +350,7 @@ if(count($EventCodes) != 0) {
             HAVING  COUNT(*)>1
             ORDER BY ElEventCode, ElSO DESC
         ) as sqyE2 ON EvCode=EvEvent2
-        WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=0 AND (EvFinalFirstPhase!=0 OR EvElimType!=0) AND EvCodeParent=''
+        WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=0 AND (EvFinalFirstPhase!=0 OR EvElimType=5) AND EvCodeParent=''
         GROUP BY EvCode ORDER BY EvProgr ASC ";
     $q=safe_r_SQL($Sql);
     echo '<table class="Tabella">';

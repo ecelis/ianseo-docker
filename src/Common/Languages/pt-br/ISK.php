@@ -184,6 +184,7 @@ $lang['Scorecard']='Planilha';
 $lang['ScorecardsManagement']='Gestão de planilhas';
 $lang['ScoredPoints']='Pontos marcados';
 $lang['ScoreHelp']='Ajuda';
+$lang['ScoreHelpDesc']='Esta tela permite que você marque as flechas atiradas. Informações sobre o atleta, a distância atual e o tipo de alvo também são mostradas. Entre os valores das flechas usando os botões numerados.';
 $lang['ScoringEntry']='Entrar pontuação';
 $lang['SelDist']='Por favor, escolha a distância e tente novamente';
 $lang['SelTgtNum']='Por favor, escolha o número do alvo e tente novamente.';

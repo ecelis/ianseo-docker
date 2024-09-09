@@ -35,7 +35,6 @@ $ClDivIndCalc=getModuleParameter('ISK','CalcClDivInd',0, 0, true);
 $ClDivTeamCalc=getModuleParameter('ISK','CalcClDivTeam',0, 0, true);
 $FinIndCalc=getModuleParameter('ISK','CalcFinInd',0, 0, true);
 $FinTeamCalc=getModuleParameter('ISK','CalcFinTeam',0, 0, true);
-$FinRobinCalc=getModuleParameter('ISK','CalcFinRobin',0, 0, true);
 
 $PAGE_TITLE=get_text('AutoImportSettings', 'ISK');
 $JS_SCRIPT=array(
@@ -46,7 +45,6 @@ $JS_SCRIPT=array(
         'CalcDivClT'=>$ClDivTeamCalc,
         'CalcFinI'=>$FinIndCalc,
         'CalcFinT'=>$FinTeamCalc,
-        'CalcFinR'=>$FinRobinCalc,
     )),
 	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 	'<script type="text/javascript" src="./Lite.js"></script>',
@@ -110,13 +108,6 @@ echo '<tr>'.
         '<td class="Center" colspan="2"><input type="radio" onclick="LiteAction(this)" name="CalcFinTeam" value="0"'.($FinTeamCalc==0 ? ' checked="checked"' : '').'></td>'.
         '<td class="Center"><input type="radio" onclick="LiteAction(this)" name="CalcFinTeam" value="1"'.($FinTeamCalc==1 ? ' checked="checked"' : '').'></td>'.
         '<td class="Center"><div class="Button" onclick="LiteButton(this)" id="doCalcFinTeam">'.get_text('CalculateNow','ISK').'</div></td>'.
-        '<td class="Center"></td>'.
-    '</tr>';
-echo '<tr>'.
-        '<th class="Left">'.get_text('CalcFinRobin', 'ISK').'</th>'.
-        '<td class="Center" colspan="2"><input type="radio" onclick="LiteAction(this)" name="CalcFinRobin" value="0"'.($FinRobinCalc==0 ? ' checked="checked"' : '').'></td>'.
-        '<td class="Center"><input type="radio" onclick="LiteAction(this)" name="CalcFinRobin" value="1"'.($FinRobinCalc==1 ? ' checked="checked"' : '').'></td>'.
-        '<td class="Center"><div class="Button" onclick="LiteButton(this)" id="doCalcFinRobin">'.get_text('CalculateNow','ISK').'</div></td>'.
         '<td class="Center"></td>'.
     '</tr>';
 echo '</table>';

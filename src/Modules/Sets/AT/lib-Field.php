@@ -11,30 +11,21 @@ function CreateStandardFieldEvents($TourId, $SubRule) {
 		case '1':
 		case '2':
 			$SettingsInd=array(
-				'EvFinalFirstPhase' => '2',
-				'EvFinalTargetType'=>6,
-				'EvElimEnds'=>12,
+				'EvFinalFirstPhase' => 8,
+				'EvFinalTargetType'=>TGT_FIELD,
+				'EvElimEnds'=>6,
 				'EvElimArrows'=>3,
 				'EvElimSO'=>1,
 				'EvFinEnds'=>4,
 				'EvFinArrows'=>3,
 				'EvFinSO'=>1,
-				'EvElimType'=>2,
-				'EvElim1'=>16,
-				'EvE1Ends'=>12,
-				'EvE1Arrows'=>3,
-				'EvE1SO'=>1,
-				'EvElim2'=>8,
-				'EvE2Ends'=>8,
-				'EvE2Arrows'=>3,
-				'EvE2SO'=>1,
-				'EvFinalAthTarget'=>MATCH_NO_SEP,
-				'EvMatchArrowsNo'=>0,
+				'EvFinalAthTarget'=>255,
+				'EvMatchArrowsNo'=>FINAL_FROM_2,
 			);
 			$SettingsTeam=array(
 				'EvTeamEvent' => '1',
 				'EvFinalFirstPhase' => '4',
-				'EvFinalTargetType'=>6,
+				'EvFinalTargetType'=>TGT_FIELD,
 				'EvElimEnds'=>4,
 				'EvElimArrows'=>3,
 				'EvElimSO'=>3,
@@ -42,7 +33,7 @@ function CreateStandardFieldEvents($TourId, $SubRule) {
 				'EvFinArrows'=>3,
 				'EvFinSO'=>3,
 				'EvFinalAthTarget'=>15,
-				'EvMatchArrowsNo'=>248,
+				'EvMatchArrowsNo'=>FINAL_FROM_2,
                 'EvMultiTeam'=>1,
                 'EvMultiTeamNo'=>2,
                 'EvPartialTeam'=>1
@@ -67,7 +58,7 @@ function CreateStandardFieldEvents($TourId, $SubRule) {
             $i = 1;
             CreateEventNew($TourId,'LW', 'Langbogen Damen', $i++, $SettingsInd);
             CreateEventNew($TourId,'LM', 'Langbogen Herren', $i++, $SettingsInd);
-            CreateEventNew($TourId,'TW', 'Traditional Damen', $i, $SettingsInd);
+            CreateEventNew($TourId,'TW', 'Traditional Damen', $i++, $SettingsInd);
             CreateEventNew($TourId,'TM', 'Traditional Herren', $i++, $SettingsInd);
             CreateEventNew($TourId,'BW', 'Blankbogen Damen', $i++, $SettingsInd);
             CreateEventNew($TourId,'BM', 'Blankbogen Herren', $i++, $SettingsInd);
@@ -77,82 +68,82 @@ function CreateStandardFieldEvents($TourId, $SubRule) {
             CreateEventNew($TourId,'RM', 'Recurve Herren', $i++, $SettingsInd);
             $i = 1;
             CreateEventNew($TourId, 'LX', 'Langbogen Mixed Team', $i++, $SettingsMixedTeam);
-            CreateEventNew($TourId, 'TX', 'Traditional Mixed Team', $i, $SettingsMixedTeam);
+            CreateEventNew($TourId, 'TX', 'Traditional Mixed Team', $i++, $SettingsMixedTeam);
             CreateEventNew($TourId, 'BX', 'Blankbogen Mixed Team', $i++, $SettingsMixedTeam);
             CreateEventNew($TourId, 'CX', 'Compound Mixed Team', $i++, $SettingsMixedTeam);
             CreateEventNew($TourId, 'RX', 'Recurve Mixed Team', $i++, $SettingsMixedTeam);
             CreateEventNew($TourId, 'WT', 'Damen Team', $i++, $SettingsTeam);
             CreateEventNew($TourId, 'MT', 'Herren Team', $i++, $SettingsTeam);
 			break;
-		case '3':
-		case '4':
-			$SettingsInd=array(
-				'EvFinalFirstPhase' => '2',
-				'EvFinalTargetType'=>6,
-				'EvElimEnds'=>6,
-				'EvElimArrows'=>3,
-				'EvElimSO'=>1,
-				'EvFinEnds'=>4,
-				'EvFinArrows'=>3,
-				'EvFinSO'=>1,
-				'EvElimType'=>4,
-				'EvElim2'=>22,
-				'EvFinalAthTarget'=>MATCH_NO_SEP,
-				'EvMatchArrowsNo'=>248,
-			);
-			$SettingsTeam=array(
-				'EvTeamEvent' => '1',
-				'EvFinalFirstPhase' => '4',
-				'EvFinalTargetType'=>6,
-				'EvElimEnds'=>8,
-				'EvElimArrows'=>3,
-				'EvElimSO'=>3,
-				'EvFinEnds'=>4,
-				'EvFinArrows'=>3,
-				'EvFinSO'=>3,
-				'EvFinalAthTarget'=>15,
-				'EvMatchArrowsNo'=>0,
-                'EvMultiTeam'=>1,
-                'EvMultiTeamNo'=>2,
-                'EvPartialTeam'=>1
-			);
-            $SettingsMixedTeam=array(
-                'EvTeamEvent' => '1',
-                'EvMixedTeam' => '1',
-                'EvFinalFirstPhase' => '4',
-                'EvFinalTargetType'=>TGT_FIELD,
-                'EvElimEnds'=>8,
-                'EvElimArrows'=>4,
-                'EvElimSO'=>2,
-                'EvFinEnds'=>4,
-                'EvFinArrows'=>4,
-                'EvFinSO'=>2,
-                'EvFinalAthTarget'=>15,
-                'EvMatchArrowsNo'=>FINAL_FROM_2,
-                'EvMultiTeam'=>1,
-                'EvMultiTeamNo'=>3,
-                'EvPartialTeam'=>0
-            );
-            $i = 1;
-            CreateEventNew($TourId,'LW', 'Langbogen Damen', $i++, $SettingsInd);
-            CreateEventNew($TourId,'LM', 'Langbogen Herren', $i++, $SettingsInd);
-            CreateEventNew($TourId,'TW', 'Traditional Damen', $i, $SettingsInd);
-            CreateEventNew($TourId,'TM', 'Traditional Herren', $i++, $SettingsInd);
-            CreateEventNew($TourId,'BW', 'Blankbogen Damen', $i++, $SettingsInd);
-            CreateEventNew($TourId,'BM', 'Blankbogen Herren', $i++, $SettingsInd);
-            CreateEventNew($TourId,'CW', 'Compound Damen', $i++, $SettingsInd);
-            CreateEventNew($TourId,'CM', 'Compound Herren', $i++, $SettingsInd);
-            CreateEventNew($TourId,'RW', 'Recurve Damen', $i++, $SettingsInd);
-            CreateEventNew($TourId,'RM', 'Recurve Herren', $i++, $SettingsInd);
-            $i = 1;
-            CreateEventNew($TourId, 'LX', 'Langbogen Mixed Team', $i++, $SettingsMixedTeam);
-            CreateEventNew($TourId, 'TX', 'Traditional Mixed Team', $i, $SettingsMixedTeam);
-            CreateEventNew($TourId, 'BX', 'Blankbogen Mixed Team', $i++, $SettingsMixedTeam);
-            CreateEventNew($TourId, 'CX', 'Compound Mixed Team', $i++, $SettingsMixedTeam);
-            CreateEventNew($TourId, 'RX', 'Recurve Mixed Team', $i++, $SettingsMixedTeam);
-            CreateEventNew($TourId, 'WT', 'Damen Team', $i++, $SettingsTeam);
-            CreateEventNew($TourId, 'MT', 'Herren Team', $i++, $SettingsTeam);
-    break;
+//		case '3':
+//		case '4':
+//			$SettingsInd=array(
+//				'EvFinalFirstPhase' => '2',
+//				'EvFinalTargetType'=>6,
+//				'EvElimEnds'=>6,
+//				'EvElimArrows'=>3,
+//				'EvElimSO'=>1,
+//				'EvFinEnds'=>4,
+//				'EvFinArrows'=>3,
+//				'EvFinSO'=>1,
+//				'EvElimType'=>4,
+//				'EvElim2'=>22,
+//				'EvFinalAthTarget'=>MATCH_NO_SEP,
+//				'EvMatchArrowsNo'=>248,
+//			);
+//			$SettingsTeam=array(
+//				'EvTeamEvent' => '1',
+//				'EvFinalFirstPhase' => '4',
+//				'EvFinalTargetType'=>6,
+//				'EvElimEnds'=>4,
+//				'EvElimArrows'=>3,
+//				'EvElimSO'=>3,
+//				'EvFinEnds'=>4,
+//				'EvFinArrows'=>3,
+//				'EvFinSO'=>3,
+//				'EvFinalAthTarget'=>15,
+//				'EvMatchArrowsNo'=>FINAL_FROM_4,
+//                'EvMultiTeam'=>1,
+//                'EvMultiTeamNo'=>2,
+//                'EvPartialTeam'=>1
+//			);
+//            $SettingsMixedTeam=array(
+//                'EvTeamEvent' => '1',
+//                'EvMixedTeam' => '1',
+//                'EvFinalFirstPhase' => '4',
+//                'EvFinalTargetType'=>TGT_FIELD,
+//                'EvElimEnds'=>4,
+//                'EvElimArrows'=>4,
+//                'EvElimSO'=>2,
+//                'EvFinEnds'=>4,
+//                'EvFinArrows'=>4,
+//                'EvFinSO'=>2,
+//                'EvFinalAthTarget'=>15,
+//                'EvMatchArrowsNo'=>FINAL_FROM_4,
+//                'EvMultiTeam'=>1,
+//                'EvMultiTeamNo'=>3,
+//                'EvPartialTeam'=>0
+//            );
+//            $i = 1;
+//            CreateEventNew($TourId,'LW', 'Langbogen Damen', $i++, $SettingsInd);
+//            CreateEventNew($TourId,'LM', 'Langbogen Herren', $i++, $SettingsInd);
+//            CreateEventNew($TourId,'TW', 'Traditional Damen', $i++, $SettingsInd);
+//            CreateEventNew($TourId,'TM', 'Traditional Herren', $i++, $SettingsInd);
+//            CreateEventNew($TourId,'BW', 'Blankbogen Damen', $i++, $SettingsInd);
+//            CreateEventNew($TourId,'BM', 'Blankbogen Herren', $i++, $SettingsInd);
+//            CreateEventNew($TourId,'CW', 'Compound Damen', $i++, $SettingsInd);
+//            CreateEventNew($TourId,'CM', 'Compound Herren', $i++, $SettingsInd);
+//            CreateEventNew($TourId,'RW', 'Recurve Damen', $i++, $SettingsInd);
+//            CreateEventNew($TourId,'RM', 'Recurve Herren', $i++, $SettingsInd);
+//            $i = 1;
+//            CreateEventNew($TourId, 'LX', 'Langbogen Mixed Team', $i++, $SettingsMixedTeam);
+//            CreateEventNew($TourId, 'TX', 'Traditional Mixed Team', $i++, $SettingsMixedTeam);
+//            CreateEventNew($TourId, 'BX', 'Blankbogen Mixed Team', $i++, $SettingsMixedTeam);
+//            CreateEventNew($TourId, 'CX', 'Compound Mixed Team', $i++, $SettingsMixedTeam);
+//            CreateEventNew($TourId, 'RX', 'Recurve Mixed Team', $i++, $SettingsMixedTeam);
+//            CreateEventNew($TourId, 'WT', 'Damen Team', $i++, $SettingsTeam);
+//            CreateEventNew($TourId, 'MT', 'Herren Team', $i++, $SettingsTeam);
+//    break;
 	}
 }
 

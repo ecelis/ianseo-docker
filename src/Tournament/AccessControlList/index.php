@@ -4,6 +4,7 @@ require_once(dirname(dirname(dirname(__FILE__))) . '/config.php');
 require_once('Common/Lib/CommonLib.php');
 checkACL(AclRoot, AclReadWrite);
 CheckTourSession(true);
+global $listACL, $CFG;
 
 if(!empty($_FILES['importACL']) and $_FILES['importACL']['error']==0) {
 	if($Import = @unserialize(gzuncompress(file_get_contents($_FILES['importACL']['tmp_name'])))) {
@@ -29,6 +30,7 @@ if(!empty($_FILES['importACL']) and $_FILES['importACL']['error']==0) {
 }
 
 $lockEnabled =  getModuleParameter("ACL","AclEnable","00");
+$IncludeJquery = true;
 $JS_SCRIPT = array(
     phpVars2js(array(
         'optNo' => count($listACL),
@@ -36,15 +38,14 @@ $JS_SCRIPT = array(
         'CmdDelete' => get_text('CmdDelete', 'Tournament'),
         'AreYouSure' => get_text('MsgAreYouSure')
         )),
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
-    '<script type="text/javascript" src="Fun_AJAX_index.js"></script>',
+    '<script type="text/javascript" src="index.js"></script>',
 );
 
 $PAGE_TITLE=get_text('Block_Manage', 'Tournament');
 
 include('Common/Templates/head.php');
 
-echo '<div align="center">
+echo '<div class="Center">
     <table class="Tabella">';
 echo '<tr><th class="Title" colspan="'.(3+count($listACL)).'">'.get_text('Block_Manage','Tournament').'</th></tr>';
 echo '<tr><th colspan="3">'.get_text('EnableAccess','Tournament').'</th><td colspan="'.count($listACL).'">
@@ -63,6 +64,9 @@ echo '<tr><th colspan="3">'.get_text('RecordAccess','Tournament').'</th><td cols
 echo '<tr><th colspan="3">'.get_text('Block_Manage','Tournament').'</th><td colspan="'.count($listACL).'"><input type="button" value="'.get_text('CmdExport','Tournament').'" onclick="exportACL()">
 	&nbsp;&nbsp;&nbsp;<form style="display: inline-block;margin-left:2em" method="post" enctype="multipart/form-data"><input type="file" name="importACL" value="">&nbsp;<input type="submit" value="'.get_text('CmdImport','Tournament').'"></form>
 </td></tr>';
+if(count($CFG->ACLExcluded)) {
+    echo '<tr><th colspan="3">' . get_text('Block_Excluded', 'Tournament') . '</th><td colspan="' . count($listACL) . '" class="aclIP">'.implode(', ',$CFG->ACLExcluded).'</td></tr>';
+}
 echo '<tr><td class="divider" colspan="'.(3+count($listACL)).'"></td></tr>';
 
 

@@ -35,7 +35,7 @@ if(!isset($_REQUEST["Data"])) {
 				$endNum=($end->e+1);
 				$tgt = $qValue[0];
 
-				$SQL="SELECT QuId, QuSession, QuTargetNo, DIDistance, DIEnds, DIArrows, QuConfirm & ".pow(2, $dist)."=1 as StopImport 
+				$SQL="SELECT QuId, QuSession, QuTargetNo, DIDistance, DIEnds, DIArrows, QuConfirm & ".pow(2, $dist).">0 as StopImport 
 					from Qualifications
 					INNER JOIN Entries ON QuId=EnId
 					INNER JOIN Tournament ON ToId=EnTournament

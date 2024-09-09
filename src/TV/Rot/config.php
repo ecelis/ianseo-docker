@@ -67,7 +67,7 @@ function getCss($TourId, $Rule) {
 		.Back2o { background:{$Settings['bck2o']}; }
 		.Title { {$Settings['title']}; }
 		.Headers { {$Settings['Headers']}; }
-		.TitleImg {display:inline-block;margin:-0.5vw;padding:0.1vw;background-color:white;}
+		.TitleImg {display:inline-block;margin:-0.5vw;padding:0;background-color:white;}
 		.TitleImg img {height:3.5vw; width:auto;}
 		";
 	}

@@ -202,9 +202,16 @@ function CreateEventNew($TourId, $Code, $Description, $Order, $Options) {
 		'EvNumQualified'=>4,
 		'EvFirstQualified'=>1,
 		'EvFinalTargetType'=>0,
+		'EvGolds'=>$tourDetGolds,
+		'EvXNine'=>$tourDetXNine,
+		'EvGoldsChars'=>$tourDetGoldsChars,
+		'EvXNineChars'=>$tourDetXNineChars,
+		'EvCheckGolds'=>0,
+		'EvCheckXNines'=>0,
 		'EvTargetSize'=>40,
 		'EvDistance'=>0,
 		'EvFinalAthTarget'=>0,
+		'EvMatchMultipleMatches'=>0,
 		'EvElimType'=>0,
 		'EvElim1'=>0,
 		'EvE1Ends'=>0,
@@ -233,11 +240,10 @@ function CreateEventNew($TourId, $Code, $Description, $Order, $Options) {
 		'EvMedals'=>1,
 		'EvTourRules'=>'',
 		'EvCodeParent'=>'',
-		'EvGolds' => $tourDetGolds,
-		'EvXNine' => $tourDetXNine,
-		'EvGoldsChars' => $tourDetGoldsChars,
-		'EvXNineChars' => $tourDetXNineChars,
+		'EvCodeParentWinnerBranch'=>0,
 		'EvIsPara' => 0,
+		'EvArrowPenalty' => 120,
+		'EvLoopPenalty' => 120,
 	);
 	foreach($Defaults as $def => $val) {
 		if(!isset($Options[$def])) {
@@ -356,10 +362,27 @@ function TargetFaceGoldsXnines($TourId, $Id, $Golds='', $Xnine='', $GoldsChars='
 function CreateDistanceInformation($TourId, $Distances, $Targets=0, $Athletes=4, $Session=1, $SesName='') {
 	require_once('Tournament/Fun_ManSessions.inc.php');
 	if($Targets) {
-		insertSession($TourId, $Session, 'Q', $SesName, $Targets, $Athletes, 1, 0);
+		insertSession($TourId, $Session, 'Q', $SesName, '', $Targets, $Athletes, 1, 0);
 	}
 	foreach($Distances as $Dist => $Infos) {
-		safe_w_sql("insert into DistanceInformation set DiTournament=$TourId, DiType='Q', DiSession=$Session, DiDistance=$Dist+1, DiEnds={$Infos[0]}, DiArrows={$Infos[1]} ON DUPLICATE KEY UPDATE DiEnds={$Infos[0]}, DiArrows={$Infos[1]} ");
+		$tmp = array();
+		switch(count($Infos)) {
+			case 4:
+				$tmp[] = "DiScoringOffset={$Infos[3]}";
+			case 3:
+				$tmp[] = "DiScoringEnds={$Infos[2]}";
+			case 2:
+				$tmp[] = "DiArrows={$Infos[1]}";
+			case 1:
+				$tmp[] = "DiEnds={$Infos[0]}";
+		}
+		if(count($tmp)) {
+			$Sql = "INSERT INTO DistanceInformation set DiTournament=$TourId, DiType='Q', DiSession=$Session, DiDistance=$Dist+1,".
+				implode(", ", $tmp) .
+				" ON DUPLICATE KEY UPDATE ".
+				implode(", ", $tmp);
+			safe_w_sql($Sql);
+		}
 	}
 }
 /*
@@ -396,4 +419,3 @@ function UpdateTourDetails($TourId, $Field, $Value='') {
 
 	safe_w_sql("update Tournament set ".implode(',', $q)." where ToId=$TourId");
 }
-?>

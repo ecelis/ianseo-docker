@@ -1,5 +1,6 @@
-<html>
+<html translate="no">
 <head>
+<meta name="google" content="notranslate">
 <meta http-equiv="Content-Type" content="text/html; charset=<?php echo PageEncode ?>">
 <title><?php print ProgramName . ' ' . ProgramVersion . (defined('ProgramBuild') ? ' ('.ProgramBuild.')' : '');;?></title>
 <?php

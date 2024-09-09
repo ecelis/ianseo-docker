@@ -204,7 +204,6 @@ $lang['TOG']='Togo';
 $lang['TPE']='Ķīnas Taipeja';
 $lang['TRI']='Trinidada un Tobāgo';
 $lang['TUN']='Tunisija';
-$lang['TUR']='Turcija';
 $lang['TUV']='Tuvalu';
 $lang['UAE']='Apvienotie Arābu Emirāti';
 $lang['UGA']='Uganda';

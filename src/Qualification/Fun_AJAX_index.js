@@ -56,49 +56,42 @@ function UpdateQuals(Field) {
 		}
 
 
-		try
-		{
-			if (!document.getElementById('chk_BlockAutoSave').checked)
+		try {
+
+			if ((XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT))
 			{
-				if ((XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT))
+				if (Cache.length>0)
 				{
-					if (Cache.length>0)
+					var FromCache = Cache.shift();
+					XMLHttp.open("POST",RootDir+"UpdateQuals.php",true);
+					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+					XMLHttp.onreadystatechange=UpdateQuals_StateChange;
+					if (PostUpdate)
+						FromCache += "&NoRecalc=1";
+					XMLHttp.send(FromCache);
+				}
+				else
+				{
+					if (!document.getElementById('chk_PostUpdate').checked)
 					{
-						var FromCache = Cache.shift();
-						XMLHttp.open("POST",RootDir+"UpdateQuals.php",true);
-						XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-						XMLHttp.onreadystatechange=UpdateQuals_StateChange;
 						if (PostUpdate)
-							FromCache += "&NoRecalc=1";
-						XMLHttp.send(FromCache);
-					}
-					else
-					{
-						if (!document.getElementById('chk_PostUpdate').checked)
 						{
-							if (PostUpdate)
+							PostUpdateMessage();
+							if(PostUpdateCnt != 0)
 							{
-								PostUpdateMessage();
-								if(PostUpdateCnt != 0)
-								{
-									CalcRank(true);
-									XMLHttp = CreateXMLHttpRequestObject();
-									CalcRank(false);
-									XMLHttp = CreateXMLHttpRequestObject();
-									MakeTeams();
-								}
-								ResetPostUpdate();
+								CalcRank(true);
+								XMLHttp = CreateXMLHttpRequestObject();
+								CalcRank(false);
+								XMLHttp = CreateXMLHttpRequestObject();
+								MakeTeams();
 							}
+							ResetPostUpdate();
 						}
 					}
 				}
 			}
-			else
-				Cache.shift();
 		}
-		catch (e)
-		{
-		}
+		catch (e) {}
 
 	}
 }
@@ -174,22 +167,15 @@ function MakeTeams()
 {
 	if (XMLHttp)
 	{
-		try
-		{
-			if (!document.getElementById('chk_BlockAutoSave').checked)
+		try {
+			if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
 			{
-				if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
-				{
-					XMLHttp.open("GET",RootDir+"MakeTeams.php",true);
-					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-					XMLHttp.onreadystatechange=MakeTeams_StateChange;
-					XMLHttp.send(null);
-				}
+				XMLHttp.open("GET",RootDir+"MakeTeams.php",true);
+				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+				XMLHttp.onreadystatechange=MakeTeams_StateChange;
+				XMLHttp.send(null);
 			}
-		}
-		catch (e)
-		{
-		}
+		} catch (e) {}
 	}
 }
 
@@ -244,25 +230,17 @@ function MakeTeams_Response()
 	- MakeTeamsAbs()
 	Invia la GET a MakeTeamsAbss.php
 */
-function MakeTeamsAbs()
-{
-	if (XMLHttp)
-	{
-		try
-		{
-			if (!document.getElementById('chk_BlockAutoSave').checked)
+function MakeTeamsAbs(){
+	if (XMLHttp) {
+		try {
+			if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
 			{
-				if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
-				{
-					XMLHttp.open("GET","MakeTeamsAbs.php",true);
-					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-					XMLHttp.onreadystatechange=MakeTeamsAbs_StateChange;
-					XMLHttp.send(null);
-				}
+				XMLHttp.open("GET",RootDir+"MakeTeamsAbs.php",true);
+				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+				XMLHttp.onreadystatechange=MakeTeamsAbs_StateChange;
+				XMLHttp.send(null);
 			}
-		}
-		catch (e)
-		{
+		} catch (e) {
 			document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
 		}
 	}
@@ -324,29 +302,20 @@ function MakeTeamsAbs_Response()
 	Se Dist è true, occorre che la distanza sia stata selezionata
 */
 
-function CalcRank(Dist)
-{
-	if (XMLHttp)
-	{
-		try
-		{
-			if (!document.getElementById('chk_BlockAutoSave').checked)
+function CalcRank(Dist) {
+	if (XMLHttp) {
+		try {
+			if (!Dist || (Dist && document.getElementById('x_Dist').value!=-1))
 			{
-				if (!Dist || (Dist && document.getElementById('x_Dist').value!=-1))
+				if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
 				{
-					if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
-					{
-						XMLHttp.open("GET","CalcRank.php" + (Dist ? "?Dist=" + document.getElementById('x_Dist').value : ""),true);
-						XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-						XMLHttp.onreadystatechange=CalcRank_StateChange;
-						XMLHttp.send(null);
-					}
+					XMLHttp.open("GET","CalcRank.php" + (Dist ? "?Dist=" + document.getElementById('x_Dist').value : ""),true);
+					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+					XMLHttp.onreadystatechange=CalcRank_StateChange;
+					XMLHttp.send(null);
 				}
 			}
-		}
-		catch (e)
-		{
-		}
+		} catch (e) { }
 	}
 }
 
@@ -400,10 +369,6 @@ function SelectSession() {
 }
 
 function SelectSession_JSON(obj) {
-	if ($('#chk_BlockAutoSave').is(':checked')) {
-		return;
-	}
-
 	$.getJSON('SelectSession.php?Ses='+$(obj).val(), function(data) {
 		if (data.error==0) {
 			$('#x_From').val(data.min);
@@ -421,7 +386,7 @@ function SelectSession_JSON(obj) {
 	Id � l'id del tizio
 */
 function Went2Home(Id) {
-	if($('#chk_BlockAutoSave:checked').length==0 && confirm(MsgAreYouSure)) {
+	if(confirm(MsgAreYouSure)) {
 		// create loader icon
 		var loader=$('<div style="position:absolute;left:50%;top:150px"><img src="../Common/Images/ajax-loader.gif"></div>');
 		$('#Content').append(loader);
@@ -531,7 +496,7 @@ function saveSnapshotImage_Response()
 }
 
 function Disqualify(Id) {
-	if($('#chk_BlockAutoSave:checked').length==0 && confirm(MsgAreYouSure)) {
+	if(confirm(MsgAreYouSure)) {
 		// create loader icon
 		var loader=$('<div style="position:absolute;left:50%;top:150px"><img src="../Common/Images/ajax-loader.gif"></div>');
 		$('#Content').append(loader);

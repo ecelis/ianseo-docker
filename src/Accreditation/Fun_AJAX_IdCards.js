@@ -127,6 +127,7 @@ function ShowEntries() {
 		    $('#getEntriesNum').html(numbers);
 
 		    hide_confirm();
+			hide_reset();
 	    }
     });
 }
@@ -345,7 +346,28 @@ function hide_confirm() {
     document.getElementById('confirm_button').style.display='none';
 }
 
+function hide_reset() {
+	$('#reset_button').toggleClass('d-none', $('#p_Entries option:selected').length==0);
+}
+
 function check_confirm(form) {
     form.target='';
     form.action=''
+}
+
+function resetPrint() {
+	let form={
+		act:'resetPrint',
+		CardType:$('#BadgeType').val(),
+		CardNumber:$('#BadgeNumber').val(),
+		EnId:[]
+	};
+	$('#p_Entries option:selected').each(function() {
+		form.EnId.push(this.value);
+	})
+
+	$.post('ConfirmPrinted.php', form, function() {
+		ShowEntries();
+	})
+	console.log(form);
 }

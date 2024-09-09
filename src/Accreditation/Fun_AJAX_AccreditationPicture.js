@@ -21,6 +21,9 @@ function selectedAthlete(clickObj) {
 					if (XMLHttp.readyState!=XHS_COMPLETE) return;
 					if (XMLHttp.status!=200) return;
 					try {
+						if(typeof window.BigPicture != 'undefined') {
+							window.BigPicture.refresh(0);
+						}
 						var XMLResp=XMLHttp.responseXML;
 						// intercetto gli errori di IE e Opera
 						if (!XMLResp || !XMLResp.documentElement) throw(XMLResp.responseText);
@@ -41,10 +44,13 @@ function selectedAthlete(clickObj) {
 							document.getElementById("selTeam").innerHTML = XMLRoot.getElementsByTagName('team').item(0).firstChild.data;
 							document.getElementById("selCat").innerHTML = XMLRoot.getElementsByTagName('cat').item(0).firstChild.data;
 							document.getElementById("athPic").src = XMLRoot.getElementsByTagName('pic').item(0).firstChild.data;
+							if(typeof window.BigPicture != 'undefined') {
+								window.BigPicture.refresh(clickObj.id);
+							}
 							if(XMLRoot.getElementsByTagName('pic').item(0).firstChild.data!='data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==') {
 								document.getElementById("ManBlock").style.display='';
 								if(cardsByCat[searchTour]!==undefined && cardsByCat[searchTour][searchCat]!== undefined) {
-									$('#accreditation-number').val(cardsByCat[searchTour][searchCat]);
+									$('#accreditation-number').val(searchTour+'|'+cardsByCat[searchTour][searchCat]);
 								}
 							} else {
 								document.getElementById("ManBlock").style.display='none';
@@ -231,6 +237,9 @@ function deletePicture() {
 
 						if(Error==0) {
 							document.getElementById("athPic").src = XMLRoot.getElementsByTagName('pic').item(0).firstChild.data;
+							if(typeof window.BigPicture != 'undefined') {
+								window.BigPicture.refresh(0);
+							}
 							if(XMLRoot.getElementsByTagName('pic').item(0).firstChild.data) {
 								document.getElementById("ManBlock").style.display='';
 							} else {
@@ -251,7 +260,7 @@ function deletePicture() {
 }
 
 function printAccreditation() {
-	let CardNumber=$("#accreditation-number").val();
+	let CardNumber=($("#accreditation-number").val().split('|'))[1];
 	window.open('CardCustom.php?CardType=A&CardNumber='+CardNumber+'&Entries[]='+document.getElementById("selId").value);
 	document.getElementById("confirm-button").style.display='';
 }
@@ -293,4 +302,13 @@ function ConfirmPrinted() {
 		}
 	}
 
+}
+
+function addZoom() {
+	$('#zoom').val(parseInt($('#zoom').val())+1);
+	changeZoom();
+}
+function subZoom() {
+	$('#zoom').val(parseInt($('#zoom').val())-1);
+	changeZoom();
 }

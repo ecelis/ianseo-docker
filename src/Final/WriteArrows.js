@@ -69,7 +69,7 @@ function updateScore(obj) {
 		event: split[2],
 		match: split[3],
 		index: split[4],
-		arrow: obj.value,
+		arrow: (obj.type=='checkbox' ? obj.checked : obj.value),
 	};
 
 	$(obj).css('backgroundColor', '#ffff00');
@@ -110,6 +110,7 @@ function SendToServer(obj) {
 			qs='d_N_'+split[2]+'_'+split[3];
 			break;
 		case 'tie':
+		case 's':
 			qs='d_t_'+split[2]+'_'+split[3]+'_'+split[4];
 			break;
 		case 'cl':

@@ -254,7 +254,7 @@ function GetRows($Id=null,$OrderBy=null,$AllTargets=false)
 
 	if ($OrderBy===null)
 	{
-		$OrderBy= "QuSession ASC,QuTargetNo ASC ";
+		$OrderBy= "`Session` ASC, `TargetNo` ASC ";
 	}
 
 	$Errore = 0;

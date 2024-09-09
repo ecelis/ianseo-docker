@@ -59,16 +59,15 @@
 			(isset($_REQUEST["TargetDx_x"]) && isset($_REQUEST["TargetDx_y"])))
 		{
 		// Estraggo le arrowstring coinvolte
-			$Select
-				= "SELECT f.FinMatchNo AS MatchNo, f2.FinMatchNo AS OppMatchNo, "
-				. "f.FinArrowPosition AS ArrPos, f.FinTiePosition AS TiePos, "
-				. "f2.FinArrowPosition AS OppArrPos, f2.FinTiePosition AS OppTiePos, "
-				. "EvCode as Event, GrPhase as Phase, EvMatchMode as MatchMode, EvMatchArrowsNo "
-				. "FROM Events  "
-				. "INNER JOIN Finals AS f ON EvTournament=f.FinTournament AND EvCode=f.FinEvent  "
-				. "INNER JOIN Finals AS f2 ON f.FinEvent=f2.FinEvent AND f.FinMatchNo=IF((f.FinMatchNo % 2)=0,f2.FinMatchNo-1,f2.FinMatchNo+1) AND f.FinTournament=f2.FinTournament "
-				. "INNER JOIN Grids ON f.FinMatchNo=GrMatchNo "
-				. "WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvCode=" . StrSafe_DB($_REQUEST['Event']) . " AND EvTeamEvent='0'  AND f.FinMatchNo=" . StrSafe_DB(($MatchNo % 2 == 0 ? $MatchNo:$MatchNo-1));
+			$Select = "SELECT f.FinMatchNo AS MatchNo, f2.FinMatchNo AS OppMatchNo,
+                    f.FinArrowPosition AS ArrPos, f.FinTiePosition AS TiePos, 
+                    f2.FinArrowPosition AS OppArrPos, f2.FinTiePosition AS OppTiePos,
+                    EvCode as Event, GrPhase as Phase, EvMatchMode as MatchMode, EvMatchArrowsNo, EvFinalTargetType
+			    FROM Events
+			    INNER JOIN Finals AS f ON EvTournament=f.FinTournament AND EvCode=f.FinEvent
+			    INNER JOIN Finals AS f2 ON f.FinEvent=f2.FinEvent AND f.FinMatchNo=IF((f.FinMatchNo % 2)=0,f2.FinMatchNo-1,f2.FinMatchNo+1) AND f.FinTournament=f2.FinTournament
+			    INNER JOIN Grids ON f.FinMatchNo=GrMatchNo
+			    WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvCode=" . StrSafe_DB($_REQUEST['Event']) . " AND EvTeamEvent='0'  AND f.FinMatchNo=" . StrSafe_DB(($MatchNo % 2 == 0 ? $MatchNo:$MatchNo-1));
 			$Rs=safe_r_sql($Select);
 			$MyRow=safe_fetch($Rs);
 
@@ -98,7 +97,7 @@
 					$f=-1;	// Freccia. E' la colonna della matrice degli score
 					list(,$m,$v,$f)=explode('_',$Key);	// Estraggo le parti del punteggio
 					//Cerco se il punteggio inserito è valido per il bersaglio scelto
-					$arrKey = GetLetterFromPrint($Value);
+					$arrKey = GetLetterFromPrint($Value, 'T', $MyRow->EvFinalTargetType);
 					//Carico l'arrowstring
 					if($m % 2 == 0)
 						$ArrStringSx = substr_replace($ArrStringSx,$arrKey,$f,1);

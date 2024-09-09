@@ -19,6 +19,7 @@ $AllowedNullTargets=array(
 	12,//TrgForestSwe
 	18,//TrgNfaa3D
 	22,//TrgNfaaAnimal
+    23,//Trg3DRedding
 	);
 
 switch($_REQUEST['act']) {
@@ -105,7 +106,7 @@ switch($_REQUEST['act']) {
 
 		$Row=intval($_REQUEST['row']);
 		// check that the targetface we are about to update exists
-		$q=safe_r_sql("select TargetFaces.*, ToNumDist from TargetFaces inner join Tournament on ToId=TfTournament where TfTournament={$_SESSION['TourId']} and TfId=$Row");
+		$q=safe_r_sql("select TargetFaces.*, ToNumDist, ToCategory&8 as Is3D from TargetFaces inner join Tournament on ToId=TfTournament where TfTournament={$_SESSION['TourId']} and TfId=$Row");
 		$TOUR=safe_fetch($q);
 		if(safe_num_rows($q)!=1) {
 			JsonOut($JSON);
@@ -167,7 +168,7 @@ switch($_REQUEST['act']) {
 					if($Dist<1 or $Dist>$TOUR->ToNumDist) {
 						$errors[]=get_text('DistanceOutRange', 'Errors');
 					}
-					if(!$Value and !in_array($TOUR->{'TfT'.$Dist}, $AllowedNullTargets)) {
+					if(!$Value and !in_array($TOUR->{'TfT'.$Dist}, $AllowedNullTargets) and !$TOUR->Is3D) {
 						$errors[]=get_text('DiameterMandatory', 'Errors');
 					}
 					$SQL[]="TfW{$Dist}=$Value";

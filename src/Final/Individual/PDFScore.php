@@ -15,15 +15,6 @@
 	$pdf = new ResultPDF((get_text('IndFinal')));
 	$pdf->setlinewidth(0.1);
 
-	$Score3D = false;
-	//$MyQuery = "SELECT (TtElabTeam=2) as is3D FROM Tournament INNER JOIN Tournament*Type AS tt ON ToType=TtId WHERE ToId=" . StrSafe_DB($_SESSION['TourId']);
-	$MyQuery = "SELECT (ToElabTeam=2) as is3D FROM Tournament WHERE ToId=" . StrSafe_DB($_SESSION['TourId']);
-	$Rs=safe_r_sql($MyQuery);
-	if(safe_num_rows($Rs)==1) {
-		$r=safe_fetch($Rs);
-		$Score3D = $r->is3D;
-	}
-
 	$Fasi = array(get_text('64_Phase'),get_text('32_Phase'), get_text('16_Phase'), get_text('8_Phase'), get_text('4_Phase'), get_text('2_Phase'), get_text('ScoreFinalMatch', 'Tournament'));
 	$TgtNoFasi = array('s64','s32', 's16', 's8', 's4', 's2', 'sGo');
 	$ByeFasi = array('b64', 'b32', 'b16', 'b8', 'b4', 'b2', 'bBr');
@@ -46,7 +37,7 @@
         . " '' AS b64,'' AS b32, '' AS b16, '' AS b8, '' AS b4, '' AS b2, '' AS bBr, '' AS bGo, "
         . " '' AS m64,'' AS m32, '' AS m16, '' AS m8, '' AS m4, '' AS m2, '' AS mBr, '' AS mGo, "
         . " '' op64, '' op32, '' op16, '' op8, '' op4, '' op2, '' opB, '' opG, "
-        . " EvElimEnds, EvElimArrows, EvElimSO, EvFinEnds, EvFinArrows, EvFinSO"
+        . " EvElimEnds, EvElimArrows, EvElimSO, EvFinEnds, EvFinArrows, EvFinSO, 0 as LastPhase "
         . " from Events where ".($model ? "EvCode='$model' and" : '')." EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=0 limit 1";
     } else {
 		$Events=array();
@@ -61,8 +52,8 @@
 		$TmpJoinType='INNER';
 		if(isset($_REQUEST["IncEmpty"]) && $_REQUEST["IncEmpty"]==1)
 			$TmpJoinType='LEFT';
-		$MyQuery = 'SELECT '
-        . ' EvCode, EvEventName, EvFinalFirstPhase, EvMatchMode, EvMatchArrowsNo, '
+		$MyQuery = 'SELECT
+		    EvCode, EvEventName, EvFinalFirstPhase, EvMatchMode, EvMatchArrowsNo, '
             . ' IF(EvFinalFirstPhase=48, GrPosition2, if(GrPosition>EvNumQualified, 0, GrPosition)) as GrPosition, if(EnNameOrder=1, concat(ucase(EnFirstName), " ", EnName), concat(EnName, " ", ucase(EnFirstName))) as Athlete, (f.FinTie=2) as isBye, '
         . ' CoCode, CoName, '
             . ' NULLIF(s64.FSLetter,\'\') s64,NULLIF(s32.FSLetter,\'\') s32, NULLIF(s16.FSLetter,\'\') s16, NULLIF(s8.FSLetter,\'\') s8, NULLIF(s4.FSLetter,\'\') s4, NULLIF(s2.FSLetter,\'\') s2, NULLIF(sb.FSLetter,\'\') sBr, NULLIF(sg.FSLetter,\'\') sGo, '
@@ -74,13 +65,14 @@
             . " EvElimSO, "
             . " EvFinEnds, "
             . " EvFinArrows, "
-            . " EvFinSO"
+            . " EvFinSO, coalesce(LastPhase,0) as LastPhase "
             . ' FROM Events'
             . ' INNER JOIN Phases ON PhId=EvFinalFirstPhase and (PhIndTeam & 1)=1 '
             . ' INNER JOIN Finals f ON EvCode=f.FinEvent AND EvTournament=f.FinTournament'
             . ' INNER JOIN Grids ON f.FinMatchNo=GrMatchNo AND GrPhase=greatest(PhId, PhLevel)'
             . ' ' . $TmpJoinType . ' JOIN Entries ON f.FinAthlete=EnId AND f.FinTournament=EnTournament'
             . ' ' . $TmpJoinType . ' JOIN Countries on EnCountry=CoId AND EnTournament=CoTournament'
+            . " left join (select EvCodeParent as Ev2CodeParent, ceil(EvNumQualified/2) as LastPhase from Events where EvTournament={$_SESSION['TourId']} and EvTeamEvent=0 and EvElimType=5) as Ev2 on Ev2CodeParent=EvCode "
             . ' LEFT JOIN FinSchedule s64 ON EvCode=s64.FSEvent AND EvTeamEvent=s64.FSTeamEvent AND EvTournament=s64.FSTournament AND IF(GrPhase=64, f.FinMatchNo, -256)=s64.FSMatchNo'
             . ' LEFT JOIN FinSchedule s32 ON EvCode=s32.FSEvent AND EvTeamEvent=s32.FSTeamEvent AND EvTournament=s32.FSTournament AND IF(GrPhase=32,f.FinMatchNo,FLOOR(s64.FSMatchNo/2))=s32.FSMatchNo'
             . ' LEFT JOIN FinSchedule s16 ON EvCode=s16.FSEvent AND EvTeamEvent=s16.FSTeamEvent AND EvTournament=s16.FSTournament AND IF(GrPhase=16,f.FinMatchNo,FLOOR(s32.FSMatchNo/2))=s16.FSMatchNo'
@@ -182,7 +174,11 @@
             $cnt = $WhichScoreEnd-$Start2FirstPhase[$MyRow->EvFinalFirstPhase] + ($NumFasi[$WhichScoreEnd-1] == 1 ? 1:0);
             $bcodeCnt = 0;
 			for($WhichScore = $Start2FirstPhase[$MyRow->EvFinalFirstPhase];$WhichScore<$WhichScoreEnd;$WhichScore++) {
-                $MyRow->{$MatchFasi[$WhichScore]} = ($MyRow->{$MatchFasi[$WhichScore]} % 2 == 1 ? $MyRow->{$MatchFasi[$WhichScore]} - 1 : $MyRow->{$MatchFasi[$WhichScore]});
+                if($MyRow->LastPhase and $Start2FirstPhase[$MyRow->LastPhase]<=$WhichScore) {
+                    continue;
+                }
+
+                $MyRow->{$MatchFasi[$WhichScore]} = (intval($MyRow->{$MatchFasi[$WhichScore]}) % 2 == 1 ? $MyRow->{$MatchFasi[$WhichScore]} - 1 : $MyRow->{$MatchFasi[$WhichScore]});
 				DrawScore($pdf, $MyRow, $WhichScore, $WhereX[$WhichScore-$Start2FirstPhase[$MyRow->EvFinalFirstPhase]], $WhereY[$WhichScore- $Start2FirstPhase[$MyRow->EvFinalFirstPhase]], $WhichScore==6);
                 if(!empty($_REQUEST['QRCode'])) {
                     foreach($_REQUEST['QRCode'] as $k => $Api) {
@@ -229,7 +225,7 @@ $pdf->Output();
 
 
 function DrawScore(&$pdf, $MyRow, $WhichScore, $WhereX, $WhereY, $FinalScore=false) {
-    global $defTotalW, $defGoldW, $defArrowTotW, $defBCodeW, $ScoreHeight, $NumFasi, $Fasi, $TgtNoFasi, $TieFasi, $ByeFasi, $Score3D, $MatchFasi, $OppArray, $Start2FirstPhase;
+    global $defTotalW, $defGoldW, $defArrowTotW, $defBCodeW, $ScoreHeight, $NumFasi, $Fasi, $TgtNoFasi, $TieFasi, $ByeFasi, $MatchFasi, $OppArray, $Start2FirstPhase;
 
 	$scoreStartX = $WhereX;
 	$scoreStartY = $WhereY;
@@ -289,13 +285,9 @@ function DrawScore(&$pdf, $MyRow, $WhichScore, $WhereX, $WhereY, $FinalScore=fal
 	$pdf->SetFont($pdf->FontStd,'B',8);
 	$pdf->SetXY($WhereX,$WhereY);
 	$pdf->Cell($GoldW,6,'',0,0,'C',0);
-	if($Score3D) {
-		$pdf->Cell($NumCol*$ArrowW,6, get_text('Arrow'), 1, 0, 'C', 1);
-	} else {
-		for($j=0; $j<$NumCol; $j++) {
-            $pdf->Cell($ArrowW, 6, ($j + 1), 1, 0, 'C', 1);
-        }
-	}
+    for($j=0; $j<$NumCol; $j++) {
+        $pdf->Cell($ArrowW, 6, ($j + 1), 1, 0, 'C', 1);
+    }
 
 	if($MyRow->EvMatchMode) {
 		$pdf->Cell($TotalW * 4/5, 6,get_text('SetTotal','Tournament'),1,0,'C',1);
@@ -313,18 +305,9 @@ function DrawScore(&$pdf, $MyRow, $WhichScore, $WhereX, $WhereY, $FinalScore=fal
 		$pdf->SetFont($pdf->FontStd,'B',10);
 		$pdf->SetXY($WhereX,$WhereY);
 		$pdf->Cell($GoldW,$CellH,$i,1,0,'C',1);
-        if ($Score3D) {
-			$pdf->SetFont($pdf->FontStd,'',8);
-			$pdf->Cell(1/5*$ArrowW,$CellH, '11', 1, 0, 'C', 0);
-			$pdf->Cell(1/5*$ArrowW,$CellH, '10', 1, 0, 'C', 0);
-			$pdf->Cell(1/5*$ArrowW,$CellH, '8', 1, 0, 'C', 0);
-			$pdf->Cell(1/5*$ArrowW,$CellH, '5', 1, 0, 'C', 0);
-			$pdf->Cell(1/5*$ArrowW,$CellH, 'M', 1, 0, 'C', 0);
-        } else {
-            for ($j = 0; $j < $NumCol; $j++) {
-                $pdf->Cell($ArrowW, $CellH, '', 1, 0, 'C', 0);
-            }
-		}
+        for ($j = 0; $j < $NumCol; $j++) {
+            $pdf->Cell($ArrowW, $CellH, '', 1, 0, 'C', 0);
+        }
         if ($MyRow->EvMatchMode == 0) {
 	        $pdf->Cell($TotalW, $CellH, '', 1, 0, 'C', 0);
 	        $pdf->Cell($TotalW, $CellH, '', 1, 0, 'C', 0);
@@ -346,9 +329,6 @@ function DrawScore(&$pdf, $MyRow, $WhichScore, $WhereX, $WhereY, $FinalScore=fal
 	$pdf->SetFont($pdf->FontStd,'B',8);
 	$pdf->Cell($GoldW,6.5,(get_text('TB')),1,0,'C',1);
 	$ShootOffW=($NumSO<=$NumCol ? $ArrowW : ($ArrowW*$NumCol)/$NumSO);
-	if($Score3D) {
-		$ShootOffW/=5;
-	}
     for ($j = 0; $j < $NumSO; $j++) {
 		$pdf->SetXY($pdf->GetX()+0.5,$pdf->GetY());
         $pdf->Cell($ShootOffW - 0.5, 4, ' ', 1, 0, 'C', 0);
@@ -358,13 +338,9 @@ function DrawScore(&$pdf, $MyRow, $WhichScore, $WhereX, $WhereY, $FinalScore=fal
     $pdf->Cell(2, 2, '', 1, 0, 'R', 0);
 	$pdf->SetXY($WhereX+$GoldW+2.5,$WhereY+4.5);
 	$pdf->SetFont($pdf->FontStd,'',6);
-	if($Score3D) {
-		$pdf->Cell($ArrowW*1.5/5, 2.5, get_text('Close2Center','Tournament'),0,0,'L',0);
-		$pdf->Cell($ArrowW*3.5/5+$TotalW-2.5, 2.5, get_text('ArcherSignature','Tournament'),0,0,'C',0);
-	} else {
-		$pdf->Cell($ArrowW*1.5, 2.5, get_text('Close2Center','Tournament'),0,0,'L',0);
-		$pdf->Cell($ArrowW*($NumCol-2)+$TotalW, 2.5, get_text('ArcherSignature','Tournament'),0,0,'C',0);
-	}
+    $pdf->Cell($ArrowW*1.5, 2.5, get_text('Close2Center','Tournament'),0,0,'L',0);
+    $pdf->Cell($ArrowW*($NumCol-2)+$TotalW, 2.5, get_text('ArcherSignature','Tournament'),0,0,'C',0);
+
 
     $OppName='';
 	if(!$MyRow->{$ByeFasi[$WhichScore]}) {
@@ -399,9 +375,6 @@ function DrawScore(&$pdf, $MyRow, $WhichScore, $WhereX, $WhereY, $FinalScore=fal
 	$pdf->SetFont($pdf->FontStd,'B',8);
 	$pdf->Cell($GoldW, 6.5, (get_text('TB')),1,0,'C',1);
 	$ShootOffW=($NumSO<=$NumCol ? $ArrowW : ($ArrowW*$NumCol)/$NumSO);
-	if($Score3D) {
-		$ShootOffW/=5;
-	}
     $hasClosest = false;
     for ($j = 0; $j < $NumSO; $j++) {
         $pdf->SetXY($pdf->GetX()+0.5,$pdf->GetY());
@@ -412,13 +385,8 @@ function DrawScore(&$pdf, $MyRow, $WhichScore, $WhereX, $WhereY, $FinalScore=fal
     $pdf->Cell(2, 2, '', 1, 0, 'R', 0);
 	$pdf->SetXY($WhereX+$GoldW+2.5,$WhereY+4.5);
 	$pdf->SetFont($pdf->FontStd,'',6);
-	if($Score3D) {
-		$pdf->Cell($ArrowW*1.5/5, 2.5, get_text('Close2Center','Tournament'),0,0,'L',0);
-		$pdf->Cell($ArrowW*3.5/5+$TotalW-2.5, 2.5, get_text('OpponentSignature','Tournament'),0,0,'C',0);
-	} else {
-		$pdf->Cell($ArrowW * 1.5, 2.5, get_text('Close2Center', 'Tournament'), 0, 0, 'L', 0);
-		$pdf->Cell($ArrowW * ($NumCol - 2) + $TotalW, 2.5, get_text('OpponentSignature', 'Tournament'), 0, 0, 'C', 0);
-	}
+	$pdf->Cell($ArrowW * 1.5, 2.5, get_text('Close2Center', 'Tournament'), 0, 0, 'L', 0);
+    $pdf->Cell($ArrowW * ($NumCol - 2) + $TotalW, 2.5, get_text('OpponentSignature', 'Tournament'), 0, 0, 'C', 0);
 
 	//Totale
 	$pdf->SetXY($WhereX+$GoldW+$ArrowW, $WhereY+0.5);

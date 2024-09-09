@@ -128,7 +128,6 @@ $lang['SpecialUpdate']='Posiadasz instalację "testową".<br/>Tylko wybrani uży
 $lang['Start Ianseo']='Idź do IANSEO!';
 $lang['Status']='Status';
 $lang['stdValue']='Wartość';
-$lang['Suboptimal']='Pomimo że pli php.ini nie jest ustawiony optymalnie, <br/>IANSEO powinien prawidłowo obsługiwać większość swoich funkcji.<br/>Zachęcamy do ustawienia parametrów do wartości optymalnych.';
 $lang['System value']='Wartość systemu';
 $lang['UpdatePrepared']='Twój system za chwilę będzie automatycznie zaktualizowany. Pamiętaj aby wykonać kopie zapasowe Zawodów przed rozpoczęciem. Aktualizacja może zając dłuższy czas, zależnie od prędkości łącza internetowego i ilości aktualizowanych modułów.<br/>Pamiętaj, że wszystkie nieoryginalne pliki będą usunięty, oprócz zawartości folderu «Modules/Custom».';
 $lang['Updating']='Aktualizacja lokalnej instalacji Ianseo';

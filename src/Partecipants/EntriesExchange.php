@@ -91,7 +91,7 @@ function export_entries($TourId) {
 	}
 
 	// Gets Entries
-	$Rs=safe_r_sql("SELECT Entries.*, EdExtra FROM Entries left join ExtraData on EnId=EdId and EdType='Z' WHERE EnTournament in ($TourId)");
+	$Rs=safe_r_sql("SELECT * FROM Entries WHERE EnTournament in ($TourId)");
 	while($MyRow=safe_fetch_assoc($Rs)){
 		$Gara['Entries'][$MyRow['EnId']]=$MyRow;
 	}
@@ -270,40 +270,17 @@ function import_Entries($filename) {
 	foreach($Gara['Entries'] as $EnId => $Entry) {
 		$query=array();
 		unset($Entry['EnId']);
-		if($Entry['EdExtra']) {
-			// original data... updates the entry
-			$OrgCode=explode('-', $Entry['EdExtra']);
-			$q=safe_r_sql("select * from Entries where EnCode=".StrSafe_DB($OrgCode['0'])." and EnTournament={$Entry['EnTournament']} and EnIocCode=".StrSafe_DB($OrgCode['1'])." and EnDivision=".StrSafe_DB($OrgCode['2']));
-			if(safe_num_rows($q)==1 and $r=safe_fetch_assoc($q)) {
-				$NewId=$r['EnId'];
-
-				foreach($Entry as $key=>$val) {
-					if($key!='EnTimestamp' and $key!='EdExtra' and $val!=$r[$key]) {
-						$query[]="$key = " . strsafe_db($val) ;
-					}
-				}
-				if($query) {
-					safe_w_sql("update Entries set ". implode(', ', $query)." where EnId={$NewId}");
-					$Updated[]="<tr><td>{$Codes[$Entry['EnTournament']]}</td><td>Entry</td><td>{$Entry['EnFirstName']}</td><td>{$Entry['EnName']}</td><td>{$Entry['EnIocCode']}</td><td>{$Entry['EnCode']}</td><td>{$Entry['EnDivision']}</td><td>{$Entry['EdExtra']}</td></tr>";
-				}
-
-				$Entries[$EnId]=$NewId;
-			} else {
-				$Refused[$EnId]="<tr><td>{$Codes[$Entry['EnTournament']]}</td><td>Entry</td><td>{$Entry['EnFirstName']}</td><td>{$Entry['EnName']}</td><td>{$Entry['EnIocCode']}</td><td>{$Entry['EnCode']}</td><td>{$Entry['EnDivision']}</td><td>{$Entry['EdExtra']}</td></tr>";
-			}
-		} else {
-			// NEW ENTRY!!!
-			foreach($Entry as $key=>$val) {
-				if($key=='EdExtra') continue;
-				$query[]="$key = " . strsafe_db($val) ;
-			}
-			safe_w_sql("insert into Entries set ". implode(', ', $query));
-			$NewId=safe_w_last_id();
-			safe_w_sql("insert into Qualifications set QuId=$NewId");
-			$Inserts[]="<tr><td>{$Codes[$Entry['EnTournament']]}</td><td>Entry</td><td>{$Entry['EnFirstName']}</td><td>{$Entry['EnName']}</td><td>{$Entry['EnIocCode']}</td><td>{$Entry['EnCode']}</td><td>{$Entry['EnDivision']}</td><td>{$Entry['EdExtra']}</td></tr>";
-			$Entries[$EnId]=$NewId;
-		}
-	}
+        // NEW ENTRY!!!
+        foreach($Entry as $key=>$val) {
+            if($key=='EdExtra') continue;
+            $query[]="$key = " . strsafe_db($val) ;
+        }
+        safe_w_sql("insert into Entries set ". implode(', ', $query));
+        $NewId=safe_w_last_id();
+        safe_w_sql("insert into Qualifications set QuId=$NewId");
+        $Inserts[]="<tr><td>{$Codes[$Entry['EnTournament']]}</td><td>Entry</td><td>{$Entry['EnFirstName']}</td><td>{$Entry['EnName']}</td><td>{$Entry['EnIocCode']}</td><td>{$Entry['EnCode']}</td><td>{$Entry['EnDivision']}</td><td>{$Entry['EdExtra']}</td></tr>";
+        $Entries[$EnId]=$NewId;
+    }
 
 	// check if there are some Entries to delete...
 	$q=safe_r_sql("select Entries.*, ToCode from Entries inner join Tournament on EnTournament=ToId where EnTournament in (".implode(',', $Tours).") and EnId not in (".implode(',', $Entries).")");
@@ -341,11 +318,13 @@ function import_Entries($filename) {
 
 	// ExtraData
 	foreach($Gara['ExtraData'] as $key=>$record) {
-		if($record['EdType']=='Z') continue;
+//		if($record['EdType']=='Z') continue;
 		if(empty($Entries[$key])) {
 			// no entries (refused!) so unset this entry
 			unset($Gara['ExtraData'][$key]);
-			if(!empty($Refused[$key])) $Refused[$key]=str_replace('Entries', 'Entries<br>ExtraData', $Refused[$key]);
+			if(!empty($Refused[$key])) {
+                $Refused[$key]=str_replace('Entries', 'Entries<br>ExtraData', $Refused[$key]);
+            }
 		} else {
 			$Gara['ExtraData'][$key]['EdId']=$Entries[$key];
 			$record['EdId']=$Entries[$key];

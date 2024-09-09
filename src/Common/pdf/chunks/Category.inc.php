@@ -49,16 +49,26 @@ if (isset($PdfData->Data['Items']) && count($PdfData->Data['Items'])>0)
 		$pdf->Cell(190, 0.5,  '', 1, 1, 'C', 0);
 
 		foreach($Rows as $MyRow) {
-			$secondaryTeam = (is_null($MyRow->NationCode2) ? 1 : 2);
-			if ($secondaryTeam==2 && !is_null($MyRow->NationCode3))
-			{
-				$secondaryTeam=3;
-			}
+            $ExtraCountries=[];
+            if($MyRow->NationCode2 and $MyRow->NationCode2!=$MyRow->NationCode) {
+                $ExtraCountries[]=[
+                    'CoCode'=>$MyRow->NationCode2,
+                    'CoName'=>$MyRow->Nation2,
+                ];
+            }
+            if($MyRow->NationCode3 and $MyRow->NationCode3!=$MyRow->NationCode2 and $MyRow->NationCode3!=$MyRow->NationCode) {
+                $ExtraCountries[]=[
+                    'CoCode'=>$MyRow->NationCode3,
+                    'CoName'=>$MyRow->Nation3,
+                ];
+            }
+			$secondaryTeam = count($ExtraCountries)+1;
+
 			if (!$pdf->SamePage(4*$secondaryTeam)) {
 				$pdf->AddPage();
 
 				$pdf->SetFont($pdf->FontStd,'B',10);
-				$pdf->Cell(190, 6,  $Rows[0]->EventCode." - ".$Rows[0]->EventName, 1, 1, 'C', 1);
+				$pdf->Cell(0, 6,  $Rows[0]->EventCode." - ".$Rows[0]->EventName, 1, 1, 'C', 1);
 				$pdf->SetXY(170,$pdf->GetY()-6);
 			   	$pdf->SetFont($pdf->FontStd,'I',6);
 				$pdf->Cell(30, 6, $PdfData->Continue, 0, 1, 'R', 0);
@@ -99,26 +109,16 @@ if (isset($PdfData->Data['Items']) && count($PdfData->Data['Items'])>0)
 		   	$pdf->SetFont($pdf->FontStd,'B',7);
 			$pdf->Cell(41, 4 * $secondaryTeam,  $MyRow->Athlete, 1, 0, 'L', 0);
 		   	$pdf->SetFont($pdf->FontStd,'',7);
-		   	$pdf->Cell(8, 4,  $MyRow->NationCode, 'LTB', 0, 'C', 0);
-			$pdf->Cell(46, 4,  $MyRow->Nation . ($MyRow->EnSubTeam==0 ? "" : " (" . $MyRow->EnSubTeam . ")"), 'RTB', 0, 'L', 0);
-			if($secondaryTeam>=2)
-			{
-				$secTmpX=$pdf->GetX();
-				$secTmpY=$pdf->GetY();
-				$pdf->SetXY($secTmpX-54,$secTmpY+4);
-		   		$pdf->Cell(8, 4,  $MyRow->NationCode2, 'LTB', 0, 'C', 0);
-				$pdf->Cell(46, 4,  $MyRow->Nation2, 'RTB', 0, 'L', 0);
-				$pdf->SetXY($secTmpX,$secTmpY);
-			}
-			if($secondaryTeam==3)
-			{
-				$secTmpX=$pdf->GetX();
-				$secTmpY=$pdf->GetY();
-				$pdf->SetXY($secTmpX-54,$secTmpY+8);
-		   		$pdf->Cell(8, 4,  $MyRow->NationCode3, 'LTB', 0, 'C', 0);
-				$pdf->Cell(46, 4, $MyRow->Nation3, 'RTB', 0, 'L', 0);
-				$pdf->SetXY($secTmpX,$secTmpY);
-			}
+		   	$pdf->Cell(8, 4,  $MyRow->NationCode??'', 'LTB', 0, 'C', 0);
+			$pdf->Cell(46, 4,  $MyRow->Nation??'' . ($MyRow->EnSubTeam==0 ? "" : " (" . $MyRow->EnSubTeam . ")"), 'RTB', 0, 'L', 0);
+            foreach($ExtraCountries as $k=>$Country) {
+                $secTmpX=$pdf->GetX();
+                $secTmpY=$pdf->GetY();
+                $pdf->SetXY($secTmpX-54,$secTmpY+4+4*$k);
+                $pdf->Cell(8, 4,  $Country['CoCode'], 'LTB', 0, 'C', 0);
+                $pdf->Cell(46, 4,  $Country['CoName'], 'RTB', 0, 'L', 0);
+                $pdf->SetXY($secTmpX,$secTmpY);
+            }
 			$pdf->Cell(7, 4 * $secondaryTeam,  $MyRow->IsAthlete ? $MyRow->Session : '', 1, 0, 'R', 0);
 			$TgtNo=ltrim(($PdfData->BisTarget && (intval(substr($MyRow->TargetNo,1)) > $PdfData->NumEnd) ? str_pad((substr($MyRow->TargetNo,0,-1)-$PdfData->NumEnd),3,"0",STR_PAD_LEFT) . substr($MyRow->TargetNo,-1,1) . ' bis'  : $MyRow->TargetNo), 'O');
 			$pdf->Cell(11, 4 * $secondaryTeam,  $MyRow->IsAthlete ? $TgtNo : '', 1, 0, 'R', 0);

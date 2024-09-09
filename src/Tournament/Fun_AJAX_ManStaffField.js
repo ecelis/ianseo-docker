@@ -23,6 +23,7 @@ function addFieldStaff() {
 	}
 	let form={
 		Code:$('#new_Matr').val(),
+		CodeLocal:$('#new_LocalCode').val(),
 		FamilyName:$('#new_FamilyName').val(),
 		GivenName:$('#new_GivenName').val(),
 		Gender:$('#new_Gender').val(),
@@ -56,6 +57,7 @@ function editFieldStaff(obj) {
 	}
 	let form={
 		Code:row.find('[name="Code"]').val(),
+		CodeLocal:row.find('[name="CodeLocal"]').val(),
 		FamilyName:row.find('[name="FamilyName"]').val(),
 		GivenName:row.find('[name="GivenName"]').val(),
 		Gender:row.find('[name="Gender"]').val(),

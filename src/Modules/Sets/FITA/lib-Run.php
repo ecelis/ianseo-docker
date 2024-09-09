@@ -40,7 +40,7 @@ function CreateRunArcheryEvents($TourId, $SubRule) {
 				'EvFinArrows'=>6,
 				'EvTargetSize'=>400,
 				'EvDistance'=>60,
-				'EvElimType'=>0,
+				'EvElimType'=>1,
 				'EvMultiTeam'=>1,
 				'EvArrowPenalty'=>45,
 				'EvLoopPenalty'=>45,
@@ -57,7 +57,7 @@ function CreateRunArcheryEvents($TourId, $SubRule) {
 			$Options['EvFinArrows']=4;
 			$Options['EvTargetSize']=1000;
 			$Options['EvDistance']=150;
-			$Options['EvElimType']=1;
+			$Options['EvElimType']=0;
 			$Options['EvArrowPenalty']=120;
 			$Options['EvLoopPenalty']=120;
 			CreateEventNew($TourId, '4KM',  '4K Men', $i++, $Options);

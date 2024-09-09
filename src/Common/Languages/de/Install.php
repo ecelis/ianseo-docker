@@ -122,7 +122,6 @@ $lang['SpecialUpdate']='Dies ist eine "Test" Installation.<br/>Nur ausgewählte 
 $lang['Start Ianseo']='Gehe zu IANSEO!';
 $lang['Status']='Status';
 $lang['stdValue']='Wert';
-$lang['Suboptimal']='Obwohl in der php.ini Datei nicht optimale Werte festgesetzt worden sind, <br/>müssten die meisten Funktionen von IANSEO korrekt ausgeführt werden. <br/>Wir wünschen uns jedoch, dass die Parameter mit optimalen Werte gesetzt werden.';
 $lang['System value']='Systemwert';
 $lang['UpdatePrepared']='Diese Installation wird anschliessend automatisch aktualisiert. Bitte erstelle ein Backup aller Turniere bevor dieser Schritt ausgeführt wird. Der Aktualisierungsprozess kann länger andauern, abhängig von der Internetverbindung und der Anzahl zu aktualisierender Elemente.<br/> Bitte beachte dass alle nicht Originaldateien entfernt werden, - abgesehen vom Inhalt des Ordners «Modules/Custom».';
 $lang['Updating']='Aktualisierung der lokalen Installation von Ianseo';

@@ -64,10 +64,12 @@ if(!empty($EvCode) AND !empty($TeamId)) {
             safe_w_SQL($Sql);
             foreach ($toLog as $k=>$v) {
                 $Sql = "INSERT INTO `TeamFinComponentLog` (`TfclCoId`, `TfclSubTeam`, `TfclTournament`, `TfclEvent`, `TfclIdPrev`, `TfclIdNext`, `TfclOrder`, `TfclTimeStamp`) VALUES ".
-                    "({$TeamId}, {$TeamSubId}, {$_SESSION['TourId']}, '{$EvCode}', {$v[0]}, {$v[1]}, {$k}, '$now')";
+                    "({$TeamId}, {$TeamSubId}, {$_SESSION['TourId']}, '{$EvCode}', {$v[0]}, {$v[1]}, {$k}, '$now') ".
+                    "ON DUPLICATE KEY UPDATE `TfclIdPrev`={$v[0]}, `TfclIdNext`={$v[1]}";
                 safe_w_SQL($Sql);
             }
             $JSON['error'] = 0;
+            runJack('TeamComponentUpdate', $_SESSION['TourId'], array('TourId'=>$_SESSION['TourId'], 'Event'=>$EvCode));
         }
     } else {
         $Sql = "SELECT EnId, EnDivision, EnClass, EnCode, EnSubClass, CONCAT(UPPER(EnFirstName), ' ', EnName) as Ath, EcTeamEvent, EcNumber, EcSubClass, TfcId, TcId " .

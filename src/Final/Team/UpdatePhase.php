@@ -32,7 +32,26 @@ if (safe_w_affected_rows()) {
     $Delete = "DELETE FROM TeamFinals WHERE TfEvent=" . StrSafe_DB($_REQUEST['EvCode']) . " AND TfTournament=" . StrSafe_DB($_SESSION['TourId']) . " ";
     $Rs=safe_w_sql($Delete);
 
-    if($GridPhase) {
+	if($EVENT->EvElimType==5) {
+		// Round Robin!!
+		// starts removing the exceeding people ;)
+		safe_w_sql("delete from RoundRobinParticipants 
+						where RrPartTournament={$_SESSION['TourId']} and RrPartTeam=1 and RrPartEvent=".StrSafe_DB($_REQUEST['EvCode'])." and RrPartLevel=0 and RrPartGroup=0 and RrPartDestItem>{$NumQualified}");
+		// check if the final level => Brackets is needed!
+		if($NewPhase) {
+			// inserts all the items
+			$sqlPart=array();
+			for($n=1;$n<=$NumQualified;$n++) {
+				$sqlPart[]="({$_SESSION['TourId']}, 1, ".StrSafe_DB($_REQUEST['EvCode']).", 0, 0, $n)";
+			}
+			safe_w_SQL("insert ignore into RoundRobinParticipants (RrPartTournament, RrPartTeam, RrPartEvent, RrPartLevel, RrPartGroup, RrPartDestItem) 
+							values ".implode(', ', $sqlPart));
+			safe_w_sql("update ignore RoundRobinParticipants set RrPartSourceLevel=0, RrPartSourceGroup=0, RrPartSourceRank=0, RrPartDestItem=0, RrPartParticipant=0, RrPartSubTeam=0 
+							where (RrPartTournament, RrPartTeam, RrPartEvent, RrPartLevel, RrPartGroup) = ({$_SESSION['TourId']}, 0, ".StrSafe_DB($_REQUEST['EvCode']).", 0, 0)");
+		}
+	}
+
+	if($GridPhase) {
 	    // Deletes unused warmups
 	    $delSchedule = "DELETE FROM FinWarmup USING
 	        Events

@@ -35,30 +35,30 @@ CreateStandardFieldEvents($TourId, $SubRule);
 InsertStandardFieldEvents($TourId, $SubRule);
 
 // Elimination rounds
-InsertStandardFieldEliminations($TourId, $SubRule);
+//InsertStandardFieldEliminations($TourId, $SubRule);
 
 // Finals & TeamFinals
 CreateFinals($TourId);
 
 // create Groups finals
-switch($SubRule) {
-	case 3:
-		$query = "INSERT INTO Finals (FinEvent,FinMatchNo,FinTournament,FinDateTime) 
-			SELECT EvCode,GrMatchNo, $TourId, " . StrSafe_DB(date('Y-m-d H:i')) . " 
-			FROM Events 
-			INNER JOIN Grids ON GrMatchNo in (".implode(',', getPoolMatchNos()).") AND EvTeamEvent='0' AND EvTournament=$TourId
-			where EvElimType=3";
-		$rs=safe_w_sql($query);
-		break;
-	case 4:
-		$query = "INSERT INTO Finals (FinEvent,FinMatchNo,FinTournament,FinDateTime) 
-			SELECT EvCode,GrMatchNo, $TourId, " . StrSafe_DB(date('Y-m-d H:i')) . " 
-			FROM Events 
-			INNER JOIN Grids ON GrMatchNo in (".implode(',', getPoolMatchNosWA()).") AND EvTeamEvent='0' AND EvTournament=$TourId
-			where EvElimType=4";
-		$rs=safe_w_sql($query);
-		break;
-}
+//switch($SubRule) {
+//	case 3:
+//		$query = "INSERT INTO Finals (FinEvent,FinMatchNo,FinTournament,FinDateTime)
+//			SELECT EvCode,GrMatchNo, $TourId, " . StrSafe_DB(date('Y-m-d H:i')) . "
+//			FROM Events
+//			INNER JOIN Grids ON GrMatchNo in (".implode(',', getPoolMatchNos()).") AND EvTeamEvent='0' AND EvTournament=$TourId
+//			where EvElimType=3";
+//		$rs=safe_w_sql($query);
+//		break;
+//	case 4:
+//		$query = "INSERT INTO Finals (FinEvent,FinMatchNo,FinTournament,FinDateTime)
+//			SELECT EvCode,GrMatchNo, $TourId, " . StrSafe_DB(date('Y-m-d H:i')) . "
+//			FROM Events
+//			INNER JOIN Grids ON GrMatchNo in (".implode(',', getPoolMatchNosWA()).") AND EvTeamEvent='0' AND EvTournament=$TourId
+//			where EvElimType=4";
+//		$rs=safe_w_sql($query);
+//		break;
+//}
 
 // Default Target
 switch($TourType) {
@@ -106,5 +106,3 @@ $tourDetails=array(
 //	'ToIocCode'	=> $tourDetIocCode,
 	);
 UpdateTourDetails($TourId, $tourDetails);
-
-?>

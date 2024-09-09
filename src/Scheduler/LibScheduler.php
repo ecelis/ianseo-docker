@@ -869,16 +869,15 @@ function getScheduleTexts() {
 			<th class="Title" colspan="10">'.get_text('Z-Session', 'Tournament').'</th>
 		</tr>
 		<tr>
-			<th class="Title w-10"><img src="'.$CFG->ROOT_DIR.'Common/Images/Tip.png" title="'.get_Text('TipDate', 'Tournament').'" align="right">'.get_text('Date', 'Tournament').'</th>
-			<th class="Title w-10">'.get_text('Time', 'Tournament').'</th>
-			<th class="Title w-10">'.get_text('Order', 'Tournament').'</th>
-			<th class="Title w-10">'.get_text('Length', 'Tournament').'</th>
-			<th class="Title w-10">'.get_text('Delayed', 'Tournament').'</th>
-			<th class="Title w-10">'.get_text('Title', 'Tournament').'</th>
-			<th class="Title w-10">'.get_text('SubTitle', 'Tournament').'</th>
-			<th class="Title w-10">'.get_text('Text', 'Tournament').'</th>
-			<th class="Title w-10">'.get_text('Targets', 'Tournament').'<br/>#1-#N@Dist<br>[@Cat[@Face]]</th>
-				<th class="Title"></th>
+			<th class="Title w-5"><img src="'.$CFG->ROOT_DIR.'Common/Images/Tip.png" title="'.get_Text('TipDate', 'Tournament').'" align="right">'.get_text('Date', 'Tournament').'</th>
+			<th class="Title w-5">'.get_text('Time', 'Tournament').'</th>
+			<th class="Title w-5">'.get_text('Order', 'Tournament').'</th>
+			<th class="Title w-5">'.get_text('Length', 'Tournament').'</th>
+			<th class="Title w-5">'.get_text('Delayed', 'Tournament').'</th>
+			<th class="Title">'.get_text('Title', 'Tournament').'</th>
+			<th class="Title">'.get_text('SubTitle', 'Tournament').'</th>
+			<th class="Title">'.get_text('Text', 'Tournament').'</th>
+			<th class="Title w-5"></th>
 		</tr>';
 	$ret.= '<tr>
 			<td><input size="10" type="date" name="Fld[Day]"></td>
@@ -886,24 +885,26 @@ function getScheduleTexts() {
 			<td><input size="3" max="999" min="0" type="number" name="Fld[Order]"></td>
 			<td><input size="3" max="999" min="0" type="number" name="Fld[Duration]"></td>
 			<td><input size="5" max="999" min="0" type="number" name="Fld[Shift]"></td>
-			<td><input size="20" type="text" name="Fld[Title]"></td>
-			<td><input size="20" type="text" name="Fld[SubTitle]"></td>
-			<td><input size="20" type="text" name="Fld[Text]"></td>
-			<td><input size="45" type="text" name="Fld[Targets]"></td>
-			<td><input type="button" onclick="DiInsert(this)" value="'.get_text('CmdAdd', 'Tournament').'"></td>
+			<td><input class="w-100" type="text" name="Fld[Title]"></td>
+			<td><input class="w-100" type="text" name="Fld[SubTitle]"></td>
+			<td><input class="w-100" type="text" name="Fld[Text]"></td>
+			<td class="Center"><i class="fa fa-2x fa-save text-success" onclick="DiInsert(this)" title="'.get_text('CmdAdd', 'Tournament').'"></i></td>
 		</tr>';
 	while($r=safe_fetch($q)) {
-		$ret.= '<tr>
-				<td><input size="10" type="date" name="Fld[Z][Day]['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" value="'.$r->SchDay.'" onchange="DiUpdate(this)"></td>
-				<td><input size="5" type="time" name="Fld[Z][Start]['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" value="'.$r->Start.'" onchange="DiUpdate(this)"></td>
+		$ret.= '<tr ref="'.$r->SchDay.'|'.$r->SchStart.'|'.$r->SchOrder.'">
+				<td><input size="10" type="date" name="Fld[Z][Day]['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" value="'.$r->SchDay.'" onblur="DiUpdate(this)"></td>
+				<td><input size="5" type="time" name="Fld[Z][Start]['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" value="'.$r->Start.'" onblur="DiUpdate(this)"></td>
 				<td><input size="3" max="999" min="0" type="number" name="Fld[Z][Order]['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" value="'.$r->SchOrder.'" onchange="DiUpdate(this)"></td>
 				<td><input size="3" max="999" min="0" type="number" name="Fld[Z][Duration]['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" value="'.$r->SchDuration.'" onchange="DiUpdate(this)"></td>
 				<td><input size="5" max="999" min="0" type="number" name="Fld[Z][Shift]['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" value="'.$r->SchShift.'" onchange="DiUpdate(this)"></td>
-				<td><input size="20" type="text" name="Fld[Z][Title]['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" value="'.htmlentities($r->SchTitle).'" onchange="DiUpdate(this)"></td>
-				<td><input size="20" type="text" name="Fld[Z][SubTitle]['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" value="'.htmlentities($r->SchSubTitle).'" onchange="DiUpdate(this)"></td>
-				<td><input size="20" type="text" name="Fld[Z][Text]['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" value="'.htmlentities($r->SchText).'" onchange="DiUpdate(this)"></td>
-				<td><input size="45" type="text" name="Fld[Z][Targets]['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" value="'.htmlentities($r->SchTargets).'" onchange="DiUpdate(this)"></td>
-				<td><input type="button" id="Fld['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" onclick="DiDelete(this)" value="'.get_text('CmdDelete', 'Tournament').'"></td>
+				<td><input class="w-100" type="text" name="Fld[Z][Title]['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" value="'.htmlentities($r->SchTitle).'" onchange="DiUpdate(this)"></td>
+				<td><input class="w-100" type="text" name="Fld[Z][SubTitle]['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" value="'.htmlentities($r->SchSubTitle).'" onchange="DiUpdate(this)"></td>
+				<td>
+					<input class="w-100" type="text" name="Fld[Z][Text]['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" value="'.htmlentities($r->SchText).'" onchange="DiUpdate(this)">
+					<input type="hidden" class="advTarget" name="Fld[Z][Targets]['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" value="'.htmlentities($r->SchTargets).'" onchange="DiUpdate(this)">
+					<input type="hidden" class="advLocation" name="Fld[Z][Location]['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" value="'.htmlentities($r->SchLocation).'" onchange="DiUpdate(this)">
+				</td>
+				<td class="Center NoWrap"><i class="fa fa-2x fa-comment-dots text-info mr-2" onclick="editAdvanced(this)"></i><i class="fa fa-2x fa-trash-alt text-danger" id="Fld['.$r->SchDay.']['.$r->SchStart.']['.$r->SchOrder.']" onclick="DiDelete(this)" title="'.get_text('CmdDelete', 'Tournament').'"></i></td>
 			</tr>';
 	}
 	return $ret;

@@ -23,10 +23,10 @@ if(isset($_REQUEST['Elim'])) {
     $ElimRequest=intval($_REQUEST['Elim']);
 }
 
-$Sql = "SELECT EvCode, EvEventName, EvNumQualified, EvShootOff, EvE1ShootOff, EvE2ShootOff, EvElimType, EvElim1, EvElim2, EvFinalFirstPhase, EvFirstQualified " .
-    "FROM Events " .
-    "WHERE EvCode='{$EventCode}' AND EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=0 AND EvElimType!=0 AND EvCodeParent='' " .
-    "ORDER BY EvProgr ASC ";
+$Sql = "SELECT EvCode, EvEventName, EvNumQualified, EvShootOff, EvE1ShootOff, EvE2ShootOff, EvElimType, EvElim1, EvElim2, EvFinalFirstPhase, EvFirstQualified, EvFinalTargetType
+    FROM Events
+    WHERE EvCode='{$EventCode}' AND EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=0 AND EvElimType!=0 AND EvCodeParent=''
+    ORDER BY EvProgr ASC ";
 $q=safe_r_SQL($Sql);
 $rowEv=safe_fetch($q);
 
@@ -103,7 +103,7 @@ if(!empty($_REQUEST["RESET"]) AND intval($_REQUEST["RESET"])==(($ElimRequest+1)*
     header('location: ' . $CFG->ROOT_DIR . 'Final/Individual/AbsIndividual.php');
     die();
 }
-
+$IncludeJquery = true;
 $JS_SCRIPT = array( phpVars2js(array(
     'ROOT_DIR'=>$CFG->ROOT_DIR,
     'MsgInitFinalGridsError'=>get_text('MsgInitFinalGridsError'),
@@ -113,11 +113,8 @@ $JS_SCRIPT = array( phpVars2js(array(
     'Advanced' => get_text('Advanced'),
     'MsgForExpert' => get_text('MsgForExpert', 'Tournament')
 )),
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
-    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-confirm.min.js"></script>',
     '<script type="text/javascript" src="./AbsIndividual.js"></script>',
     '<link href="'.$CFG->ROOT_DIR.'Final/Individual/AbsIndividual.css" rel="stylesheet" type="text/css">',
-    '<link href="'.$CFG->ROOT_DIR.'Common/css/jquery-confirm.min.css" media="screen" rel="stylesheet" type="text/css">',
 );
 include('Common/Templates/head.php');
 
@@ -171,7 +168,7 @@ if (isset($_REQUEST['R']) AND !IsBlocked(BIT_BLOCK_ELIM)) {
                         }
                         $existingRanks[$irmPos]++;
                     }
-                    if (array_sum($existingRanks) < min(count($EnIds), $r->EvNumQualified)) {
+                    if (array_sum($existingRanks) < min(count($EnIds), $NumQualified)) {
                         $cantResolve = true;
                     }
                 } else {
@@ -196,7 +193,7 @@ if (isset($_REQUEST['R']) AND !IsBlocked(BIT_BLOCK_ELIM)) {
                         $tmpValue['tiebreak'] = '';
                         $tmpValue['closest'] = 0;
                         foreach ($_REQUEST['T'][$Event][$EnId] as $k => $v) {
-                            $tmpValue['tiebreak'] .= GetLetterFromPrint(str_replace('*', '', $v));
+                            $tmpValue['tiebreak'] .= GetLetterFromPrint(str_replace('*', '', $v), 'T', $rowEv->EvFinalTargetType);
                         }
                         $tmpValue['tiebreak'] = trim($tmpValue['tiebreak']);
                         if (isset($_REQUEST['C'][$Event][$EnId])) {

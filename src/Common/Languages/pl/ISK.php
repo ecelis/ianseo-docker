@@ -176,5 +176,6 @@ $lang['VerNotCompatible']='Wersja tej aplikacji to __currver__, nie jest zgodna 
 $lang['VerNotVerified']='Nie można zweryfikować wersji tej aplikacji z oprogramowaniem Ianseo. Sprawdź instalację i spróbuj ponownie.';
 $lang['VerNotVerifiedErr']='Nie zweryfikowane wersji aplikacji Ianseo. Sprawdź informacje o serwerze i spróbuj ponownie. Błąd __TEXT__';
 $lang['Version']='Wersja';
+$lang['Winner']='Zwycięzca';
 $lang['Yes']='Tak';
 ?>

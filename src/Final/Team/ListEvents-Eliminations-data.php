@@ -174,6 +174,14 @@ switch($_REQUEST['act']) {
             case 'EvElim1':
                 if($Value) {
                     $SQL="update Events set EvElim1=$Value where EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=1 and EvCode=".StrSafe_DB($_REQUEST['ev']);
+                    if($EVENT->EvElimType==5) {
+                        // Round Robin, destroys all what is more than that level
+                        safe_w_sql("delete from RoundRobinGrids where RrGridLevel>$Value and RrGridTournament={$_SESSION['TourId']} and RrGridTeam=1 and RrGridEvent=".StrSafe_DB($_REQUEST['ev']));
+                        safe_w_sql("delete from RoundRobinGroup where RrGrLevel>$Value and RrGrTournament={$_SESSION['TourId']} and RrGrTeam=1 and RrGrEvent=".StrSafe_DB($_REQUEST['ev']));
+                        safe_w_sql("delete from RoundRobinLevel where RrLevLevel>$Value and RrLevTournament={$_SESSION['TourId']} and RrLevTeam=1 and RrLevEvent=".StrSafe_DB($_REQUEST['ev']));
+                        safe_w_sql("delete from RoundRobinMatches where RrMatchLevel>$Value and RrMatchTournament={$_SESSION['TourId']} and RrMatchTeam=1 and RrMatchEvent=".StrSafe_DB($_REQUEST['ev']));
+                        safe_w_sql("delete from RoundRobinParticipants where RrPartLevel>$Value and RrPartTournament={$_SESSION['TourId']} and RrPartTeam=1 and RrPartEvent=".StrSafe_DB($_REQUEST['ev']));
+                    }
                 } else {
                     $SQL="update Events set EvElim1=0, EvE1Ends=0, EvE1Arrows=0, EvE1SO=0, EvElimType=1 where EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvTeamEvent=1 and EvCode=".StrSafe_DB($_REQUEST['ev']);
                 }

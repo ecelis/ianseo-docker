@@ -3,6 +3,7 @@
 $OldStop=$pdf->StopHeader;
 $pdf->StopHeader=true;
 $pdf->setPhase('As of '.$PdfData->RecordAs);
+$pdf->setEvent($PdfData->Description);
 
 $Version='';
 if($PdfData->DocVersion) {
@@ -10,6 +11,7 @@ if($PdfData->DocVersion) {
 }
 $pdf->setComment($Version);
 $pdf->setOrisCode($PdfData->Code, $PdfData->Description);
+
 $pdf->AddPage();
 $pdf->Bookmark($PdfData->IndexName, 0);
 
@@ -21,7 +23,9 @@ if(empty($PdfData->Data['Items'])) {
 	$pdf->printSectionTitle('No data§', $pdf->GetY()+10);
 } else {
 	foreach($PdfData->Data['Items'] as $Team => $Rows) {
-		if($AddPage) $pdf->addpage();
+		if($AddPage) {
+			$pdf->addpage();
+		}
 		$AddPage=true;
 		$pdf->lastY += 3.5;
 		$pdf->SamePage(count($Rows), 3.5, $pdf->lastY);

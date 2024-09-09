@@ -308,6 +308,10 @@
 					if (count($events4abs)>0) {
 						if (!Obj_RankFactory::create('Abs',array('events'=>$events4abs,'dist'=>0))->calculate()) {
 							$Errore=1;
+						} else {
+							foreach ($events4abs as $eventAbs) {
+								runJack("QRRankUpdate", $_SESSION['TourId'], array("Event" => $eventAbs, "Team" => 0, "TourId" => $_SESSION['TourId']));
+							}
 						}
 					}
 				}

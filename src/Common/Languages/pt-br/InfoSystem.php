@@ -1,6 +1,7 @@
 <?php
 $lang['AutoUpdate']='Atualização automática';
 $lang['BarRecord']='Mostra barra de média do recorde';
+$lang['BrokenRecords']='Recordes quebrados';
 $lang['ByClub']='Por país/clube';
 $lang['ByEvent']='Por evento';
 $lang['ByName']='Por nome';
@@ -73,6 +74,7 @@ $lang['Record-WR-avg']='Média do recorde Mundial';
 $lang['Record-WR-WA']='Recorde Mundial';
 $lang['Record-WR-WA-avg']='Recorde Mundial - média';
 $lang['RR_Score']='Pontuação do RR';
+$lang['StandingRecords']='Recordes atuais';
 $lang['Teams']='Equipes';
 $lang['TypeName']='Digite o nome que você está buscando';
 $lang['ViewIndividualResults']='Ver resultados individuais';

@@ -262,11 +262,18 @@ switch($TourType)
 		break;
 
 	case 7:  // Indoor 25m, 2 Dist - 60 arrows
-		CreateTargetFace($TourId, $i++, '10 ring 60cm', '_U13_', '1', 1, 60, 1, 60);
-		CreateTargetFace($TourId, $i++, '10 ring 60cm', 'REG-^[RBLT]', '1', 1, 60, 1, 60);
-		CreateTargetFace($TourId, $i++, '3 spot', 'REG-^[RBLT]', '0', 2, 60, 2, 60);
-		CreateTargetFace($TourId, $i++, '3 spot', 'REG-^[C]', '1', 4, 60, 4, 60);
-		CreateTargetFace($TourId, $i++, '10 ring 60cm', 'REG-^[C]', '0', 3, 60, 3, 60);
+        CreateTargetFace($TourId, $i++, '10 ring 60cm', '_U13_', '1', 1, 60, 1, 60);
+        CreateTargetFace($TourId, $i++, '10 ring 40cm', 'REG-^[RB](U16)[MW]', '1', 1, 40, 1, 40);
+        CreateTargetFace($TourId, $i++, '3 spot 40cm', 'REG-^[RB](U16)[MW]', '0', 2, 40, 2, 40);
+        CreateTargetFace($TourId, $i++, '10 ring 40cm', 'REG-^[C](U16)[MW]', '1', 3, 40, 3, 40);
+        CreateTargetFace($TourId, $i++, '3 spot 40cm', 'REG-^[C](U16)[MW]', '0', 4, 40, 4, 40);
+        CreateTargetFace($TourId, $i++, '10 ring 60cm', 'REG-^[LT](U16)[MW]', '1', 1, 60, 1, 60);
+        CreateTargetFace($TourId, $i++, '3 spot 60cm', 'REG-^[R](U21|21|50|60)?[MW]', '1', 2, 60, 2, 60);
+        CreateTargetFace($TourId, $i++, '10 ring 60cm', 'REG-^[R](U21|21|50|60)?[MW]', '0', 1, 60, 1, 60);
+        CreateTargetFace($TourId, $i++, '3 spot 60cm', 'REG-^[C](U21|21|50|60)?[MW]', '1', 4, 60, 4, 60);
+        CreateTargetFace($TourId, $i++, '10 ring 60cm', 'REG-^[C](U21|21|50|60)[MW]', '0', 3, 60, 3, 60);
+		CreateTargetFace($TourId, $i++, '10 ring 60cm', 'REG-^[BLT](U21|21|50|60)?[MW]', '1', 1, 60, 1, 60);
+		CreateTargetFace($TourId, $i++, '3 spot 60cm', 'REG-^[BLT](U21|21|50|60)?[MW]', '0', 2, 60, 2, 60);
 		break;
 
 	case 22:  // Indoor 18m, 1 Dist - 30 arrows

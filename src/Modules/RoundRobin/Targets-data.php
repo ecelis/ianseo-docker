@@ -13,7 +13,11 @@ require_once('./Lib.php');
 
 $Team=intval($_REQUEST['Team'] ?? 0);
 $Event=($_REQUEST['Event'] ?? '');
-$Level=max(intval($_REQUEST['Level'] ?? 1), 1);
+if(($_REQUEST['Level'] ?? 1)==='') {
+    $Level=1;
+} else {
+    $Level=intval($_REQUEST['Level']);
+}
 $Group=intval($_REQUEST['Group'] ?? 0);
 $Round=intval($_REQUEST['Round'] ?? 0);
 $Matchno=intval($_REQUEST['Matchno'] ?? -1);
@@ -56,6 +60,11 @@ switch($_REQUEST['act']) {
 				'disabled' => is_null($r->RrLevName),
 			);
 		}
+        $JSON['levels'][]=array(
+            'val' => 0,
+            'text' => 'all',
+            'disabled' => 0,
+        );
 
 		$JSON['dateTimes']=getRrMatchDateTimes($Team);
 
@@ -72,7 +81,8 @@ switch($_REQUEST['act']) {
 		$JSON['setAll']=get_text('ToAll');
 		$JSON['groups']=array();
 
-		$q=safe_r_sql("select RrMatchGroup, RrMatchRound, RrMatchMatchNo, RrMatchTarget, RrGridItem, RrGrTargetArchers, RrGrArcherWaves, RrLevGroups, RrLevGroupArchers, RrMatchScheduledDate as MatchDate, date_format(RrMatchScheduledTime, '%H:%i') as MatchTime, RrMatchScheduledLength as MatchLength, RrGrName, 
+		$q=safe_r_sql("select RrMatchGroup, RrMatchRound, RrMatchMatchNo, RrMatchTarget, RrGridItem, RrGrTargetArchers, RrGrArcherWaves, 
+            RrLevGroups, RrLevGroupArchers, RrMatchLevel, RrLevName, RrMatchScheduledDate as MatchDate, date_format(RrMatchScheduledTime, '%H:%i') as MatchTime, RrMatchScheduledLength as MatchLength, RrGrName, 
        		coalesce(concat(upper(EnFirstName), ' ', EnName), concat(CoCode, '-', CoName, if(TeSubTeam>0, concat(' (', TeSubTeam, ')'), '')), '') as PartName 
 			from RoundRobinMatches
             inner join RoundRobinGroup on RrGrTournament=RrMatchTournament and RrGrTeam=RrMatchTeam and RrGrEvent=RrMatchEvent and RrGrLevel=RrMatchLevel and RrGrGroup=RrMatchGroup
@@ -81,7 +91,7 @@ switch($_REQUEST['act']) {
 			left join Entries on EnId=RrMatchAthlete and RrMatchTeam=0
 			left join Teams on TeCoId=RrMatchAthlete and RrMatchTeam=1 and TeSubTeam=RrMatchSubTeam and TeFinEvent=1 and TeEvent=RrMatchEvent and TeTournament=RrMatchTournament
 			left join Countries on CoId=TeCoId and CoTournament=RrMatchTournament
-			where RrMatchLevel=$Level and RrMatchTeam=$Team and RrMatchEvent=".StrSafe_DB($Event)." and  RrMatchTournament={$_SESSION['TourId']} ".($EvGroup ? "and RrMatchGroup=$EvGroup" : "")." ".($EvRound ? "and RrMatchRound=$EvRound" : "")."
+			where ".($Level=='0' ? '': "RrMatchLevel=$Level and")." RrMatchTeam=$Team and RrMatchEvent=".StrSafe_DB($Event)." and  RrMatchTournament={$_SESSION['TourId']} ".($EvGroup ? "and RrMatchGroup=$EvGroup" : "")." ".($EvRound ? "and RrMatchRound=$EvRound" : "")."
 			order by RrMatchGroup, RrMatchRound, RrMatchMatchNo");
 
 		$JSON['items']=0;
@@ -95,10 +105,21 @@ switch($_REQUEST['act']) {
 				}
 			}
 
+            $lv='l'.str_pad($r->RrMatchLevel,3, '0', STR_PAD_LEFT);
 			$gr='g'.str_pad($r->RrMatchGroup,3, '0', STR_PAD_LEFT);
 			$ro='r'.str_pad($r->RrMatchRound,3, '0', STR_PAD_LEFT);
-			if(empty($JSON['groups'][$gr])) {
-				$JSON['groups'][$gr]=[
+			if(empty($JSON['groups'][$lv])) {
+				$JSON['groups'][$lv]=[
+					'lId'=>$r->RrMatchLevel,
+					'lName'=>($r->RrLevName ?: get_text('LevelNum', 'RoundRobin', $r->RrMatchLevel)),
+					'lA4T'=>$r->RrGrTargetArchers,
+					'lM4T'=>$r->RrGrArcherWaves,
+					'groups'=>[],
+				];
+
+			}
+			if(empty($JSON['groups'][$lv]['groups'][$gr])) {
+				$JSON['groups'][$lv]['groups'][$gr]=[
 					'gId'=>$r->RrMatchGroup,
 					'gName'=>($r->RrGrName ?: get_text('GroupNum', 'RoundRobin', $r->RrMatchGroup)),
 					'gA4T'=>$r->RrGrTargetArchers,
@@ -107,15 +128,15 @@ switch($_REQUEST['act']) {
 				];
 
 			}
-			if(empty($JSON['groups'][$gr]['gRounds'][$ro])) {
-				$JSON['groups'][$gr]['gRounds'][$ro]=[
+			if(empty($JSON['groups'][$lv]['groups'][$gr]['gRounds'][$ro])) {
+				$JSON['groups'][$lv]['groups'][$gr]['gRounds'][$ro]=[
 					'rId'=>$r->RrMatchRound,
 					'rName'=>get_text('Round#', 'Tournament', $r->RrMatchRound),
 					'rComponents'=>[],
 				];
 
 			}
-			$JSON['groups'][$gr]['gRounds'][$ro]['rComponents'][]=[
+			$JSON['groups'][$lv]['groups'][$gr]['gRounds'][$ro]['rComponents'][]=[
 				'mMatchno' => $r->RrMatchMatchNo,
 				'mItem' => $r->RrGridItem,
 				'mDate' => ($r->MatchDate=='0000-00-00' ? '' : $r->MatchDate),
@@ -163,43 +184,70 @@ switch($_REQUEST['act']) {
 
 			$Time='0';
 			$tmp=strtolower($_REQUEST['time']);
-			if(($tmp[0]=='+' or $tmp[0]=='-') and $Round>1) {
-				// it is relative to the time from the previous round, so round must be > 1
-				$Minutes=intval(substr($tmp,1));
-				if($Date and $Date!='0000-00-00') {
-					$SQL=($tmp[0]=='+' ? 'date_add' : 'date_sub')."(concat('$Date ', RrMatchScheduledTime), INTERVAL $Minutes MINUTE)";
-				} else {
-					$SQL=($tmp[0]=='+' ? 'date_add' : 'date_sub')."(concat(RrMatchScheduledDate, ' ', RrMatchScheduledTime), INTERVAL $Minutes MINUTE)";
-				}
+            $Length=intval($_REQUEST['length']);
 
-				$q=safe_r_sql("select date_format($SQL, '%Y-%m-%d %H:%i:%s') as NewDateTime from RoundRobinMatches 
-					where RrMatchTournament={$_SESSION['TourId']} and RrMatchTeam=$Team and RrMatchEvent=".StrSafe_DB($Event)." and RrMatchLevel=$Level and RrMatchGroup=$Group and RrMatchRound=".($Round-1)." and RrMatchMatchNo=$Matchno");
-				if($r=safe_fetch($q)) {
-					$Date=substr($r->NewDateTime, 0, 10);
-					$Time=substr($r->NewDateTime, -8, 5);
-				}
-			} else {
-				if(!preg_match('#^[0-9]{1,2}[^0-9][0-9]{1,2}$#', $tmp)) {
-					JsonOut($JSON);
-				}
-				$Items=preg_split('#[^0-9]+#',$tmp);
-				if(count($Items)!=2) {
-					JsonOut($JSON);
-				}
-				$Items[]='00';
-				$Time=implode(':', $Items);
-			}
+            if($tmp) {
+                if(($tmp[0]=='+' or $tmp[0]=='-')) {
+                    // it is relative to the time from the previous, so round must be > 1
+                    $Minutes=intval(substr($tmp,1));
+                    if($Date and $Date!='0000-00-00') {
+                        $SQL=($tmp[0]=='+' ? 'date_add' : 'date_sub')."(concat('$Date ', RrMatchScheduledTime), INTERVAL $Minutes MINUTE)";
+                    } else {
+                        $SQL=($tmp[0]=='+' ? 'date_add' : 'date_sub')."(concat(RrMatchScheduledDate, ' ', RrMatchScheduledTime), INTERVAL $Minutes MINUTE)";
+                    }
 
-			$Length=intval($_REQUEST['length']);
-			safe_w_sql("update RoundRobinMatches set RrMatchScheduledDate='$Date', RrMatchScheduledTime='$Time', RrMatchScheduledLength='$Length'
+                    if($Round==1 and $Level>1) {
+                        // only 1 round so it travels throught the levels!!!
+                        $q=safe_r_sql("select date_format($SQL, '%Y-%m-%d %H:%i:%s') as NewDateTime, RrMatchScheduledLength from RoundRobinMatches 
+					        where RrMatchTournament={$_SESSION['TourId']} and RrMatchTeam=$Team and RrMatchEvent=".StrSafe_DB($Event)." and RrMatchLevel=".($Level-1)." and RrMatchGroup=$Group and RrMatchRound=$Round and RrMatchMatchNo=$Matchno");
+                    } elseif($Round>1) {
+                        $q=safe_r_sql("select date_format($SQL, '%Y-%m-%d %H:%i:%s') as NewDateTime, RrMatchScheduledLength from RoundRobinMatches 
+					        where RrMatchTournament={$_SESSION['TourId']} and RrMatchTeam=$Team and RrMatchEvent=".StrSafe_DB($Event)." and RrMatchLevel=$Level and RrMatchGroup=$Group and RrMatchRound=".($Round-1)." and RrMatchMatchNo=$Matchno");
+                    } else {
+                        JsonOut($JSON);
+                    }
+                    if($r=safe_fetch($q)) {
+                        $Date=substr($r->NewDateTime, 0, 10);
+                        $Time=substr($r->NewDateTime, -8, 5);
+                    }
+                } elseif(($tmp[0]=='*') and $Level>1) {
+                    // it is relative to the time from the previous level (same round and group)
+                    $Minutes=intval(substr($tmp,1));
+                    if($Date and $Date!='0000-00-00') {
+                        $SQL="date_add(concat('$Date ', RrMatchScheduledTime), INTERVAL $Minutes MINUTE)";
+                    } else {
+                        $SQL="date_add(concat(RrMatchScheduledDate, ' ', RrMatchScheduledTime), INTERVAL $Minutes MINUTE)";
+                    }
+
+                    $q=safe_r_sql("select date_format($SQL, '%Y-%m-%d %H:%i:%s') as NewDateTime, RrMatchScheduledLength from RoundRobinMatches 
+					where RrMatchTournament={$_SESSION['TourId']} and RrMatchTeam=$Team and RrMatchEvent=".StrSafe_DB($Event)." and RrMatchLevel=".($Level-1)." and RrMatchGroup=$Group and RrMatchRound=$Round and RrMatchMatchNo=$Matchno");
+                    if($r=safe_fetch($q)) {
+                        $Date=substr($r->NewDateTime, 0, 10);
+                        $Time=substr($r->NewDateTime, -8, 5);
+                        $Length=$r->RrMatchScheduledLength;
+                    }
+                } else {
+                    if(!preg_match('#^[0-9]{1,2}[^0-9][0-9]{1,2}$#', $tmp)) {
+                        JsonOut($JSON);
+                    }
+                    $Items=preg_split('#[^0-9]+#',$tmp);
+                    if(count($Items)!=2) {
+                        JsonOut($JSON);
+                    }
+                    $Items[]='00';
+                    $Time=implode(':', $Items);
+                }
+
+                safe_w_sql("update RoundRobinMatches set RrMatchScheduledDate='$Date', RrMatchScheduledTime='$Time', RrMatchScheduledLength='$Length'
 				where RrMatchTournament={$_SESSION['TourId']} and RrMatchTeam=$Team and RrMatchEvent=".StrSafe_DB($Event)." and RrMatchLevel=$Level and RrMatchGroup=$Group and RrMatchRound=$Round and RrMatchMatchNo in ($Matchnos)");
 
-			$q=safe_r_sql("select RrMatchMatchNo, RrMatchScheduledDate, left(RrMatchScheduledTime,5) as MatchTime, RrMatchScheduledLength from RoundRobinMatches
+                $q=safe_r_sql("select RrMatchMatchNo, RrMatchScheduledDate, left(RrMatchScheduledTime,5) as MatchTime, RrMatchScheduledLength from RoundRobinMatches
 				where RrMatchTournament={$_SESSION['TourId']} and RrMatchTeam=$Team and RrMatchEvent=".StrSafe_DB($Event)." and RrMatchLevel=$Level and RrMatchGroup=$Group and RrMatchRound=$Round and RrMatchMatchNo in ($Matchnos)");
-			$JSON['dates']=[];
-			while($r=safe_fetch($q)) {
-				$JSON['dates'][]=array('g'=>$Group, 'r'=>$Round, 'm'=>$r->RrMatchMatchNo, 'd' => $r->RrMatchScheduledDate, 't' => $r->MatchTime, 'l' => $r->RrMatchScheduledLength);
-			}
+                $JSON['dates']=[];
+                while($r=safe_fetch($q)) {
+                    $JSON['dates'][]=array('lv' => $Level, 'g'=>$Group, 'r'=>$Round, 'm'=>$r->RrMatchMatchNo, 'd' => $r->RrMatchScheduledDate, 't' => $r->MatchTime, 'l' => $r->RrMatchScheduledLength);
+                }
+            }
 			$JSON['error']=0;
 		} else {
 			JsonOut($JSON);
@@ -221,7 +269,7 @@ switch($_REQUEST['act']) {
 				list($l, $g, $r, $m, $e)=explode('-', $Item);
 				if($l==$Level and $e==$Event) {
 					// target
-					$JSON['list'][]='.Tabella[group="'.$g.'"][round="'.$r.'"] [matchno="'.$m.'"] [name="tgt"]';
+					$JSON['list'][]='.Tabella[level="'.$l.'"][group="'.$g.'"][round="'.$r.'"] [matchno="'.$m.'"] [name="tgt"]';
 				}
 			}
 
@@ -234,7 +282,7 @@ switch($_REQUEST['act']) {
 $JSON['error']=0;
 $JSON['team']=$Team;
 $JSON['event']=$Event;
-$JSON['level']=max($Level,1);
+$JSON['level']=$Level;
 $JSON['evGroup']=$EvGroup;
 $JSON['evRound']=$EvRound;
 $JSON['cmdSave']=get_text('CmdSave');

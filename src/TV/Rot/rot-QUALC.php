@@ -191,8 +191,16 @@ function rotQualcSettings($Settings) {
 	$PageDefaults=getPageDefaults($RMain);
 
 	foreach($PageDefaults as $key => $Value) {
-		$ret.= '<tr>
-			<th nowrap="nowrap" class="Right">'.get_text('TVCss3'.$key,'Tournament').' <input type="button" value="reset" onclick="document.getElementById(\'P-Main['.$key.']\').value=\''.$Value.'\'"></th>
+		$ret.= '<tr ref="'.$Value.'">
+			<th nowrap="nowrap">
+			    <div class="d-flex">
+                    <div class="CssResetButton '.($Value==$RMain[$key] ? 'CssResetDisabled' : '').'" onclick="SetDefaults(this)">Default</div>
+                    <div class="CssTitle">
+                        '.get_text('TVCss3'.$key,'Tournament').'
+                        <i class="fa fa-pencil-alt ml-1" onclick="editCss(this)"></i>
+                    </div>
+                </div>
+            </th>
 			<td width="100%"><input type="text" name="P-Main['.$key.']" id="P-Main['.$key.']" value="'.$RMain[$key].'"></td>
 			</tr>';
 	}

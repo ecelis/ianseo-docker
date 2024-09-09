@@ -80,8 +80,7 @@ if(!empty($_REQUEST['FindLanguage'])) {
         $Lingue_esterne=@unserialize(gzinflate($package)) ;
     }
 }
-
-$JS_SCRIPT[] = '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>';
+$IncludeJquery = true;
 $JS_SCRIPT[] = '<script type="text/javascript" src="./lang.js"></script>';
 $JS_SCRIPT[] = '<style>.updated {background-color:#e0ffe0}</style>';
 

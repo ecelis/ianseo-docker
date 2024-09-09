@@ -5,8 +5,8 @@ require_once('Common/Fun_FormatText.inc.php');
 $CardType=(empty($_REQUEST['CardType']) ? 'A' : $_REQUEST['CardType']);
 $CardNumber=(empty($_REQUEST['CardNumber']) ? 0 : intval($_REQUEST['CardNumber']));
 
-$FIELDS='distinct CoId, CoCode, CoName, "" as Bib';
-$SORTSTRICT='CoCode, CoName';
+$FIELDS='distinct c.CoId, c.CoCode, c.CoName, "" as Bib';
+$SORTSTRICT='c.CoCode, c.CoName';
 
 foreach(array('PrintNotPrinted','PrintAccredited','PrintPhoto') as $tmp) {
 	if(isset($_REQUEST[$tmp])) {

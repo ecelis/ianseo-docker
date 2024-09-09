@@ -161,6 +161,55 @@ foreach ($Data['sections'] as $EvCode=>$Phases) {
     }
 }
 
+$rank=Obj_RankFactory::create('Robin',$options);
+$rank->read();
+$Data=$rank->getData();
+
+foreach (($Data['sections']??[]) as $EvCode=>$Levels) {
+    foreach (($Levels['levels']??[]) as $LevelNum => $Level) {
+        foreach($Level['matches'] as $Group => $Rounds) {
+            foreach ($Rounds['rounds'] as $RoundNum => $Round) {
+                foreach($Round['items'] as $Match) {
+                    if(!($Match['itemId'] or $Match['oppItemId'])) {
+                        continue;
+                    }
+                    $arrPos=array('','');
+                    $oppArrPos=array('','');
+                    $output[] = array(
+                        $EvCode,
+                        'R',
+                        $Level['name'].' '.$Rounds['name'].' '.$Round['name'].' ('.$Round['place'].')',
+                        $Match['matchNo'],
+                        '',
+                        '',
+                        '',
+                        $Match['countryCode'],
+                        $Match['athlete'],
+                        $Match['winner'],
+                        '',
+                        '',
+                        '',
+                        $Match['oppCountryCode'],
+                        $Match['oppAthlete'],
+                        $Match['oppWinner'],
+                        $Match[($Levels['meta']['matchMode']==1 ? 'setScore' : 'score')],
+                        str_replace('|',',',$Match['setPoints']),
+                        $Match['tiebreakDecoded'],
+                        implode(',', DecodeFromString(rtrim($Match['arrowstring']), false, true)),
+                        implode(',', DecodeFromString(rtrim($Match['tiebreak']), false, true)),
+                        $Match[($Phases['meta']['matchMode']==1 ? 'oppSetScore' : 'oppScore')],
+                        str_replace('|',',',$Match['oppSetPoints']),
+                        $Match['oppTiebreakDecoded'],
+                        implode(',', DecodeFromString(rtrim($Match['oppArrowstring']), false, true)),
+                        implode(',', DecodeFromString(rtrim($Match['oppTiebreak']), false, true)),
+                        $arrPos[0],$arrPos[1],$oppArrPos[0],$oppArrPos[1]
+                    );
+                }
+            }
+        }
+    }
+}
+
 
 header('Cache-Control: no-store, no-cache, must-revalidate');
 header('Content-Disposition: attachment; filename=' . $_SESSION["TourCode"] . '_Matches.csv');

@@ -55,6 +55,7 @@ $SQL= "update {$table}
 			and {$prefix}Event='$event'
 			and {$prefix}Matchno in ($match, ".($match+1).") ";
 safe_w_sql($SQL);
+updateOdfTiming('C', $_SESSION['TourId'], $event, $team, $match);
 
 $ok=false;
 if ($team) {

@@ -28,4 +28,3 @@ $DistanceInfoArray=array(array(24, 2), array(24, 2));
 
 require_once('Setup_D3.php');
 
-?>

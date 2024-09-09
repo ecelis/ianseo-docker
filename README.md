@@ -1,4 +1,4 @@
-# I@nseo
+# i@nseo
 
 i@nseo is a software for managing archery tournaments results
 
@@ -11,26 +11,29 @@ Mine is a fork from Brian Nelson's `brian-nelson/ianseo` repository but
 mixed with the official release, since Brian's repository seems
 unmaintained.
 
-This fork goal is running I@nseo in Docker.
+This fork goal is running i@anseo in Docker containers. Docker setup is
+out of scope.
 
 ## How to use this image
 
-Docker setup is out of scope.
+Copy `sample.env` to `.env` and edit to suit your requirements.
 
-### Docker compose
+```
+cp sample.env .env`
+```
+
+### Run withDocker compose
 
 ```
 docker compose up -d
 ```
 
-### Docker step by step
+### Run from command line, step by step
 
 First launch a MariaDB container.
 
 ```
-docker run -d --name ianseodb -e MARIADB_USER=ianseo \
-  -e MARIADB_DATABASE=ianseo -e MARIADB_PASSWORD=ianseo \
-  -e MARIADB_ROOT_PASSWORD=ianseo mariadb:10
+docker run -d --env-file .env --name ianseodb mariadb:lts
 ```
 
 Now launch the ianseo container linked to the database container.
@@ -42,7 +45,7 @@ docker run -d --name ianseo --link ianseodb:mysql -p 8080:80 arqueria/ianseo
 Browse to http://127.0.0.1:8080 and follow the instructions to
 finish the installation.
 
-⚠️  In the **Step 2: Database connection data** of I@nseo has a default of
+⚠️  In the **Step 2: Database connection data** of i@anseo has a default of
 `localhost` for Database host, change it for the name of the MariaDB
 container, `ianseodb` in the example above.
 
@@ -94,10 +97,10 @@ by the `MARIADB_ROOT_PASSWORD` / `MYSQL_ROOT_PASSWORD` variable.
 Refer to the MariaDB official repository for deeper information about
 variable environments https://hub.docker.com/_/mariadb
 
-## Fetch newer Ianseo releases
+## Fetch newer i@nseo releases
 
 ```
-./bin/fetch <YYYYMMDD>
+npm run ianseo:fetch <YYYYMMDD>
 ```
 
 ## Build the docker image
@@ -105,17 +108,22 @@ variable environments https://hub.docker.com/_/mariadb
 To only build the i@anseo image for the current CPU architechture run:
 
 ```
-docker build -t arqueria/ianseo .
+npm run ianseo:build
 ```
+
 To build images for both x86_64, aarch64 and arm7, run:
 
 ```
-docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 --tag arqueria/ianseo .
+npm run ianseo:build:multi
 ```
 
 ## Relase and Publish images to Docker registries
 
-There are github actions wired to this repository, after mergin a bracnch into `master` you must tag the commit to publish with semantic versioning. Ex: v2022.01.01.1 vYEAR.MONTH.DAY.REVISION. Official I@anseo versioning has integers as REVISION, however docker releases may add an alphabetic charater to the REVISIOn integer to support my own releases linked to official ones.
+There are github actions wired to this repository, after mergin a branch into
+`main` you must tag the commit to publish with semantic versioning.
+Ex: v2022.01.01.1 vYEAR.MONTH.DAY.REVISION. Official I@anseo versioning has
+integers as REVISION, however docker releases may add an alphabetic charater to
+the REVISION integer to support my own releases linked to official ones.
 
 ```
 git checkout master

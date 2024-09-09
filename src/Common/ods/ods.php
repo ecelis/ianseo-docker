@@ -163,13 +163,13 @@ class ods {
 						$string .= '<table:table-cell ';
 						if(!empty($tableContent['rows'][$n][$o])) {
 							foreach ($tableContent['rows'][$n][$o]['attrs'] as $attrName => $attrValue) {
-								$string .= strtolower($attrName) . '="' . str_replace('"', '&quot;', $attrValue) . '" ';
+								$string .= strtolower($attrName) . '="' . str_replace(['"','&'], ['&quot;','&amp;'], $attrValue) . '" ';
 							}
 							$string .= '>';
 
 							if(isset($tableContent['rows'][$n][$o]['value'])) {
 								foreach(preg_split('/[\r\n]+/', $tableContent['rows'][$n][$o]['value']) as $line) {
-									$string .= '<text:p>' . $line . '</text:p>';
+									$string .= '<text:p><![CDATA[' . $line . ']]></text:p>';
 								}
 							}
 						} else {

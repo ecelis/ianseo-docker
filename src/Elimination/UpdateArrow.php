@@ -56,10 +56,9 @@ $ArrowString[$Index]=$Letter;
 
 // check if the arrow inserted is the same as the arrow received
 $JSON['error']='0';
-if($Arrow!=($tmp=ValutaArrowString($Letter))) {
+if($Arrow!=($tmp=DecodeFromLetter($Letter))) {
 	$JSON['error']='1';
 	$Arrow=$tmp;
-} else {
 }
 
 $Hits=strlen(str_replace(' ', '', $ArrowString));

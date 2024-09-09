@@ -360,7 +360,7 @@ function getRss($TourId) {
 	$ret.='<td><table cellpadding="0" cellspacing="0" border="0" width="100%">';
 	$ret.='<tr><th colspan="5">'.get_text('IndFinal')."</th></tr>\n";
 	// Finals Individual
-	$q=safe_r_sql("Select distinct BsType, BsExtra, EvCode, EvEventName from Finals inner join Events on FinTournament=EvTournament and EvCode=FinEvent and EvTeamEvent=0 left join BoinxSchedule on FinTournament=BsTournament and BsType=concat_ws('_', 'Rss', 'Abs', EvCode) where FinTournament=$TourId order by EvProgr");
+	$q=safe_r_sql("Select distinct BsType, BsExtra, EvCode, EvEventName from Events left join BoinxSchedule on EvTournament=BsTournament and BsType=concat_ws('_', 'Rss', 'Abs', EvCode) where EvTournament=$TourId and EvTeamEvent=0 order by EvProgr");
 	while($r=safe_fetch($q)) {
 		$ret.='<tr>'
 			. '<td><div class="button_'.($r->BsType ? 'on' : 'off').'" id="Rss_Abs_'.$r->EvCode.'" onclick="toggle(this)">'.get_text($r->EvEventName, '', '', true)."</div>\n"

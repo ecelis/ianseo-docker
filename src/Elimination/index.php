@@ -8,9 +8,9 @@ require_once('Common/Fun_FormatText.inc.php');
 require_once('Common/Fun_Sessions.inc.php');
 require_once('Common/Lib/CommonLib.php');
 
+$IncludeJquery = true;
 $JS_SCRIPT=array(
 	phpVars2js(array('RootDir'=>$CFG->ROOT_DIR.'Elimination/')),
-	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/jquery-3.2.1.min.js"></script>',
 	'<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Elimination/WriteArrows.js"></script>',
 	);
 

@@ -37,7 +37,6 @@ $lang['Required']='Obligatoriu';
 $lang['Root password']='Parola ADMINISTRATOR pentru creare utilizatori si baze de date';
 $lang['Start Ianseo']='Porneste IANSEO!';
 $lang['Status']='Status';
-$lang['Suboptimal']='Cu toate ca fisierul php.ini nu este setat la parametri optimi, IANSEO ar trebui sa functioneze corect la majoritatea solicitarilor. Recomandam insistent sa setati parametri la valoarea optima.';
 $lang['System value']='Sistem de valori';
 $lang['User']='Nume utilizator';
 $lang['Write connection failed']='Conexiunea cu serverul a eşuat: fie nu s-a furnizat parola administrator sau datele de logare nu sunt corecte!';
