@@ -1,0 +1,14 @@
+services:
+  ianseodb:
+    image: mariadb:lts
+    environment:
+      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      - MARIADB_USER=${MARIADB_USER}
+      - MARIADB_DATABASE=${MARIADB_DATABASE}
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD}
+  ianseo:
+    image: ghcr.io/ecelis/ianseo-docker:v2023.04.01.562a
+    ports:
+      - "8080:80"
+    depends_on:
+      - ianseodb
