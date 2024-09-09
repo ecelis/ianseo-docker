@@ -243,3 +243,4 @@ ModelManifest.xml
 .env
 data
 *.zip
+local.env
