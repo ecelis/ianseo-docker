@@ -126,7 +126,7 @@ integers as REVISION, however docker releases may add an alphabetic charater to
 the REVISION integer to support my own releases linked to official ones.
 
 ```
-git checkout master
+git checkout main
 git pull
 git tag v<YYYY>.<mm>.<dd>.<REVISION>
 git push origin v<YYYY>.<mm>.<dd>.<REVISION>
