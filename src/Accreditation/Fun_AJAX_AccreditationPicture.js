@@ -47,19 +47,22 @@ function selectedAthlete(clickObj) {
 							if(typeof window.BigPicture != 'undefined') {
 								window.BigPicture.refresh(clickObj.id);
 							}
+							if(cardsByCat[searchTour]!==undefined && cardsByCat[searchTour][searchCat]!== undefined) {
+								$('#accreditation-number').val(searchTour+'|'+cardsByCat[searchTour][searchCat]);
+							}
 							if(XMLRoot.getElementsByTagName('pic').item(0).firstChild.data!='data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==') {
 								document.getElementById("ManBlock").style.display='';
-								if(cardsByCat[searchTour]!==undefined && cardsByCat[searchTour][searchCat]!== undefined) {
-									$('#accreditation-number').val(searchTour+'|'+cardsByCat[searchTour][searchCat]);
-								}
 							} else {
 								document.getElementById("ManBlock").style.display='none';
 								document.getElementById("confirm-button").style.display='none';
 							}
-
+							document.getElementById("PrnBlock").style.display='';
 							if(document.getElementById("stop-button").style.display != '') {
 								document.getElementById("start-button").style.display = '';
 							}
+						} else {
+							document.getElementById("ManBlock").style.display='none';
+							document.getElementById("PrnBlock").style.display='none';
 						}
 
 					} catch(e) {
@@ -74,6 +77,7 @@ function selectedAthlete(clickObj) {
 }
 
 function searchAthletes() {
+	sesNames();
 	var XMLHttp=CreateXMLHttpRequestObject();
 	if (XMLHttp) {
 		try {
@@ -83,7 +87,8 @@ function searchAthletes() {
 					+"&athlete="+($("#x_Athlete").is(":checked") ? 1 : 0)
 					+"&noprint="+($("#x_NoPrint").is(":checked") ? 1 : 0)
 					+"&noacc="+($("#x_noAcc").is(":checked") ? 1 : 0)
-					+"&nophoto="+($("#x_noPhoto").is(":checked") ? 1 : 0);
+					+"&nophoto="+($("#x_noPhoto").is(":checked") ? 1 : 0)
+					+"&tobeprinted="+($("#x_2BPrinted").is(":checked") ? 1 : 0);
 				var srcTours=document.querySelectorAll('.x_Tours');
 				if(srcTours.length>0) {
 					for(var i=0; i< srcTours.length; i++) {
@@ -147,12 +152,23 @@ function searchAthletes() {
 								td.innerHTML=XmlRow.getAttribute('ath');
 								newRow.appendChild(td);
 								var td = document.createElement('td');
+								td.innerHTML=XmlRow.getAttribute('bib');
+								newRow.appendChild(td);
+								var td = document.createElement('td');
 								td.innerHTML=XmlRow.getAttribute('cat');
 								newRow.appendChild(td);
 								var td = document.createElement('td');
 								td.innerHTML=XmlRow.getAttribute('team');
 								newRow.appendChild(td);
-
+								var td = document.createElement('td');
+								td.innerHTML=XmlRow.getAttribute('tour');
+								newRow.appendChild(td);
+								var td = document.createElement('td');
+								td.innerHTML=XmlRow.getAttribute('sess');
+								newRow.appendChild(td);
+								var td = document.createElement('td');
+								td.innerHTML='<i class="fa fas fa-print '+(XmlRow.getAttribute('printed')=="1" ? "text-success" : "text-danger")+'"></i>';
+								newRow.appendChild(td);
 								document.getElementById("ListBody").appendChild(newRow);
 							}
 						}
@@ -165,6 +181,25 @@ function searchAthletes() {
 			}
 		} catch (e) {
 		}
+	}
+}
+
+function sesNames() {
+	if($('.x_Tours:checked').length == 1) {
+		let tId = $('.x_Tours:checked').attr('tourid');
+		$.each(sessByToId, (index, item) => {
+			if(item[tId] != undefined) {
+				$('#lblSess'+index).html('&nbsp;-&nbsp;'+item[tId]);
+				$('#sesBlock'+index).show();
+			} else {
+				$('#sesBlock'+index).hide();
+			}
+		});
+	} else {
+		$('.x_Sessions').each((index, item) => {
+			$('#lblSess'+index).html('');
+			$('#sesBlock'+index).show();
+		});
 	}
 }
 
@@ -265,6 +300,12 @@ function printAccreditation() {
 	document.getElementById("confirm-button").style.display='';
 }
 
+function printAccreditationAuto(printer) {
+	let ToId=($("#accreditation-number").val().split('|'))[0];
+	let CardNumber=($("#accreditation-number").val().split('|'))[1];
+	$.getJSON('PrintAcc.php?toPrint='+encodeURIComponent(ROOT_DIR+'Accreditation/CardCustom.php?CardType=A&ToString=1&ToId='+ToId+'&CardNumber='+CardNumber+'&Entries[]='+$("#selId").val())+'&printer='+printer);
+}
+
 function ConfirmPrinted() {
 	var CardNumber=document.getElementById("accreditation-number").value;
 	var XMLHttp=CreateXMLHttpRequestObject();
@@ -291,6 +332,7 @@ function ConfirmPrinted() {
 							alert('Error');
 						} else {
 							document.getElementById("confirm-button").style.display='none';
+							searchAthletes();
 						}
 					} catch(e) {
 					}

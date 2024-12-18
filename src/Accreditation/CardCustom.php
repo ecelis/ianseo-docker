@@ -20,6 +20,7 @@ if($Mem=getSystemMemInfo() and !empty($Mem['MemFree'])) {
 
 $CardType=(empty($_REQUEST['CardType']) ? 'A' : $_REQUEST['CardType']);
 $CardNumber=(empty($_REQUEST['CardNumber']) ? 0 : intval($_REQUEST['CardNumber']));
+$AvailableFonts=getFonts();
 
 $SpecialFilter='';
 // $SpecialFilter=' and EnCode in (
@@ -136,7 +137,13 @@ while ($MyRow=safe_fetch($Rs)) {
 			$r->Options=unserialize($r->IceOptions);
 			if(!empty($r->Options['Font'])) {
 				$r->Options['FontStyle']='';
-                $r->Options['FontFamily'] = TCPDF_FONTS::addTTFfont(K_PATH_FONTS . $r->Options['Font'] . '.ttf');
+                $FontFile=$AvailableFonts[$r->Options['Font']]['file'] ?? $AvailableFonts[$r->Options['Font'].'.ttf']['file'] ?? K_PATH_FONTS."arial.ttf";
+                if(($AvailableFonts[$r->Options['Font']]['type']??'')=='E') {
+                    $r->Options['FontFamily'] = TCPDF_FONTS::addTTFfont($FontFile, '', '', 32, dirname($AvailableFonts[$r->Options['Font']]['file']).'/');
+                    $pdf->AddFont($r->Options['FontFamily'], '', dirname($AvailableFonts[$r->Options['Font']]['file']).'/'.$r->Options['FontFamily']);
+                } else {
+                    $r->Options['FontFamily'] = TCPDF_FONTS::addTTFfont($FontFile);
+                }
 				if(substr($r->Options['Font'],-1)=='i') {
 					$r->Options['FontStyle']='I';
 					$r->Options['FontFamily']=substr($r->Options['Font'],0,-1);
@@ -474,22 +481,22 @@ while ($MyRow=safe_fetch($Rs)) {
                 }
             case 'Club3':
                 if(!isset($Text)) {
-                    if($MyRow->CoId2 != 0) {
+                    if($MyRow->CoId3 != 0) {
                         switch ($Element->IceContent) {
                             case 'NocCaps-ClubCamel':
-                                $Text = array($MyRow->NationCode . ' ' . $MyRow->Nation);
+                                $Text = array($MyRow->NationCode3 . ' ' . $MyRow->Nation3);
                                 break;
                             case 'NocCaps-ClubCaps':
-                                $Text = array($MyRow->NationCode . ' ' . $MyRow->NationCaps);
+                                $Text = array($MyRow->NationCode3 . ' ' . $MyRow->NationCaps3);
                                 break;
                             case 'NocCaps':
-                                $Text = array($MyRow->NationCode);
+                                $Text = array($MyRow->NationCode3);
                                 break;
                             case 'ClubCamel':
-                                $Text = array($MyRow->Nation);
+                                $Text = array($MyRow->Nation3);
                                 break;
                             case 'ClubCaps':
-                                $Text = array($MyRow->NationCaps);
+                                $Text = array($MyRow->NationCaps3);
                                 break;
                         }
                     } else {
@@ -534,6 +541,7 @@ while ($MyRow=safe_fetch($Rs)) {
                         case '':
                         case 'Cardinal':  $Text=array($MyRow->Rank); break;
                         case 'Ordinal':  $Text=array(ordinal($MyRow->Rank)); break;
+						case 'Roman': $Text=array(inttoRoman($MyRow->Rank)); break;
                     }
                 }
 			case 'FinalRanking':
@@ -542,6 +550,7 @@ while ($MyRow=safe_fetch($Rs)) {
                         case '':
                         case 'Cardinal':  $Text=array($MyRow->RankFinal); break;
                         case 'Ordinal':  $Text=array(ordinal($MyRow->RankFinal)); break;
+						case 'Roman': $Text=array(inttoRoman($MyRow->RankFinal)); break;
                     }
                 }
             case 'WRank':
@@ -625,8 +634,8 @@ while ($MyRow=safe_fetch($Rs)) {
 	                } else {
 	                    $pdf->setFontSpacing(0);
 	                }
-					$pdf->SetFont($Element->Options['FontFamily'], $Element->Options['FontStyle'], $Element->Options['Size']);
-				}
+                    $pdf->SetFont($Element->Options['FontFamily'], $Element->Options['FontStyle'], $Element->Options['Size']);
+                }
 				$Fill=false;
 				$WhiteText=false;
 				$BlackText=false;
@@ -987,10 +996,3 @@ function getSystemMemInfo() {
 	return $meminfo;
 }
 
-function ordinal($number) {
-    $ends = array('th','st','nd','rd','th','th','th','th','th','th');
-    if ((($number % 100) >= 11) && (($number%100) <= 13))
-        return $number. 'th';
-    else
-        return $number. $ends[$number % 10];
-}

@@ -117,8 +117,6 @@ if($rankData['meta']['lastUpdate'] <= $_REQUEST['time']) {
 	JsonOut($JSON);
 }
 
-require_once("Common/Obj_Target.php");
-
 if($MatchNo>256) {
     $Section=end($rankData['sections']);
     $Level=end($Section['levels']);
@@ -163,104 +161,57 @@ $JSON['Id'.$Rx]=$Match[($Team ? 'oppCountryCode':'oppBib')];
 
 // check if we are running SO or normal match
 $IsSO=false;
-
-$SelectedEndNum=0;
-$SelectedEndType='';
-if(!empty($_REQUEST['SelectedEnd'])) {
-	list($dummy, $SelectedEndType, $SelectedEndNum)=explode('-', $_REQUEST['SelectedEnd']);
-}
-$JSON['SelectedEnd']=$SelectedEndNum;
-
-// actual ends number is not that important in case of SO!
-$JSON['NumEnds']=(integer) $NumEnds;
-$JSON['NumSO']=1;
-
-if($SelectedEndType!='End' and (trim($Match['tiebreak']) or trim($Match['oppTiebreak']))) {
-    $IsSO=true;
+$NumArrows=$NumArrowsMatch;
+$EndNo=ceil(max(strlen(rtrim($Match['arrowstring'])), strlen(rtrim($Match['oppArrowstring'])))/$NumArrows);
+if(trim($Match['tiebreak'])!='' or trim($Match['oppTiebreak'])!='') {
+    $IsSO = true;
     $NumArrows=$NumArrowsSO;
-    ${'Arrowstrin'.$Sx}=strlen(trim($Match['tiebreak']));
-    ${'Arrowstrin'.$Rx}=strlen(trim($Match['oppTiebreak']));
+    $EndNo = ceil(max(strlen(rtrim($Match['tiebreak'])), strlen(rtrim($Match['oppTiebreak']))) / $NumArrows);
+}
+
+if($Match['status']==3 and $Match['oppStatus']==3 and $Match['winner']==0 and $Match['oppWinner']==0) {
+    $EndNo++;
+    if(!$IsSO AND $EndNo>$NumEnds) {
+        $IsSO=true;
+        $NumArrows=$NumArrowsSO;
+        $EndNo=1;
+    }
+    $JSON['UpdateL'] = 1;
+    $JSON['UpdateR'] = 1;
+}
+
+if($IsSO) {
     ${'Obj'.$Sx}='tiebreak';
     ${'Obj'.$Rx}='oppTiebreak';
     ${'Pos'.$Sx}='tiePosition';
     ${'Pos'.$Rx}='oppTiePosition';
 } else {
-    $NumArrows=$NumArrowsMatch;
-    ${'Arrowstrin'.$Sx}=strlen(trim($Match['arrowstring']));
-    ${'Arrowstrin'.$Rx}=strlen(trim($Match['oppArrowstring']));
     ${'Obj'.$Sx}='arrowstring';
     ${'Obj'.$Rx}='oppArrowstring';
     ${'Pos'.$Sx}='arrowPosition';
     ${'Pos'.$Rx}='oppArrowPosition';
 }
-
-$EndL=ceil(max($ArrowstrinL, $ArrowstrinR)/$NumArrows);
-$EndR=$EndL;
-if($Match['status']==3 and $Match['oppStatus']==3 and $Match['winner']==0 and $Match['oppWinner']==0) {
-    $EndL++;
-    $JSON['UpdateL'] = 1;
-    $JSON['UpdateR'] = 1;
-    $EndR++;
-    $JSON['UpdateL'] = 1;
-    $JSON['UpdateR'] = 1;
-}
-
-if(!$EndL) $EndL++;
-if(!$EndR) $EndR++;
-
-if($EndL>$NumEnds and $EndR>$NumEnds) {
-    // double check we are in a SO situation...
-    $IsSO=true;
-    $NumArrows=$NumArrowsSO;
-    ${'Arrowstrin'.$Sx}=strlen(trim($Match['tiebreak']));
-    ${'Arrowstrin'.$Rx}=strlen(trim($Match['oppTiebreak']));
-    ${'Obj'.$Sx}='tiebreak';
-    ${'Obj'.$Rx}='oppTiebreak';
-    ${'Pos'.$Sx}='tiePosition';
-    ${'Pos'.$Rx}='oppTiePosition';
-
-    $EndL=ceil(max($ArrowstrinL, $ArrowstrinR)/$NumArrows);
-	$JSON['NumSO']=$EndL;
-
-    $EndR=$EndL;
-
-    if(!$EndL or $Match['status']==3) {
-        $EndL++;
-    }
-    if(!$EndR or $Match['oppStatus']==3) {
-        $EndR++;
-    }
-}
-
-if($IsSO) {
-    $EndL=-$EndL;
-    $EndR=-$EndR;
-}
-$JSON['isSO']=$IsSO;
-$JSON['Event']=$Event.'<br/>'.$MatchName;
-
-$JSON['CurEnd']=max($EndL, $EndR);
-if(!$JSON['SelectedEnd']) {
-    $JSON['SelectedEnd']=$JSON['CurEnd'];
-}
+$JSON['CurEnd'] = $EndNo + ($IsSO ? $NumEnds : 0);
+$JSON['NumEnds'] = intval($NumEnds);
+$JSON['NumSO'] = ($IsSO ? $EndNo : 0);
 
 if($Team) {
 	$JSON['Opp'.$Left]=$Match['countryName'].get_flag_ianseo($Match['countryCode'], 0, '', $_SESSION['TourCode']);
 	$JSON['Opp'.$Right]=$Match['oppCountryName'].get_flag_ianseo($Match['oppCountryCode'], 0, '', $_SESSION['TourCode']);
 } else {
-	$JSON['Opp'.$Left]= $Match['fullName'] . ' - '.$Match['countryCode'].get_flag_ianseo($Match['countryCode'], 0, '', $_SESSION['TourCode']);
-	$JSON['Opp'.$Right]=$Match['oppFullName'] . ' - '.$Match['oppCountryCode'].get_flag_ianseo($Match['oppCountryCode'], 0, '', $_SESSION['TourCode']);
+	$JSON['Opp'.$Left]= $Match['fullName'] . ' - '.$Match['countryName'].get_flag_ianseo($Match['countryCode'], 0, '', $_SESSION['TourCode']);
+	$JSON['Opp'.$Right]=$Match['oppFullName'] . ' - '.$Match['oppCountryName'].get_flag_ianseo($Match['oppCountryCode'], 0, '', $_SESSION['TourCode']);
 }
+$JSON['Event']=$Event.'<br/>'.$MatchName;
 
-$ArrL=substr($Match[${'Obj'.$Sx}], $IndexL=$NumArrows*(abs($EndL)-1), $NumArrows);
-$ArrR=substr($Match[${'Obj'.$Rx}], $IndexR=$NumArrows*(abs($EndR)-1), $NumArrows);
+$ArrL=substr($Match[${'Obj'.$Sx}], $IndexL=$NumArrows*($EndNo-1), $NumArrows);
+$ArrR=substr($Match[${'Obj'.$Rx}], $IndexR=$NumArrows*($EndNo-1), $NumArrows);
 
-$JSON['Score'.$Left]='<div class="badge badge-danger" id="scoreLabelL" numArr="'.$NumArrows.'">'.($EndL<0 ? 'SO '.abs($EndL) : 'End '.$EndL).'</div>';
-$JSON['Score'.$Right]='<div class="badge badge-danger" id="scoreLabelR" numArr="'.$NumArrows.'">'.($EndR<0 ? 'SO '.abs($EndR) : 'End '.$EndR).'</div>';
+$JSON['Score'.$Left]='<div class="badge badge-danger" id="scoreLabelL" numArr="'.$NumArrows.'">'.($IsSO ? 'SO ' : 'End '). $EndNo .'</div>';
+$JSON['Score'.$Right]='<div class="badge badge-danger" id="scoreLabelR" numArr="'.$NumArrows.'">'.($IsSO ? 'SO ' : 'End '). $EndNo .'</div>';
 
 $TotL=ValutaArrowString($ArrL);
 $TotR=ValutaArrowString($ArrR);
-//$ShowDistance=($IsSO and strlen(trim($ArrL))==strlen(trim($ArrR)) and strlen(trim($ArrL))==$NumArrows and $TotL==$TotR);
 
 foreach(DecodeFromString(str_pad($ArrL, $NumArrows, ' ', STR_PAD_RIGHT), false, true) as $k => $Point) {
     $JSON['Score'.$Left].='<div class="badge badge-primary" id="'.$k.'-L" onclick="showSight(this)" onmouseover="showSight(this)" onmouseout="hideSight(this)">'.
@@ -301,7 +252,6 @@ if($Team) {
 
 switch ($_REQUEST["View"]) {
     case 'Scorecard':
-
         $cols= $NumArrowsMatch;
         $rows  = $NumEnds;
         $so = $NumArrowsSO;
@@ -344,8 +294,8 @@ switch ($_REQUEST["View"]) {
             $JSON['Tgt'.$Right] .= '<tr><th scope="row" class="table-dark text-center">'.($lenSo ? get_text('ShotOffShort', 'Tournament') . ' ' . ($r+1) : '&nbsp;').'</th>';
             if($lenSo) {
                 for ($c = 0; $c < $so; $c++) {
-                    $JSON['Tgt'.$Left] .= '<td class="text-center whiteBg">' . DecodeFromLetter($arrSo[($r * $so) + $c]) . '</td>';
-                    $JSON['Tgt'.$Right] .= '<td class="text-center whiteBg">' . DecodeFromLetter($oppSo[($r * $so) + $c]) . '</td>';
+                    $JSON['Tgt'.$Left] .= '<td class="text-center whiteBg">' . DecodeFromLetter($arrSo[($r * $so) + $c]??'') . '</td>';
+                    $JSON['Tgt'.$Right] .= '<td class="text-center whiteBg">' . DecodeFromLetter($oppSo[($r * $so) + $c]??'') . '</td>';
                 }
                 if ($so < $cols) {
                     $JSON['Tgt'.$Left] .= '<td class="text-center whiteBg closestText" colspan="' . ($cols - $so) . '">' . ($Match['closest']!=0 ? '+':'&nbsp;') . '</td>';
@@ -400,7 +350,6 @@ switch ($_REQUEST["View"]) {
                 $Records .= '</div>';
             }
         }
-
         if($Team) {
             //Left Team
             $options['coid'] = $Match['teamId'];
@@ -770,17 +719,33 @@ switch ($_REQUEST["View"]) {
         $JSON['Tgt'.$Left] = $Ceremonies[0];
         $JSON['Tgt'.$Right] = $Ceremonies[1];
         break;
-
-
-
     case 'Target':
+        require_once("Common/Obj_Target.php");
         $target = new Obj_Target();
+        $SelectedEnd=$EndNo;
+        $JSON['SelectedEnd'] = intval($_REQUEST["SelectedEnd"]);
+        if(!empty($_REQUEST["SelectedEnd"])) {
+            $SelectedEnd = intval($_REQUEST["SelectedEnd"]);
+            if($SelectedEnd <=  $NumEnds) {
+                $IsSO = false;
+                ${'Obj'.$Sx}='arrowstring';
+                ${'Obj'.$Rx}='oppArrowstring';
+                ${'Pos'.$Sx}='arrowPosition';
+                ${'Pos'.$Rx}='oppArrowPosition';
+                $NumArrows = $NumArrowsMatch;
+            } else {
+                $IsSO = true;
+                ${'Obj'.$Sx}='tiebreak';
+                ${'Obj'.$Rx}='oppTiebreak';
+                ${'Pos'.$Sx}='tiePosition';
+                ${'Pos'.$Rx}='oppTiePosition';
+                $NumArrows = $NumArrowsSO;
+                $SelectedEnd -= $NumEnds;
+            }
+        }
+        $IndexArrow = (($SelectedEnd - 1) * $NumArrows);
 
-        // the end to show is the selected end that defaults to the current end!
-        $IndexL=$NumArrows*(abs($JSON['SelectedEnd'])-1);
-        $IndexR=$IndexL;
-
-    // we already have most of the data needed for the target!
+        // we already have most of the data needed for the target!
         $target->initSVG($TourId, $Event, $MatchNo, $Team);
         $target->setSVGHeader('', '');
         $target->setTarget();
@@ -793,21 +758,21 @@ switch ($_REQUEST["View"]) {
         $r=safe_fetch($q);
 
         if($Match['lastUpdated']>$r->CurrentDateTime) {
-	        $q=safe_r_sql("select * from FinOdfTiming where FinOdfEvent='$Event' and FinOdfTeamEvent=$Team and FinOdfMatchno in ($MatchNo, ".($MatchNo+1).") and FinOdfTournament={$_SESSION['TourId']} ");
-	        while($r=safe_fetch($q)) {
-	            if($r->FinOdfArrows) {
-	                $ar=json_decode($r->FinOdfArrows, true);
-	                if(!is_array($ar)) {
-	                    $ar=array($ar);
-	                }
-	                $ar=end($ar);
-	                if($ar['Ts']>$lastTime) {
-				        $lastTime=$ar['Ts'];
-				        $LastArrow=($r->FinOdfMatchno==$MatchNo ? 'L' : 'R');
-			        }
+            $q=safe_r_sql("select * from FinOdfTiming where FinOdfEvent='$Event' and FinOdfTeamEvent=$Team and FinOdfMatchno in ($MatchNo, ".($MatchNo+1).") and FinOdfTournament={$_SESSION['TourId']} ");
+            while($r=safe_fetch($q)) {
+                if($r->FinOdfArrows) {
+                    $ar=json_decode($r->FinOdfArrows, true);
+                    if(!is_array($ar)) {
+                        $ar=array($ar);
+                    }
+                    $ar=end($ar);
+                    if($ar['Ts']>$lastTime) {
+                        $lastTime=$ar['Ts'];
+                        $LastArrow=($r->FinOdfMatchno==$MatchNo ? 'L' : 'R');
+                    }
 
-		        }
-	        }
+                }
+            }
         }
 
         $JSON['TgtSize'] = $target->Diameter;
@@ -815,7 +780,7 @@ switch ($_REQUEST["View"]) {
 
         $arrowsL=array();
         $arrowsR=array();
-        foreach(range($IndexL, $IndexL+$NumArrows-1) as $k => $i) {
+        foreach(range($IndexArrow, $IndexArrow+$NumArrows-1) as $k => $i) {
         	if(isset($Match[${'Pos'.$Sx}][$i])) {
 	            $arrowsL[$k]=$Match[${'Pos'.$Sx}][$i];
 	        }
@@ -835,6 +800,36 @@ switch ($_REQUEST["View"]) {
         $target2->DrawSVGSighter($ar, false, 'SighterR');
         $JSON['Tgt'.$Right] = $target2->OutputStringSVG();
         $JSON['LastArrow'] = $LastArrow;
+
+        if($JSON['SelectedEnd']!=0 AND $JSON['SelectedEnd']!=$JSON['CurEnd']) {
+            $tmp = array('L'=>'','R'=>'');
+            $ArrL=substr($Match[${'Obj'.$Sx}], $IndexL=$NumArrows*($SelectedEnd-1), $NumArrows);
+            $ArrR=substr($Match[${'Obj'.$Rx}], $IndexR=$NumArrows*($SelectedEnd-1), $NumArrows);
+            $tmp[$Left]='<div class="badge badge-dark" id="scoreLabelL" numArr="'.$NumArrows.'">'.($IsSO ? 'SO ' : 'End '). $SelectedEnd .'</div>';
+            $tmp[$Right]='<div class="badge badge-dark" id="scoreLabelR" numArr="'.$NumArrows.'">'.($IsSO ? 'SO ' : 'End '). $SelectedEnd .'</div>';
+
+            $TotL=ValutaArrowString($ArrL);
+            $TotR=ValutaArrowString($ArrR);
+
+            foreach(DecodeFromString(str_pad($ArrL, $NumArrows, ' ', STR_PAD_RIGHT), false, true) as $k => $Point) {
+                $tmp[$Left].='<div class="badge badge-primary" id="'.$k.'-L" onclick="showSight(this)" onmouseover="showSight(this)" onmouseout="hideSight(this)">'.
+                    $Point.
+                    ((!empty($Match[${'Pos'.$Sx}][$IndexL+$k]) and isset($Match[${'Pos'.$Sx}][$IndexL+$k]['D'])) ? '<span class="arrowDist ml-2'.($IsSO ? '': ' hidden d-grid').'">'.($Match[${'Pos'.$Sx}][$IndexL+$k]['D']??'').'</span>' : '').
+                    '</div>';
+            }
+            $tmp[$Left].='<div class="badge badge-info">'.$TotL.(($IsSO AND $Match['closest']!=0 AND $k==($NumArrows-1)) ? '+':'').'</div>';
+
+            foreach(DecodeFromString(str_pad($ArrR, $NumArrows, ' ', STR_PAD_RIGHT), false, true) as $k => $Point) {
+                $tmp[$Right].='<div class="badge badge-primary" id="'.$k.'-R" onclick="showSight(this)" onmouseover="showSight(this)" onmouseout="hideSight(this)">'.
+                    $Point.
+                    ((!empty($Match[${'Pos'.$Rx}][$IndexR+$k]) and isset($Match[${'Pos'.$Rx}][$IndexR+$k]['D'])) ? '<span class="arrowDist ml-2'.($IsSO ? '': ' hidden').'">'.$Match[${'Pos'.$Rx}][$IndexR+$k]['D'].'</span>' : '').
+                    '</div>';
+            }
+            $tmp[$Right].='<div class="badge badge-info">'.$TotR.(($IsSO AND $Match['oppClosest']!=0 AND $k==($NumArrows-1)) ? '+':'').'</div>';
+            $JSON['Tgt'.$Left] = '<div class="p-0">' . $JSON['Tgt'.$Left] . '</div><div class="previous-end">' . $tmp[$Left] . '</div>';
+            $JSON['Tgt'.$Right] = '<div class="p-0">' . $JSON['Tgt'.$Right] . '</div><div class="previous-end">' . $tmp[$Right] . '</div>';
+        }
+
 }
 
 JsonOut($JSON);

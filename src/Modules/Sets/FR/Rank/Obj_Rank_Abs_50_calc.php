@@ -118,7 +118,7 @@
 					where IndTournament={$this->tournament}");
 
 			$q="SELECT
-					IndId AS `athId`,IndEvent AS `EventCode`,
+					IndId AS `athId`,IndEvent AS `EventCode`, QuArrow,
 					Qu{$dd}Score AS Score,Qu{$dd}Gold AS Gold,Qu{$dd}Xnine AS XNine, Qu{$dd}Hits AS Hits, IndRank as actualRank,
 					EvFinalFirstPhase, EvElim1, EvElim2, EvElimType,
 					IF(EvFinalFirstPhase=0,999999,coalesce(RrQualified, IF(EvElimType=0, EvNumQualified, IF(EvElim1=0,EvElim2,EvElim1)))) as QualifiedNo, EvFirstQualified
@@ -132,7 +132,7 @@
 			        AND (QuScore != 0 OR QuHits !=0) 
 					{$filter}
 				ORDER BY
-					IndEvent, Qu{$dd}Hits DESC, Qu{$dd}Score DESC, Qu{$dd}Gold DESC, Qu{$dd}Xnine DESC
+					IndEvent, QuArrow DESC, Qu{$dd}Score DESC, Qu{$dd}Gold DESC, Qu{$dd}Xnine DESC
 			";
 				//print $q.'<br><br>';
 			$r=safe_r_sql($q);
@@ -142,6 +142,7 @@
 				$myRank = 1;
 				$myPos = 0;
 
+				$myArrowsOld = 0;
 				$myScoreOld = 0;
 				$myGoldOld = 0;
 				$myXNineOld = 0;
@@ -157,6 +158,7 @@
 
 						$myRank = 1;
 						$myPos = 0;
+                        $myArrowsOld = 0;
 						$myScoreOld = 0;
 						$myGoldOld = 0;
 						$myXNineOld = 0;
@@ -214,7 +216,7 @@
     					$so=1;
 					} else {
                         // all the other are tie only in case of Full Tie
-						if (!($myRow->Score==$myScoreOld AND $myRow->Gold==$myGoldOld AND $myRow->XNine==$myXNineOld)) {
+						if (!($myRow->QuArrow==$myArrowsOld AND $myRow->Score==$myScoreOld AND $myRow->Gold==$myGoldOld AND $myRow->XNine==$myXNineOld)) {
                             $myRank = $myPos;
                         }
 					}
@@ -227,6 +229,7 @@
                         $so = 0;
                     }
 
+					$myArrowsOld = $myRow->QuArrow;
 					$myScoreOld = $myRow->Score;
 					$myGoldOld = $myRow->Gold;
 					$myXNineOld = $myRow->XNine;

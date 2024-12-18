@@ -1,6 +1,7 @@
 <?php
 
 $CellH=8;
+$pdf->setDocUpdate($PdfData->Timestamp ?? $PdfData->LastUpdate ?? '');
 
 $LastCellW=$pdf->getPageWidth()-20-$NatAtlCell*2-$TgtCell*2;
 

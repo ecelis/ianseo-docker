@@ -28,7 +28,6 @@ $lang['Optimal value']='Valore Ottimale';
 $lang['Parameter']='Parametri';
 $lang['Password']='Parola d\'Ordine!!!';
 $lang['PHP settings']='Settaggi Piaccappì';
-$lang['PHP too old']='La tua istallazzione der Piaccappì è vecchia come \'r cucco. T\'ha da scaricà la verzione minima de IANSEO, la 5.0';
 $lang['PHP version']='Verzione Piaccappì';
 $lang['php.ini file']='Fail Piaccappìpuntoini';
 $lang['Read connection failed']='La connessione cor Servere de lettura è ita male: o nun j\'hai fornito la passuorde de amministrazzione oppure le \'nformazzioni de loghinne nun sò corette!';

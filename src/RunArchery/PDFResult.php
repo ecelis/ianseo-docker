@@ -16,7 +16,7 @@ if (!isset($_SESSION['TourId']) && isset($_REQUEST['TourId'])) {
 	CreateTourSession($_REQUEST['TourId']);
 }
 
-checkACL(AclRunArchery, AclReadOnly);
+checkACL(AclQualification, AclReadOnly);
 
 $Events=[];
 foreach(($_REQUEST['events']??[]) as $v) {

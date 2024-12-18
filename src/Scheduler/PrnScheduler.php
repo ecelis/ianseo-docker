@@ -34,7 +34,7 @@ if(isset($_REQUEST['Ranking'])) {
 }
 
 if(isset($_REQUEST['Today'])) {
-	$Schedule->SingleDay=date('Y-m-d');
+	$Schedule->SingleDay=getToday();
 	if(!empty($_REQUEST['FromDayDay'])) {
 		if(strtolower(substr($_REQUEST['FromDayDay'], 0, 1))=='d') {
 			$Date=date('Y-m-d', strtotime(sprintf('%+d days', substr($_REQUEST['FromDayDay'], 1) -1), $_SESSION['ToWhenFromUTS']));
@@ -46,7 +46,7 @@ if(isset($_REQUEST['Today'])) {
 }
 
 if(isset($_REQUEST['FromDay'])) {
-	$Schedule->FromDay=date('Y-m-d');
+	$Schedule->FromDay=getToday();
 	if(!empty($_REQUEST['FromDayDay'])) {
 		if(strtolower(substr($_REQUEST['FromDayDay'], 0, 1))=='d') {
 			$Date=date('Y-m-d', strtotime(sprintf('%+d days', substr($_REQUEST['FromDayDay'], 1) -1), $_SESSION['ToWhenFromUTS']));

@@ -1,6 +1,7 @@
 var TimeStamp = '';
 var TimeCheck = 1000;
 var Zoom = 1;
+var Lock = 0;
 var View = 'Auto';
 var toReference = 0;
 var oldEvent='';
@@ -15,17 +16,19 @@ var Athletes = [[],[]];
 var bioLoaded = false;
 var Ids=[];
 var evListData;
-var oldSelectedEnd='';
+var curSelectedEnd=0;
 
 $(document).ready(init);
 
 var TgtSize=0;
 var TgtOrgSize=0;
 function init() {
-    TgtSize=Math.min($('.card').width()*0.45, $(window).height()-parseInt($('.card-header').css("height"))-parseInt($('#ScoreLeft').css("height"))-12);
+    $('.card-body').height($(document).outerHeight()-$('.card-header').outerHeight()-$('.card-footer').outerHeight());
+    TgtSize=Math.min($('.card').outerWidth()*0.44, $('.card-body').height());
     $('.SVGTarget').width(TgtSize).height(TgtSize);
-    $('#MainTable').height($('.card-body').height());
-    setView('Presentation');
+    $('#MainTable').height($('.card-body').innerHeight());
+    let tmpView = sessionStorage.getItem("finalViewerView") ?? 'Presentation';
+    setView(tmpView);
 }
 
 function resetInit(Event, MatchNo, Team, Phase) {
@@ -40,10 +43,12 @@ function resetInit(Event, MatchNo, Team, Phase) {
     Athletes = [[],[]];
     bioLoaded = false;
     Ids=[];
+    curSelectedEnd = 0;
 }
 
 function setView(newView) {
     View = newView;
+    sessionStorage.setItem("finalViewerView", newView);
     $('.btnViewMenu').addClass('btn-info').removeClass('active btn-success');
     $('#btn'+View).addClass('active btn-success').removeClass('btn-info');
     TimeStamp='';
@@ -142,18 +147,8 @@ function BuildPage() {
 	    Team: oldTeam,
 	    Lock: Lock,
 	    View: View,
-	    SelectedEnd:'',
+	    SelectedEnd:curSelectedEnd,
     };
-    if($('#followLive').hasClass('btn-secondary')) {
-    	// we are not following live anymore so select which end we are following
-	    tmpEnd = $('#EndSelector .EndSelector.btn-success');
-	    if(!tmpEnd.hasClass('disabled')) {
-	    	form.SelectedEnd = tmpEnd.attr('id');
-	    	Lock=1;
-	    	form.Lock=1;
-	    }
-    }
-
     $.getJSON('index-buildPage.php', form, function (data) {
         if (data.error == 0) {
             if (data.time != '') {
@@ -162,9 +157,8 @@ function BuildPage() {
 	            } else {
 		            $('#bntGoToLive').hide();
 	            }
-            	if(data.time!=TimeStamp || form.SelectedEnd!=oldSelectedEnd) {
+            	if(data.time!=TimeStamp) {
 	                TimeStamp = data.time;
-		            oldSelectedEnd=form.SelectedEnd;
 	                $('#Event').html(data.Event);
 
 	                if (oldEvent != data.EvCode || oldMatchNo != data.MatchNo || oldTeam != data.EvTeam) {
@@ -207,27 +201,34 @@ function BuildPage() {
 	                    $('#TgtLeft').html(data.TgtLeft);
 	                    $('#TgtRight').html(data.TgtRight);
 
-	                    // End Selector only if we did not ask for a specific end
-		                if(oldSelectedEnd=='') {
-			                EndSelector='';
-			                for(n=0;n<data.NumEnds;n++) {
-			                    EndSelector+='<button type="button" id="EndSelector-End-'+(n+1)+'" class="EndSelector btnViewMenu btn '+((n==data.SelectedEnd-1 && data.isSO==false) ? 'btn-success' : 'btn-warning')+((n>=data.CurEnd && data.isSO==false) ? ' disabled' : '')+'" onclick="selectEnd(this)">End '+(n+1)+'</button>'
-			                }
-			                for(n=0;n<data.NumSO;n++) {
-			                    EndSelector+='<button type="button" id="EndSelector-SO-'+(n+1)+'" class="EndSelector btnViewMenu btn '+(n==0 ? ' mt-1' : '')+((n==data.SelectedEnd-1 && data.isSO==true) ? ' btn-success' : ' btn-warning')+(data.isSO==false ? ' disabled' : '')+'" onclick="selectEnd(this)">SO '+(n+1)+'</button>'
-			                }
-			                if(EndSelector!='') {
-                                EndSelector += '<button id="followLive" class="mt-1 btn btn-info btnViewMenu" onclick="toggleFollow()">Current</button>';
-                                EndSelector += '<button id="followLive" class="mt-1 btn btn-light border-info btnViewMenu" onclick="toggleDistance()">Distance</button>';
-                            }
-							$('#EndSelector').html(EndSelector);
-		                }
+                        EndSelector='';
+                        for(n=1;n<=data.NumEnds;n++) {
+                            EndSelector+='<button type="button" id="EndSelector-End-'+n+'" class="EndSelector btnViewMenu btn '+(n==(data.SelectedEnd==0 ? data.CurEnd : data.SelectedEnd) ? 'btn-success' : 'btn-warning')+'" '+((n>data.CurEnd) ? 'disabled' : '')+' onclick="selectEnd('+n+')">End '+n+'</button>';
+                        }
+                        for(n;n<=data.NumEnds+data.NumSO;n++) {
+                            EndSelector+='<button type="button" id="EndSelector-End-'+n+'" class="EndSelector btnViewMenu btn '+(n==data.NumEnds+1 ? ' mt-1' : '')+(n==(data.SelectedEnd==0 ? data.CurEnd : data.SelectedEnd) ? ' btn-success' : ' btn-warning')+'" onclick="selectEnd('+n+')">SO '+(n-data.NumEnds)+'</button>';
+                        }
+                        if(EndSelector!='') {
+                            EndSelector += '<button id="followLive" class="mt-1 btn '+((data.SelectedEnd == 0 || data.SelectedEnd == data.CurEnd) ? 'btn-info' : 'btn-secondary')+' btnViewMenu" onclick="selectEnd(0)">Current</button>';
+                            EndSelector += '<button id="followLive" class="mt-1 btn btn-light border-info btnViewMenu" onclick="toggleDistance()">Distance</button>';
+                        }
+                        $('#EndSelector').html(EndSelector);
+                        if(curSelectedEnd != 0 && curSelectedEnd != data.CurEnd) {
+                            Lock = 1;
+                        } else {
+                            curSelectedEnd = 0;
+                        }
+                        $('.arrowDist').toggleClass('hidden', $('#ScoreLeft .arrowDist').hasClass('hidden'));
 
 	                    Zoom = data.TgtZoom;
 	                    TgtOrgSize = data.TgtSize;
+                        reducedSize = ($('.previous-end').outerHeight() ?? 0);
+                        if($('.card-body').innerHeight() > (TgtSize+reducedSize)) {
+                            reducedSize = 0;
+                        }
 	                    $('.SVGTarget')
 	                        .width(TgtSize)
-	                        .height(TgtSize)
+	                        .height(TgtSize - reducedSize)
 	                        .mouseleave(function (e) {
 	                            $(this).attr('viewBox', '0 0 ' + TgtOrgSize + ' ' + TgtOrgSize);
 	                        })
@@ -390,8 +391,7 @@ function goToMatch() {
 function goToLive() {
     TimeStamp=0;
     Lock = 0;
-	oldSelectedEnd='';
-	toggleFollow(true);
+    curSelectedEnd=0;
     BuildPage();
 }
 
@@ -405,25 +405,11 @@ function setMatchInfo(Event, MaNo, Team) {
     $('#SelectMatch').modal('hide');
 }
 
-function toggleFollow(status) {
-	if(typeof status == 'undefined') {
-		status = $('#followLive').hasClass('btn-secondary');
-	}
-	if(status==true) {
-		$('#followLive').removeClass('btn-secondary').addClass('btn-info');
-		oldSelectedEnd='';
-		TimeStamp=0;
-		BuildPage();
-	} else {
-		$('#followLive').addClass('btn-secondary').removeClass('btn-info');
-	}
-}
-
-function selectEnd(obj) {
-    // remove the follow status and stop refreshing
-    toggleFollow(false);
-    $('#EndSelector .EndSelector.btn-success').removeClass('btn-success').addClass('btn-warning');
-    $(obj).removeClass('btn-warning').addClass('btn-success');
+function selectEnd(endNo) {
+    if(curSelectedEnd != endNo) {
+        curSelectedEnd = endNo;
+        TimeStamp = 0;
+    }
     BuildPage();
 }
 
@@ -456,8 +442,9 @@ function hideSight(obj) {
 }
 
 function toggleDistance() {
-    $('.arrowDist').toggleClass('hidden');
-    if(!$('.arrowDist').hasClass('hidden') && (parseInt($('#scoreLabelL').attr('numArr'))>4 || parseInt($('#scoreLabelR').attr('numArr'))>4)) {
+    let tmpActualHidden = ($('#ScoreLeft .arrowDist').hasClass('hidden'));
+    $('.arrowDist').toggleClass('hidden', !tmpActualHidden);
+    if(!tmpActualHidden && (parseInt($('#scoreLabelL').attr('numArr'))>4 || parseInt($('#scoreLabelR').attr('numArr'))>4)) {
         $('#ScoreLeft').addClass('reduced');
         $('#ScoreRight').addClass('reduced');
     } else {

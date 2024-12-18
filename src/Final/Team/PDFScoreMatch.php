@@ -150,10 +150,37 @@ if (safe_num_rows($Rs)>0) {
     $FollowingRows=false;
 //DrawScore
     while($MyRow=safe_fetch($Rs)) {
+        $MyRow->EnId=[];
+        $MyRow->OppEnId=[];
+        $pdf->ScoreCellHeight=9;
         if(empty($_REQUEST["Blank"]) and empty($_REQUEST["IncEmpty"]) and (!$MyRow->CountryCode or !$MyRow->OppCountryCode)) {
             // se è vuoto uno dei due arcieri e non è selezionata l'inclusione
+            $EnIds=array();
+            if(!empty($_REQUEST["IncAllNames"])) {
+                // 3D and Field rounds, get the opponent(s) of previous matches
+                if(empty($MyRow->CountryCode)) {
+                    $EnIds=get_winner($MyRow->MatchNo, $MyRow->Event);
+                    $MyRow->EnId=$EnIds;
+                }
+                if(empty($MyRow->OppCountryCode)) {
+                    $EnIds=get_winner($MyRow->OppMatchNo, $MyRow->Event);
+                    $MyRow->OppEnId=$EnIds;
+                }
+            }
             // salta al prossimo record
-            continue;
+            if(empty($EnIds)) {
+                continue;
+            }
+            if(is_array($MyRow->EnId) and is_array($MyRow->OppEnId)) {
+
+                while(count($MyRow->EnId)<count($MyRow->OppEnId)) {
+                    $MyRow->EnId[]=' ';
+                }
+                while(count($MyRow->OppEnId)<count($MyRow->EnId)) {
+                    $MyRow->OppEnId[]=' ';
+                }
+            }
+            $pdf->ScoreCellHeight=min(9, ($pdf->getPageHeight()-105-4.5*max(is_array($MyRow->EnId??'') ? count($MyRow->EnId) : 1, is_array($MyRow->OppEnId??'') ? count($MyRow->OppEnId) : 1))/(4+($MyRow->FinElimChooser ? $MyRow->EvElimEnds : $MyRow->EvFinEnds)));
         }
         $NumUnits=15;
         if($MyRow->EvCheckGolds) {
@@ -238,7 +265,7 @@ function DrawScore(&$pdf, $MyRow, $Side='L', $Athletes=array()) {
 	$TotalW=$defTotalW;
 	$GoldW=$defGoldW;
     $margins = $pdf->getMargins();
-    $ScoreCellHeight= ($pdf->GetPageHeight()-$margins['bottom']-100)/($NumRow+6);
+    $ScoreCellHeight= min(($pdf->GetPageHeight()-$margins['bottom']-100)/($NumRow+6), $pdf->ScoreCellHeight);
 
 	$Prefix='Opp';
 	$Opponent='';
@@ -279,7 +306,7 @@ function DrawScore(&$pdf, $MyRow, $Side='L', $Athletes=array()) {
 
 	$AthCell=6;
 	$AthHeight=6;
-	$RankHeight=12;
+	$RankHeight=6;
 	if(($MyRow->Team and is_array($MyRow->Team)) or ($MyRow->OppTeam and is_array($MyRow->OppTeam))) {
 		$AthCell=4.5;
 		if($MyRow->Team and is_array($MyRow->Team)) {
@@ -290,11 +317,31 @@ function DrawScore(&$pdf, $MyRow, $Side='L', $Athletes=array()) {
 		$WhereY[$WhichScore]=$WhereY[$WhichScore]+$AthHeight-6;
 		$RankHeight=6+$AthHeight;
 	}
+    if(($MyRow->EnId and is_array($MyRow->EnId)) or ($MyRow->OppEnId and is_array($MyRow->OppEnId))) {
+        $AthCell=4.5;
+        if($MyRow->EnId and is_array($MyRow->EnId)) {
+            $AthHeight=$AthCell*count($MyRow->EnId);
+        } else {
+            $AthHeight=$AthCell*count($MyRow->OppEnId);
+        }
+        $WhereY[$WhichScore]=$WhereY[$WhichScore]+$AthHeight-6;
+        $RankHeight=$AthHeight;
+    }
 
 	$pdf->SetFont($pdf->FontStd,'',10);
-	$pdf->Cell(20, 6,(get_text('Team')) . ': ', 'LT', 0, 'L', 0);
+	$pdf->Cell(20, $AthHeight,(get_text('Team')) . ': ', 'LT', 0, 'L', 0);
 	$pdf->SetFont($pdf->FontStd,'B',10);
-	$pdf->Cell($ScoreWidth-20-2*$GoldW-($pdf->PrintFlags?18:0), 6, (($MyRow->{$Prefix.'CountryName'}??'') . (strlen($MyRow->{$Prefix.'CountryCode'}??'')>0 ?  ' (' . $MyRow->{$Prefix.'CountryCode'}  . ')' : '')), 'T', 1, 'L', 0);
+    if($MyRow->{$Prefix.'CountryName'}) {
+        $pdf->Cell($ScoreWidth-20-2*$GoldW-($pdf->PrintFlags?18:0), $RankHeight, (($MyRow->{$Prefix.'CountryName'}??'') . (strlen($MyRow->{$Prefix.'CountryCode'}??'')>0 ?  ' (' . $MyRow->{$Prefix.'CountryCode'}  . ')' : '')), 'T', 1, 'L', 0);
+    } elseif($MyRow->{$Prefix.'EnId'} and is_array($MyRow->{$Prefix.'EnId'})) {
+        $OrgX=$pdf->getX();
+        foreach($MyRow->{$Prefix.'EnId'} as $k=>$Athlete) {
+            $pdf->setX($OrgX);
+            $pdf->Cell($ScoreWidth-20-2*$GoldW-($pdf->PrintFlags?18:0),$AthCell,$Athlete, $k ? '' : 'T', 1, 'L', 0);
+        }
+    } else {
+        $pdf->Cell($ScoreWidth-20-2*$GoldW-($pdf->PrintFlags?18:0), 6, '', 'T', 1, 'L', 0);
+    }
 
     if(count($Athletes)) {
         $first = true;
@@ -324,7 +371,7 @@ function DrawScore(&$pdf, $MyRow, $Side='L', $Athletes=array()) {
 	$pdf->Cell(2*$GoldW,6, (get_text('Rank')),'TLR',1,'C',1);
 	$pdf->SetXY($ScoreWidth-2*$GoldW+$WhereStartX[$WhichScore],$pdf->GetY());
 	$pdf->SetFont($pdf->FontStd,'B',25);
-	$pdf->Cell(2*$GoldW,6+(count($Athletes)<=1 ? 6:4)*max(count($Athletes),1), ($MyRow->{$Prefix.'QualRank'} ?? $MyRow->{$Prefix.'GridPosition'}),'BLR',1,'C',1);
+	$pdf->Cell(2*$GoldW,$RankHeight+(count($Athletes)<=1 ? 6:4)*max(count($Athletes),1), ($MyRow->{$Prefix.'QualRank'} ?? ''),'BLR',1,'C',1);
 
     //Readjust start of score where needed
     if($WhereY[0] <= $pdf->getY()+5) {
@@ -572,6 +619,39 @@ function DrawScore(&$pdf, $MyRow, $Side='L', $Athletes=array()) {
    	$pdf->SetFont($pdf->FontStd,'I',7);
 	$pdf->Cell($ScoreWidth,4,(get_text('ArcherSignature','Tournament')),'B',1,'L',0);
 
+}
+
+function get_winner($MatchNo, $Event) {
+    $ret=array();
+    $Bronze=($MatchNo==2 or $MatchNo==3);
+    if($MatchNo<2) {
+        $MatchNo+=2;
+    }
+    $q=safe_r_sql("select concat('(#', TeRank, ') ', CoName, if(TfSubTeam>0, TfSubTeam, ''), ' (', CoCode, if(TfSubTeam>0, TfSubTeam, ''),')') as Athlete, CoCode, TfMatchNo, TfWinLose 
+		from TeamFinals
+	    left join (
+	        select TeCoId, TeSubTeam, TeTournament, CoCode, CoName, TeRank
+            from Teams
+            inner join Countries on CoId=TeCoId
+            where TeTournament={$_SESSION['TourId']} and TeEvent='$Event'
+	    ) Countries on TeCoId=TfTeam and TeSubTeam=TfSubTeam
+		where TfMatchNo in (".($MatchNo*2).", ".($MatchNo*2 + 1).") and TfEvent='$Event' and TfTournament={$_SESSION['TourId']} order by TfWinLose desc");
+    while($r=safe_fetch($q)) {
+        if($r->TfWinLose) {
+            $ret[]=$r->Athlete;
+            return $ret;
+        }
+        $ret=array_merge($ret, get_winner($r->TfMatchNo, $Event));
+        if($r->CoCode) {
+            $ret[]=$r->Athlete;
+        }
+    }
+    $ret=array_unique($ret);
+    if($Bronze and count($ret)==1) {
+        // if the semifinals are with only one contender, then no bronze are done!
+        $ret=[' '];
+    }
+    return $ret;
 }
 
 

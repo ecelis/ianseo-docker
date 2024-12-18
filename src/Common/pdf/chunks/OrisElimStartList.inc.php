@@ -3,6 +3,7 @@
 require_once('Common/Lib/CommonLib.php');
 
 $pdf->SetDataHeader($PdfData->Header, $PdfData->HeaderWidth);
+$pdf->setDocUpdate($PdfData->LastUpdate ?? $PdfData->Timestamp ?? '');
 
 $OldEvent='#@#@#';
 $targetNo=-1;

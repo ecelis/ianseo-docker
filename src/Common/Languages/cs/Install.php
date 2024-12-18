@@ -48,7 +48,6 @@ $lang['Optimal value']='Optimální hodnota';
 $lang['Parameter']='Parametr';
 $lang['Password']='Heslo';
 $lang['PHP settings']='PHP nastavení';
-$lang['PHP too old']='Vaše PHP instalace je příliš stará. Minimální verze pro IANSEO je 5.0';
 $lang['PHP version']='PHP verze';
 $lang['php.ini file']='php.ini soubor';
 $lang['Prepare']='Příprava dat pro aktualizaci';

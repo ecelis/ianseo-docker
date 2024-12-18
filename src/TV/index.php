@@ -23,6 +23,7 @@ if(!empty($_REQUEST['export'])) {
 		}
 		$q=safe_r_sql("select * from TVContents where TVCTournament={$ToId} and TVCId in (".implode(',', $SeqIds).")");
 		while($r=safe_fetch($q)) {
+            $r->TVCContent=base64_encode($r->TVCContent);
 			$JSON['content'][]=$r;
 		}
 		if($JSON) {
@@ -83,8 +84,12 @@ if(!IsBlocked(BIT_BLOCK_MEDIA)) {
 			// check the sequence ID
 			$q=safe_r_sql("select max(TVCId) as MaxId from TVContents where TVCTournament=$TourId");
 			$r=safe_fetch($q);
-			if($r->MaxId) $StartParam=$r->MaxId+1;
+			if($r->MaxId) {
+                $StartParam=$r->MaxId+1;
+            }
+            $Recreate=false;
 			foreach($JSON->content as $r) {
+                $Recreate=true;
 				$r->TVCTournament=$TourId;
 				if(empty($ContentIds['MM'][$r->TVCId])) {
 					$ContentIds['MM'][$r->TVCId]=$StartParam++;
@@ -92,11 +97,13 @@ if(!IsBlocked(BIT_BLOCK_MEDIA)) {
 				$r->TVCId=$ContentIds['MM'][$r->TVCId];
 				$SQL=array();
 				foreach($r as $k=>$v) {
+                    if($k=='TVCContent') {
+                        $v=base64_decode($v);
+                    }
 					$SQL[]="$k=".StrSafe_DB($v);
 				}
 				safe_w_sql("insert into TVContents set ".implode(',', $SQL));
 			}
-
 			$StartSeq=1;
 			// check the sequence ID
 			$q=safe_r_sql("select max(TVSId) as MaxId from TVSequence where TVSTournament=$TourId");
@@ -118,6 +125,17 @@ if(!IsBlocked(BIT_BLOCK_MEDIA)) {
 				safe_w_sql("insert into TVSequence set ".implode(',', $SQL));
 			}
 
+            if($Recreate) {
+                $q=safe_r_sql("select * from TVContents where TVCMimeType in ('image/gif','image/jpeg','image/png') and TVCTournament = $TourId");
+                while($r=safe_fetch($q)) {
+                    $ImName=$CFG->DOCUMENT_PATH.'TV/Photos/TV-'.$_SESSION['TourCodeSafe'].'-'.($r->TVCName=='IdCardFooter' ? $r->TVCName : $r->TVCId).'.jpg';
+                    if(!file_exists($ImName) or filemtime($ImName) < $r->TVCTimestamp) {
+                        if($im=imagecreatefromstring($r->TVCContent)) {
+                            imagejpeg($im, $ImName, 90);
+                        }
+                    }
+                }
+            }
 			cd_redirect();
 		}
 	}

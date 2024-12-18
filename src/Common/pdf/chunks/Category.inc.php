@@ -3,6 +3,7 @@ $SinglePage=isset($_REQUEST['SinglePage']);
 $TargetFace=(isset($_REQUEST['tf']) && $_REQUEST['tf']==1);
 
 $pdf->HideCols = $PdfData->HideCols;
+$pdf->setDocUpdate($PdfData->Timestamp ?? $PdfData->LastUpdate ?? '');
 
 $StartLetter = ".";
 $ShowStatusLegend = false;

@@ -45,7 +45,6 @@ $lang['Optimal value']='Optimi arvo';
 $lang['Parameter']='Parametri';
 $lang['Password']='Salasana';
 $lang['PHP settings']='PHP asetukset';
-$lang['PHP too old']='PHP: n versio on liian vanha. IANSEO vaatii version 5.0 tai uudemman.';
 $lang['PHP version']='PHP versio';
 $lang['php.ini file']='php.ini -tiedosto';
 $lang['Prepare']='Valmistelee tietoja päivitystä varten';

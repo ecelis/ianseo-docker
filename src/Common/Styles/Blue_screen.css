@@ -202,8 +202,8 @@ table.Tabella td.Top { vertical-align: top;}
 table.Tabella td.Bold {  font-weight:bold;}
 table.Tabella td.FontMedium { font-size:140%;}
 table.Tabella td.LiveSpotting {vertical-align:top; text-align:center;}
-table.Tabella td.Title { background-color:var(--header-dark); text-align:center; font-weight:bold; padding-left:2px; padding-right:2px; font-weight:bold; color: var(--row-main-text)}
-table.Tabella td.Caption { background-color:var(--bg-cell-header);  text-align:center; font-weight:bold; padding-left:2px; padding-right:2px; font-weight:bold; color: var(--header-dark)}
+table.Tabella td.Title { background-color:var(--header-dark); text-align:center; font-weight:bold; padding-left:2px; padding-right:2px; color: var(--row-main-text)}
+table.Tabella td.Caption { background-color:var(--bg-cell-header);  text-align:center; font-weight:bold; padding-left:2px; padding-right:2px; color: var(--header-dark)}
 /*table.Startlist td.Small  { width=50px; padding-left:2px; padding-right:2px; padding-top:2px; padding-bottom:2px; font-size:10px; color: var(--black)}*/
 table.Tabella td.Divider {background-color: var(--header-dark); height:2px}
 table.Tabella td.Light {background-color:var(--text-white)}
@@ -225,7 +225,7 @@ tr.active td {background-color:var(--bg-yellow);}
 
 .LetteraGrande { font-size:150%; font-weight:bold; }
 .bold {font-weight:bold; }
-.small {font-size: smaller }
+.small {font-size: smaller!important; }
 
 table.Tabella2 {margin:auto; background-color:var(--row-background); border: 2px; border-color:var(--table-background); border-collapse:separate; border-spacing:1px; }
 table.Tabella2 td { padding:1px;}
@@ -287,9 +287,16 @@ a:hover {text-decoration:underline; }
 .LinkRevert {font-weight:bold; color: var(--text-white); text-decoration:none;}
 .LinkRevert:hover {text-decoration:underline;}
 
-.medium {width: 75%; margin: 0 auto}
-.half {width: 50%;}
+.medium {width: 100%; margin: 0 auto}
+.half {width: 100%;}
 
+@media screen and (min-width: 600px) {
+	.half {width:75%;}
+}
+@media screen and (min-width: 900px) {
+	.medium {width:75%;}
+	.half {width:50%;}
+}
 .htt_number
 {
 	float:left;
@@ -390,6 +397,7 @@ body.loading .modal {
 .alert-warning {background-color: #ffe0a0; border:1px solid #bfa575;}
 .alert-danger {background-color:lightpink; border:1px solid hotpink;}
 .alert-success {background-color:lightgreen; border:1px solid darkgreen;}
+.alert-info {color:white; background-color:var(--text-info); border:1px solid var(--text-info-hover);}
 
 
 .ml-1, .m-1, .mx-1 {margin-left:0.25em;}
@@ -434,6 +442,12 @@ body.loading .modal {
 .w-90 {width: 90% !important}
 .w-95 {width: 95% !important}
 .w-100 {width: 100% !important}
+.wmin-3ch {min-width:3ch;}
+.wmin-5ch {min-width:5ch;}
+.wmin-7ch {min-width:7ch;}
+.wmin-10ch {min-width:10ch;}
+.wmin-15ch {min-width:15ch;}
+.wmin-20ch {min-width:20ch;}
 
 .h-0 {height: 0; vertical-align: top;}
 
@@ -458,3 +472,27 @@ div.Center  {text-align: center; margin: auto}
 @MEDIA print {
 	.print_debug {display:none;}
 }
+
+/* Define the spin animation */
+@keyframes spin {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+/* Basic styles for the spinner */
+#SpinningIanseo {
+	position:fixed;
+	display:flex;
+	align-items: center;
+	justify-content: center;
+	width: 100px;
+	height: 100px;
+	top:calc( 50% - 50px);
+	left:calc( 50% - 50px);
+	animation: spin 2s linear infinite;
+}
+.text-right {text-align: right;}

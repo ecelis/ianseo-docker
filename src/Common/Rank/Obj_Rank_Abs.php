@@ -188,9 +188,9 @@
 
 			if (array_key_exists('cutRank',$this->opts)) {
 				if(is_numeric($this->opts['cutRank']) && $this->opts['cutRank']>0) {
-					$EnFilter.= "AND Ind{$dd}Rank<={$this->opts['cutRank']} ";
+					$EnFilter.= "AND (Ind{$dd}Rank<={$this->opts['cutRank']} AND Ind{$dd}Rank!=0)";
 				} elseif (strtolower($this->opts['cutRank'])=='cut') {
-					$EnFilter.= "AND Ind{$dd}Rank<=EvNumQualified ";
+					$EnFilter.= "AND (Ind{$dd}Rank<=EvNumQualified AND Ind{$dd}Rank!=0)";
 				}
 			}
 
@@ -242,7 +242,7 @@
 					QuD1Gold, QuD2Gold, QuD3Gold, QuD4Gold, QuD5Gold, QuD6Gold, QuD7Gold, QuD8Gold,
 					QuD1Xnine, QuD2Xnine, QuD3Xnine, QuD4Xnine, QuD5Xnine, QuD6Xnine, QuD7Xnine, QuD8Xnine,
 					QuD1Arrowstring,QuD2Arrowstring,QuD3Arrowstring,QuD4Arrowstring,QuD5Arrowstring,QuD6Arrowstring,QuD7Arrowstring,QuD8Arrowstring,
-					QuScore, QuNotes, QuConfirm, IndNotes, (EvShootOff OR EvE1ShootOff OR EvE2ShootOff) as ShootOffSolved,
+					QuScore, QuNotes, QuConfirm, QuArrow, IndNotes, (EvShootOff OR EvE1ShootOff OR EvE2ShootOff) as ShootOffSolved,
 					IF(EvRunning=1,IFNULL(ROUND(QuScore/QuHits,3),0),0) as RunningScore,
 					EvCode,EvEventName,EvRunning, EvFinalFirstPhase, EvElim1, EvElim2, EvIsPara, coalesce(OdfTrOdfCode,'') as OdfUnitCode, EvOdfCode,
 					{$tmp} AS Arrows_Shot,
@@ -341,7 +341,7 @@
 			if(!empty($this->opts['runningDist']) && $this->opts['runningDist']>0) {
 				$q .= "OrderScore DESC, OrderGold DESC, OrderXnine DESC, FirstName, Name ";
 			} else {
-				$q .= "RunningScore DESC, Ind{$dd}Rank=0, Ind{$dd}Rank ASC, FirstName, Name ";
+				$q .= "Ind{$dd}Rank=0, Ind{$dd}Rank ASC, FirstName, Name ";
 			}
 			$r=safe_r_sql($q);
 
@@ -353,30 +353,23 @@
 			$this->data['sections']=array();
 
 			if (safe_num_rows($r)>0) {
-				$curEvent='';
+                $curEvent='';
 
-				$section=null;
+                $section=null;
 
-				$runningOldScore=-1;
-				$runningPos=0;
-				$runningRank=0;
+                $oldScore=-1;
+                $oldGold=-1;
+                $oldXnine=-1;
+                $myPos=0;
+                $myRank=0;
 
-				$oldScore=-1;
-				$oldGold=-1;
-				$oldXnine=-1;
-				$myPos=0;
-				$myRank=0;
-
-				while ($myRow=safe_fetch($r))
-				{
-					if ($curEvent!=$myRow->EvCode)
-					{
+				while ($myRow=safe_fetch($r)) {
+					if ($curEvent!=$myRow->EvCode) {
 					/*
 					 *  se non sono all'inizio, prima di iniziare una sezione devo prendere quella appena fatta
 					 *  e accodarla alle altre
 					 */
-						if ($curEvent!='')
-						{
+						if ($curEvent!='') {
 							foreach($section["meta"]["arrowsShot"] as $k => $v) {
 								if($v) $section["meta"]["sesArrows"][$k] = get_text('AfterXArrows', 'Common', $v);
 							}
@@ -388,8 +381,7 @@
 						$curEvent=$myRow->EvCode;
 
 					// inizializzo i meta che son comuni a tutta la classifica
-						if ($this->data['meta']['numDist']==-1)
-						{
+						if ($this->data['meta']['numDist']==-1) {
 							$this->data['meta']['numDist']=$myRow->ToNumDist;
 							$this->data['meta']['double']=$myRow->ToDouble;
 						}
@@ -446,8 +438,7 @@
 							'hits' => get_text('Arrows','Tournament')
 						);
 
-						if ($this->opts['dist']==0 && empty($this->opts['runningDist']))
-						{
+						if ($this->opts['dist']==0 && empty($this->opts['runningDist'])) {
 							$fields=$fields+array(
 								'tiebreak' => get_text('TieArrows'),
 								'tiebreakClosest' => get_text('Close2Center', 'Tournament'),
@@ -502,31 +493,21 @@
 						$oldXnine=-1;
 						$myPos=0;
 						$myRank=0;
-
-						$runningOldScore=-1;
-						$runningPos=0;
-						$runningRank=0;
 					}
 
-					if($myRow->EvRunning==1)
-					{
-						$runningPos++;
-						if($runningOldScore!=$myRow->RunningScore)
-							$runningRank=$runningPos;
-						$runningOldScore=$myRow->RunningScore;
-					}
-
-					$myPos++;
-					if(!($oldScore==$myRow->OrderScore && $oldGold==$myRow->OrderGold && $oldXnine==$myRow->OrderXnine))
-						$myRank = $myPos;
-					$oldScore = $myRow->OrderScore;
-					$oldGold = $myRow->OrderGold;
-					$oldXnine = $myRow->OrderXnine;
-
+                    if(!empty($this->opts['runningDist']) && $this->opts['runningDist']>0) {
+                        $myPos++;
+                        if (!($oldScore == $myRow->OrderScore && $oldGold == $myRow->OrderGold && $oldXnine == $myRow->OrderXnine)) {
+                            $myRank = $myPos;
+                        }
+                        $oldScore = $myRow->OrderScore;
+                        $oldGold = $myRow->OrderGold;
+                        $oldXnine = $myRow->OrderXnine;
+                    }
 
 				// creo un elemento per la sezione
 					if($myRow->IrmShowRank) {
-						$tmpRank= (!empty($this->opts['runningDist']) && $this->opts['runningDist']>0 ? $myRank : ($myRow->EvRunning==1 ? $runningRank: $myRow->Rank));
+						$tmpRank= (!empty($this->opts['runningDist']) && $this->opts['runningDist']>0 ? $myRank : $myRow->Rank);
 					} else {
                         $tmpRank = $myRow->IrmType;
 					}
@@ -568,6 +549,7 @@
 						'gold' => $myRow->IrmShowRank ? (!empty($this->opts['runningDist']) && $this->opts['runningDist']>0 ? $myRow->OrderGold : $myRow->Gold) : '',
 						'xnine' => $myRow->IrmShowRank ? (!empty($this->opts['runningDist']) && $this->opts['runningDist']>0 ? $myRow->OrderXnine : $myRow->XNine) : '',
 						'hits' => $myRow->IrmShowRank ? $myRow->Hits : '',
+						'miss' => $myRow->IrmShowRank ? $myRow->Hits-$myRow->QuArrow : '',
 						'notes' => trim($myRow->QuNotes. ' ' . $myRow->IndNotes),
 						'record' => $this->ManageBitRecord($myRow->RecBitLevel, $myRow->CoCaCode, $myRow->CoMaCode, $myRow->EvIsPara),
 						'irm' => $myRow->IndIrmType,
@@ -575,7 +557,7 @@
 						'recordGap' => ($myRow->Arrows_Shot*10)-$myRow->Score,
 					);
 
-					if ($this->opts['dist']==0 && empty($this->opts['runningDist'])) {
+					if ($this->opts['dist']==0 AND empty($this->opts['runningDist'])) {
 						$item=$item+array(
 							'tiebreak' => trim($myRow->IndTiebreak),
                             'tiebreakClosest' => $myRow->IndTbClosest,
@@ -603,12 +585,10 @@
 					$item=$item+$distFields;
 
 					//Gestisco il numero di frecce tirate per sessione
-					if(empty($section["meta"]["arrowsShot"][$myRow->Session]) || $section["meta"]["arrowsShot"][$myRow->Session]<=$myRow->Arrows_Shot)
-						$section["meta"]["arrowsShot"][$myRow->Session] = $myRow->Arrows_Shot;
+					if($myRow->IndIrmType==0 AND (empty($section["meta"]["arrowsShot"][$myRow->Session]) OR $section["meta"]["arrowsShot"][$myRow->Session]<=$myRow->Arrows_Shot)) {
+                        $section["meta"]["arrowsShot"][$myRow->Session] = $myRow->Arrows_Shot;
+                    }
 
-
-				// e lo aggiungo alla sezione
-					//print_r($item);
 					$section['items'][]=$item;
 
 					if ($myRow->IndTimestamp>$this->data['meta']['lastUpdate']) {

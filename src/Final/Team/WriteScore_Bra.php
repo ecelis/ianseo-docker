@@ -275,13 +275,15 @@ function setTieWinner($ee, $winner, $loser, $SoArrows, $WinLose=1, $TieValue=1, 
 			if($r->Closest1==$r->Closest2) {
 				if($winner==$r->MatchNo1) {
 					$r->Closest1=1;
+					$r->Closest2=0;
 				} else {
 					$r->Closest2=1;
+					$r->Closest1=0;
 				}
 			}
 		}
 
-		safe_w_sql("update TeamFinals set TfTbDecoded='" . ($TbDecoded1 ? implode(",",$TbDecoded1).($r->Closest1 ? '+' : '') : '') . "' where TfTournament={$_SESSION['TourId']} AND TfEvent='$ee' AND TfMatchNo = $r->MatchNo1");
-		safe_w_sql("update TeamFinals set TfTbDecoded='" . ($TbDecoded2 ? implode(",",$TbDecoded2).($r->Closest2 ? '+' : '') : '') . "' where TfTournament={$_SESSION['TourId']} AND TfEvent='$ee' AND TfMatchNo = $r->MatchNo2");
+		safe_w_sql("update TeamFinals set TfTbClosest={$r->Closest1}, TfTbDecoded='" . ($TbDecoded1 ? implode(",",$TbDecoded1).($r->Closest1 ? '+' : '') : '') . "' where TfTournament={$_SESSION['TourId']} AND TfEvent='$ee' AND TfMatchNo = $r->MatchNo1");
+		safe_w_sql("update TeamFinals set TfTbClosest={$r->Closest2}, TfTbDecoded='" . ($TbDecoded2 ? implode(",",$TbDecoded2).($r->Closest2 ? '+' : '') : '') . "' where TfTournament={$_SESSION['TourId']} AND TfEvent='$ee' AND TfMatchNo = $r->MatchNo2");
 	}
 }

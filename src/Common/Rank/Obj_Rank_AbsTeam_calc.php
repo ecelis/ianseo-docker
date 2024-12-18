@@ -104,10 +104,12 @@
 
 			$q="
 				SELECT
-					TeTournament,TeCoId,TeSubTeam,TeEvent,
-					IFNULL(IF(EvRunning=1, TeScore/TeHits,TeScore),0) as TeScore, TeGold, TeXnine,
-					IF(EvFinalFirstPhase=0,99999,coalesce(RrQualified, EvNumQualified)) AS QualifiedNo, EvFinalFirstPhase, 
-					TeRank AS ActualRank
+					TeTournament,TeCoId,TeSubTeam,TeEvent, IF(EvFinalFirstPhase=0,99999,coalesce(RrQualified, EvNumQualified)) AS QualifiedNo, EvFinalFirstPhase, TeRank AS ActualRank,
+                    TeScore, TeGold, TeXnine,
+					IF(EvRunning=1,IFNULL(ROUND(TeScore/TeHits,3),0),TeScore) AS TeScore, 
+                    IF(EvRunning=1,IFNULL(ROUND(TeGold/TeHits,3),0),TeGold) AS TeGold,
+                    IF(EvRunning=1,IFNULL(ROUND(TeXnine/TeHits,3),0),TeXnine) AS TeXnine,
+                    TeHits AS Hits 
 				 FROM Teams
 			    INNER JOIN Events ON TeEvent=EvCode AND TeTournament=EvTournament AND EvTeamEvent=1
 			    inner join IrmTypes on IrmId=TeIrmType and IrmShowRank=1
@@ -116,9 +118,8 @@
 				 	TeTournament={$this->tournament} AND TeFinEvent=1 AND TeScore<>'0'
 				 	{$filter}
 				 ORDER BY
-				 	{$orderBy}
-			";
-			//print $q;exit;
+				 	{$orderBy}";
+
 
 			$r=safe_r_sql($q);
 
@@ -287,12 +288,7 @@
 			$affected=0;
 
 			foreach ($items as $item) {
-				/*print '<pre>';
-				print_r($item);
-				print '</pre>';*/
-
 				$paramsOk=true;
-
 				$canUp=false;
 
 		/*

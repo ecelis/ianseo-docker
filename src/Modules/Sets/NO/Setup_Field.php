@@ -43,7 +43,7 @@ if($tourDetNumDist==2) {
 		CreateDistanceNew($TourId, $TourType, 'BR', array(array('Gul',0)));
 		CreateDistanceNew($TourId, $TourType, 'LB%', array(array('Gul',0)));
 		CreateDistanceNew($TourId, $TourType, 'T%', array(array('Gul',0)));
-		CreateDistanceNew($TourId, $TourType, 'PU%', array(array('Sort/Hvit',0)));
+		CreateDistanceNew($TourId, $TourType, 'OC%', array(array('Sort/Hvit',0)));
 	} else {
 		CreateDistanceNew($TourId, $TourType, '%', array(array('Bane',0)));
 	}

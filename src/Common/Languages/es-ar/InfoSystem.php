@@ -1,4 +1,6 @@
 <?php
+$lang['AutoUpdate']='Actualización Automática';
+$lang['BrokenRecords']='Records Superados';
 $lang['ByClub']='Por país/club';
 $lang['ByEvent']='Por Prueba';
 $lang['ByName']='Por nombre';
@@ -11,6 +13,7 @@ $lang['Eliminations_1']='1er. Serie Eliminatoria';
 $lang['Eliminations_2']='2da. Serie Eliminatoria';
 $lang['HomeButton']='Inicio';
 $lang['Individual']='Individual';
+$lang['Live']='Vivo';
 $lang['Matches']='Encuentros';
 $lang['NewContent']='Nuevos datos disponibles';
 $lang['NoDataDisplay']='Sin datos para mostrar';
@@ -26,6 +29,11 @@ $lang['Record-CR-AAF']='Record de Asia';
 $lang['Record-CR-COPARCO']='Record Americano';
 $lang['Record-CR-EMAU']='Record Europeo';
 $lang['Record-CR-FAA']='Record Africano';
+$lang['Record-CR-WAAf']='Record Africano';
+$lang['Record-CR-WAAM']='Record Americano';
+$lang['Record-CR-WAAs']='Record Asiático';
+$lang['Record-CR-WAE']='Record Europeo';
+$lang['Record-CR-WAO']='Record Oceanía';
 $lang['Record-OR-WA']='Record Olímpico';
 $lang['Record-WR-WA']='Record Mundial';
 $lang['Teams']='Equipos';

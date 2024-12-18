@@ -181,7 +181,7 @@
 					{
 						$node=$xmlDoc->createElement($k);
 						$xmlAth->appendChild($node);
-							$cdata=$xmlDoc->createCDATASection($v);
+							$cdata=$xmlDoc->createCDATASection($v??'');
 							$node->appendChild($cdata);
 					}
 			}

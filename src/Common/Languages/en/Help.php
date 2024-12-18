@@ -1,4 +1,5 @@
 <?php
+$lang['AuthTourCode']='Comma separated list of tournaments codes that can be managed by the user.<br>Allowed wildchar: "%"';
 $lang['AutoCheckinAlreadyDone']='You are already checked in<br>If you need to change any information proceed to the accreditation desk';
 $lang['AutoCheckinConfirm']='If all the details are correct press CONFIRM CHECK-IN<br> 
 Otherwise press CANCEL and proceed to the accreditation desk';
@@ -19,6 +20,11 @@ $lang['ChangeComponents']='<p>To proceed with a change first remove the athletes
 &#9654&nbsp;Score included in the total of team qualification round<br>
 &#9655&nbsp;Score not included in the total of team qualification round';
 $lang['CombiCompList']='List of Competitions Codes, comma separated';
+$lang['ExportAdvanced']='Also exports Entry and Country data to create if missing at the endpoint';
+$lang['ExportCategories']='Choose which categories/events to export (no selection means all)';
+$lang['ExportDistances']='Select which distance(s) to export (no selection means all distances)';
+$lang['ExportSchedule']='Select from the schedule which session to export';
+$lang['ExportScheduleToday']='Shows only the scheduled sessions for today';
 $lang['FlightsManagement']='<b>To flight categories</b>
 <ul>
 <li>Select on which Ends - Distances Total - Full Total calculate the flights;</li>
@@ -33,6 +39,11 @@ $lang['FlightsManagement']='<b>To flight categories</b>
 <li>If a category is considered to be flighted, use \'-1\' as cut to explicitly exclude from flighting</li>
 <li>Professional and/or Championships as excluded from flighting and greyed out</li>
 </ul>';
+$lang['FontFamily']='Name of the font to use in the CSS';
+$lang['FontFile']='Location of the file on disk';
+$lang['FontName']='Actual name of the font';
+$lang['FontStyle']='Style of the font in CSS';
+$lang['FontWeight']='Weight of the font in CSS';
 $lang['GetBarcodeSeparator']='After printing the barcodes reference sheet, read the «SEPARATOR» barcode in order to activate the correct reader items.';
 $lang['HomePage']='This is the page where you can select or create a tournament.';
 $lang['ISK-LockedSessionHelp']='{$a} icons show if the app can score or not in that session.';
@@ -98,5 +109,7 @@ $lang['TV-RotList']='<div>This is the list of available presentation pages to se
 <li>an advanced version that uses modern browsers HTML5 capabilities</li>
 </ul>
 <div>To create a new content, enter a name for it and press the button.</div>';
+$lang['UserName']='Must be unique in the system. Minimal length: 6 characters';
+$lang['UserPassword']='Leave blank to keep current password';
 $lang['ZeroBased']='Zero based number';
 ?>

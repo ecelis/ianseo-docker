@@ -14,7 +14,7 @@ function toggleSnapshot(obj) {
 
 function rebuildSnapshot(ses, dist, from, to) {
     $.getJSON('MakeSnapshot.php?json=&numArrows=0&Session=' + ses + '&Distance=' + dist + '&fromTarget=' + from + '&toTarget=' + to, function (data) {
-        if (data.Error==0) {
+        if (data.error==0) {
             alert(data.msg);
         }
     });

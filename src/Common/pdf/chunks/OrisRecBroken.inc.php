@@ -5,6 +5,8 @@ $pdf->StopHeader=true;
 $pdf->setPhase('As of '.$PdfData->RecordAs);
 $pdf->setEvent($PdfData->Description);
 
+$pdf->setDocUpdate($PdfData->LastUpdate ?? $PdfData->Timestamp ?? '');
+
 $Version='';
 if($PdfData->DocVersion) {
 	$Version=trim('Vers. '.$PdfData->DocVersion . " ($PdfData->DocVersionDate) $PdfData->DocVersionNotes");

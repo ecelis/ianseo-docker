@@ -15,6 +15,34 @@ if(!empty($on) AND $_SESSION["TourLocRule"]=='FR' AND $acl[AclCompetition] >= Ac
     }
 
 	switch($_SESSION['TourLocSubRule']) {
+		case 'SetFRCoupeFrance':
+            $q=safe_r_sql("select EvCode, count(*) as ExAequo
+                from Individuals
+                inner join Events on EvTournament=IndTournament and EvCode=IndEvent and EvTeamEvent=0 and EvFinalFirstPhase=0
+                inner join Qualifications on QuId=IndId
+                inner join (select EvCode TieCode, count(*) as ExAequo, QuScore as TieScore
+                    from Individuals
+                    inner join Events on EvTournament=IndTournament and EvCode=IndEvent and EvTeamEvent=0 and EvFinalFirstPhase=0
+                    inner join Qualifications on QuId=IndId
+                    where IndTournament={$_SESSION['TourId']} and IndRank between 1 and 4
+                    group by EvCode, QuScore
+                    having ExAequo>1) Ties on TieCode=IndEvent and QuScore=TieScore
+                where IndTournament={$_SESSION['TourId']}
+                group by EvCode, QuScore
+                having ExAequo>1
+                order by EvProgr, QuScore desc");
+            if(safe_num_rows($q)>0) {
+                $tmp = get_text('MenuLM_Check shoot-off before Rank');
+                $ev=[];
+                while($r=safe_fetch($q)) {
+                    $ev[]=$r->EvCode;
+                }
+                $tmp .= ' <b class="ShootOffMenu">(' . implode('-', $ev) . ')</b>';
+                $tmp .= '|' . $CFG->ROOT_DIR . 'Modules/Sets/FR/Manage/AbsTae.php';
+                $ret['FINI'][]=MENU_DIVIDER;
+                $ret['FINI'][]=$tmp;
+            }
+            break;
 		case 'SetFRChampsD1DNAP':
 		case 'SetFRD12023':
 			$AllInOne=getModuleParameter('FFTA', 'D1AllInOne', 0);

@@ -9,6 +9,7 @@ $lang['CmdImport']='Uvoz';
 $lang['CmdReplace']='pisati preko';
 $lang['CmdTruncateHTTData']='Odreži privremenu tablicu';
 $lang['Country']='Država';
+$lang['DateTime']='Datum / vrijeme';
 $lang['Distance']='Udaljenost';
 $lang['Download']='Skupi podatke';
 $lang['EnableHHT']='Omogući HHT sustav';

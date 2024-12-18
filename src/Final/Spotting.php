@@ -94,7 +94,8 @@ if(!empty($GoBack)) {
     echo '<div style="display:flex;justify-content: space-between">
 		<div><input type="checkbox" id="MatchAlternate" onclick="toggleAlternate(this)"/>'.get_text('AlternateMatch', 'Tournament').'</div>
 		<div><input type="checkbox" id="ActivateKeys" onclick="toggleKeypress()" />'.get_text('KeyPress', 'Tournament').'</div>
-		<div><input type="checkbox" id="MoveNext" checked="checked" />'.get_text('AutoMoveNext', 'Tournament').'</div>
+		<div class="d-none" id="ClickMovesPositionDiv"><input type="checkbox" id="ClickMovesPosition" onclick="toggleClickMovesPosition(this)"/>'.get_text('ClickMovesPosition', 'Tournament').'</div>
+		<div><input type="checkbox" id="MoveNext" checked="checked" onclick="checkClickMovesPosition()" />'.get_text('AutoMoveNext', 'Tournament').'</div>
 		<div><input type="button" id="liveButton" value="" onclick="setLive()"/></div>
 		<div id="buttonMove2Next"></div>
 		</div>';

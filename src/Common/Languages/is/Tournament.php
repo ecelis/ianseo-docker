@@ -27,7 +27,6 @@ $lang['Badge2PerPage']='2 skírteini per síðu';
 $lang['Badge4PerPage']='3 skírteini per síðu';
 $lang['Badge4PerPageB7']='4 skírteini per síðu (B7 format)';
 $lang['BadgeConfirmPrinted']='Staðfesta prentað';
-$lang['BadgeOnlyNotPrinted']='BARA skírteini sem er ekki þegar búið að prenta?';
 $lang['BadgeOnlyPrintAccredited']='BARA skírteini af staðfestum þátttakendum?';
 $lang['BadgeOnlyPrintPhoto']='BARA skírteini með myndum?';
 $lang['BadgeOptions']='Valmöguleikar';

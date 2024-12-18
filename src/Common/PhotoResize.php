@@ -39,13 +39,13 @@ function photoresize($file, $direct=false, $String=false) {
 					$ratio=min($width/MAX_WIDTH, $height/MAX_HEIGHT);
 
 					// we resize the image to fit the greater value
-					$new_width=$width/$ratio;
-					$new_height=$height/$ratio;
+					$new_width=intval($width/$ratio);
+					$new_height=intval($height/$ratio);
 					$im2=imagecreatetruecolor( MAX_WIDTH, MAX_HEIGHT);
 					$bgcolor=imagecolorallocate($im2, 255, 255, 255);
 					imagefill($im2, 0,0,$bgcolor);
 
-					if(!imagecopyresampled( $im2, $im, (MAX_WIDTH-$new_width)/2, (MAX_HEIGHT-$new_height)/2,0,0, $new_width, $new_height, $width, $height)) {
+					if(!imagecopyresampled( $im2, $im, intval((MAX_WIDTH-$new_width)/2), intval((MAX_HEIGHT-$new_height)/2),0,0, $new_width, $new_height, $width, $height)) {
 						$errMsg=get_text('PhotoDimError','Tournament',array(MAX_WIDTH,MAX_HEIGHT));
 					} else {
 						// check now the proportions

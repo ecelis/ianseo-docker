@@ -250,6 +250,7 @@ $lang['MenuLM_Delete']='Usuń';
 $lang['MenuLM_DeleteTarget']='Usuń przypisanie stanowisk';
 $lang['MenuLM_Distances']='Ustawienia odległości';
 $lang['MenuLM_Div/Class Result List']='Wyniki w kategoriach';
+$lang['MenuLM_Divisions and Classes']='Konkurencje i Kategorie';
 $lang['MenuLM_Draw']='Wylosuj';
 $lang['MenuLM_Edit Competition Info']='Edytuj informacje o zawodach';
 $lang['MenuLM_EditFinalReport']='Edytuj końcowy protokół';

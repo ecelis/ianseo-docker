@@ -53,7 +53,7 @@ switch($CardType) {
 			// EnBadgePrinted contiene data e ora della stampa del badge...
 			// quindi sono da recuperare quelli che hanno la data nulla oppure
 			// oppure quelli la cui data di stampa è anteriore alla foto inserita
-			$Where[] = ' AND (EnBadgePrinted is NULL or EnBadgePrinted=0 '.(empty($_REQUEST['PrintPhoto']) ? '' : 'or PhPhotoEntered is null or EnBadgePrinted < PhPhotoEntered ').') ';
+			$Where[] = ' AND (EnBadgePrinted is NULL or EnBadgePrinted=0 '.(empty($_REQUEST['PrintPhoto']) ? '' : 'or PhPhotoEntered is null  ').') ';
 		}
 		if(!empty($_REQUEST['HasPlastic'])) {
 			$Where[] = " AND aextra.EdExtra='1' and aextra.EdEmail!='1' ";

@@ -558,7 +558,7 @@ foreach($Data['sections'] as $kSec=>$vSec) {
                                         // check the correct value of $ToWin
                                         if(!in_array($ToWin, $vSec['meta']['targetTypeValues'])) {
                                             foreach(array_reverse($vSec['meta']['targetTypeValues']) as $v) {
-                                                if($v>$ToWin) {
+                                                if(intval($v)>$ToWin) {
                                                     $ToWin=$v;
                                                     break;
                                                 }
@@ -606,7 +606,7 @@ foreach($Data['sections'] as $kSec=>$vSec) {
                                     // check the correct value of $ToWin
                                     if(!in_array($ToWin, $vSec['meta']['targetTypeValues'])) {
                                         foreach(array_reverse($vSec['meta']['targetTypeValues']) as $v) {
-                                            if($v>$ToWin) {
+                                            if(intval($v)>$ToWin) {
                                                 $ToWin=$v;
                                                 break;
                                             }
@@ -1126,7 +1126,7 @@ foreach($Data['sections'] as $kSec=>$vSec) {
                                     // check the correct value of $ToWin
                                     if(!in_array($ToWin, $vSec['meta']['targetTypeValues'])) {
                                         foreach(array_reverse($vSec['meta']['targetTypeValues']) as $v) {
-                                            if($v>$ToWin) {
+                                            if(intval($v)>$ToWin) {
                                                 $ToWin=$v;
                                                 break;
                                             }
@@ -1174,7 +1174,7 @@ foreach($Data['sections'] as $kSec=>$vSec) {
                                 // check the correct value of $ToWin
                                 if(!in_array($ToWin, $vSec['meta']['targetTypeValues'])) {
                                     foreach(array_reverse($vSec['meta']['targetTypeValues']) as $v) {
-                                        if($v>$ToWin) {
+                                        if(intval($v)>$ToWin) {
                                             $ToWin=$v;
                                             break;
                                         }

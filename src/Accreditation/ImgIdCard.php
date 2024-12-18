@@ -5,6 +5,7 @@ require_once('Common/pdf/BackNoPDF.php');
 require_once('Common/Fun_FormatText.inc.php');
 require_once('IdCardEmpty.php');
 require_once('Common/Lib/Fun_DateTime.inc.php');
+require_once('Common/Lib/CommonLib.php');
 
 if(!CheckTourSession()) {
 	// spedisci una immagine vuota
@@ -18,6 +19,7 @@ if(!CheckTourSession()) {
 
 $CardType=(empty($_REQUEST['CardType']) ? 'A' : $_REQUEST['CardType']);
 $CardNumber=(empty($_REQUEST['CardNumber']) ? 0 : intval($_REQUEST['CardNumber']));
+$AvailableFonts=getFonts();
 
 $Select
 	= "SELECT IdCards.*, LENGTH(IcBackground) as ImgSize "
@@ -60,7 +62,7 @@ imagepng($img);
 die();
 
 function draw_pip($r) {
-	global $img, $ColBlk, $CFG;
+	global $img, $ColBlk, $CFG, $AvailableFonts;
 	static $Fonts=array('arial','times','cour');
 
 	$Options=unserialize($r->IceOptions);
@@ -233,7 +235,9 @@ function draw_pip($r) {
 			if(isset($Text)) {
 				if($Options and $Options['H']>0 and $Options['W']>0) {
 					// Calculate the dimensions of the box containing the text
-					$font=dirname(dirname(__FILE__))."/Common/tcpdf/fonts/{$Options['Font']}.ttf";
+                    // we do need a fallback in case there is no available extra font!
+                    $font=$AvailableFonts[$Options['Font']]['file'] ?? $AvailableFonts[$Options['Font'].'.ttf']['file'] ?? dirname(dirname(__FILE__))."/Common/tcpdf/fonts/arial.ttf";
+//                    $font=dirname(dirname(__FILE__))."/Common/tcpdf/fonts/{$Options['Font']}.ttf";
 					if(strpos($Options['Size'],'-') !== false) {
 						list($Options['Size'],) = explode('-',$Options['Size']);
 					}

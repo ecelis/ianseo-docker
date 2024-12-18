@@ -188,6 +188,7 @@
 					. " upper(a.EnFirstName) FamilyNameUpper,"
 					. " a.EnName GivenName,"
 					. " a.EnTvFamilyName TvFamilyName,"
+					. " a.EnTvGivenName TvGivenName,"
 					. " a.EnTvInitials TvInitials,"
 					. " CoId CountryId,"
 					. " CoCode CountryCode,"
@@ -274,6 +275,7 @@
 					. " IF(EvFinalFirstPhase=48, GrPosition2, if(GrPosition>EvNumQualified, 0, GrPosition)) OppPosition,"
 					. " a.EnName OppGivenName,"
                     . " a.EnTvFamilyName OppTvFamilyName,"
+                    . " a.EnTvGivenName OppTvGivenName,"
                     . " a.EnTvInitials OppTvInitials,"
 					. " CoId OppCountryId,"
 					. " CoCode OppCountryCode,"
@@ -483,7 +485,7 @@
 						'elimType' => $myRow->EvElimType,
 						'targetType' => $myRow->TarDescr,
 						'targetTypeId' => $myRow->TarId,
-						'targetTypeValues' => GetTarget($this->tournament, $myRow->TarDescr),
+						'targetTypeValues' => GetTarget($this->tournament, $myRow->TarDescr, true),
 						'targetSize' => $myRow->TargetSize,
 						'distance' => $myRow->Distance,
 						'version' => $myRow->DocVersion,
@@ -593,6 +595,7 @@
 					'familyNameUpper' => $myRow->FamilyNameUpper,
 					'givenName' => $myRow->GivenName,
                     'tvFamilyName' => $myRow->TvFamilyName,
+                    'tvGivenName' => $myRow->TvGivenName,
                     'tvInitials' => $myRow->TvInitials,
 					'nameOrder' => $myRow->NameOrder,
 					'gender' => $myRow->Gender,
@@ -655,6 +658,7 @@
 					'oppFamilyNameUpper' => $myRow->OppFamilyNameUpper,
 					'oppGivenName' => $myRow->OppGivenName,
 					'oppTvFamilyName' => $myRow->OppTvFamilyName,
+					'oppTvGivenName' => $myRow->OppTvGivenName,
 					'oppTvInitials' => $myRow->OppTvInitials,
 					'oppNameOrder' => $myRow->OppNameOrder,
 					'oppGender' => $myRow->OppGender,

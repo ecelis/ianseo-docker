@@ -1,5 +1,6 @@
 <?php
 
+$pdf->setDocUpdate($PdfData->Timestamp ?? $PdfData->LastUpdate ?? '');
 	foreach($PdfData->Data['Items'] as $Country => $Rows) {
 		if($SinglePage and !$FirstTime) {
 			$pdf->AddPage();

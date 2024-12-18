@@ -2,6 +2,7 @@
 
 $pdf->SetDataHeader($PdfData->Header, $PdfData->HeaderWidth);
 $pdf->setPhase('Entries');
+$pdf->setDocUpdate($PdfData->LastUpdate ?? $PdfData->Timestamp ?? '');
 
 $Version='';
 if($PdfData->DocVersion) {

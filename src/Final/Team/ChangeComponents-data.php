@@ -52,7 +52,7 @@ if(!empty($EvCode) AND !empty($TeamId)) {
             }
         }
         if(count($toAdd)==count($toRemove) AND count($toAdd)!=0) {
-            $now = (!empty($_REQUEST["changeTs"]) ? str_replace('T',' ',$_REQUEST["changeTs"].':00') : date('Y-m-d H:i:s'));
+            $now = (!empty($_REQUEST["changeTs"]) ? str_replace('T',' ',$_REQUEST["changeTs"].':00') : getToday('now','Y-m-d H:i:s'));
             foreach ($toAdd as $k=>$v) {
                 $v->Order = array_shift($grpPositions[$v->Group]);
                 $toLog[$v->Order][1] = $v->Id;
@@ -96,6 +96,7 @@ if(!empty($EvCode) AND !empty($TeamId)) {
             $JSON['error'] = 0;
         }
     }
+    $JSON['currentTimestamp']=getToday('now', 'Y-m-d H:i:00');
     JsonOut($JSON);
     die();
 }

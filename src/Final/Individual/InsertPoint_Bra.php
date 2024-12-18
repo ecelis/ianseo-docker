@@ -425,7 +425,7 @@ print '</select>' . "\n";
 							$MyGrid[$Row][$Col].= '<option value="'.($irm->IrmShowRank ? 'irm-'.$irm->IrmId : 'man').'"' . ($MyRow->FinIrmType==$irm->IrmId ? ' selected' : '') . '>' . $irm->IrmType . '</option>' . "\n";
 						}
 						$MyGrid[$Row][$Col].= '</select>';
-                        $MyGrid[$Row][$Col] .= '&nbsp;<input type="checkbox" class="'.($ActivePhase=='0' ? '' : 'disabled').'" name="d_cl_' . $Key . '" id="d_cl_' . $Key . '" '.($MyRow->FinTbClosest ? 'checked="checked"' : '').' '.($ActivePhase=='0' ? '' : 'disabled').'>&nbsp;'.get_text('ClosestShort', 'Tournament');
+                        $MyGrid[$Row][$Col] .= '&nbsp;<input type="checkbox" class="'.($ActivePhase=='0' ? '' : 'disabled').'" name="d_cl_' . $Key . '" id="d_cl_' . $Key . '" '.($MyRow->FinTbClosest ? 'checked="checked"' : '').' '.($ActivePhase=='0' ? '' : 'disabled').' onclick="SendToServer(this);">&nbsp;'.get_text('ClosestShort', 'Tournament');
 						$MyGrid[$Row][$Col].= '<br/>';
 
 						$TieBreak = str_pad($MyRow->FinTiebreak,$obj->so,' ',STR_PAD_RIGHT);

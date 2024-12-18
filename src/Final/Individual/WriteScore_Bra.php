@@ -258,9 +258,11 @@ function setTieWinner($ee, $winner, $loser, $SoArrows, $WinLose=1, $TieValue=1, 
 		if($TbDecoded1==$TbDecoded2 and $WinLose) {
 			// the closest is the winner!
 			if($r->Closest1==$r->Closest2) {
-				if($winner==$r->Winner1) {
+				if($r->Winner1) {
 					$r->Closest1=1;
-				} else {
+					$r->Closest2=0;
+				} elseif($r->Winner2) {
+					$r->Closest1=0;
 					$r->Closest2=1;
 				}
 			}

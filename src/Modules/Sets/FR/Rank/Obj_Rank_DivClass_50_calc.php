@@ -105,7 +105,7 @@
 
 			$filter=$this->safeFilter();
 
-			$orderBy="CONCAT(EnDivision,EnClass), Qu{$dd}Hits DESC, Qu{$dd}Score DESC, Qu{$dd}Gold DESC, Qu{$dd}Xnine DESC ";
+			$orderBy="CONCAT(EnDivision,EnClass), QuArrow DESC, Qu{$dd}Score DESC, Qu{$dd}Gold DESC, Qu{$dd}Xnine DESC ";
 
 			$q="
 				SELECT

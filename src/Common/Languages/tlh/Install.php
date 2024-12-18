@@ -73,7 +73,6 @@ $lang['Optimal value']=' ';
 $lang['Parameter']='';
 $lang['Password']='';
 $lang['PHP settings']=' ';
-$lang['PHP too old']='  .    : ..';
 $lang['PHP version']='';
 $lang['php.ini file']='. ';
 $lang['Prepare']='   ';

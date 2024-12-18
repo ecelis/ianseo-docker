@@ -116,9 +116,6 @@ function get_which_menu($on=false) {
             $ret['COMP']['EXPT'][] = get_text('MenuLM_Export Tournament') . '|' . $CFG->ROOT_DIR . 'Tournament/TournamentExport.php';
             $ret['COMP']['EXPT'][] = get_text('MenuLM_Export Tournament Photo') . '|' . $CFG->ROOT_DIR . 'Tournament/TournamentExport.php?Complete=1';
             if (ProgramRelease == 'HEAD') $ret['COMP']['EXPT'][] = get_text('MenuLM_Export Entries') . '|' . $CFG->ROOT_DIR . 'Partecipants/EntriesExchange.php';
-            if($_SESSION['TourType']==6 AND $_SESSION['TourRealWhenFrom']>='2023-10-27' AND $_SESSION['TourRealWhenTo']<='2024-02-05') {
-                $ret['COMP']['EXPT'][] = get_text('MenuLM_ExportIndoorWorldSeries') . '|' . $CFG->ROOT_DIR . 'Qualification/ExportIWS.php';
-            }
             $ret['COMP'][] = MENU_DIVIDER;
         }
         if ($acl[AclInternetPublish] == AclReadWrite) {
@@ -457,14 +454,6 @@ function get_which_menu($on=false) {
 			$ret['API'][] = get_text('ISKMenuHeader') .'';
 
 			switch($_SESSION['UseApi']) {
-				case 2:
-				case 1:
-				    // MUST stay here!!!
-			        @include_once('Api/ISK/menu.php');
-					break;
-				case 3:
-			        @include_once('Api/ISK-Live/menu.php');
-					break;
                 case 11:
                 case 12:
                 case 13:
@@ -663,238 +652,24 @@ function get_which_run_menu($on=false) {
         if ($acl[AclQualification] == AclReadWrite) {
             $ret['RUN']['SCOR'][] = get_text('MenuLM_Input Score') . '|' . $CFG->ROOT_DIR . 'RunArchery/index.php';
             $ret['RUN']['SCOR'][] = get_text('MenuLM_Standard Table') . '|' . $CFG->ROOT_DIR . 'RunArchery/index.php';
-            // $ret['RUN']['SCOR'][] = get_text('MenuLM_Extended Table') . '|' . $CFG->ROOT_DIR . 'RunArchery/index_all.php';
-            // $ret['RUN']['SCOR'][] = get_text('MenuLM_Arrow by Arrow (Advanced user)') . '|' . $CFG->ROOT_DIR . 'RunArchery/WriteArrows.php';
-            // $ret['RUN']['SCOR'][] = get_text('MenuLM_Arrow by Arrow (Scorecards)') . '|' . $CFG->ROOT_DIR . 'RunArchery/WriteScoreCard.php';
-            // $ret['RUN']['SCOR'][] = MENU_DIVIDER;
-            // $ret['RUN']['SCOR'][] = get_text('MenuLM_Check Data Update') . '|' . $CFG->ROOT_DIR . 'RunArchery/CheckTargetUpdate.php';
-            // $ret['RUN']['SCOR'][] = get_text('SnapshotConf') . '|' . $CFG->ROOT_DIR . 'RunArchery/SnapshotConf.php';
 	        $ret['RUN'][] = MENU_DIVIDER;
         }
         if ($acl[AclQualification] >= AclReadOnly) {
-            // $ret['RUN'][] = get_text('MenuLM_Export Text File') . '|' . $CFG->ROOT_DIR . 'RunArchery/ExportTSV.php';
-            // $ret['RUN'][] = MENU_DIVIDER;
             $ret['RUN'][] = get_text('MenuLM_Scorecard Printout') . '|' . $CFG->ROOT_DIR . 'RunArchery/PrintScore.php';
             $ret['RUN'][] = get_text('MenuLM_NewBacknumbers') . '|' . $CFG->ROOT_DIR . 'Accreditation/IdCards.php?CardType=Q';
-            // $ret['RUN'][] = get_text('MenuLM_Qualification Field of Play Layout') . '|' . $CFG->ROOT_DIR . 'RunArchery/FopSetup.php|||PrintOut';
-            // $ret['RUN'][] = MENU_DIVIDER;
-            // $ret['RUN'][] = get_text('MenuLM_Personal Rank') . '|' . $CFG->ROOT_DIR . 'RunArchery/RankPersonal1.php';
-            // $ret['RUN'][] = MENU_DIVIDER;
-            // if($_SESSION['TourType']>=6 AND $_SESSION['TourType']<=8 AND $_SESSION['TourLocRule']=='IT') {
-            //     $ret['RUN'][] = get_text('SubClassRank','Tournament') . '|' . $CFG->ROOT_DIR . 'RunArchery/PrnIndividual.php?SubClassRank=on&SubClassClassRank=on|||PrintOut';
-            // }
+
             $ret['RUN'][] = get_text('Rankings') . '|' . $CFG->ROOT_DIR . 'RunArchery/PrintOut.php';
             $ret['RUN'][] = get_text('MenuLM_OdsExport') . '|' . $CFG->ROOT_DIR . 'RunArchery/Export.php';
-            // $ret['RUN'][] = get_text('MenuLM_Qualification Round') . '|' . $CFG->ROOT_DIR . 'RunArchery/PrintOutAbs.php';
         }
-
-		// /** QUALIFICATIONS MENU **/
-		// $ret['QUAL'][] = get_text('MenuLM_Qualification') .'';
-        // if ($acl[AclQualification] == AclReadWrite) {
-        //     $ret['QUAL']['SCOR'][] = get_text('MenuLM_Input Score');
-        //     $ret['QUAL']['SCOR'][] = get_text('MenuLM_Standard Table') . '|' . $CFG->ROOT_DIR . 'Qualification/index.php';
-        //     $ret['QUAL']['SCOR'][] = get_text('MenuLM_Extended Table') . '|' . $CFG->ROOT_DIR . 'Qualification/index_all.php';
-        //     $ret['QUAL']['SCOR'][] = get_text('MenuLM_Arrow by Arrow (Advanced user)') . '|' . $CFG->ROOT_DIR . 'Qualification/WriteArrows.php';
-        //     $ret['QUAL']['SCOR'][] = get_text('MenuLM_Arrow by Arrow (Scorecards)') . '|' . $CFG->ROOT_DIR . 'Qualification/WriteScoreCard.php';
-        //     $ret['QUAL']['SCOR'][] = MENU_DIVIDER;
-        //     $ret['QUAL']['SCOR'][] = get_text('MenuLM_Check Data Update') . '|' . $CFG->ROOT_DIR . 'Qualification/CheckTargetUpdate.php';
-        //     $ret['QUAL']['SCOR'][] = get_text('SnapshotConf') . '|' . $CFG->ROOT_DIR . 'Qualification/SnapshotConf.php';
-        //     $ret['QUAL'][] = MENU_DIVIDER;
-        // }
-        // if ($acl[AclQualification] >= AclReadOnly) {
-        //     $ret['QUAL'][] = get_text('MenuLM_Export Text File') . '|' . $CFG->ROOT_DIR . 'Qualification/ExportTSV.php';
-        //     $ret['QUAL'][] = MENU_DIVIDER;
-        //     $ret['QUAL'][] = get_text('MenuLM_Scorecard Printout') . '|' . $CFG->ROOT_DIR . 'Qualification/PrintScore.php';
-        //     $ret['QUAL'][] = get_text('MenuLM_NewBacknumbers') . '|' . $CFG->ROOT_DIR . 'Accreditation/IdCards.php?CardType=Q';
-        //     $ret['QUAL'][] = get_text('MenuLM_Qualification Field of Play Layout') . '|' . $CFG->ROOT_DIR . 'Qualification/FopSetup.php|||PrintOut';
-        //     $ret['QUAL'][] = MENU_DIVIDER;
-        //     $ret['QUAL'][] = get_text('MenuLM_Personal Rank') . '|' . $CFG->ROOT_DIR . 'Qualification/RankPersonal1.php';
-        //     $ret['QUAL'][] = MENU_DIVIDER;
-        //     if($_SESSION['TourType']>=6 AND $_SESSION['TourType']<=8 AND $_SESSION['TourLocRule']=='IT') {
-        //         $ret['QUAL'][] = get_text('SubClassRank','Tournament') . '|' . $CFG->ROOT_DIR . 'Qualification/PrnIndividual.php?SubClassRank=on&SubClassClassRank=on|||PrintOut';
-        //     }
-        //     $ret['QUAL'][] = get_text('MenuLM_Category Result List') . '|' . $CFG->ROOT_DIR . 'Qualification/PrintOut.php';
-        //     $ret['QUAL'][] = get_text('MenuLM_Qualification Round') . '|' . $CFG->ROOT_DIR . 'Qualification/PrintOutAbs.php';
-        // }
-
-		/** ELIMINATION MENU **/
-// 		if($_SESSION['MenuElimDo']) {
-// 			$ret['ELIM'][] = get_text('MenuLM_Eliminations') .'';
-//             if ($acl[AclEliminations] == AclReadWrite) {
-//                 $tmp = get_text('MenuLM_Check shoot-off before eliminations') . '';
-//                 if ($_SESSION['MenuElim1']) {
-//                     $tmp .= ' <b class="ShootOffMenu">(Round 1: ' . implode('-', $_SESSION['MenuElim1']) . ')</b>';
-//                 }
-//                 if ($_SESSION['MenuElim2']) {
-//                     $tmp .= ' <b class="ShootOffMenu">(Round 2: ' . implode('-', $_SESSION['MenuElim2']) . ')</b>';
-//                 }
-//                 $tmp .= '|' . $CFG->ROOT_DIR . 'Final/Individual/AbsIndividual.php';
-//                 $ret['ELIM'][] = $tmp;
-//                 $ret['ELIM'][] = MENU_DIVIDER;
-//             }
-//             if ($acl[AclEliminations] >= AclReadOnly) {
-//                 $ret['ELIM'][] = get_text('MenuLM_Scorecard Printout') . '|' . $CFG->ROOT_DIR . 'Elimination/PrintScore.php';
-//                 $ret['ELIM'][] = get_text('MenuLM_NewBacknumbers') . '|' . $CFG->ROOT_DIR . 'Accreditation/IdCards.php?CardType=E';
-//                 $ret['ELIM'][] = MENU_DIVIDER;
-//             }
-//             if ($acl[AclEliminations] == AclReadWrite) {
-//                 $ret['ELIM'][] = get_text('MenuLM_Target Assignment') . '|' . $CFG->ROOT_DIR . 'Elimination/SetTarget.php';
-//             }
-// 			if($_SESSION['MenuElimOn']) {
-//                 if ($acl[AclEliminations] == AclReadWrite) {
-//                     $ret['ELIM']['SCOR'][] = get_text('MenuLM_Input Score');
-//                     $ret['ELIM']['SCOR'][] = get_text('MenuLM_Standard Table') . '|' . $CFG->ROOT_DIR . 'Elimination/index.php';
-//                     $ret['ELIM']['SCOR'][] = get_text('MenuLM_Arrow by Arrow (Advanced user)') . '|' . $CFG->ROOT_DIR . 'Elimination/WriteArrows.php';
-//                     $ret['ELIM']['SCOR'][] = get_text('MenuLM_Arrow by Arrow (Scorecards)') . '|' . $CFG->ROOT_DIR . 'Elimination/WriteScoreCard.php';
-//                     $ret['ELIM'][] = MENU_DIVIDER;
-//                 }
-//                 if ($acl[AclEliminations] >= AclReadOnly) {
-//                     $ret['ELIM'][] = get_text('MenuLM_Printout') . '|' . $CFG->ROOT_DIR . 'Elimination/PrintOut.php';
-//                 }
-// 			}
-// 		}
-//
-// 		if($_SESSION['MenuElimPoolDo']) {
-// 			$ret['ELIMP'][] = get_text('MenuLM_Pools') .'';
-//             if ($acl[AclEliminations] == AclReadWrite) {
-//                 $tmp = get_text('MenuLM_Check shoot-off before eliminations') . '';
-//                 if ($_SESSION['MenuElimPool']) {
-//                     $tmp .= ' <b class="ShootOffMenu">(Pool: ' . implode('-', $_SESSION['MenuElimPool']) . ')</b>';
-//                 }
-//                 $tmp .= '|' . $CFG->ROOT_DIR . 'Final/Individual/AbsIndividual.php';
-//                 $ret['ELIMP'][] = $tmp;
-//                 $ret['ELIMP'][] = MENU_DIVIDER;
-//             }
-//             if ($acl[AclEliminations] >= AclReadOnly) {
-//                 $ret['ELIMP'][] = get_text('MenuLM_Scorecard Printout') . '|' . $CFG->ROOT_DIR . 'Final/Individual/PrintScore.php';
-//                 $ret['ELIMP'][] = get_text('MenuLM_NewBacknumbers') . '|' . $CFG->ROOT_DIR . 'Accreditation/IdCards.php?CardType=I';
-//                 $ret['ELIMP'][] = MENU_DIVIDER;
-//             }
-//             if ($acl[AclEliminations] == AclReadWrite) {
-//                 $ret['ELIMP'][] = get_text('MenuLM_Target Assignment') . '|' . $CFG->ROOT_DIR . 'Elimination/SetTarget.php';
-//             }
-// 			if($_SESSION['MenuElimOn']) {
-//                 if ($acl[AclEliminations] == AclReadWrite) {
-//                     $ret['ELIMP'][] = get_text('MenuLM_Spotting') . '|' . $CFG->ROOT_DIR . 'Final/Spotting.php';
-//                     $ret['ELIMP'][] = MENU_DIVIDER;
-//                     $ret['ELIMP']['SCOR'][] = get_text('MenuLM_Input Score');
-//                     $ret['ELIMP']['SCOR'][] = get_text('MenuLM_Data insert (Table view)') . '|' . $CFG->ROOT_DIR . 'Final/Individual/InsertPoint1.php';
-//                 }
-//                 if ($acl[AclEliminations] >= AclReadOnly) {
-//                     $ret['ELIMP'][] = get_text('MenuLM_Printout') . '|' . $CFG->ROOT_DIR . 'Elimination/PrintOut.php';
-//                 }
-// 			}
-// 		}
-//
-//
-// 		/** INDIVIDUAL FINAL MENU **/
-// 		if($_SESSION['MenuFinIDo']) {
-// 			$ret['FIN'][] = get_text('MenuLM_Individual Finals') .'';
-//             if($acl[AclIndividuals] == AclReadWrite) {
-//                 $tmp = get_text('MenuLM_Check shoot-off before final phases') . '';
-//                 if ($_SESSION['MenuFinI']) {
-//                     $tmp .= ' <b class="ShootOffMenu">(' . implode('-', $_SESSION['MenuFinI']) . ')</b>';
-//                 }
-//                 $tmp .= '|' . $CFG->ROOT_DIR . 'Final/Individual/AbsIndividual.php';
-//                 $ret['FIN'][] = $tmp;
-//             }
-//             if($acl[AclIndividuals] >= AclReadOnly) {
-//                 $ret['FIN'][] = get_text('MenuLM_PrnShootOff') . '|' . $CFG->ROOT_DIR . 'Qualification/PrnShootoff.php|||PrintOut';
-//                 $ret['FIN'][] = MENU_DIVIDER;
-//                 $ret['FIN'][] = get_text('MenuLM_Export Text File') . '|' . $CFG->ROOT_DIR . 'Final/ExportTSV.php';
-//                 $ret['FIN'][] = MENU_DIVIDER;
-//                 $ret['FIN'][] = get_text('MenuLM_Scorecard Printout') . '|' . $CFG->ROOT_DIR . 'Final/Individual/PrintScore.php';
-// // 			$ret['FIN'][] = get_text('MenuLM_Back Number Printout') .'|'.$CFG->ROOT_DIR.'Final/Individual/PrintBackNo.php';
-//                 $ret['FIN'][] = get_text('MenuLM_NewBacknumbers') . '|' . $CFG->ROOT_DIR . 'Accreditation/IdCards.php?CardType=I';
-//             }
-// 			if($_SESSION['MenuFinIOn']) {
-//                 if($acl[AclIndividuals] == AclReadWrite) {
-//                     $ret['FIN'][] = MENU_DIVIDER;
-//                     $ret['FIN'][] = get_text('MenuLM_Data insert (Bracket view)') . '|' . $CFG->ROOT_DIR . 'Final/Individual/InsertPoint_Bra.php';
-//                     $ret['FIN'][] = get_text('MenuLM_Data insert (Table view)') . '|' . $CFG->ROOT_DIR . 'Final/Individual/InsertPoint1.php';
-//                     $ret['FIN'][] = get_text('MenuLM_Arrow by Arrow (Advanced user)') . '|' . $CFG->ROOT_DIR . 'Final/WriteArrows.php';
-//                     $ret['FIN'][] = get_text('MenuLM_Spotting') . '|' . $CFG->ROOT_DIR . 'Final/Spotting.php';
-//                 }
-//                 if($acl[AclIndividuals] >= AclReadOnly) {
-//                     $ret['FIN'][] = MENU_DIVIDER;
-//                     $ret['FIN'][] = get_text('MenuLM_Printout') . '|' . $CFG->ROOT_DIR . 'Final/PrintOut.php';
-//                 }
-// 			}
-// 		}
-
 		/** PRINTOUT MENU **/
 		$ret['PRNT'][] = get_text('MenuLM_Printout') .'';
-        // if ($acl[AclParticipants] >= AclReadOnly) {
-        //     $ret['PRNT'][] = get_text('MenuLM_Participant Lists') . '|' . $CFG->ROOT_DIR . 'Partecipants/PrintOut.php';
-        //     $ret['PRNT'][] = get_text('MenuLM_Statistics') . '|' . $CFG->ROOT_DIR . 'Partecipants/PrintOutStat.php';
-        //     $ret['PRNT'][] = MENU_DIVIDER;
-        // }
         if ($acl[AclQualification] >= AclReadOnly) {
             $ret['PRNT'][] = get_text('Rankings') . '|' . $CFG->ROOT_DIR . 'RunArchery/PrintOut.php';
             $ret['PRNT'][] = MENU_DIVIDER;
         }
-        // if ($acl[AclIndividuals] >= AclReadOnly OR $acl[AclTeams] >= AclReadOnly) {
-        //     $ret['PRNT'][] = get_text('MenuLM_Final Rounds') . '|' . $CFG->ROOT_DIR . 'Final/PrintOut.php';
-        //     $ret['PRNT'][] = MENU_DIVIDER;
-        // }
-        // if ($acl[AclQualification] == AclReadWrite OR $acl[AclEliminations] == AclReadWrite OR $acl[AclIndividuals] == AclReadWrite OR $acl[AclTeams] == AclReadWrite) {
-        //     $ret['PRNT'][] = get_text('MenuLM_Header for Result Printouts') . '|' . $CFG->ROOT_DIR . 'Tournament/PrintoutComments.php';
-        //     $ret['PRNT'][] = MENU_DIVIDER;
-        // }
-        // if ($acl[AclCompetition] == AclReadWrite) {
-        //     $ret['PRNT'][] = get_text('MenuLM_ManAwards') . '|' . $CFG->ROOT_DIR . 'Tournament/ManAwards.php';
-        // }
-        // if ($acl[AclCompetition] >= AclReadOnly) {
-        //     $ret['PRNT'][] = get_text('MenuLM_CheckAwards') . '|' . $CFG->ROOT_DIR . 'Tournament/PDFAward-check.php|||PrintOut';
-        //     $ret['PRNT'][] = get_text('MenuLM_PrintAwardsPositions') . '|' . $CFG->ROOT_DIR . 'Tournament/PDFAward-Positions.php|||PrintOut';
-        //     $ret['PRNT'][] = get_text('MenuLM_PrintAwards') . '|' . $CFG->ROOT_DIR . 'Tournament/PDFAward.php|||PrintOut';
-        //     $ret['PRNT'][] = MENU_DIVIDER;
-        // }
         if ($acl[AclCompetition] == AclReadWrite) {
             $ret['PRNT'][] = get_text('MenuLM_Print Sign') . '|' . $CFG->ROOT_DIR . 'Common/Sign';
         }
-		//
-		// /** HHT MENU **/
-        // if ($_SESSION['MenuHHT'] AND ($acl[AclQualification] == AclReadWrite OR $acl[AclIndividuals] == AclReadWrite OR $acl[AclTeams] == AclReadWrite)) {
-		// 	$ret['HHT'][] = get_text('MenuLM_HTT') .'';
-		// 	$ret['HHT'][] = get_text('MenuLM_HTT Communication Setup') .'|'.$CFG->ROOT_DIR.'HHT/Configuration.php';
-		// 	$ret['HHT'][] = MENU_DIVIDER;
-		// 	$ret['HHT'][] = get_text('MenuLM_HTT Setup') .'|'.$CFG->ROOT_DIR.'HHT/InitHTT.php';
-		// 	$ret['HHT'][] = get_text('MenuLM_Athletes Setup') .'|'.$CFG->ROOT_DIR.'HHT/InitAthletes.php';
-		// 	$ret['HHT'][] = get_text('MenuLM_Scores Setup') .'|'.$CFG->ROOT_DIR.'HHT/InitScores.php';
-		// 	$ret['HHT'][] = get_text('MenuLM_Setup HTT Sequence') .'|'.$CFG->ROOT_DIR.'HHT/Sequence.php';
-		// 	$ret['HHT'][] = get_text('MenuLM_Collect Data') .'|'.$CFG->ROOT_DIR.'HHT/Collect.php';
-		// 	$ret['HHT'][] = get_text('MenuLM_Get Info') .'|'.$CFG->ROOT_DIR.'HHT/GetInfo.php';
-		// }
-		//
-		// if(!empty($_SESSION['UseApi'])) {
-		// 	$ret['API'][] = get_text('ISKMenuHeader') .'';
-		//
-		// 	switch($_SESSION['UseApi']) {
-		// 		case 2:
-		// 		case 1:
-		// 		    // MUST stay here!!!
-		// 	        @include_once('Api/ISK/menu.php');
-		// 			break;
-		// 		case 3:
-		// 	        @include_once('Api/ISK-Live/menu.php');
-		// 			break;
-		// 	}
-		// }
-		//
-		// /** OUTPUT MENU **/
-		// $ret['MEDI'][] = get_text('MenuLM_Output') .'';
-        // if ($acl[AclOutput] >= AclReadOnly) {
-        //     $ret['MEDI'][] = get_text('MenuLM_TV Output') . '|' . $CFG->ROOT_DIR . 'TV/';
-        //     $ret['MEDI'][] = get_text('MenuLM_TV Channels') . '|' . $CFG->ROOT_DIR . 'TV/ChannelSetup.php';
-        //     $ret['MEDI'][] = MENU_DIVIDER;
-        //     $ret['MEDI'][] = get_text('MenuLM_Spotting') . '|' . $CFG->ROOT_DIR . 'Final/Viewer/|||_blank';
-	    //     //if(ProgramRelease=='HEAD' or ProgramRelease=='TESTING') {
-        //     //    $ret['MEDI'][] = 'Judges\' Output (EXPERIMENTAL)|' . $CFG->ROOT_DIR . 'Final/Viewer/|||_blank';
-	    //     //}
-        //     $ret['MEDI'][] = 'ShowTvLiveScore|' . $CFG->ROOT_DIR . 'Final/ShowTVScore.php?TourId=' . $_SESSION['TourCode'] . '|||TV';
-        // }
-
 	} else {
 		// MENU OFF!!!
 

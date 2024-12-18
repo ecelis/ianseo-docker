@@ -1,6 +1,7 @@
 <?php
 $pdf->SetDataHeader($PdfData->Header, $PdfData->HeaderWidth);
 $pdf->setPhase('');
+$pdf->setDocUpdate($PdfData->LastUpdate ?? $PdfData->Timestamp ?? '');
 
 $pdf->setOrisCode($PdfData->Code, $PdfData->Description);
 $pdf->AddPage();
@@ -39,7 +40,8 @@ foreach($PdfData->Data['Items'] as $MyRow) {
 		);
 }
 $pdf->lastY += 2;
-$pdf->Line(10, $pdf->lastY, array_sum($PdfData->HeaderWidth)+60, $pdf->lastY);
+
+$pdf->Line(10, $pdf->lastY, array_multisum($PdfData->HeaderWidth)+60, $pdf->lastY);
 $pdf->lastY += 2;
 $tmp=array(
 		"",
@@ -52,3 +54,11 @@ $tmp=array(
 		number_format(($Total["M"]+$Total["W"]+$Total["Of"] ),0,'','.') . "#",
 );
 $pdf->printDataRow($tmp);
+
+function array_multisum(array $arr): float {
+    $sum=0;
+    foreach($arr as $child){
+        $sum+=is_array($child) ? array_multisum($child):$child;
+    }
+    return $sum;
+}

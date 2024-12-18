@@ -7,6 +7,7 @@ $pdf->pushMargins();
 
 $pdf->SetLineWidth(0.125);
 $pdf->setCellPaddings(0.5,0,0.5,0);
+$pdf->setDocUpdate($PdfData->LastUpdate ?? '');
 
 //error_reporting(E_ALL);
 

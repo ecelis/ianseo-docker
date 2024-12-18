@@ -56,7 +56,6 @@ $lang['Optimal value']='Wartość optymalna';
 $lang['Parameter']='Parametr';
 $lang['Password']='Hasło';
 $lang['PHP settings']='Ustawienia PHP';
-$lang['PHP too old']='Twoja wersja PHP jest za stara. Minimalna instalacja dla IANSEO to 5.o';
 $lang['PHP version']='Wesja PHP';
 $lang['php.ini file']='plik php.ini';
 $lang['Prepare']='Przygotowanie danych do aktualizacji';

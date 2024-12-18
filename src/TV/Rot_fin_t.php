@@ -52,7 +52,6 @@ if($TVsettings->TVPViewIdCard) {
 	// opponents view with picture
 
 	// check the pictures
-	$fotow=min(200, intval($_SESSION['WINHEIGHT']/6)*4/3, intval($_SESSION['WINWIDTH']/7));
 	include_once('Common/CheckPictures.php');
 	CheckPictures($TourId);
 
@@ -122,7 +121,7 @@ if($TVsettings->TVPViewIdCard) {
 
 						$fot=$CFG->DOCUMENT_PATH.'TV/'.($fotina='Photos/'.$TourCode.'-En-'.$at['id'].'.jpg');
 						$tmpSx.= '<td><b>' . $name . '</b></td>';
-						$tmp4Sx.= '<td>'.(file_exists($fot) ? '<img class="athletephoto" src="'.$fotina.'" width="'.$fotow.'" alternate=""/>':'&nbsp;').'</td>';
+						$tmp4Sx.= '<td>'.(file_exists($fot) ? '<img class="athletephoto" src="'.$fotina.'" width="65%" alternate=""/>':'&nbsp;').'</td>';
 					} else {
 						$tmpSx.= '<td>&nbsp;</td>';
 						$tmp4Sx.= '<td>&nbsp;</td>';
@@ -134,7 +133,7 @@ if($TVsettings->TVPViewIdCard) {
 
 						$fot=$CFG->DOCUMENT_PATH.'TV/'.($fotina='Photos/'.$TourCode.'-En-'.$at['id'].'.jpg');
 						$tmpDx.= '<td><b>' . $name . '</b></td>';
-						$tmp4Dx.= '<td>'.(file_exists($fot) ? '<img class="athletephoto" src="'.$fotina.'" width="'.$fotow.'" alternate=""/>':'&nbsp;').'</td>';
+						$tmp4Dx.= '<td>'.(file_exists($fot) ? '<img class="athletephoto" src="'.$fotina.'" width="65%" alternate=""/>':'&nbsp;').'</td>';
 					} else {
 						$tmpDx.= '<td>&nbsp;</td>';
 						$tmp4Dx.= '<td>&nbsp;</td>';

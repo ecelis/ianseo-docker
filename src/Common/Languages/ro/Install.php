@@ -27,7 +27,6 @@ $lang['Optimal value']='Valoare optima';
 $lang['Parameter']='Parametri';
 $lang['Password']='Parola';
 $lang['PHP settings']='Setari PHP';
-$lang['PHP too old']='Versiunea locala PHP este prea veche. Versiunea IANSEO minima este 5.0.';
 $lang['PHP version']='Versiune PHP';
 $lang['php.ini file']='Fisier php.ini';
 $lang['Read connection failed']='Conexiunea cu serverul s-a intrerupt: fie parola administrator este gresita, fie datele de logare nu sunt corecte!';

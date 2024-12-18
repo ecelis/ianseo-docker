@@ -83,7 +83,7 @@ function CreateStandardEvents($TourId, $TourType, $SubRule, $Outdoor=true) {
 
 function InsertStandardEvents($TourId, $TourType, $SubRule, $Outdoor=true) {
 	$dv = array('R','B','C','L','T');
-	$cl = array('U13'=>array('U13M','U13W'), 'U16'=>array('U16M','U16W'), 'U21'=>array('U21M','U21W'), '21'=>array('21M','50M','60M','M','21W','50W','60W','W'));
+	$cl = array('U13'=>array('U13M','U13W'), 'U16'=>array('U16M','U16W'), 'U21'=>array('U21M','U21W'), 'S'=>array('21M','50M','60M','M','21W','50W','60W','W'));
 
 	if($TourType==6 || $TourType==3 || $TourType==37 || $TourType==1) {
 		foreach($dv as $v_dv) {

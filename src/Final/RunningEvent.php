@@ -11,9 +11,13 @@
 			. "SET EvRunning=IF(EvRunning!=" . $tmpEventType . "," . $tmpEventType . ",0) "
 			. "WHERE EvTournament=" . StrSafe_DB($_SESSION['TourId']) . " AND EvCode=" . StrSafe_DB($tmpEvent) . " AND EvTeamEvent=" . StrSafe_DB($tmpTeam);
 		safe_w_sql($MyQuery);
-        $q=safe_r_sql("select ToElabTeam!=127 as MakeTeams from Tournament where ToId={$_SESSION['TourId']}");
-        if($r=safe_fetch($q) and $r->MakeTeams and $tmpTeam) {
-            MakeTeamsAbs(null, null, null);
+        if(safe_w_affected_rows()) {
+            if($tmpTeam) {
+                MakeTeamsAbs(null, null, null);
+            } else {
+                Obj_RankFactory::create('Abs', array('tournament' => $_SESSION['TourId'], 'events' => $tmpEvent, 'dist' => 0))->calculate();
+                runJack("QRRankUpdate", $_SESSION['TourId'], array("Event"=>$tmpEvent, "Team"=>0, "TourId"=>$_SESSION['TourId']));
+            }
         }
 	}
 
@@ -59,24 +63,24 @@ $ResultRs = safe_r_sql($MyQuery);
 if(safe_num_rows($ResultRs))
 {
 	echo '<tr>';
-	echo '<th width="35%">' . get_text('EvName') . '</th>';
-	echo '<th width="20%">' . get_text('PrintText','Tournament') . '</th>';
-	echo '<th width="15%" colspan="2">' . get_text('QualRound') . '</th>';
-	echo '<th width="15%" colspan="2">' . get_text('Eliminations_1') . '</th>';
-	echo '<th width="15%" colspan="2">' . get_text('Eliminations_2') . '</th>';
+	echo '<th class="w-35">' . get_text('EvName') . '</th>';
+	echo '<th class="w-20">' . get_text('PrintText','Tournament') . '</th>';
+	echo '<th class="w-15" colspan="2">' . get_text('QualRound') . '</th>';
+	echo '<th class="w-15" colspan="2">' . get_text('Eliminations_1') . '</th>';
+	echo '<th class="w-15" colspan="2">' . get_text('Eliminations_2') . '</th>';
 	echo '</tr>';
 	while($MyRow = safe_fetch($ResultRs))
 	{
-		echo '<tr>';
-		echo '<td width="35%"><b>' . $MyRow->EvCode . '</b> - ' . $MyRow->EvEventName .  ' (' . ($MyRow->EvTeamEvent==0 ? get_text('Individual') : get_text('Team'))  . ')</td>';
-		echo '<td width="20%">' . $MyRow->PrintHeader . '</td>';
-		echo '<td width="5%" class="Center' . ($MyRow->EvRunning == 1 ? ' yellow' : '') . '">';
+		echo '<tr class="rowHover">';
+		echo '<td class="w-35"><b>' . $MyRow->EvCode . '</b> - ' . $MyRow->EvEventName .  ' (' . ($MyRow->EvTeamEvent==0 ? get_text('Individual') : get_text('Team'))  . ')</td>';
+		echo '<td class="w-20">' . $MyRow->PrintHeader . '</td>';
+		echo '<td class="w-5 Center' . ($MyRow->EvRunning == 1 ? ' yellow' : '') . '">';
 		if(!empty($ArrowNoArray[$MyRow->EvCode . "_" . $MyRow->EvTeamEvent . "_1"]))
 			echo $ArrowNoArray[$MyRow->EvCode . "_" . $MyRow->EvTeamEvent . "_1"][0] . ($ArrowNoArray[$MyRow->EvCode . "_" . $MyRow->EvTeamEvent . "_1"][0]!=$ArrowNoArray[$MyRow->EvCode . "_" . $MyRow->EvTeamEvent . "_1"][1] ? " - ". $ArrowNoArray[$MyRow->EvCode . "_" . $MyRow->EvTeamEvent . "_1"][1]:"");
 		else
 			echo '&nbsp;';
 		echo '</td>';
-		echo '<td width="10%" class="Center' . ($MyRow->EvRunning == 1 ? ' yellow' : '') . '">';
+		echo '<td class="w-10 Center' . ($MyRow->EvRunning == 1 ? ' yellow' : '') . '">';
 		echo '<a href="' . $_SERVER['PHP_SELF']. '?Event=' . $MyRow->EvCode . '_' . $MyRow->EvTeamEvent . '_1">';
 		if($MyRow->EvRunning == 1)
 			echo get_text('RunningEv','Tournament');
@@ -84,13 +88,13 @@ if(safe_num_rows($ResultRs))
 			echo get_text('StandardEv','Tournament');
  		echo '</a>';
 		echo '</td>';
-		echo '<td width="5%" class="Center' . ($MyRow->EvRunning == 2 ? ' yellow' : '') . '">';
+		echo '<td class="w-5 Center' . ($MyRow->EvRunning == 2 ? ' yellow' : '') . '">';
 		if(!empty($ArrowNoArray[$MyRow->EvCode . "_" . $MyRow->EvTeamEvent . "_2"]))
 			echo $ArrowNoArray[$MyRow->EvCode . "_" . $MyRow->EvTeamEvent . "_2"][0] . ($ArrowNoArray[$MyRow->EvCode . "_" . $MyRow->EvTeamEvent . "_2"][0]!=$ArrowNoArray[$MyRow->EvCode . "_" . $MyRow->EvTeamEvent . "_2"][1] ? " - ". $ArrowNoArray[$MyRow->EvCode . "_" . $MyRow->EvTeamEvent . "_2"][1]:"");
 		else
 			echo '&nbsp;';
 		echo '</td>';
-		echo '<td width="10%" class="Center' . ($MyRow->EvRunning == 2 ? ' yellow' : '') . '">';
+		echo '<td class="w-10 Center' . ($MyRow->EvRunning == 2 ? ' yellow' : '') . '">';
 		if($MyRow->EvElim1)
 		{
 			echo '<a href="' . $_SERVER['PHP_SELF']. '?Event=' . $MyRow->EvCode . '_' . $MyRow->EvTeamEvent . '_2">';
@@ -103,13 +107,13 @@ if(safe_num_rows($ResultRs))
 		else
 			echo '&nbsp;';
 		echo '</td>';
-		echo '<td width="5%" class="Center' . ($MyRow->EvRunning == 3 ? ' yellow' : '') . '">';
+		echo '<td class="w-5 Center' . ($MyRow->EvRunning == 3 ? ' yellow' : '') . '">';
 		if(!empty($ArrowNoArray[$MyRow->EvCode . "_" . $MyRow->EvTeamEvent . "_3"]))
 			echo $ArrowNoArray[$MyRow->EvCode . "_" . $MyRow->EvTeamEvent . "_3"][0] . ($ArrowNoArray[$MyRow->EvCode . "_" . $MyRow->EvTeamEvent . "_3"][0]!=$ArrowNoArray[$MyRow->EvCode . "_" . $MyRow->EvTeamEvent . "_3"][1] ? " - ". $ArrowNoArray[$MyRow->EvCode . "_" . $MyRow->EvTeamEvent . "_3"][1]:"");
 		else
 			echo '&nbsp;';
 		echo '</td>';
-		echo '<td width="10%" class="Center' . ($MyRow->EvRunning == 3 ? ' yellow' : '') . '">';
+		echo '<td class="w-10 Center' . ($MyRow->EvRunning == 3 ? ' yellow' : '') . '">';
 		if($MyRow->EvElim2)
 		{
 			echo '<a href="' . $_SERVER['PHP_SELF']. '?Event=' . $MyRow->EvCode . '_' . $MyRow->EvTeamEvent . '_3">';

@@ -15,6 +15,7 @@ if(!empty($_GET['delete'])) {
 if(isset($_REQUEST['Export'])) {
 	$q=safe_r_sql("select distinct FlCode, FlJPG
 		from Flags 
+		inner join Countries on CoCode=FlCode and CoTournament={$_SESSION['TourId']}
 		where FlTournament in (-1, {$_SESSION['TourId']})
 			and FlJPG!='' ");
 	if(!safe_num_rows($q)) {
@@ -23,7 +24,7 @@ if(isset($_REQUEST['Export'])) {
 
 	$zip = new ZipArchive();
 	$filename = $tmpfname = tempnam("/tmp", $_SESSION['TourCodeSafe']);
-
+	unlink($filename);
 	if ($zip->open($filename, ZipArchive::CREATE)!==TRUE) {
 		exit("cannot open <$filename>\n");
 	}
@@ -45,11 +46,11 @@ if(isset($_REQUEST['Export'])) {
 		if($ratio<1.5) {
 			// image is too squarish
 			$DestX=intval((90-(60*$ratio))/2);
-			$DestW=60*$ratio;
+			$DestW=intval(60*$ratio);
 		} elseif($ratio>1.5) {
 			// image is too long
 			$DestY=intval((60-(90/$ratio))/2);
-			$DestH=90/$ratio;
+			$DestH=intval(90/$ratio);
 		}
 
 		imagecopyresampled($img2, $img, $DestX, $DestY, 0, 0, $DestW, $DestH, imagesx($img), imagesy($img));
@@ -67,6 +68,7 @@ if(isset($_REQUEST['Export'])) {
 	header('Content-Disposition: attachment; filename="'.$_SESSION['TourCodeSafe'].'.zip"');
 	readfile($filename);
 	unlink($filename);
+	die();
 }
 
 if($_FILES) {

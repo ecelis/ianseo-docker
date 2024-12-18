@@ -2,6 +2,7 @@ var dwData;
 var keyPressedActive=false;
 var KeyListener=null;
 var Preparation=true;
+var ClickMovesPosition=false;
 
 $(document).ready(function() {
     getMatchesData();
@@ -119,18 +120,20 @@ function toggleAlternate() {
 var SvgCursor;
 
 function buildScorecard() {
-    $('#Spotting').hide();
-    $('.ActiveArrow').toggleClass('ActiveArrow', false);
-    $('#Target').toggleClass('TargetL', false).toggleClass('TargetR', false);
-
-	if($('#ActivateKeys').is(':checked')==false && $('#spotTarget').is(':checked')) {
-		$('#ActivateKeys').prop('checked', 'checked').click();
-	}
-
     var spTeam = ($('#spotType').val()=='Team' ? '1' : '0');
     var spEvent = $('#spotCode').val();
     var spMatch = $('#spotMatch').val();
     var spTarget = $('#spotTarget:checked').length>0;
+
+    if(spEvent=='' || spMatch=='') {
+        // still not ready to build the scorecard
+        return;
+    }
+
+    $('#Spotting').hide();
+    $('.ActiveArrow').toggleClass('ActiveArrow', false);
+    $('#Target').toggleClass('TargetL', false).toggleClass('TargetR', false);
+
 	Preparation=true;
     $.getJSON(WebDir+'Final/Spotting-getScorecards.php?Team='+spTeam+'&Event='+spEvent+'&MatchId='+spMatch+(spTarget ? '&ArrowPosition=1' : ''), function (data) {
         if(data.error!=0) {
@@ -207,7 +210,7 @@ function buildScorecard() {
                         var x = (parseInt(e.offsetX) * ratio - TgtOrgSize/2)*convert;
                         var y = (parseInt(e.offsetY) * ratio - TgtOrgSize/2)*convert;
                         var position={'x':x, 'y':y };
-                        if(e.which==3) {
+                        if(e.which==3 || ClickMovesPosition) {
                             position.noValue=1;
                         }
                         updateArrow(activeArrow[0], position);
@@ -275,17 +278,37 @@ function buildScorecard() {
                 $('.arrowcell').on('click', function() {
                     selectArrow($(this).find('input')[0]);
                 });
-                $('#Spotting input[type="text"]').prop('disabled', true);
+                $('#Spotting input[type="text"]').prop('readonly', true);
             }
 
             // simulate call on the first arrow of each match to check the stars if any on loading the scorecard
             updateArrow($('[id^="Arrow["]')[0], null);
         }
+        if($('#ActivateKeys').is(':checked')==false && $('#spotTarget').is(':checked')) {
+            $('#ActivateKeys').prop('checked', 'checked').click();
+        }
+        checkClickMovesPosition();
 	    Preparation=false;
     });
 }
 
+function checkClickMovesPosition() {
+    var check=($('#spotTarget').is(':checked') && $('#ActivateKeys').is(':checked') && !$('#MoveNext').is(':checked'));
+    $('#ClickMovesPositionDiv').toggleClass('d-none', !check);
+    if(!check) {
+        ClickMovesPosition=false;
+    }
+    $('#ClickMovesPosition').prop('checked', ClickMovesPosition);
+}
+
+function toggleClickMovesPosition(obj) {
+    ClickMovesPosition=$(obj)[0].checked;
+}
+
 function updateArrow(obj, position) {
+    // if(ClickMovesPosition && !(position && position.noValue)) {
+    //     return;
+    // }
     var spType = ($('#spotType').val()=='Team' ? '1' : '0');
     var spEvent = $('#spotCode').val();
     var spMatch = $('#spotMatch').val();
@@ -609,7 +632,7 @@ function toggleKeypressNew() {
 		$('.arrowcell').on('click', function() {
 			selectArrow($(this).find('input')[0]);
 		});
-		$('#Spotting input[type="text"]').prop('disabled', true);
+		$('#Spotting input[type="text"]').prop('readonly', true);
 
 		// creates the definitions
 
@@ -644,7 +667,7 @@ function toggleKeypressNew() {
 
 	} else {
 		// makes all inputs acive
-		$('#Spotting input[type="text"]').prop('disabled', false);
+		$('#Spotting input[type="text"]').prop('readonly', false);
 		$('.arrowcell').off('click');
 
 		$(document).off('keydown');
@@ -661,6 +684,7 @@ function toggleKeypress() {
     else {
         $('#keypadLegenda').hide();
     }
+    checkClickMovesPosition();
 
 	if(keyPressedActive) {
 		if(KeyListener) {
@@ -672,7 +696,7 @@ function toggleKeypress() {
 		$('.arrowcell').on('click', function() {
 				selectArrow($(this).find('input')[0]);
 			});
-		$('#Spotting input[type="text"]').prop('disabled', true);
+		$('#Spotting input[type="text"]').prop('readonly', true);
 
 		// creates the definitions
 
@@ -886,7 +910,7 @@ function toggleKeypress() {
 		// KeyListener = new window.keypress.Listener();
 
 		// makes all inputs acive
-		$('#Spotting input[type="text"]').prop('disabled', false);
+		$('#Spotting input[type="text"]').prop('readonly', false);
 		$('.arrowcell').off('click');
 
 		// focus on the active cell
@@ -904,6 +928,9 @@ function toggleKeypress() {
 }
 
 function setValue(num) {
+    // if(ClickMovesPosition) {
+    //     return;
+    // }
 	var activeCell=$('.ActiveArrow input');
 	activeCell[0].value=num;
 	updateArrow(activeCell[0]);

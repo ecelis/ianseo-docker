@@ -615,6 +615,7 @@ function getStatEntriesByEvent($ORIS='') {
 	$Data->Description='Number of Entries by Event';
 	$Data->IndexName='Number of Entries by Event';
 	$Data->Continue=get_text('Continue');
+	$Data->LastUpdate='';
 	$Data->Data=array();
 
 	if($ORIS) {
@@ -624,6 +625,9 @@ function getStatEntriesByEvent($ORIS='') {
 		$MyQuery = getStatEntriesByEventQuery('IF');
 		$Rs=safe_r_sql($MyQuery);
 		while ($Row=safe_fetch($Rs)) {
+            if($Row->EnTimestamp>$Data->LastUpdate) {
+                $Data->LastUpdate=$Row->EnTimestamp;
+            }
 			$Data->Data[$Row->Code]=array(
 				'Name' => $Row->EventName,
 				'Number' => $Row->Quanti,
@@ -710,6 +714,9 @@ function getStatEntriesByEvent($ORIS='') {
 		$QR['Data']=array();
 		$Rs=safe_r_sql($MyQuery);
 		while ($Row=safe_fetch($Rs)) {
+            if($Row->EnTimestamp>$Data->LastUpdate) {
+                $Data->LastUpdate=$Row->EnTimestamp;
+            }
 			if(!in_array($Row->Divisione, $QR['Div'])) {
 				$QR['Div'][] = $Row->Divisione;
 			}
@@ -832,6 +839,7 @@ function getStatEntriesByCountries($ORIS='', $Athletes=false) {
 	$Data->Header=array("NOC","Men#","Women#","Total\nCompetitors#","","Officials#", "Total#");
 	$Data->HeaderWidth=array(array(10,40),15,15,25,10,15,15,5);
 	$Data->Phase='';
+	$Data->LastUpdate='';
 	$Data->StatCountries=get_text('StatCountries','Tournament');
 	$Data->Continue=get_text('Continue');
 	$Data->TotalShort=get_text('TotalShort','Tournament');
@@ -855,6 +863,9 @@ function getStatEntriesByCountries($ORIS='', $Athletes=false) {
 
 
 	while ($MyRow=safe_fetch($Rs)) {
+        if($MyRow->EnTimestamp>$Data->LastUpdate) {
+            $Data->LastUpdate=$MyRow->EnTimestamp;
+        }
 		$Data->Data['Items'][$MyRow->NationCode]=$MyRow;
 	}
 
@@ -871,8 +882,9 @@ function getCompetitionOfficials($ORIS=false) {
     $Data->HeaderWidth=array(55,60,array(10,50),15);
     $Data->Phase='';
     $Data->Data=array();
+    $Data->LastUpdate='';
 
-    $Sql = "SELECT TiName, TiGivenName, TiGender, ItDescription, CoCode, CoNameComplete,
+    $Sql = "SELECT TiName, TiGivenName, TiGender, TiTimeStamp, ItDescription, CoCode, CoNameComplete,
         concat(DvMajVersion, '.', DvMinVersion) as DocVersion, date_format(DvPrintDateTime, '%e %b %Y %H:%i UTC') as DocVersionDate, DvNotes as DocNotes
 	FROM TournamentInvolved
 	LEFT JOIN InvolvedType ON TiType=ItId
@@ -886,6 +898,9 @@ function getCompetitionOfficials($ORIS=false) {
     $Data->DocVersionNotes='';
     $q=safe_r_sql($Sql);
     while ($r=safe_fetch($q)) {
+        if($r->TiTimeStamp>$Data->LastUpdate) {
+            $Data->LastUpdate=$r->TiTimeStamp;
+        }
 		$r->ItDescription=get_text($r->ItDescription, 'Tournament');
         $Data->Data['Items'][$r->ItDescription][]=$r;
         if(!empty($r->DocVersion)) {
@@ -954,6 +969,7 @@ function getStartListByCountries($ORIS=false, $Athletes=false, $orderByName=fals
 	$Data->DocVersion='';
 	$Data->DocVersionDate='';
 	$Data->DocVersionNotes='';
+	$Data->LastUpdate='';
 
 	if($ORIS) {
 		$Data->Data['Fields']['TargetNo']='Target';
@@ -976,6 +992,9 @@ function getStartListByCountries($ORIS=false, $Athletes=false, $orderByName=fals
 	while ($MyRow=safe_fetch($Rs)) {
 	    if(!empty($MyRow->EvCodeParent)) continue;
 		if(!empty($MyRow->EventName)) $MyRow->EventName=get_text($MyRow->EventName,'','',true);
+        if($MyRow->EnTimestamp>$Data->LastUpdate) {
+            $Data->LastUpdate=$MyRow->EnTimestamp;
+        }
 		$MyRow->DivDescription=get_text($MyRow->DivDescription,'','',true);
 		$MyRow->ClDescription=get_text($MyRow->ClDescription,'','',true);
 		$MyRow->TfName=get_text($MyRow->TfName,'Tournament','',true);
@@ -1008,7 +1027,8 @@ function getStandingRecords($ORIS=true) {
 	$Data->DocVersion='';
 	$Data->DocVersionDate='';
 	$Data->DocVersionNotes='';
-	$Data->RecordAs=$_SESSION['TourRealWhenFrom'];
+	$Data->RecordAs='';
+	$Data->LastUpdate='';
 	$Data->SubSections=array();
 	$Data->Data=array();
 
@@ -1038,7 +1058,10 @@ function getStandingRecords($ORIS=true) {
 		if($MyRow->RtRecDate=='0000-00-00') {
 			$MyRow->RtRecDate='';
 		}
-		if($MyRow->RtRecLastUpdated<$Data->RecordAs) {
+		if($MyRow->RtRecLastUpdated>$Data->LastUpdate) {
+			$Data->LastUpdate=$MyRow->RtRecLastUpdated;
+		}
+		if(substr($MyRow->RtRecLastUpdated, 0, 10)>$Data->RecordAs) {
 			$Data->RecordAs=substr($MyRow->RtRecLastUpdated, 0, 10);
 		}
 		if(!empty($MyRow->EventName)) {
@@ -1054,7 +1077,10 @@ function getStandingRecords($ORIS=true) {
 			$Data->DocVersionNotes=$MyRow->DocNotes;
 		}
 	}
-
+    $Data->RecordAs=min($_SESSION['TourRealWhenFrom'], $Data->RecordAs);
+    if(substr($Data->LastUpdate,0,10)>$_SESSION['TourRealWhenFrom']) {
+        $Data->LastUpdate=$_SESSION['TourRealWhenFrom'];
+    }
 	return $Data;
 }
 
@@ -1077,6 +1103,7 @@ function getBrokenRecords($ORIS=true) {
 	$Data->DocVersionDate='';
 	$Data->DocVersionNotes='';
 	$Data->RecordAs=$_SESSION['TourRealWhenTo'];
+	$Data->LastUpdate='';
 	$Data->SubSections=array();
 	$Data->Data=array();
 
@@ -1101,8 +1128,8 @@ function getBrokenRecords($ORIS=true) {
 
 	$Rs=safe_r_sql($MyQuery);
 	$Record=array();
-	if($CheckDate=(date('Y-m-d')<$Data->RecordAs)) {
-		$Data->RecordAs=date('Y-m-d');
+	if($CheckDate=(getToday()<$Data->RecordAs)) {
+		$Data->RecordAs=getToday();
 	}
 	//error_reporting(E_ALL);
 	while ($MyRow=safe_fetch($Rs)) {
@@ -1110,6 +1137,9 @@ function getBrokenRecords($ORIS=true) {
 		//	// in case full scores the X are marked so check the Xs of the new record
 		//	continue;
 		//}
+        if($MyRow->RecordDate>$Data->LastUpdate) {
+            $Data->LastUpdate=$MyRow->RecordDate;
+        }
 		switch($MyRow->Phase) {
 			case '1':
 				if(!$MyRow->RtRecXNine) {
@@ -1146,6 +1176,9 @@ function getBrokenRecords($ORIS=true) {
 			$Data->DocVersionNotes=$MyRow->DocNotes;
 		}
 	}
+    if($Data->LastUpdate) {
+        $Data->RecordAs=substr($Data->LastUpdate, 0, 10);
+    }
 
 	return $Data;
 }
@@ -1160,6 +1193,7 @@ function getCountriesList($ORIS='') {
 	$Data->IndexName='List of Countries';
 	$Data->HeaderWidth=array(10,20,160);
 	$Data->Phase='';
+	$Data->LastUpdate='';
 	$Data->Data=array();
 
 	$Data->Data['Fields'] = array(
@@ -1179,13 +1213,16 @@ function getCountriesList($ORIS='') {
 	//echo $MyQuery;exit;
 	$Rs=safe_r_sql($MyQuery);
 	while ($MyRow=safe_fetch($Rs)) {
+        if($MyRow->EnTimestamp>$Data->LastUpdate) {
+            $Data->LastUpdate=$MyRow->EnTimestamp;
+        }
 		$Data->Data['Items'][$MyRow->NationCode][]=$MyRow;
 	}
 
 	return $Data;
 }
 
-function getStartListAlphabetical($ORIS='') {
+function getStartListAlphabetical($ORIS='', $Athlete=false) {
 	$Data=new StdClass();
 
 	$Data->Code='C32B';
@@ -1200,6 +1237,7 @@ function getStartListAlphabetical($ORIS='') {
 	$Data->DocVersion='';
 	$Data->DocVersionDate='';
 	$Data->DocVersionNotes='';
+	$Data->LastUpdate='';
 
 	$Locations=array();
 	if($FopLocations=Get_Tournament_Option('FopLocations')) {
@@ -1249,7 +1287,7 @@ function getStartListAlphabetical($ORIS='') {
 		$Data->IndexName=get_text('StartlistAlpha','Tournament');
 		$Data->Header=array(get_text('Name', 'Tournament'), get_text('Country'), get_text('Nation'), get_text('DOB', 'Tournament')."   #", get_text('Target'), get_text("Event"));
 	}
-	$MyQuery = getStartListAlphaQuery($ORIS);
+	$MyQuery = getStartListAlphaQuery($ORIS, $Athlete);
 
 	$OldLetter='';
 	$Group=0;
@@ -1257,6 +1295,9 @@ function getStartListAlphabetical($ORIS='') {
 	//echo $MyQuery;exit;
 	$Rs=safe_r_sql($MyQuery);
 	while ($MyRow=safe_fetch($Rs)) {
+        if($MyRow->EnTimestamp>$Data->LastUpdate) {
+            $Data->LastUpdate=$MyRow->EnTimestamp;
+        }
 		if(isset($Locations[intval($MyRow->TargetButt)])) {
 			$MyRow->Location=$Locations[intval($MyRow->TargetButt)];
 		}
@@ -1296,6 +1337,7 @@ function getStartListCategory($ORIS=false, $orderByTeam=0, $Events=array()) {
 	$Data->DocVersion='';
 	$Data->DocVersionDate='';
 	$Data->DocVersionNotes='';
+	$Data->LastUpdate='';
 
 	$Data->Data['Fields'] = array(
 			'SesName' => get_text('Session'),
@@ -1352,6 +1394,9 @@ function getStartListCategory($ORIS=false, $orderByTeam=0, $Events=array()) {
 
 	$Rs=safe_r_sql($MyQuery);
 	while ($MyRow=safe_fetch($Rs)) {
+        if($MyRow->EnTimestamp>$Data->LastUpdate) {
+            $Data->LastUpdate=$MyRow->EnTimestamp;
+        }
 		if($OldCategory != $MyRow->EventCode) {
 			$Group++;
 			$OldCategory = $MyRow->EventCode;
@@ -2051,7 +2096,7 @@ function getMedalStand($ORIS=false, $TourId=0) {
 		if($section['meta']['medals']) {
 			$Data->OdfTotalEvents++;
 			foreach($section['items'] as $item) {
-				if($item['rank']!=0) {
+				if(is_numeric($item['rank']) and $item['rank']!=0) {
 					if(empty($CountryList[$item['countryCode']])) {
 						$CountryList[$item['countryCode']] = clone $tmp;
 						$CountryList[$item['countryCode']]->Name = $item['countryName'];
@@ -2096,7 +2141,7 @@ function getMedalStand($ORIS=false, $TourId=0) {
 		if($section['meta']['medals']) {
 			$Data->OdfTotalEvents++;
 			foreach($section['items'] as $item) {
-				if($item['rank']!=0) {
+				if(is_numeric($item['rank']) and $item['rank']!=0) {
 					if(empty($CountryList[$item['countryCode']])) {
 						$CountryList[$item['countryCode']] = clone $tmp;
 						$CountryList[$item['countryCode']]->Name = $item['countryName'];

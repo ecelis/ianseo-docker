@@ -6,8 +6,9 @@ require_once('Common/Fun_FormatText.inc.php');
 require_once('Tournament/Fun_Tournament.local.inc.php');
 checkACL(AclCompetition, AclReadWrite, false);
 
-$JSON=array('error'=>1, 'errormsg'=>'');
+$JSON=array('error'=>1, 'errormsg'=>get_text('MissingData','Errors'));
 if (!CheckTourSession() ||
+        checkACL(AclCompetition, AclReadWrite, false)!=AclReadWrite ||
 		empty($_REQUEST['New_ClId']) ||
 		!isset($_REQUEST['New_ClSex']) ||
 		empty($_REQUEST['New_ClDescription']) ||
@@ -22,13 +23,17 @@ if (!CheckTourSession() ||
 	JsonOut($JSON);
 }
 
+if (preg_match('/[^a-z0-9]/i', $_REQUEST['New_ClId'])) {
+    $JSON['errormsg']=get_text('InvalidCharacters','Errors', '<span class="text-danger">a-z A-Z 0-9</span>');
+	JsonOut($JSON);
+}
+
 if (!is_numeric($_REQUEST['New_ClAgeFrom']) || !is_numeric($_REQUEST['New_ClAgeTo']) ||
 	$_REQUEST['New_ClAgeFrom']<=0 || $_REQUEST['New_ClAgeTo']<=0 || $_REQUEST['New_ClAgeFrom']>$_REQUEST['New_ClAgeTo']) {
 	$JSON['errormsg']=get_text('ClassFromToError', 'Errors');
 	JsonOut($JSON);
 }
 
-$JSON['error']=0;
 
 $ValidClass=CreateValidClass($_REQUEST['New_ClId'],$_REQUEST['New_ClValidClass']);
 
@@ -51,8 +56,10 @@ safe_w_sql($Insert); //duplicate entries is OK
 
 if (!safe_w_affected_rows()) {
 	$JSON['errormsg']=get_text('DuplicateEntry','Tournament');
-	$JSON['error']=2;
+    JsonOut($JSON);
 }
+
+$JSON['error']=0;
 
 $JSON['clid']= $_REQUEST['New_ClId'];
 $JSON['cldescr']= $_REQUEST['New_ClDescription'];

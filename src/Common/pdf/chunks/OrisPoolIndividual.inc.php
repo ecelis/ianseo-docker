@@ -6,6 +6,7 @@ $PdfData->HeaderPool[6]='';
 $PdfData->HeaderPool[5]='';
 
 $pdf->SetDataHeader($PdfData->Header, $PdfData->HeaderWidth);
+$pdf->setDocUpdate($PdfData->LastUpdate ?? $PdfData->Timestamp ?? '');
 
 $OldEvent='#@#@#';
 $targetNo=-1;

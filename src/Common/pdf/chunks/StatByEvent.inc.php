@@ -4,6 +4,7 @@
 // starts with Qualification Round
 if (isset($PdfData->Data['QR']) && count($PdfData->Data['QR']['Data'])>0) {
 	$DivSize=($pdf->getPageWidth()-35)/count($PdfData->Data['QR']['Div']);
+    $pdf->setDocUpdate($PdfData->Timestamp ?? $PdfData->LastUpdate ?? '');
 
 	$FirstTime=true;
 

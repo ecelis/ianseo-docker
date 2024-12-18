@@ -17,6 +17,10 @@
     background-color:red;
 }
 
+.so-status.notsolvable {
+    background-color:transparent;
+}
+
 .warningMsg {
     font-size: 1.5em;;
     padding: 0.5em;

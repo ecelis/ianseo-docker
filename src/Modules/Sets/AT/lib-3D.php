@@ -152,7 +152,7 @@ function CreateStandard3DEvents($TourId, $SubRule) {
 
 function InsertStandard3DEvents($TourId, $SubRule) {
     foreach (array('C'=>'C','B'=>'B','L'=>'L','T'=>'T','R'=>'R') as $kDiv=>$vDiv) {
-        $clsTmpArr = array('W','U18W','U21W','50W','65W');
+        $clsTmpArr = array('W','U18W','U21W','60W');
         if($SubRule==2 OR $SubRule==4) {
             $clsTmpArr = array('W');
         }
@@ -163,7 +163,7 @@ function InsertStandard3DEvents($TourId, $SubRule) {
             }
             InsertClassEvent($TourId, 1, 1, $vDiv.'X', $kDiv, $vClass);
         }
-        $clsTmpArr = array('M','U18M','U21M','50','50M','65','65M');
+        $clsTmpArr = array('M','U18M','U21M','60','60M');
         if($SubRule==2 OR $SubRule==4) {
             $clsTmpArr = array('M');
         }

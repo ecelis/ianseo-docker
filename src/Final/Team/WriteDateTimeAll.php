@@ -31,7 +31,7 @@
 			= "select"
 			. " FSScheduledDate,"
 			. " date_format(FSScheduledDate, '".get_text('DateFmtDB')."') DateFormatted,"
-			. " UNIX_TIMESTAMP(concat(FSScheduledDate, ' ', FSScheduledTime)) UnixTime "
+			. " concat(FSScheduledDate, ' ', FSScheduledTime) as PhaseDateTime "
 			. "FROM FinSchedule "
 			. " INNER JOIN Grids on FsMatchNo=GrMatchNo "
 			. "WHERE"
@@ -49,7 +49,7 @@
 			$_REQUEST['d_FSScheduledDateAll']=$r->DateFormatted;
 		}
 		if(substr($_REQUEST['d_FSScheduledTimeAll'],0,1)=='+') {
-			$time=date('H:i:s', strtotime($_REQUEST['d_FSScheduledTimeAll'].' minutes', $r->UnixTime));
+			$time=date('H:i:s', strtotime($_REQUEST['d_FSScheduledTimeAll'].' minutes', strtotime($r->PhaseDateTime)));
 			$_REQUEST['d_FSScheduledTimeAll']=substr($time,0,5);
 		}
 	}

@@ -8,7 +8,7 @@ require_once('Common/pdf/PdfChunkLoader.php');
 
 // ATTENTION!
 // MUST BE called $PdfData
-$PdfData=getStartListAlphabetical('ORIS');
+$PdfData=getStartListAlphabetical('ORIS', true);
 
 if(!isset($isCompleteResultBook))
 	$pdf = new OrisPDF($PdfData->Code, $PdfData->Description);

@@ -178,7 +178,7 @@ if(empty($_REQUEST['btnDelOnline'])) {
 		if($IsRunArchery) {
 			$RET->ENA=getRunEntries($ORIS, '', 'Alpha');
 		} else {
-			$RET->ENA=getStartListAlphabetical($ORIS);
+			$RET->ENA=getStartListAlphabetical($ORIS, true);
 		}
     }
 
@@ -359,6 +359,10 @@ if(empty($_REQUEST['btnDelOnline'])) {
     if(!empty($_REQUEST['RobinTeam'])) foreach($_REQUEST['RobinTeam'] as $Event) $RET->delete[]=''.$Event; // Round Robin, Team
     if(!empty($_REQUEST['MEDSTD'])) $RET->delete[]='MEDSTD'; // Medal standing
     if(!empty($_REQUEST['MEDLST'])) $RET->delete[]='MEDLST'; // Medallists
+    if(!empty($_REQUEST['RECSTD'])) $RET->delete[]='SRECSTD'; // Record Standing
+    if(!empty($_REQUEST['RECBRK'])) $RET->delete[]='SRECBRK'; // Record Broken
+    if(!empty($_REQUEST['STF'])) $RET->delete[]='STF'; // Record Broken
+    if(!empty($_REQUEST['BOOK'])) $RET->delete[]='BOOK'; // Record Broken
 }
 
 $postdata = http_build_query( array(

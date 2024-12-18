@@ -123,14 +123,15 @@ switch($TourType) {
 
             break;
             case '2':
+            case '3':
                 CreateDistanceNew($TourId, $TourType, 'R_', array(array('70m-1',70), array('70m-2',70)));
                 CreateDistanceNew($TourId, $TourType, 'C_', array(array('50m-1',50), array('50m-2',50)));
                 CreateDistanceNew($TourId, $TourType, 'B%', array(array('50m-1',50), array('50m-2',50)));
             break;
-            case '3':
-                CreateDistanceNew($TourId, $TourType, 'R_', array(array('70m-1',70), array('70m-2',70)));
-                CreateDistanceNew($TourId, $TourType, 'C_', array(array('50m-1',50), array('50m-2',50)));
-            break;
+            // case '3':
+            //     CreateDistanceNew($TourId, $TourType, 'R_', array(array('70m-1',70), array('70m-2',70)));
+            //     CreateDistanceNew($TourId, $TourType, 'C_', array(array('50m-1',50), array('50m-2',50)));
+            // break;
         }
     break;
     case 5: // WA900
@@ -184,7 +185,9 @@ if($TourType==3 or $TourType==6) {
 	InsertStandardEvents($TourId, $SubRule, $TourType!=6);
 
 	// Finals & TeamFinals
-	// CreateFinals($TourId);
+    if($SubRule==3) { // only create finals for Australian Open format
+	    CreateFinals($TourId);
+    }
 }
 
 
@@ -194,11 +197,11 @@ switch($TourType) {
         CreateTargetFace($TourId, 1, 'Full Face Default-Recurve, Barebow, Longbow', 'REG-^[RLB].*$', '1', TGT_OUT_FULL, 122, TGT_OUT_FULL, 122, TGT_OUT_FULL, 80, TGT_OUT_FULL, 80);
         CreateTargetFace($TourId, 2, 'Full Face Option', 'REG-^(?![RLB]).*$', '', TGT_OUT_FULL, 122, TGT_OUT_FULL, 122, TGT_OUT_FULL, 80, TGT_OUT_FULL, 80);
         CreateTargetFace($TourId, 3, '10 Ring / 6 Ring', 'REG-^(?!C).*$', '',TGT_OUT_FULL, 122, TGT_OUT_FULL, 122,TGT_OUT_5_big10, 80, TGT_OUT_5_big10, 80);
-        CreateTargetFace($TourId, 4, '5-X Default-Compound', 'C%', '1',TGT_OUT_FULL, 122, TGT_OUT_FULL, 122,TGT_OUT_5_big10, 80, TGT_OUT_5_big10, 80);
+        CreateTargetFace($TourId, 4, '5-X Default-Compound', 'REG-^[C].*$', '1',TGT_OUT_FULL, 122, TGT_OUT_FULL, 122,TGT_OUT_5_big10, 80, TGT_OUT_5_big10, 80);
     break;
     case 3: // 720 rounds
-        CreateTargetFace($TourId, 1, 'Full Face Default', 'REG-^(?!C).*$', '1', TGT_OUT_FULL, 122, TGT_OUT_FULL, 122);
-        CreateTargetFace($TourId, 2, '5-X Default-Compound', 'C%', '1',TGT_OUT_5_big10, 80, TGT_OUT_5_big10, 80);
+        CreateTargetFace($TourId, 1, 'Full Face Default', 'REG-^[^!C].*$', '1', TGT_OUT_FULL, 122, TGT_OUT_FULL, 122);
+        CreateTargetFace($TourId, 2, '5-X Default-Compound', 'REG-^[C].*$', '1',TGT_OUT_5_big10, 80, TGT_OUT_5_big10, 80);
     break;
     case 5:
         CreateTargetFace($TourId, 1, 'Default', '%', '1', TGT_OUT_FULL, 122, TGT_OUT_FULL, 122, TGT_OUT_FULL, 122);

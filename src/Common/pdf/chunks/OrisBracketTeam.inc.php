@@ -13,7 +13,7 @@ $FreePageWidth=$pdf->getPageWidth()-20-array_reduce($misArray, function($a,$b) {
 
 $pdf->NotAwarded = $PdfData->rankData['meta']['notAwarded'];
 $pdf->FinalRank  = $PdfData->rankData['meta']['fields']['finRank'];
-
+$pdf->setDocUpdate($PdfData->LastUpdate ?? $PdfData->Timestamp ?? '');
 
 // Variabile per gestire il cambio di Evento
 $PhaseCounter=-1;

@@ -12,6 +12,7 @@ $srcAthlete = !empty($_REQUEST["athlete"]);
 $srcNoPhoto = !empty($_REQUEST["nophoto"]);
 $srcNoPrint = !empty($_REQUEST["noprint"]);
 $srcAccPhoto = !empty($_REQUEST["noacc"]);
+$src2BPrinted = !empty($_REQUEST["tobeprinted"]);
 
 $srcString = (empty($_REQUEST["search"]) ? '' : $_REQUEST["search"]);
 
@@ -32,14 +33,16 @@ if($_SESSION['AccreditationTourIds']) {
 	$Where="EnTournament=" . StrSafe_DB($_SESSION['TourId']) . " ";
 }
 
-$Sql = "SELECT EnId,
+$Sql = "SELECT EnId, EnCode, ToCode, EnTournament, QuSession,
+       (EnBadgePrinted is not null and EnBadgePrinted!=0) as Printed,
 		CONCAT(EnDivision, '-',EnClass) as Category,
 		CONCAT(CoName, ' (' ,CoCode,')') as Country,
 		CONCAT(UPPER(EnFirstName),' ' ,EnName) as Athlete,
 		(PhEnId IS NOT NULL and PhToRetake=0 ) as hasPicture,
 		(EnBadgePrinted+0 and PhEnId IS NULL) or PhToRetake=1 as NoPrintout
 	FROM Entries
-	INNER JOIN Qualifications ON EnId=QuId
+	INNER JOIN Qualifications ON EnId=QuId 
+	INNER JOIN Tournament ON EnTournament=ToId
 	LEFT JOIN Countries ON EnCountry=CoId
 	LEFT JOIN Photos ON EnId=PhEnId
 	WHERE  ";
@@ -64,6 +67,10 @@ if($srcNoPrint) {
 if($srcAccPhoto) {
 	$Where .= " AND PhEnId IS NULL ";
 }
+if($src2BPrinted) {
+	$Where .= " AND (EnBadgePrinted is null or EnBadgePrinted=0) ";
+}
+
 
 if(!empty($_REQUEST['x_Sessions'])) {
 	$tmp=array();
@@ -78,11 +85,16 @@ $Rs=safe_r_sql($Sql);
 if(safe_num_rows($Rs)) {
 	while ($row = safe_fetch($Rs)) {
 		$Answer .= '<athlete id="' . $row->EnId
+				. '" bib="' . $row->EnCode
 				. '" ath="' . htmlspecialchars($row->Athlete . ($row->NoPrintout ? ' - ONLY PHOTO' : ''))
 				. '" team="' . htmlspecialchars($row->Country)
 				. '" cat="' . htmlspecialchars($row->Category)
 				. '" pic="' . ($row->hasPicture ? 1 : 0)
-				. '" prn="' . ($row->NoPrintout ? 1 : 0) . '">'
+				. '" prn="' . ($row->NoPrintout ? 1 : 0)
+				. '" printed="' . ($row->Printed ? 1 : 0)
+				. '" tourid="' . $row->EnTournament
+				. '" tour="' . $row->ToCode
+				. '" sess="' . $row->QuSession . '">'
 			//. '<id>' . $row->EnId . '</id>'
 			//. '<ath><![CDATA[' . $row->Athlete . ($row->NoPrintout ? ' - ONLY PHOTO' : '') . ']]></ath>'
 			//. '<team><![CDATA[' . $row->Country . ']]></team>'

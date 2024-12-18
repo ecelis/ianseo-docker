@@ -520,7 +520,7 @@ function DoImportData($Options=array(), $IsSendall=0, &$UpdatedEntries=[]) {
                     IF(TfXNineChars{$Options['dist']}='',IF(TfXNineChars='',ToXNineChars,TfXNineChars),TfXNineChars{$Options['dist']}) as XNineChars,
                     EnIndClEvent, EnTeamClEvent, EnIndFEvent, EnTeamFEvent+EnTeamMixEvent as EnTeamFinals,
                     group_concat(concat_ws(':', IskDtEndNo, IskDtArrowstring) separator '|') as IskArrowstring,
-                    ToElabTeam!=127 as MakeTeams, ToLocRule
+                    ToElabTeam!=127 as MakeTeams, ToLocRule, QuConfirm & ".pow(2, $Options['dist']).">0 as StopScore
                 FROM Qualifications
 				INNER JOIN Entries ON QuId=EnId and EnTournament={$CompId}
 				INNER JOIN Tournament ON ToId=EnTournament
@@ -541,6 +541,14 @@ function DoImportData($Options=array(), $IsSendall=0, &$UpdatedEntries=[]) {
 				);
 			$q=safe_r_sql($SQL);
 			while($r=safe_fetch($q)) {
+                if($r->StopScore) {
+                    // scorecard validated, do not accept anything: deletes the data and skip to next record
+                    $Update = "DELETE FROM IskData
+                        WHERE IskDtTournament={$CompId} AND IskDtMatchNo=0 AND IskDtEvent='' AND IskDtTeamInd=0 AND IskDtType='Q'
+                        AND IskDtTargetNo='{$r->QuTargetNo}' AND IskDtDistance={$Options['dist']}";
+                    safe_w_SQL($Update);
+                    continue;
+                }
 				$arrowString = str_pad($r->Arrowstring,$r->DIArrows*$r->DIEnds);
 				foreach(explode('|', $r->IskArrowstring) as $IskEnds) {
 					list($IskEnd,$IskString)=explode(':', $IskEnds);
@@ -698,7 +706,7 @@ function DoImportData($Options=array(), $IsSendall=0, &$UpdatedEntries=[]) {
 			if($IskSequence['subtype']=='R') {
 				require_once('Modules/RoundRobin/Lib.php');
 				$fSes=$IskSequence['session'];
-				$SQL="SELECT if(EvGoldsChars='', ToGoldsChars, EvGoldsChars) as GoldsChars, if(EvXNineChars='', ToXNineChars, EvXNineChars) as XNineChars, RrMatchEvent, RrMatchMatchNo, RrMatchTeam, RrMatchLevel, RrMatchGroup, RrMatchRound, RrMatchConfirmed,
+				$SQL="SELECT if(EvGoldsChars='', ToGoldsChars, EvGoldsChars) as GoldsChars, if(EvXNineChars='', ToXNineChars, EvXNineChars) as XNineChars, RrMatchEvent, RrMatchMatchNo, RrMatchTeam, RrMatchLevel, RrMatchGroup, RrMatchRound, RrMatchConfirmed as StopScore,
        					RrMatchArrowstring as Arrowstring, RrMatchTiebreak as TieBreak, RrMatchTbClosest as TbClosest, RrMatchTbDecoded as TbDecoded,
        					IskDtMatchNo, group_concat(concat_ws(':', IskDtEndNo, IskDtArrowstring) separator '|') as IskArrowstring, max(IskDtIsClosest) as IskClosest,
        					RrLevArrows as arrows, RrLevEnds as ends, RrLevSO as so, RrLevBestRankMode
@@ -714,6 +722,13 @@ function DoImportData($Options=array(), $IsSendall=0, &$UpdatedEntries=[]) {
 					group by IskDtTournament, IskDtMatchNo, IskDtEvent, IskDtTeamInd, IskDtType, IskDtTargetNo, IskDtDistance, IskDtSession";
 				$q=safe_r_SQL($SQL);
 				while($r=safe_fetch($q)){
+                    if($r->StopScore) {
+                        // score has been confirmed so we remove the data and skip to next record
+                        $Update = "DELETE FROM IskData
+							WHERE IskDtTournament={$CompId} AND IskDtMatchNo={$r->IskDtMatchNo} AND IskDtEvent='{$r->RrMatchEvent}' AND IskDtTeamInd={$IndTeam} AND IskDtType='M'";
+                        safe_w_SQL($Update);
+                        continue;
+                    }
 					foreach(explode('|', $r->IskArrowstring) as $IskEnds) {
 						list($IskEnd,$IskString)=explode(':', $IskEnds);
 
@@ -755,7 +770,8 @@ function DoImportData($Options=array(), $IsSendall=0, &$UpdatedEntries=[]) {
 				$tblHead = ($IndTeam==0 ? 'Fin' : 'Tf');
 
 				$SQL="SELECT if(EvGoldsChars='', ToGoldsChars, EvGoldsChars) as GoldsChars, if(EvXNineChars='', ToXNineChars, EvXNineChars) as XNineChars, FSEvent, FSMatchNo, FSTeamEvent, {$tblHead}Arrowstring as Arrowstring, {$tblHead}Tiebreak as TieBreak, {$tblHead}TbClosest as TbClosest, {$tblHead}TbDecoded as TbDecoded, GrPhase, 
-       				group_concat(concat_ws(':', IskDtEndNo, IskDtArrowstring) separator '|') as IskArrowstring, max(IskDtIsClosest) as IskClosest
+       				group_concat(concat_ws(':', IskDtEndNo, IskDtArrowstring) separator '|') as IskArrowstring, max(IskDtIsClosest) as IskClosest,
+       				{$tblHead}Confirmed as StopScore
 					FROM FinSchedule
                     inner join Events on EvTournament=FSTournament and EvTeamEvent=FSTeamEvent and EvCode=FSEvent
                     inner join Tournament on ToId=FSTournament
@@ -772,6 +788,14 @@ function DoImportData($Options=array(), $IsSendall=0, &$UpdatedEntries=[]) {
 				$SQL.=" group by IskDtTournament, IskDtMatchNo, IskDtEvent, IskDtTeamInd, IskDtType, IskDtTargetNo, IskDtDistance, IskDtSession";
 				$q=safe_r_SQL($SQL);
 				while($r=safe_fetch($q)){
+                    if($r->StopScore) {
+                        // SCORE HAS BEEN CONFIRMED SO
+                        // empty the whole match lines and skip to next record
+                        $Update = "DELETE FROM IskData
+							WHERE IskDtTournament={$CompId} AND IskDtMatchNo={$r->FSMatchNo} AND IskDtEvent='{$r->FSEvent}' AND IskDtTeamInd={$IndTeam} AND IskDtType='M'";
+                        safe_w_SQL($Update);
+                        continue;
+                    }
 					$obj=getEventArrowsParams($r->FSEvent,$r->GrPhase,$r->FSTeamEvent,$CompId);
 					$r->so=$obj->so; // will be used later on in UpdateNgArrowString()
                     $r->startArrow = 10000;

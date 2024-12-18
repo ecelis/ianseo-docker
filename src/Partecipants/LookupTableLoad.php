@@ -549,12 +549,17 @@ function DoLookupPhoto($u, $OnlyMissing=false, $ForceOld=false) {
 
 function DoLookupFlags($u) {
 	require_once('Common/CheckPictures.php');
-    $q=safe_r_sql("select CoCode, CoName 
-        from Countries 
-        inner join Entries on CoId in (EnCountry, EnCountry2,EnCountry3) and CoTournament=EnTournament 
+    $q=safe_r_sql("SELECT DISTINCT CoCode, CoName 
+        from Countries  
         left join Flags ON FlTournament=CoTournament AND FlCode=CoCode 
-        where EnTournament={$_SESSION['TourId']} and EnIocCode='$u->LupIocCode' 
-        group by CoCode
+        where CoTournament={$_SESSION['TourId']} AND CoId IN (
+            SELECT EnCountry from Entries WHERE EnTournament={$_SESSION['TourId']} AND EnIocCode='$u->LupIocCode'
+            UNION 
+            SELECT EnCountry2 from Entries WHERE EnTournament={$_SESSION['TourId']} AND EnIocCode='$u->LupIocCode'
+            UNION 
+            SELECT EnCountry3 from Entries WHERE EnTournament={$_SESSION['TourId']} AND EnIocCode='$u->LupIocCode'
+            UNION
+            SELECT TiCountry from TournamentInvolved WHERE TiTournament={$_SESSION['TourId']})
         order by CoCode");
 
     $Opt='';

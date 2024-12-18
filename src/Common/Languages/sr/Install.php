@@ -50,7 +50,6 @@ $lang['Optimal value']='Optimalna vrednost';
 $lang['Parameter']='Parametar';
 $lang['Password']='Lozinka';
 $lang['PHP settings']='PHP podešavanja';
-$lang['PHP too old']='Vaša PHP instalacija je previše stara. IANSEO zahteva najmanje PHP 5.0.';
 $lang['PHP version']='PHP verzija';
 $lang['php.ini file']='php.ini fajl';
 $lang['Prepare']='Priprema podataka za ažuriranje';

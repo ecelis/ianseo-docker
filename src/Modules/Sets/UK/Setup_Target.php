@@ -320,7 +320,7 @@ switch($TourType) {
 
          case 11:
          case 15:
-             CreateDistanceNew($TourId, $TourType, '_%', array(array('20y',20), array('20y',20)));
+             CreateDistanceNew($TourId, $TourType, '_%', array(array('20y-1',20), array('20y-2',20)));
              break;
          case 12:
              CreateDistanceNew($TourId, $TourType, '_%', array(array('20y',20)));
@@ -329,7 +329,7 @@ switch($TourType) {
              CreateDistanceNew($TourId, $TourType, '_%', array(array('25y',25)));
              break;
          case 14:
-             CreateDistanceNew($TourId, $TourType, '_%', array(array('30m',30), array('30m',30)));
+             CreateDistanceNew($TourId, $TourType, '_%', array(array('30m-1',30), array('30m-2',30)));
              break;
      }
         break;

@@ -30,7 +30,6 @@ $CanEdit=hasACL(AclCompetition, AclReadWrite);
 $JSON['error']=0;
 
 if($CanEdit) {
-
 	switch($_REQUEST['act']) {
 		case 'new':
 		case 'edit':
@@ -58,13 +57,20 @@ if($CanEdit) {
 				"TiName=".StrSafe_DB($_REQUEST['FamilyName']),
 				"TiGivenName=".StrSafe_DB($_REQUEST['GivenName']),
 				"TiCountry=$CoId",
-				"TiGender=".intval($_REQUEST['Gender']),
+				"TiGender=".intval($_REQUEST['Gender'])
 			);
+            $t = microtime(true);
+            $micro = sprintf("%06d",($t - floor($t)) * 1000000);
+            $d = new DateTime( date('Y-m-d H:i:s.'.$micro, intval($t)));
 
 			if($_REQUEST['ID']=='new') {
+                $SQL[] = "TiTimeStamp='".$d->format('Y-m-d H:i:s.u')."'";
 				safe_w_sql("insert ignore into TournamentInvolved set ".implode(',', $SQL));
 			} else {
 				safe_w_sql("update TournamentInvolved set ".implode(',', $SQL)." where TiId=".intval($_REQUEST['ID']));
+                if(safe_w_affected_rows() != 0) {
+                    safe_w_sql("update TournamentInvolved set TiTimeStamp='".$d->format('Y-m-d H:i:s.u')."' where TiId=".intval($_REQUEST['ID']));
+                }
 			}
 			break;
 		case 'delete':
@@ -87,8 +93,8 @@ while ($RowSel = safe_fetch($RsSel)) {
 }
 
 $Genders ='<option value="">---</option>';
-$Genders.='<option value="0">'.get_text('ShortMale', 'Tournament').'</option>';
-$Genders.='<option value="1">'.get_text('ShortFemale', 'Tournament').'</option>';
+$Genders.='<option value="0">'.get_text('GenderShort0').'</option>';
+$Genders.='<option value="1">'.get_text('GenderShort1').'</option>';
 
 $JSON['table']='';
 $q=safe_r_sql("SELECT *

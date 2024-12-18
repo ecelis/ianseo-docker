@@ -44,6 +44,8 @@ $isCompleteResultBook = true;
 $pdf = new OrisBracketPDF('', 'Complete Result Book');
 $pdf->SetAutoPageBreak(true,OrisPDF::bottomMargin+$pdf->extraBottomMargin);
 
+$LastUpdate='';
+
 /********
  * ORIS ORDER of documents
  *
@@ -89,21 +91,26 @@ Sport Communication (C68) - selected by World Archery
 //Medaglieri
 if($cbIndFinal || $cbTeamFinal) {
 	include 'OrisMedalList.php';
+    $LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
 	$pdf->SetAutoPageBreak(true,OrisPDF::bottomMargin+$pdf->extraBottomMargin);
 	include 'OrisMedalStanding.php';
+    $LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
     $pdf->endPage();
 }
 
 include 'Partecipants/OrisCountry.php';
+$LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
 $pdf->endPage();
 
 if($cbIndFinal || $cbIndElim) {
     include 'Final/Individual/OrisRanking.php';
+    $LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
     $pdf->endPage();
 }
 
 if($cbIndFinal) {
 	include 'Final/Individual/OrisBracket.php';
+    $LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
 	$BracketsInd = clone $PdfData;
 	$pdf->SetAutoPageBreak(true,OrisPDF::bottomMargin+$pdf->extraBottomMargin);
     $pdf->endPage();
@@ -111,20 +118,25 @@ if($cbIndFinal) {
 
 if($cbIndElim) {
     include 'Elimination/OrisIndividual.php';
+    $LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
     $pdf->endPage();
 }
 
 if($cbIndFinal) {
     include 'Qualification/OrisIndividual.php';
+    $LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
     $pdf->endPage();
 }
 
 if($cbTeamFinal) {
 	include 'Final/Team/OrisRanking.php';
+    $LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
 	include 'Final/Team/OrisBracket.php';
+    $LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
 	$BracketsTeam = clone $PdfData;
 	$pdf->SetAutoPageBreak(true,OrisPDF::bottomMargin+$pdf->extraBottomMargin);
 	include 'Qualification/OrisTeam.php';
+    $LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
 	$pdf->endPage();
 }
 
@@ -137,6 +149,7 @@ if($cbIndFinal) {
 			true,
 			true);
 
+        $LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
 	} else {
 		$PdfData = clone $BracketsInd;
 	}
@@ -145,6 +158,7 @@ if($cbIndFinal) {
 	$pdf->SetAutoPageBreak(true,(OrisPDF::bottomMargin+$pdf->extraBottomMargin));
 
 	include(PdfChunkLoader('OrisScoreIndividual.inc.php'));
+    $LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
     $pdf->endPage();
 }
 if($cbTeamFinal) {
@@ -157,6 +171,7 @@ if($cbTeamFinal) {
             true,
             null,
             true);
+        $LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
     } else {
         $PdfData = clone $BracketsTeam;
     }
@@ -164,9 +179,11 @@ if($cbTeamFinal) {
 	$pdf->SetAutoPageBreak(true,(OrisPDF::bottomMargin+$pdf->extraBottomMargin));
 
 	include(PdfChunkLoader('OrisScoreTeam.inc.php'));
+    $LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
     $pdf->endPage();
 
     $PdfData=getTeamsComponentsLog();
+    $LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
     include(PdfChunkLoader('OrisComponentLogTeam.inc.php'));
     $pdf->endPage();
 }
@@ -175,11 +192,13 @@ if($cbTeamFinal) {
 $q=safe_r_sql("SELECT count(*) as Involved FROM TourRecords WHERE TrTournament={$_SESSION['TourId']}");
 if($r=safe_fetch($q) and $r->Involved) {
 	include('Partecipants/OrisStatRecStanding.php');
+    $LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
     $pdf->endPage();
 }
 $q=safe_r_sql("SELECT count(*) as Involved FROM RecBroken WHERE RecBroTournament={$_SESSION['TourId']}");
 if($r=safe_fetch($q) and $r->Involved) {
 	include('Partecipants/OrisStatRecBroken.php');
+    $LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
     $pdf->endPage();
 }
 
@@ -187,6 +206,7 @@ if($r=safe_fetch($q) and $r->Involved) {
 $q=safe_r_sql("SELECT count(*) as Involved FROM TournamentInvolved WHERE TiTournament={$_SESSION['TourId']}");
 if($r=safe_fetch($q) and $r->Involved) {
 	include('Tournament/OrisStaffField.php');
+    $LastUpdate = max($LastUpdate, $PdfData->LastUpdate ?? $LastUpdate);
     $pdf->endPage();
 }
 
@@ -200,6 +220,7 @@ $pdf->setEvent('Complete Results Booklet');
 $pdf->setComment('');
 $pdf->setOrisCode('SUMMARY', 'Complete Results Booklet');
 $pdf->setPhase('');
+$pdf->setDocUpdate($LastUpdate ?? '');
 
 $pdf->addTOCPage();
 

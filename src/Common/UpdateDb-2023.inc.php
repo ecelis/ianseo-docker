@@ -201,41 +201,41 @@ if($version<'2023-11-16 10:30:00') {
 }
 
 if($version<'2023-11-19 10:00:00') {
-    safe_w_sql("alter table Finals add FinGolds tinyint not null after FinScore, add FinXNines tinyint not null after FinGolds");
-    safe_w_sql("alter table TeamFinals add TfGolds tinyint not null after TfScore, add TfXNines tinyint not null after TfGolds");
-    safe_w_sql("alter table Events add EvCodeParentWinnerBranch tinyint not null after EvCodeParent, add EvCheckGolds tinyint not null after EvXNineChars, add EvCheckXNines tinyint not null after EvCheckGolds");
+    safe_w_sql("alter table Finals add FinGolds tinyint not null after FinScore, add FinXNines tinyint not null after FinGolds",false,array(1146, 1060));
+    safe_w_sql("alter table TeamFinals add TfGolds tinyint not null after TfScore, add TfXNines tinyint not null after TfGolds",false,array(1146, 1060));
+    safe_w_sql("alter table Events add EvCodeParentWinnerBranch tinyint not null after EvCodeParent, add EvCheckGolds tinyint not null after EvXNineChars, add EvCheckXNines tinyint not null after EvCheckGolds",false,array(1146, 1060));
     db_save_version('2023-11-19 10:00:00');
 }
 
 if($version<'2023-11-26 10:00:00') {
-    safe_w_sql("alter table Qualifications add QuTieWeight bigint unsigned not null after QuTie, change QuTieBreak QuTieBreak varchar(50) not null, add index (QuScore, QuGold, QuXnine, QuTieWeight)");
+    safe_w_sql("alter table Qualifications add QuTieWeight bigint unsigned not null after QuTie, change QuTieBreak QuTieBreak varchar(50) not null, add index (QuScore, QuGold, QuXnine, QuTieWeight)",false,array(1146, 1060));
     db_save_version('2023-11-26 10:00:00');
 }
 
 if($version<'2023-11-27 10:00:00') {
-    safe_w_sql("alter table Qualifications add QuTieWeightDecoded varchar(80) not null after QuTieWeight");
-    safe_w_sql("alter table Individuals add IndTieWeightDecoded varchar(80) not null after IndTbDecoded");
+    safe_w_sql("alter table Qualifications add QuTieWeightDecoded varchar(80) not null after QuTieWeight",false,array(1146, 1060));
+    safe_w_sql("alter table Individuals add IndTieWeightDecoded varchar(80) not null after IndTbDecoded",false,array(1146, 1060));
     db_save_version('2023-11-27 10:00:00');
 }
 
 if($version<'2023-11-27 10:00:01') {
-    safe_w_sql("alter table Qualifications add QuTieWeightDrops text not null after QuTieWeight");
+    safe_w_sql("alter table Qualifications add QuTieWeightDrops text not null after QuTieWeight",false,array(1146, 1060));
     db_save_version('2023-11-27 10:00:01');
 }
 if($version<'2023-11-28 10:00:01') {
-    safe_w_sql("alter table Events change EvCodeParentWinnerBranch EvCodeParentWinnerBranch tinyint not null");
-    safe_w_sql("alter table RoundRobinMatches add RrMatchGolds tinyint unsigned not null, add RrMatchXNines tinyint unsigned not null");
+    safe_w_sql("alter table Events change EvCodeParentWinnerBranch EvCodeParentWinnerBranch tinyint not null",false,array(1146, 1060));
+    safe_w_sql("alter table RoundRobinMatches add RrMatchGolds tinyint unsigned not null, add RrMatchXNines tinyint unsigned not null",false,array(1146, 1060));
     db_save_version('2023-11-28 10:00:01');
 }
 
 if($version<'2023-12-18 10:00:01') {
-    safe_w_sql("ALTER TABLE TeamEligibleComponent ADD TecSubTeam TINYINT NOT NULL AFTER TecCoId;");
-    safe_w_sql("alter table RoundRobinLevel add RrLevCheckGolds tinyint not null after RrLevTieBreakSystem2, add RrLevCheckXNines tinyint not null after RrLevCheckGolds");
+    safe_w_sql("ALTER TABLE TeamEligibleComponent ADD TecSubTeam TINYINT NOT NULL AFTER TecCoId;",false,array(1146, 1060));
+    safe_w_sql("alter table RoundRobinLevel add RrLevCheckGolds tinyint not null after RrLevTieBreakSystem2, add RrLevCheckXNines tinyint not null after RrLevCheckGolds",false,array(1146, 1060));
     db_save_version('2023-12-18 10:00:01');
 }
 
 if($version<'2023-12-18 17:00:01') {
-    safe_w_sql("alter table RoundRobinMatches add RrMatchSwapped tinyint not null after RrMatchMatchNo");
+    safe_w_sql("alter table RoundRobinMatches add RrMatchSwapped tinyint not null after RrMatchMatchNo",false,array(1146, 1060));
     db_save_version('2023-12-18 17:00:01');
 }
 
@@ -247,6 +247,6 @@ if($version<'2023-12-19 16:10:00') {
 }
 
 if($version<'2023-12-31 10:00:00') {
-    safe_w_sql("alter table Individuals add IndFinTieWeightDecoded varchar(80) not null after IndTieWeightDecoded");
+    safe_w_sql("alter table Individuals add IndFinTieWeightDecoded varchar(80) not null after IndTieWeightDecoded",false,array(1146, 1060));
     db_save_version('2023-12-31 10:00:00');
 }

@@ -239,6 +239,19 @@ function doAlert(msg) {
 	});
 }
 
+function showTitle(obj) {
+	if(obj.title) {
+		$.alert({
+			content: obj.title,
+			title: '',
+			boxWidth: '33%',
+			useBootstrap: false,
+			escapeKey: true,
+			backgroundDismiss: true,
+		});
+	}
+}
+
 function editCss(data) {
 	let css= {
 		display: '',
@@ -461,4 +474,18 @@ function adaptTransparency(obj) {
 function toggleColor(obj) {
 	$('#'+$(obj).attr('ref')+'-color').prop('disabled', !obj.checked);
 	$('#'+$(obj).attr('ref')+'-alpha').prop('disabled', !obj.checked);
+}
+
+function exportAllCompetitions() {
+	window.open(wwwdir+'Update/ExportAllCompetitions.php');
+}
+
+function toggleSpinningIanseo(show=false) {
+	if(show) {
+		if($('#SpinningIanseo').length==0) {
+			$('body').append('<div id="SpinningIanseo"><img src="'+wwwdir+'Common/Images/ianseo.svg"></div>');
+		}
+	} else {
+		$('#SpinningIanseo').remove();
+	}
 }

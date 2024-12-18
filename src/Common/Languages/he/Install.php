@@ -67,7 +67,6 @@ $lang['Optimal value']='ערך מיטבי';
 $lang['Parameter']='נתון';
 $lang['Password']='סיסמה';
 $lang['PHP settings']='הגדרות PHP';
-$lang['PHP too old']='גרסת ה-PHP המותקנת ישנה מידי. מספר הגרסה המינימלי עבור IANSEO הוא 5.0.';
 $lang['PHP version']='גרסת PHP';
 $lang['php.ini file']='קובץ php.ini';
 $lang['Prepare']='מכין מידע לעדכון';

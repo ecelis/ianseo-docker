@@ -29,6 +29,7 @@ function CreateStandardDivisions($TourId, $Type, $SubRule) {
         case '3':
             $optionDivs = array(
                 'R' => 'Recurve',
+                'BR' => 'Barebow Recurve',
                 'C' => 'Compound'
             );
             break;
@@ -45,22 +46,22 @@ function CreateStandardClasses($TourId, $Type, $SubRule) {
     $i=1;
 	switch($SubRule) {
 		case '1': // All AU Classes
-            CreateClass($TourId, $i++, 1, 13, 0, 'U14M', 'U14M, U16M, U18M, U21M, M', 'U14 Men');
-            CreateClass($TourId, $i++, 14, 15, 0, 'U16M', 'U16M, U18M, U21M, M', 'U16 Men');
-            CreateClass($TourId, $i++, 16, 17, 0, 'U18M', 'U18M, U21M, M', 'U18 Men');
-            CreateClass($TourId, $i++, 18, 20, 0, 'U21M', 'U21M, M', 'U21 Men');
+            CreateClass($TourId, $i++, 1, 13, 0, 'U14M', 'U14M,U16M,U18M,U21M,M', 'U14 Men');
+            CreateClass($TourId, $i++, 14, 15, 0, 'U16M', 'U16M,U18M,U21M,M', 'U16 Men');
+            CreateClass($TourId, $i++, 16, 17, 0, 'U18M', 'U18M,U21M,M', 'U18 Men');
+            CreateClass($TourId, $i++, 18, 20, 0, 'U21M', 'U21M,M', 'U21 Men');
             CreateClass($TourId, $i++, 21, 49, 0, 'M', 'M', 'Men');
-            CreateClass($TourId, $i++, 50, 59, 0, '50M', '50M, M', '50+ Men');
-            CreateClass($TourId, $i++, 60, 69, 0, '60M', '60M, 50M, M', '60+ Men');
-            CreateClass($TourId, $i++, 70, 100, 0, '70M', '70M, 60M, 50M, M', '70+ Men');
-            CreateClass($TourId, $i++, 1, 13, 0, 'U14W', 'U14W, U16W, U18W, U21W, W', 'U14 Women');
-            CreateClass($TourId, $i++, 14, 15, 0, 'U16W', 'U16W, U18W, U21W, W', 'U16 Women');
-            CreateClass($TourId, $i++, 1, 17, 1, 'U18W', 'U18W, U21W, W', 'U18 Women');
-            CreateClass($TourId, $i++, 18, 20, 1, 'U21W', 'U21W, W', 'U21 Women');
+            CreateClass($TourId, $i++, 50, 59, 0, '50M', '50M,M', '50+ Men');
+            CreateClass($TourId, $i++, 60, 69, 0, '60M', '60M,50M,M', '60+ Men');
+            CreateClass($TourId, $i++, 70, 100, 0, '70M', '70M,60M,50M,M', '70+ Men');
+            CreateClass($TourId, $i++, 1, 13, 0, 'U14W', 'U14W,U16W,U18W,U21W,W', 'U14 Women');
+            CreateClass($TourId, $i++, 14, 15, 0, 'U16W', 'U16W,U18W,U21W,W', 'U16 Women');
+            CreateClass($TourId, $i++, 1, 17, 1, 'U18W', 'U18W,U21W,W', 'U18 Women');
+            CreateClass($TourId, $i++, 18, 20, 1, 'U21W', 'U21W,W', 'U21 Women');
             CreateClass($TourId, $i++, 21, 49, 1, 'W', 'W', 'Women');
             CreateClass($TourId, $i++, 50, 59, 1, '50W', '50W, W', '50+ Women');
-            CreateClass($TourId, $i++, 60, 69, 1, '60W', '60W, 50W, W', '60+ Women');
-            CreateClass($TourId, $i++, 70, 100, 1, '70W', '70W, 60W, 50W, W', '70+ Women');
+            CreateClass($TourId, $i++, 60, 69, 1, '60W', '60W,50W,W', '60+ Women');
+            CreateClass($TourId, $i++, 70, 100, 1, '70W', '70W,60W,50W,W', '70+ Women');
             break;
         case '2': // M/F open classes
         case '3': // M/F open classes for AUS Open style event

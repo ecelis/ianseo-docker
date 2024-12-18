@@ -10,7 +10,7 @@ if (empty($_SESSION['TourId'])) {
 }
 checkACL(array(AclSpeaker, AclQualification, AclEliminations, AclIndividuals, AclTeams), AclReadOnly);
 
-$Today=date('Y-m-d');
+$Today=getToday();
 $UseHHT='';
 $OnlyToday='';
 $SelectedEvent="''";

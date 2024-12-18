@@ -27,7 +27,7 @@ $Sql = "SELECT CONCAT(FsEvent, '|', FsTeamEvent, '|', FsMatchNo) as SesKey,
 		coalesce(SesOrder, 0) SesNumber, coalesce(SesName, '') as SesName
 	FROM FinSchedule
 	left join Session on SesTournament=FsTournament and (CONCAT(FsScheduledDate, ' ', FsScheduledTime) >= SesDtStart AND CONCAT(FsScheduledDate, ' ', FsScheduledTime) < SesDtEnd)
-	WHERE FsTournament=".$_SESSION['TourId'] ." AND (FsMatchNo%2=0)".(empty($_REQUEST['OnlyMedals']) ? '' : ' and FsMatchno in (0,2) ').($Date ? " AND FsScheduledDate='$Date'" : '')." and FSScheduledDate>0
+	WHERE FsTournament=".$_SESSION['TourId'] ." AND (FsMatchNo%2=0)".(empty($_REQUEST['OnlyMedals']) ? '' : ($_REQUEST['OnlyMedals']==1 ? ' and FsMatchno in (0,2) ' : ' and FsMatchno = 0 ' )).($Date ? " AND FsScheduledDate='$Date'" : '')." and FSScheduledDate>0
 	ORDER BY FsScheduledDate, FsScheduledTime, FsOdfMatchName";
 
 $q=safe_r_SQL($Sql);

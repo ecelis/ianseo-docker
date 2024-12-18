@@ -69,3 +69,20 @@ function closeDialog() {
     $('#UpdateBox').remove();
     location.href='../'
 }
+
+function doInnoDbUpdate() {
+    // show turning ianseo...
+    toggleSpinningIanseo(true);
+    let form={
+        act:'updateInnoDb'
+    }
+    $.getJSON('index-action.php', form).always(function(data) {
+        if(data.msg!='') {
+            doAlert(data.msg);
+        }
+        toggleSpinningIanseo(false);
+        $('#InnoDbUpdateTable').addClass('d-none');
+        $('#UpdateTable').removeClass('d-none');
+    })
+}
+

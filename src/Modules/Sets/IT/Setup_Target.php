@@ -293,6 +293,10 @@ switch($TourType) {
 				CreateDistanceNew($TourId, $TourType, 'OLA_', array(array('60m-1',60)));
 				CreateDistanceNew($TourId, $TourType, 'OLR_', array(array('40m-1',40)));
 				CreateDistanceNew($TourId, $TourType, 'OLG_', array(array('25m-1',25)));
+				CreateDistanceNew($TourId, $TourType, 'COJ_', array(array('50m-1',50)));
+				CreateDistanceNew($TourId, $TourType, 'COA_', array(array('50m-1',50)));
+				CreateDistanceNew($TourId, $TourType, 'COR_', array(array('40m-1',40)));
+				CreateDistanceNew($TourId, $TourType, 'COG_', array(array('25m-1',25)));
 				CreateDistanceNew($TourId, $TourType, 'ANJ_', array(array('50m-1',50)));
 				CreateDistanceNew($TourId, $TourType, 'ANA_', array(array('40m-1',40)));
 				CreateDistanceNew($TourId, $TourType, 'ANR_', array(array('25m-1',25)));

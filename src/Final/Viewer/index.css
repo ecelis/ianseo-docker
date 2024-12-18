@@ -26,13 +26,11 @@ body {padding:0 !important;}
     font-size: 1vw;
     white-space: nowrap;
 }
-#OppLeftContainer {
+#OppLeftContainer, #OppRightContainer,
+#ScoreLeftContainer, #ScoreRightContainer{
     flex: 0 0 44vw;
 }
-#OppRightContainer {
-    flex: 0 0 44vw;
-}
-#EventContainer {
+#EventContainer, #VoidContainer {
     flex: 0 0 10vw;
 }
 
@@ -74,6 +72,16 @@ body {padding:0 !important;}
     border-radius: 0.5em;
     margin-left:0.25em;
     min-width:2em;
+}
+
+.previous-end {
+    font-size:1.70vw;
+    padding: 0 0 0.25em 0;
+}
+.previous-end div {
+    border-radius: 0.5em;
+    margin-left:0.15em;
+    min-width:1em;
 }
 
 #TgtLeft,

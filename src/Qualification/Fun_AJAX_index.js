@@ -13,30 +13,30 @@ var Cache = new Array();	// cache per l'update
 var PostUpdate=false;		// true se è partito il postupdate. verrà rimesso a false dopo che la coda si è svuotata
 var PostUpdateCnt=0;		// Contatore degli aggiornamenti in postupdate, per decidere se ricalcolare o no
 
-function ManagePostUpdate(chk)
-{
-	if (!chk)
-	{
-		UpdateQuals();
-	}
-	else
-	{
+function ManagePostUpdate(chk) {
+	if (!chk) {
+		if(PostUpdate && !$('#chk_PostUpdate').is(':checked')) {
+			PostUpdateMessage();
+			if (PostUpdateCnt != 0) {
+				CalcRank(true);
+				CalcRank(false);
+				MakeTeams();
+			}
+			ResetPostUpdate();
+		}
+	} else {
 		PostUpdate=true;
 		PostUpdateCnt=0;
 	}
 }
 
-function PostUpdateMessage()
-{
-	//document.getElementById('idPostUpdateMessage').innerHTML=PostUpdating;
-	document.getElementById('PostUpdateMask').style.visibility="visible";
+function PostUpdateMessage() {
+	$('#PostUpdateMask').css('visibility',"visible");
 }
 
-function ResetPostUpdate()
-{
+function ResetPostUpdate() {
 	PostUpdate=false;
-	//document.getElementById('idPostUpdateMessage').innerHTML='';
-	document.getElementById('PostUpdateMask').style.visibility="hidden";
+	$('#PostUpdateMask').css('visibility',"hidden");
 	alert(PostUpdateEnd);
 }
 
@@ -45,255 +45,47 @@ function ResetPostUpdate()
 	Invia la GET a UpdateQuals.php
 */
 function UpdateQuals(Field) {
-	if (XMLHttp)
-	{
-		if (Field)
-		{
-			var FieldName = encodeURIComponent(Field);
-			var FieldValue= encodeURIComponent(document.getElementById(Field).value);
-			Cache.push(FieldName + "=" + FieldValue);
-			PostUpdateCnt++;
-		}
-
-
-		try {
-
-			if ((XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT))
-			{
-				if (Cache.length>0)
-				{
-					var FromCache = Cache.shift();
-					XMLHttp.open("POST",RootDir+"UpdateQuals.php",true);
-					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-					XMLHttp.onreadystatechange=UpdateQuals_StateChange;
-					if (PostUpdate)
-						FromCache += "&NoRecalc=1";
-					XMLHttp.send(FromCache);
-				}
-				else
-				{
-					if (!document.getElementById('chk_PostUpdate').checked)
-					{
-						if (PostUpdate)
-						{
-							PostUpdateMessage();
-							if(PostUpdateCnt != 0)
-							{
-								CalcRank(true);
-								XMLHttp = CreateXMLHttpRequestObject();
-								CalcRank(false);
-								XMLHttp = CreateXMLHttpRequestObject();
-								MakeTeams();
-							}
-							ResetPostUpdate();
-						}
-					}
-				}
-			}
-		}
-		catch (e) {}
-
-	}
-}
-
-function UpdateQuals_StateChange()
-{
-	// se lo stato � Complete vado avanti
-	if (XMLHttp.readyState==XHS_COMPLETE)
-	{
-	// se lo status di HTTP � ok vado avanti
-		if (XMLHttp.status==200)
-		{
-			try
-			{
-				UpdateQuals_Response();
-			}
-			catch(e)
-			{
-			}
-		}
-		else
-		{
-		}
-	}
-}
-
-function UpdateQuals_Response()
-{
-
-	// leggo l'xml
-	var XMLResp=XMLHttp.responseXML;
-// intercetto gli errori di IE e Opera
-	if (!XMLResp || !XMLResp.documentElement)
-		throw(XMLResp.responseText);
-
-// Intercetto gli errori di Firefox
-	var XMLRoot;
-	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
-		throw("");
-
-	XMLRoot = XMLResp.documentElement;
-
-	var Error = XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
-	var Which = XMLRoot.getElementsByTagName('which').item(0).firstChild.data;
-
-	if (Error==0)
-	{
-		var Id = XMLRoot.getElementsByTagName('id').item(0).firstChild.data;
-		var Score = XMLRoot.getElementsByTagName('score').item(0).firstChild.data;
-		var Gold = XMLRoot.getElementsByTagName('gold').item(0).firstChild.data;
-		var XNine = XMLRoot.getElementsByTagName('xnine').item(0).firstChild.data;
-
-		document.getElementById('idScore_' + Id).innerHTML=Score;
-		document.getElementById('idGold_' + Id).innerHTML=Gold;
-		document.getElementById('idXNine_' + Id).innerHTML=XNine;
-
-		SetStyle(Which,'');
-	}
-	else
-	{
-		SetStyle(Which,'error');
+	let form={};
+	form[Field]=$('#'+Field).val();
+	if(PostUpdate) {
+		form.NoRecalc=1;
+		PostUpdateCnt++;
 	}
 
-	// per scaricare la cache degli update
-	setTimeout("UpdateQuals()",250);
-}
+	$.getJSON(RootDir+"UpdateQuals.php", form, function(data) {
+		if(data.error==0) {
+			$('#idScore_' + data.id).html(data.score);
+			$('#idGold_' + data.id).html(data.gold);
+			$('#idXNine_' + data.id).html(data.xnine);
 
-/*
-	- MakeTeams()
-	Invia la GET a MakeTeams.php
-*/
-function MakeTeams()
-{
-	if (XMLHttp)
-	{
-		try {
-			if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
-			{
-				XMLHttp.open("GET",RootDir+"MakeTeams.php",true);
-				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-				XMLHttp.onreadystatechange=MakeTeams_StateChange;
-				XMLHttp.send(null);
-			}
-		} catch (e) {}
-	}
-}
-
-function MakeTeams_StateChange()
-{
-	// se lo stato � Complete vado avanti
-	if (XMLHttp.readyState==XHS_COMPLETE)
-	{
-	// se lo status di HTTP � ok vado avanti
-		if (XMLHttp.status==200)
-		{
-			try
-			{
-				MakeTeams_Response();
-			}
-			catch(e)
-			{
-			}
+			SetStyle(data.which,'');
+		} else {
+			SetStyle(data.which,'error');
 		}
-		else
-		{
+	});
+}
+
+/**
+	Recreates the DivClass teams
+**/
+function MakeTeams() {
+	$.getJSON(RootDir+"MakeTeams.php", function(data) {
+		alert(data.msg);
+		if(data.error==0) {
+			MakeTeamsAbs();
 		}
-	}
+	});
 }
 
-function MakeTeams_Response()
-{
 
-	// leggo l'xml
-	var XMLResp=XMLHttp.responseXML;
-// intercetto gli errori di IE e Opera
-	if (!XMLResp || !XMLResp.documentElement)
-		throw(XMLResp.responseText);
-
-// Intercetto gli errori di Firefox
-	var XMLRoot;
-	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
-		throw("");
-
-	XMLRoot = XMLResp.documentElement;
-
-	var Error = XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
-	var Msg = XMLRoot.getElementsByTagName('msg').item(0).firstChild.data;
-
-	alert(Msg);
-
-	XMLHttp = CreateXMLHttpRequestObject();
-	MakeTeamsAbs();
-}
-
-/*
-	- MakeTeamsAbs()
-	Invia la GET a MakeTeamsAbss.php
+/**
+	Recreates the Event teams
 */
 function MakeTeamsAbs(){
-	if (XMLHttp) {
-		try {
-			if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
-			{
-				XMLHttp.open("GET",RootDir+"MakeTeamsAbs.php",true);
-				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-				XMLHttp.onreadystatechange=MakeTeamsAbs_StateChange;
-				XMLHttp.send(null);
-			}
-		} catch (e) {
-			document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
-		}
-	}
+	$.getJSON(RootDir+"MakeTeamsAbs.php", function(data) {
+		alert(data.msg);
+	});
 }
-
-function MakeTeamsAbs_StateChange()
-{
-	// se lo stato � Complete vado avanti
-	if (XMLHttp.readyState==XHS_COMPLETE)
-	{
-	// se lo status di HTTP � ok vado avanti
-		if (XMLHttp.status==200)
-		{
-			try
-			{
-				MakeTeamsAbs_Response();
-			}
-			catch(e)
-			{
-				document.getElementById('idOutput').innerHTML='Errore: ' + e.toString();
-			}
-		}
-		else
-		{
-			document.getElementById('idOutput').innerHTML='Errore: ' +XMLHttp.statusText;
-		}
-	}
-}
-
-function MakeTeamsAbs_Response()
-{
-
-	// leggo l'xml
-	var XMLResp=XMLHttp.responseXML;
-// intercetto gli errori di IE e Opera
-	if (!XMLResp || !XMLResp.documentElement)
-		throw(XMLResp.responseText);
-
-// Intercetto gli errori di Firefox
-	var XMLRoot;
-	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
-		throw("");
-
-	XMLRoot = XMLResp.documentElement;
-
-	var Error = XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
-	var Msg = XMLRoot.getElementsByTagName('msg').item(0).firstChild.data;
-
-	alert(Msg);
-}
-
-
-
 
 /*
 	- CalcRank(Dist=false)
@@ -303,64 +95,15 @@ function MakeTeamsAbs_Response()
 */
 
 function CalcRank(Dist) {
-	if (XMLHttp) {
-		try {
-			if (!Dist || (Dist && document.getElementById('x_Dist').value!=-1))
-			{
-				if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
-				{
-					XMLHttp.open("GET","CalcRank.php" + (Dist ? "?Dist=" + document.getElementById('x_Dist').value : ""),true);
-					XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-					XMLHttp.onreadystatechange=CalcRank_StateChange;
-					XMLHttp.send(null);
-				}
-			}
-		} catch (e) { }
+	let form={}
+	if(Dist) {
+		form.Dist=$('#x_Dist').val()
 	}
-}
-
-function CalcRank_StateChange()
-{
-	// se lo stato � Complete vado avanti
-	if (XMLHttp.readyState==XHS_COMPLETE)
-	{
-	// se lo status di HTTP � ok vado avanti
-		if (XMLHttp.status==200)
-		{
-			try
-			{
-				CalcRank_Response();
-			}
-			catch(e)
-			{
-			}
-		}
-		else
-		{
-		}
+	if(!Dist || form.Dist!=-1) {
+		$.getJSON(RootDir+"CalcRank.php", form, function(data) {
+			alert(data.msg);
+		});
 	}
-}
-
-function CalcRank_Response()
-{
-
-	// leggo l'xml
-	var XMLResp=XMLHttp.responseXML;
-// intercetto gli errori di IE e Opera
-	if (!XMLResp || !XMLResp.documentElement)
-		throw(XMLResp.responseText);
-
-// Intercetto gli errori di Firefox
-	var XMLRoot;
-	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
-		throw("");
-
-	XMLRoot = XMLResp.documentElement;
-
-	var Error = XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
-	var Msg = XMLRoot.getElementsByTagName('msg').item(0).firstChild.data;
-
-	alert(Msg);
 }
 
 function SelectSession() {
@@ -422,77 +165,17 @@ function Went2Home(Id) {
 	}
 }
 
-function saveSnapshotImage()
-{
-	if (XMLHttp)
-	{
-		try
-		{
-			if (XMLHttp.readyState==XHS_COMPLETE || XMLHttp.readyState==XHS_UNINIT)
-			{
-				var ses=document.getElementById('x_Session').value;
-				var from=document.getElementById('x_From').value;
-				var to=document.getElementById('x_To').value;
-				var dist=document.getElementById('x_Dist').value;
-				var qs
-					= '?Session=' + ses
-					+ '&Distance=' + dist
-					+ '&fromTarget=' + from
-					+ '&toTarget=' + to;
-				XMLHttp.open("GET",RootDir+"MakeSnapshot.php" + qs,true);
-				XMLHttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-				XMLHttp.onreadystatechange=saveSnapshotImage_StateChange;
-				XMLHttp.send(null);
-			}
-		}
-		catch (e)
-		{
-		}
+function saveSnapshotImage() {
+	let form={
+		Session: $('#x_Session').val(),
+		Distance: $('#x_Dist').val(),
+		fromTarget: $('#x_From').val(),
+		toTarget: $('#x_To').val(),
 	}
-}
 
-function saveSnapshotImage_StateChange()
-{
-	// se lo stato � Complete vado avanti
-	if (XMLHttp.readyState==XHS_COMPLETE)
-	{
-	// se lo status di HTTP � ok vado avanti
-		if (XMLHttp.status==200)
-		{
-			try
-			{
-				saveSnapshotImage_Response();
-			}
-			catch(e)
-			{
-			}
-		}
-		else
-		{
-		}
-	}
-}
-
-function saveSnapshotImage_Response()
-{
-
-	// leggo l'xml
-	var XMLResp=XMLHttp.responseXML;
-// intercetto gli errori di IE e Opera
-	if (!XMLResp || !XMLResp.documentElement)
-		throw(XMLResp.responseText);
-
-// Intercetto gli errori di Firefox
-	var XMLRoot;
-	if ((XMLRoot = XMLResp.documentElement.nodeName)=="parsererror")
-		throw("");
-
-	XMLRoot = XMLResp.documentElement;
-
-	var Error = XMLRoot.getElementsByTagName('error').item(0).firstChild.data;
-	var Msg = XMLRoot.getElementsByTagName('msg').item(0).firstChild.data;
-
-	alert(Msg);
+	$.getJSON(RootDir+"MakeSnapshot.php", form, function(data) {
+		alert(data.msg);
+	});
 }
 
 function Disqualify(Id) {

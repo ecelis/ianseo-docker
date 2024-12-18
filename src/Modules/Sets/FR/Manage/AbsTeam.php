@@ -186,7 +186,7 @@ if(count($EventCodes) != 0) {
             }
 
             // Team Components
-            $now = date('Y-m-d H:i:s');
+            $now = getToday('now', 'Y-m-d H:i:s');
             safe_w_SQL("INSERT INTO TeamFinComponent (TfcCoId, TfcSubTeam, TfcTournament, TfcEvent, TfcId, TfcOrder, TfcTimeStamp) 
 				SELECT TcCoId, TcSubTeam, TcTournament, TcEvent, TcId, TcOrder, '{$now}'
 				FROM TeamComponent 

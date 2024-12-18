@@ -81,6 +81,7 @@ $lang['ISK-Configuration']='Správa PDA-čiek';
 $lang['ISK-Results']='Výsledky v PDA';
 $lang['ISKMenuHeader']='ISK';
 $lang['jrYesNo']='Áno / Nie';
+$lang['JudgeNotes']='Poznámky rozhodcu';
 $lang['ManFinAthTargetInd']='Individuálne Eliminácie - Strelci na Terčovnici';
 $lang['ManFinScheduleInd']='Rozpis Eiliminácie Jednotlivcov';
 $lang['MatchModeScoring']='Typ Skórovania';

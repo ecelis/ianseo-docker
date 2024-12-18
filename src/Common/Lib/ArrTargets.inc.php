@@ -904,7 +904,7 @@ function GetMaxScores($EventCode, $MatchNo=0, $TeamEvent=0, $TourId=-1){
 }
 
 
-function GetTarget($TourId, $TrgName='') {
+function GetTarget($TourId, $TrgName='', $Value=false) {
 	global $LetterPoint;
 	if($TrgName) {
 		$q=safe_r_SQL("select Targets.* from Targets where TarDescr='$TrgName'");
@@ -919,16 +919,30 @@ function GetTarget($TourId, $TrgName='') {
 	foreach(range('Z','B') as $key) {
 		if($MyRow->{$key.'_size'}) {
 			// fills the accepted arrows array
-			$ret[] = $LetterPoint[$key]['P'];
+            if($Value) {
+                $ret[] = $LetterPoint[$key]['N'];
+            } else {
+                $ret[] = $LetterPoint[$key]['P'];
+            }
 		}
 	}
 	foreach(range('9','1') as $key) {
 		if($MyRow->{$key.'_size'}) {
 			// fills the accepted arrows array
-			$ret[] = $LetterPoint[$key]['P'];
+            if($Value) {
+                $ret[] = $LetterPoint[$key]['N'];
+            } else {
+                $ret[] = $LetterPoint[$key]['P'];
+            }
 		}
 	}
-	$ret[] = $LetterPoint['A']['P'];
+    if($Value) {
+        $ret[] = $LetterPoint['A']['N'];
+        arsort($ret);
+        $ret=array_unique($ret);
+    } else {
+        $ret[] = $LetterPoint['A']['P'];
+    }
 
 	return $ret;
 }

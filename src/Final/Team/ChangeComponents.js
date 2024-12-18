@@ -69,7 +69,7 @@ function editComponents(EvCode, TeamId, TeamSubId) {
                     $('#lstBody').append(Html);
                 });
                 let Html = '<tr class="editTeam"><th colspan="6">&nbsp;</th></tr>'+
-                    '<tr class="editTeam"><td colspan="4" class="Right">'+TeamComponentsTimestamp+'</td><td colspan="2"><input id="TeamComponentsTimestamp" type="datetime-local" value="'+ (new Date(Date.now() - (new Date()).getTimezoneOffset() * 60000)).toISOString().slice(0,16)+'"></td></tr>';
+                    '<tr class="editTeam"><td colspan="4" class="Right">'+TeamComponentsTimestamp+'</td><td colspan="2"><input id="TeamComponentsTimestamp" type="datetime-local" value="' + data.currentTimestamp + '"></td></tr>';
                 $('#lstBody').append(Html);
                 $('tfoot').show();
                 VerifyCheckbox();

@@ -190,9 +190,9 @@ require_once('Common/Lib/ArrTargets.inc.php');
 			$TeamFilter='';
 			if (array_key_exists('cutRank',$this->opts)) {
 				if(is_numeric($this->opts['cutRank']) && $this->opts['cutRank']>0) {
-					$TeamFilter.= " AND Teams.teRank<={$this->opts['cutRank']} ";
+					$TeamFilter.= " AND (Teams.teRank<={$this->opts['cutRank']} AND Teams.teRank!=0)";
 				} elseif (strtolower($this->opts['cutRank'])=='cut') {
-					$TeamFilter.= " AND Teams.teRank<=EvNumQualified ";
+					$TeamFilter.= " AND (Teams.teRank<=EvNumQualified  AND Teams.teRank!=0)";
 				}
 			}
 
@@ -280,7 +280,7 @@ require_once('Common/Lib/ArrTargets.inc.php');
 					{$filter}
 					{$TeamFilter}
 				ORDER BY
-					EvProgr,TeEvent, RunningScore DESC, if(IrmShowRank=1, 0, TeIrmType), TeRank ASC, TeGold DESC, TeXnine DESC, CoCode, TeSubTeam, EnSex desc, EnFirstName, tc.TcOrder
+					EvProgr,TeEvent, if(IrmShowRank=1, 0, TeIrmType), TeRank ASC, TeGold DESC, TeXnine DESC, CoCode, TeSubTeam, EnSex desc, EnFirstName, tc.TcOrder
 			";
 
 			$r=safe_r_sql($q);

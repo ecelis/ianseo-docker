@@ -221,7 +221,7 @@ class IanseoPdf extends TCPDF {
 	    	$this->SetXY(IanseoPdf::sideMargin,$this->h - $this->savedBottomMargin);
 		    $this->MultiCell(($this->w-20), 5, $this->getGroupPageNo() . "/" . $this->getPageGroupAlias() ,0, "C", 0);    //Page number
 		    $this->SetXY(($this->w-105),$this->h - $this->savedBottomMargin + 1);    //Position at 1.5 cm from bottom
-			$this->MultiCell(95, 5, $this->Titolo . " - " . $this->docUpdate . ($this->Version ? " (v. $this->Version)" : ''),0, "R", 0);    //Page number
+			$this->MultiCell(95, 5, $this->Titolo . " - " . $this->docUpdate .$this->TzOffset. ($this->Version ? " (v. $this->Version)" : ''),0, "R", 0);    //Page number
 		}
 	}
 

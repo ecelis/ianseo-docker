@@ -16,21 +16,23 @@ CreateStandardClasses($TourId, $SubRule);
 switch($TourType)
 {
     case 3:
-        CreateDistanceNew($TourId, $TourType, 'RN_', array(array('40m-1',40), array('40m-2',40)));
-        CreateDistanceNew($TourId, $TourType, 'CN_', array(array('30m-1',30), array('30m-2',30)));
-        CreateDistanceNew($TourId, $TourType, 'BN_', array(array('30m-1',30), array('30m-2',30)));
-        CreateDistanceNew($TourId, $TourType, 'LN_', array(array('30m-1',30), array('30m-2',30)));
-        CreateDistanceNew($TourId, $TourType, 'IN_', array(array('30m-1',30), array('30m-2',30)));
-        CreateDistanceNew($TourId, $TourType, 'RW_', array(array('60m-1',60), array('60m-2',60)));
-        CreateDistanceNew($TourId, $TourType, 'CW_', array(array('50m-1',50), array('50m-2',50)));
-        CreateDistanceNew($TourId, $TourType, 'BW_', array(array('40m-1',40), array('40m-2',40)));
-        CreateDistanceNew($TourId, $TourType, 'LW_', array(array('30m-1',30), array('30m-2',30)));
-        CreateDistanceNew($TourId, $TourType, 'IW_', array(array('30m-1',30), array('30m-2',30)));
-        CreateDistanceNew($TourId, $TourType, 'RJ_', array(array('70m-1',70), array('70m-2',70)));
-        CreateDistanceNew($TourId, $TourType, 'CJ_', array(array('50m-1',50), array('50m-2',50)));
-        CreateDistanceNew($TourId, $TourType, 'BJ_', array(array('50m-1',50), array('50m-2',50)));
-        CreateDistanceNew($TourId, $TourType, 'LJ_', array(array('30m-1',30), array('30m-2',30)));
-        CreateDistanceNew($TourId, $TourType, 'IJ_', array(array('30m-1',30), array('30m-2',30)));
+        CreateDistanceNew($TourId, $TourType, 'RU16_', array(array('40m-1',40), array('40m-2',40)));
+        CreateDistanceNew($TourId, $TourType, 'CU16_', array(array('30m-1',30), array('30m-2',30)));
+        CreateDistanceNew($TourId, $TourType, 'BU16_', array(array('30m-1',30), array('30m-2',30)));
+        CreateDistanceNew($TourId, $TourType, 'LU16_', array(array('30m-1',30), array('30m-2',30)));
+        CreateDistanceNew($TourId, $TourType, 'TU16_', array(array('30m-1',30), array('30m-2',30)));
+        CreateDistanceNew($TourId, $TourType, 'RU18_', array(array('60m-1',60), array('60m-2',60)));
+        CreateDistanceNew($TourId, $TourType, 'CU18_', array(array('50m-1',50), array('50m-2',50)));
+        CreateDistanceNew($TourId, $TourType, 'BU18_', array(array('40m-1',40), array('40m-2',40)));
+        CreateDistanceNew($TourId, $TourType, 'LU18_', array(array('30m-1',30), array('30m-2',30)));
+        CreateDistanceNew($TourId, $TourType, 'TU18_', array(array('30m-1',30), array('30m-2',30)));
+        CreateDistanceNew($TourId, $TourType, 'RU21O', array(array('50m-1',70), array('50m-2',70)));
+        CreateDistanceNew($TourId, $TourType, 'RU21M', array(array('70m-1',70), array('70m-2',70)));
+        CreateDistanceNew($TourId, $TourType, 'RU21W', array(array('70m-1',70), array('70m-2',70)));
+        CreateDistanceNew($TourId, $TourType, 'CU21_', array(array('50m-1',50), array('50m-2',50)));
+        CreateDistanceNew($TourId, $TourType, 'BU21_', array(array('50m-1',50), array('50m-2',50)));
+        CreateDistanceNew($TourId, $TourType, 'LU21_', array(array('30m-1',30), array('30m-2',30)));
+        CreateDistanceNew($TourId, $TourType, 'TU21_', array(array('30m-1',30), array('30m-2',30)));
 
         break;
 }

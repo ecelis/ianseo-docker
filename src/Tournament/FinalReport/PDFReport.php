@@ -257,13 +257,13 @@ for($i=0;$i<count($copy2);++$i)
 						$pdf->Cell(10, 6,  $MyRow->FrqId . ".", 'LTB', 0, 'L', 0);
 						$pdf->Cell(50, 6,  $MyRow->FrqQuestion . ": ", 'BT', 0, 'L', 0);
 						$pdf->SetFont($pdf->FontStd,'B',8);
-						$pdf->Cell(115, 6,  $MyRow->FraAnswer , 'TRB', 1, 'L', 0);
+						$pdf->Cell(115, 6,  $MyRow->FraAnswer??'' , 'TRB', 1, 'L', 0);
 						break;
 					case 1:
 						$mcStartY = $pdf->GetY();
 						$pdf->SetX($pdf->GetX()+60);
 						$pdf->SetFont($pdf->FontStd,'B',8);
-						$pdf->MultiCell(115, 7,  $MyRow->FraAnswer , 'RTB', 'L', 0, 1);
+						$pdf->MultiCell(115, 7,  $MyRow->FraAnswer??'' , 'RTB', 'L', 0, 1);
 						$mcEndY = $pdf->GetY();
 						if($mcStartY>$mcEndY)
 						{
@@ -272,7 +272,7 @@ for($i=0;$i<count($copy2);++$i)
 						}
 						$pdf->SetY($mcStartY);
 						$pdf->SetFont($pdf->FontStd,'',8);
-						$pdf->Cell(10, $mcEndY-$mcStartY,  $MyRow->FrqId . ".", 'LTB' . (strlen($MyRow->FraAnswer)>0 ? '' : 'B'), 0, 'L', 0);
+						$pdf->Cell(10, $mcEndY-$mcStartY,  $MyRow->FrqId . ".", 'LTB' . (strlen($MyRow->FraAnswer??'')>0 ? '' : 'B'), 0, 'L', 0);
 						$pdf->Cell(50, $mcEndY-$mcStartY,  $MyRow->FrqQuestion . ": ", 'TB', 1, 'L', 0);
 						break;
 					case 2:
@@ -287,14 +287,14 @@ for($i=0;$i<count($copy2);++$i)
 						$pdf->Cell(10, 6,  $MyRow->FrqId . ".", 'LTB', 0, 'L', 0);
 						$pdf->Cell(50, 6,  $MyRow->FrqQuestion . ": ", 'BT', 0, 'L', 0);
 						$pdf->SetFont($pdf->FontStd,'B',8);
-						$pdf->Cell(115, 6,  $MyRow->FraAnswer , 'TRB', 1, 'L', 0);
+						$pdf->Cell(115, 6,  $MyRow->FraAnswer??'' , 'TRB', 1, 'L', 0);
 						break;
 					case 4:
 						$pdf->SetFont($pdf->FontStd,'',8);
 						$pdf->Cell(10, 6,  $MyRow->FrqId . ".", 'LTB', 0, 'L', 0);
 						$pdf->Cell(50, 6,  $MyRow->FrqQuestion . ": ", 'BT', 0, 'L', 0);
 						$pdf->SetFont($pdf->FontStd,'B',8);
-						$pdf->Cell(115, 6,  str_replace("|",", ",$MyRow->FraAnswer) , 'TRB', 1, 'L', 0);
+						$pdf->Cell(115, 6,  str_replace("|",", ",$MyRow->FraAnswer??'') , 'TRB', 1, 'L', 0);
 						break;
 				}
 			}

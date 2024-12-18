@@ -2,19 +2,21 @@
 
 $FirstTime=true;
 if (isset($PdfData->Data['Items']) && count($PdfData->Data['Items'])>0) {
-	$mainHeaderList = array();
+    $pdf->setDocUpdate($PdfData->Timestamp ?? $PdfData->LastUpdate ?? '');
+
+    $mainHeaderList = array();
     $cnt = 1;
-	foreach($PdfData->Data['Fields'] as $field) {
-		if(strstr($field,'|') !== false) {
-			list($div,$cl) = explode('|',$field);
-			if(!array_key_exists($div,$mainHeaderList)) {
+    foreach($PdfData->Data['Fields'] as $field) {
+        if(strstr($field,'|') !== false) {
+            list($div,$cl) = explode('|',$field);
+            if(!array_key_exists($div,$mainHeaderList)) {
                 $mainHeaderList[$div]=array();
-				$cnt++;
-			}
+                $cnt++;
+            }
             $mainHeaderList[$div][$cl]=0;
-			$cnt++;
-		}
-	}
+            $cnt++;
+        }
+    }
     $pages=array();
     $maxColNo = ($pdf->getPageWidth()< $pdf->getPageHeight() ? 25 : 35);
     if($cnt<=$maxColNo) {

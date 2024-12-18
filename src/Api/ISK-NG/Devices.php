@@ -69,6 +69,7 @@ $JS_SCRIPT=array(
         'isPro' => ($_SESSION["UseApi"] === ISK_NG_PRO_CODE),
         'usePersonal' => ($UsePersonalDevices ? true : false),
         'tourCode' => $_SESSION["TourCode"],
+        'reqAppVersion' => reqAppVersion,
         'SocketIP'=>getModuleParameter('ISK-NG', 'SocketIP', gethostbyname($_SERVER['HTTP_HOST'])),
         'SocketPort'=>getModuleParameter('ISK-NG', 'SocketPort', '12346'),
         'scheduleOpts' => array_values($scheduleOpts),

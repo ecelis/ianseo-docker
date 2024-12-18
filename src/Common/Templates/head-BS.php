@@ -25,6 +25,10 @@ print ProgramName . ' ' . ProgramVersion . (defined('ProgramBuild') ? ' ('.Progr
 echo '</title>';
 
 if(!empty($JS_SCRIPT)) {
+    require_once(dirname(__DIR__).'/Lib/CommonLib.php');
+    $JS_SCRIPT[]= phpVars2js([
+        'wwwdir'=>$CFG->ROOT_DIR,
+    ]);
 	foreach($JS_SCRIPT as $script) echo "$script\n";
 }
 

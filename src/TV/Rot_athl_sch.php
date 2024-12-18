@@ -1,14 +1,16 @@
 <?php
 require_once('Common/Fun_FormatText.inc.php');
+require_once('Common/Lib/Obj_RankFactory.php');
 
 $TVsettings->EventFilter=MakeEventFilter($TVsettings->TVPEventInd);
 // get the array of our guys
-$Select = "select EnId from Entries "
-		. "WHERE EnAthlete=1 AND EnIndClEvent=1 AND EnStatus <= 1 AND EnTournament = " . StrSafe_DB($TourId) . " "
-		. ($TVsettings->EventFilter ? " AND CONCAT(EnDivision,EnClass) " . $TVsettings->EventFilter : "") . " "
-		. "order by rand() "
-		. "limit " . ($TVsettings->TVPNumRows ? $TVsettings->TVPNumRows : "1")
-		;
+$Select = "select EnId from Entries 
+    inner join Qualifications on QuId=EnId
+    WHERE EnAthlete=1 AND EnIndClEvent=1 AND EnStatus <= 1 AND EnTournament = " . StrSafe_DB($TourId) . "
+    " . ($TVsettings->EventFilter ? " AND CONCAT(EnDivision,EnClass) " . $TVsettings->EventFilter : "") . "
+    " . (($TVsettings->TVPSession??0) ? " AND QuSession= " . intval($TVsettings->TVPSession) : "") . "
+    order by rand()
+    limit " . ($TVsettings->TVPNumRows ? $TVsettings->TVPNumRows : "1");
 $GUYS=array();
 
 $q=safe_r_sql($Select);
@@ -19,210 +21,71 @@ while($r=safe_fetch($q)) $GUYS[]=$r->EnId;
 include_once('Common/CheckPictures.php');
 CheckPictures($TourCode);
 
-$TourType=getTournamentType($TourId);
+$options=array('tournament' => $RULE->TVRTournament, 'enids'=>$GUYS);
 
-$ArrowNo=0;
-$SnapDistance=0;
-if(isset($_REQUEST["ArrowNo"]) && is_numeric($_REQUEST["ArrowNo"]))
-	$ArrowNo = $_REQUEST["ArrowNo"];
-else
-{
-	$MyQuery = "SELECT MAX(EqArrowNo) as ArrowNo "
-		. "FROM Entries "
-		. "INNER JOIN Qualifications ON EnId=QuId "
-		. "INNER JOIN ElabQualifications ON EnId=EqId "
-		. "WHERE EnAthlete=1 AND EnIndClEvent=1 AND EnStatus <= 1 AND EnTournament = " . StrSafe_DB($TourId) . " "
-		. ($TVsettings->EventFilter ? " AND CONCAT(EnDivision,EnClass) " . $TVsettings->EventFilter : "") . " "
-		. "GROUP BY QuSession "
-		. "ORDER BY ArrowNo ASC";
-	$Rs=safe_r_sql($MyQuery);
-	if($Rs)
-		$ArrowNo = safe_fetch($Rs)->ArrowNo;
+if(isset($TVsettings->TVPEventInd) && !empty($TVsettings->TVPEventInd))
+    $options['events'] = explode('|',$TVsettings->TVPEventInd);
+if(isset($TVsettings->TVPNumRows) && $TVsettings->TVPNumRows>0)
+    $options['cutRank'] = $TVsettings->TVPNumRows;
+//if(isset($TVsettings->TVPSession) && $TVsettings->TVPSession>0)
+//    $options['session'] = $TVsettings->TVPSession;
+
+$rank=Obj_RankFactory::create('DivClass',$options);
+$rank->read();
+$rankData=$rank->getData();
+
+if(!empty($rankData['sections'])) {
+    foreach ($rankData['sections'] as $Category=>$Items) {
+        foreach ($Items['items'] as $Item) {
+            // lo include nelle schede da ritornare
+            $ret[$Item['id']]['head']='';
+            $ret[$Item['id']]['cols']='';
+            $ret[$Item['id']]['fissi']='';
+            $ret[$Item['id']]['type']='DB';
+            $ret[$Item['id']]['style']=$ST;
+            $ret[$Item['id']]['js']=$JS;
+            $ret[$Item['id']]['js'] .= 'FreshDBContent[%1$s]=\'\';'."\n";
+
+            $Photo='';
+            if(is_file(__DIR__.'/'.($pic="Photos/{$TourCode}-En-{$Item['id']}.jpg"))) {
+                $Photo='<img class="athletephoto" src="'.$pic.'" style="width:100%" alternate=""/>';
+            }
+
+            $tmp ='<table width="100%" height="80%" style="font-size:4vh;">';
+            // prima riga, a destra ci va la foto, a sinistra i dati
+            $tmp.='<tr>';
+            if($Photo) {
+                $tmp.='<td style="width:30%" align="right" rowspan="5">'.$Photo.'</td>';
+            }
+            $tmp.='<td width="100%" align="center">' . $Item['familynameUpper'] . ' ' . ($TVsettings->TVPNameComplete==0 ? FirstLetters($Item['givenname']) : $Item['givenname']).'</td>';
+            $tmp.='</tr>';
+
+            $tmp.='<tr><td align="center" class="piccolo"><span class="piccolo">'.get_text('RankingPosition','Tournament').'</span><br/>'.$Item['rank'].'<span class="piccolo">';
+            for ($i=1;$i<=$Items['meta']['numDist'];++$i) {
+                $bits=explode('|', $Item['dist_'.$i]);
+                $tmp .= '<br/>' . $Items['meta']['fields']['dist_'.$i] . ': ' . str_pad($bits[1],3," ",STR_PAD_LEFT) . '<span class="piccolo">/' . str_pad($bits[0],3," ",STR_PAD_LEFT) . '</span>';
+//                else if($i < $SnapDistance)
+//                    $tmp .= str_pad($MyRow->{'QuD' . $i . 'Score'},3," ",STR_PAD_LEFT);
+//                else if($i == $SnapDistance)
+//                    $tmp .= str_pad($MyRow->{'EqScore'},3," ",STR_PAD_LEFT);
+//                else
+//                    $tmp .= str_pad("0",3," ",STR_PAD_LEFT);
+            }
+            $tmp.='</span></td></tr>';
+
+            $tmp.='<tr><td align="center" class="piccolo"><span class="piccolo">'.get_text('Division').' - '.get_text('Class').'</span><br/>'.$Item['div'] . '&nbsp;&nbsp;' . $Item['class'].'</td></tr>';
+
+            $tmp.='<tr><td align="center" class="piccolo"><span class="piccolo">'.get_text('Target').'</span><br/>'.ltrim($Item['target'],'0').'</td></tr>';
+
+            $tmp.='<tr>';
+            $tmp.='<td align="center" class="piccolo"><span class="piccolo">'.get_text('Score','Tournament').'</span><br/>' . $Item['score'] . '</td>';
+            $tmp.='</tr>';
+            $tmp.='';
+            $tmp.='';
+            $tmp.='</table>';
+
+            $ret[$Item['id']]['basso']=$tmp;
+        }
+    }
+
 }
-
-
-if($ArrowNo != 0)
-{
-	$MyQuery = "SELECT MIN(EqDistance) as Distance "
-		. "FROM Entries "
-		. "INNER JOIN Qualifications ON EnId=QuId "
-		. "INNER JOIN ElabQualifications ON EnId=EqId "
-		. "WHERE EnAthlete=1 AND EnTournament=" . StrSafe_DB($TourId) . " AND EqArrowNo=" . StrSafe_DB($ArrowNo) . " "
-		. ($TVsettings->EventFilter ? " AND CONCAT(EnDivision,EnClass) " . $TVsettings->EventFilter : "");
-	$Rs=safe_r_sql($MyQuery);
-	if($Rs)
-		$SnapDistance=safe_fetch($Rs)->Distance;
-}
-
-$Select
-	= "SELECT EnId, EnCode as Bib, EnName AS Name, upper(EnFirstName) AS FirstName, SUBSTRING(QuTargetNo,2) AS TargetNo, CoCode AS NationCode, CoName AS Nation, EnClass AS ClassCode, EnDivision AS DivCode,EnAgeClass as AgeClass,  EnSubClass as SubClass, ClDescription, DivDescription, "
-	. "CONCAT(EnDivision,EnClass) AS MyEvent,ToNumDist as NumDist,Td1, Td2, Td3, Td4, Td5, Td6, Td7, Td8, "
-	. "QuD1Score, QuD1Rank, QuD2Score, QuD2Rank, QuD3Score, QuD3Rank, QuD4Score, QuD4Rank, "
-	. "QuD5Score, QuD5Rank, QuD6Score, QuD6Rank, QuD7Score, QuD7Rank, QuD8Score, QuD8Rank, "
-	. "QuScore, QuGold, QuXnine, ToGolds AS TtGolds, ToXNine AS TtXNine, ";
-
-if($SnapDistance==0) {
-	$Select .= " QuScore as OrderScore, QuGold as OrderGold, QuXnine as OrderXNine, ";
-	$Select .= "'0' as EqDistance, '0' as EqScore, ";
-} else {
-	for($i=1; $i<$SnapDistance; $i++)
-		$Select .= "QuD" . $i . "Score+";
-	$Select .="IFNULL(EqScore,0) AS OrderScore, ";
-	for($i=1; $i<$SnapDistance; $i++)
-		$Select .= "QuD" . $i . "Gold+";
-	$Select .="IFNULL(EqGold,0) AS OrderGold, ";
-	for($i=1; $i<$SnapDistance; $i++)
-		$Select .= "QuD" . $i . "XNine+";
-	$Select .="IFNULL(EqXNine,0) AS OrderXNine, ";
-	$Select .= "EqDistance, IFNULL(EqScore,0) as EqScore, ";
-}
-
-
-$Select .= "ToType, QuD1Xnine, QuD2Xnine, QuD3Xnine, QuD4Xnine, QuD5Xnine, QuD6Xnine, QuD7Xnine, QuD8Xnine "
-	. "FROM Tournament AS t "
-	. "INNER JOIN Entries AS e ON t.ToId=e.EnTournament "
-	. "INNER JOIN Countries AS c ON e.EnCountry=c.CoId AND e.EnTournament=c.CoTournament "
-	. "INNER JOIN Qualifications AS q ON e.EnId=q.QuId "
-	. "INNER JOIN Classes AS cl ON e.EnClass=cl.ClId AND ClTournament=" . StrSafe_DB($TourId) . " "
-	. "INNER JOIN Divisions AS d ON e.EnDivision=d.DivId AND DivTournament=" . StrSafe_DB($TourId) . " ";
-if($SnapDistance!=0)
-	$Select .=  "LEFT JOIN ElabQualifications AS eq ON e.EnId=eq.EqId AND eq.EqArrowNo=" . StrSafe_DB($ArrowNo) . " ";
-
-$Select .= "LEFT JOIN TournamentDistances AS td ON t.ToType=td.TdType and TdTournament=ToId AND CONCAT(TRIM(e.EnDivision),TRIM(e.EnClass)) LIKE TdClasses "
-	. "WHERE EnAthlete=1 AND EnIndClEvent=1 AND EnStatus <= 1 AND ToId = " . StrSafe_DB($TourId) . " "
-	. ($TVsettings->EventFilter ? " AND CONCAT(e.EnDivision,e.EnClass) " . $TVsettings->EventFilter : "") . " "
-	. ($TVsettings->TVPSession ? " AND QuSession = " . StrSafe_DB($TVsettings->TVPSession) : "") . " ";
-
-switch($TourType) {
-	case 14:
-		$Select.= "ORDER BY DivViewOrder, EnDivision, ClViewOrder, EnClass, (QuD1Score+QuD2Score+QuD3Score) DESC, QuD4Score DESC, QuXnine DESC, FirstName, Name ";
-		break;
-	case 32:
-		$Select.= "ORDER BY DivViewOrder, EnDivision, ClViewOrder, EnClass, (QuD1Score+QuD2Score) DESC, (QuD1Xnine + QuD2Xnine) DESC, QuD3Xnine desc, FirstName, Name ";
-		break;
-	default:
-		//Tutto tranne Las Vegas
-		$Select.= "ORDER BY DivViewOrder, EnDivision, ClViewOrder, EnClass, OrderScore DESC, OrderGold DESC, OrderXNine DESC, FirstName, Name ";
-}
-
-$Rs=safe_r_sql($Select);
-
-//print $Select;exit;
-
-//print $Select;exit;
-$MyStrData="";
-
-$MyRank = 1;
-$MyPos = 0;
-$MyScoreOld = 0;
-$MyGoldOld = 0;
-$MyXNineOld = 0;
-$fotow = intval($_SESSION['WINWIDTH']/3);
-
-$count=0;
-
-if (safe_num_rows($Rs)==0) return '';
-
-// Variabili che contengono i punti del precedente atleta per la gestione del rank
-$MyRank = 1;
-$MyPos = 0;
-$MyScoreOld = 0;
-$MyGoldOld = 0;
-$MyXNineOld = 0;
-$oldEventCode = '';
-
-while ($MyRow=safe_fetch($Rs))
-{
-	if($oldEventCode!=$MyRow->MyEvent) {
-		$MyRank = 1;
-		$MyPos = 0;
-	}
-
-	// Sicuramente devo incrementare la posizione
-	++$MyPos;
-	switch(getTournamentType($TourId)) {
-		case 14:
-			if ($MyRow->OrderScore!=$MyScoreOld) {
-				$MyRank = $MyPos;
-			}
-			break;
-		case 32:
-			if ($MyRow->OrderScore!=$MyScoreOld or $MyRow->OrderXNine!=$MyXNineOld) {
-				$MyRank = $MyPos;
-			}
-			break;
-		default:
-	}
-	// Se non ho parimerito il ranking è uguale alla posizione
-	if(getTournamentType($TourId) == 14 or getTournamentType($TourId) == 32) //Tipo Las Vegas
-	{
-	}
-	else	//STANDARD
-	{
-		if (!($MyRow->OrderScore==$MyScoreOld &&
-			$MyRow->OrderGold==$MyGoldOld &&
-			$MyRow->OrderXNine==$MyXNineOld))
-		$MyRank = $MyPos;
-	}
-
-	if(in_array($MyRow->EnId, $GUYS)) {
-		// lo include nelle schede da ritornare
-		$ret[$MyRow->EnId]['head']='';
-		$ret[$MyRow->EnId]['cols']='';
-		$ret[$MyRow->EnId]['fissi']='';
-		$ret[$MyRow->EnId]['type']='DB';
-		$ret[$MyRow->EnId]['style']=$ST;
-		$ret[$MyRow->EnId]['js']=$JS;
-		$ret[$MyRow->EnId]['js'] .= 'FreshDBContent[%1$s]=\'\';'."\n";
-
-		$tmp ='<table width="100%" height="'.($_SESSION['WINHEIGHT']-35).'">';
-		// prima riga, a destra ci va la foto, a sinistra i dati
-		$tmp.='<tr>';
-		$tmp.='<td rowspan="5"><img class="athletephoto" src="Photos/'.$TourCode.'-En-'.$MyRow->EnId.'.jpg" width="'.$fotow.'" alternate=""/></td>';
-		$tmp.='<td width="100%" align="center">' . $MyRow->FirstName . ' ' . ($TVsettings->TVPNameComplete==0 ? FirstLetters($MyRow->Name) : $MyRow->Name).'</td>';
-		$tmp.='</tr>';
-
-		$tmp.='<tr><td align="center" class="piccolo"><span class="piccolo">'.get_text('RankingPosition','Tournament').'</span><br/>'.$MyRank.'<span class="piccolo">';
-		for ($i=1;$i<=$MyRow->NumDist;++$i)
-		{
-			$tmp .= '<br/>' . $MyRow->{'Td' . $i} . ': ' ;
-			if($SnapDistance==0)
-				$tmp .= str_pad($MyRow->{'QuD' . $i . 'Score'},3," ",STR_PAD_LEFT) . '<span class="piccolo">/' . str_pad(($MyRow->ToType!=14 ? $MyRow->{'QuD' . $i . 'Rank'} : $MyRow->{'QuD' . $i . 'Xnine'}),2," ",STR_PAD_LEFT) . '</span>';
-			else if($i < $SnapDistance)
-				$tmp .= str_pad($MyRow->{'QuD' . $i . 'Score'},3," ",STR_PAD_LEFT);
-			else if($i == $SnapDistance)
-				$tmp .= str_pad($MyRow->{'EqScore'},3," ",STR_PAD_LEFT);
-			else
-				$tmp .= str_pad("0",3," ",STR_PAD_LEFT);
-		}
-		$tmp.='</span></td></tr>';
-
-		$tmp.='<tr><td align="center" class="piccolo"><span class="piccolo">'.get_text('Division').' - '.get_text('Class').'</span><br/>'.$MyRow->DivCode . '&nbsp;&nbsp;' . $MyRow->ClassCode.'</td></tr>';
-
-		$tmp.='<tr><td align="center" class="piccolo"><span class="piccolo">'.get_text('Target').'</span><br/>'.$MyRow->TargetNo.'</td></tr>';
-
-		$tmp.='<tr>';
-		$tmp.='<td align="center" class="piccolo"><span class="piccolo">'.get_text('Score','Tournament').'</span><br/>' . $MyRow->OrderScore;
-		$tmp.=($MyRow->OrderScore != $MyRow->QuScore ?  '<br/><span class="piccolo">' . $MyRow->QuScore . '</span>' : "") . '</td>';
-		$tmp.='</tr>';
-		$tmp.='';
-		$tmp.='';
-		$tmp.='</table>';
-
-//		if($MyRow->ToType!=14) {
-//			$tmp.= '<td>' . ($MyRow->ToType!=14 ? $MyRow->NationCode : substr($MyRow->NationCode,0,3)) . ' ' . ($TVsettings->TVPViewNationName==1 ? ($MyRow->Nation) : '') . '</td>';
-//		}
-	//NewDistanze
-
-
-		$ret[$MyRow->EnId]['basso']=$tmp;
-	}
-
-	$MyScoreOld = $MyRow->OrderScore;
-	if($MyRow->ToType!=14)		//Non Considera ORI se "Las Vegas"
-		$MyGoldOld = $MyRow->OrderGold;
-	$MyXNineOld = $MyRow->OrderXNine;
-	$oldEventCode=$MyRow->MyEvent;
-}
-
-?>

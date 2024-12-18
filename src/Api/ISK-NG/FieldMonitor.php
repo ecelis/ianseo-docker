@@ -31,7 +31,7 @@ $JS_SCRIPT=array(
 
 //Socket Header
 echo '<table class="Tabella mb-3">';
-echo '<tr><th class="Title" colspan="2">' . $PAGE_TITLE . '</th></tr>';
+echo '<tr><th class="Title" colspan="3">' . $PAGE_TITLE . '</th></tr>';
 if($_SESSION["UseApi"] === ISK_NG_LIVE_CODE) {
     echo '<tr>' .
         '<th class="w-15">' . get_text('ISK-ConnectionStatus', 'Api') . '</th>' .

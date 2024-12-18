@@ -126,6 +126,10 @@
 				$filter[]="EnId=" . intval($this->opts['enid']) . " ";
 			}
 
+			if (!empty($this->opts['enids'])) {
+				$filter[]="EnId in (" . implode(',',$this->opts['enids']) . ") ";
+			}
+
 			if (!empty($this->opts['encode'])) {
 				if (is_array($this->opts['encode'])) {
 					$filter[]="EnCode IN (" . implode(',', StrSafe_DB($this->opts['encode'])) . ")";
@@ -228,7 +232,7 @@
 					QuD1Xnine, QuD2Xnine, QuD3Xnine, QuD4Xnine, QuD5Xnine, QuD6Xnine, QuD7Xnine, QuD8Xnine,
 					QuD1ArrowString, QuD2ArrowString, QuD3ArrowString, QuD4ArrowString, QuD5ArrowString, QuD6ArrowString, QuD7ArrowString, QuD8ArrowString,
 					{$tmp} AS Arrows_Shot, ToNumEnds, DiEnds, DiArrows, FdiDetails,
-					QuIrmType, IrmType, IrmShowRank, QuNotes,
+					QuIrmType, IrmType, IrmShowRank, QuNotes, QuArrow,
 					{$MyRank} AS `Rank`, " . (!empty($comparedTo) ? 'IFNULL(QopClRank,0)' : '0') . " as OldRank, Qu{$dd}Score AS Score, Qu{$dd}Gold AS Gold,Qu{$dd}Xnine AS XNine, Qu{$dd}Hits AS Hits, ";
 
 			if(!empty($this->opts['runningDist']) && $this->opts['runningDist']>0)
@@ -454,6 +458,7 @@
 						'gold' => (!empty($this->opts['runningDist']) && $this->opts['runningDist']>0 ? $myRow->OrderGold : $myRow->Gold),
 						'xnine' => (!empty($this->opts['runningDist']) && $this->opts['runningDist']>0 ? $myRow->OrderXnine : $myRow->XNine),
 						'hits' => $myRow->Hits,
+                        'miss' => $myRow->IrmShowRank ? $myRow->Hits-$myRow->QuArrow : '',
 						'arrowsShot' => $myRow->Arrows_Shot,
 						'irm' => $myRow->QuIrmType,
 						'irmText' => $myRow->IrmType,

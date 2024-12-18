@@ -47,6 +47,8 @@
 	);
 
 	$OrderCol[$OrderCrit]=($OrderDir=='ASC'?'DESC':'ASC');
+//    $Collation = ($_SESSION['TourCollation'] ? "COLLATE utf8_{$_SESSION['TourCollation']}_ci" : '');
+    $Collation = '';
 
 	switch ($OrderCrit)
 	{
@@ -67,7 +69,7 @@
 			$GroupType=GROUP_TYPE_NOGROUP;
 			break;
 		case 'ordName':
-			$OrderBy = "EnFirstName collate {$_SESSION['COLLATION']} {$OrderDir},EnName collate {$_SESSION['COLLATION']} {$OrderDir} ";
+			$OrderBy = "EnFirstName {$Collation} {$OrderDir},EnName {$Collation} {$OrderDir} ";
 			$GroupType=GROUP_TYPE_LETTER;
 			break;
 		case 'ordEmail':
@@ -79,39 +81,39 @@
 			$GroupType=GROUP_TYPE_NOGROUP;
 			break;
 		case 'ordCtrl':
-			$OrderBy = "EnDob {$OrderDir}, EnFirstName collate {$_SESSION['COLLATION']} ASC,EnName collate {$_SESSION['COLLATION']} ASC ";
+			$OrderBy = "EnDob {$OrderDir}, EnFirstName {$Collation} ASC,EnName {$Collation} ASC ";
 			$GroupType=GROUP_TYPE_NOGROUP;
 			break;
 		case 'ordSex':
-			$OrderBy = "EnSex {$OrderDir}, EnFirstName collate {$_SESSION['COLLATION']} ASC,EnName collate {$_SESSION['COLLATION']} ASC ";
+			$OrderBy = "EnSex {$OrderDir}, EnFirstName {$Collation} ASC,EnName {$Collation} ASC ";
 			$GroupType=GROUP_TYPE_NOGROUP;
 			break;
 		case 'ordCountryCode':
-			$OrderBy = "CoCode {$OrderDir}, EnFirstName collate {$_SESSION['COLLATION']} ASC,EnName collate {$_SESSION['COLLATION']} ASC ";
+			$OrderBy = "CoCode {$OrderDir}, EnFirstName {$Collation} ASC,EnName {$Collation} ASC ";
 			$GroupType=GROUP_TYPE_COUNTRY;
 			break;
 		case 'ordCountry':
-			$OrderBy = "CoName {$OrderDir}, EnFirstName collate {$_SESSION['COLLATION']} ASC,EnName collate {$_SESSION['COLLATION']} ASC ";
+			$OrderBy = "CoName {$OrderDir}, EnFirstName {$Collation} ASC,EnName {$Collation} ASC ";
 			$GroupType=GROUP_TYPE_COUNTRY;
 			break;
 		case 'ordDiv':
-			$OrderBy = "EnDivision {$OrderDir}, EnClass ASC, EnFirstName collate {$_SESSION['COLLATION']} ASC,EnName collate {$_SESSION['COLLATION']} ASC ";
+			$OrderBy = "EnDivision {$OrderDir}, EnClass ASC, EnFirstName {$Collation} ASC,EnName {$Collation} ASC ";
 			$GroupType=GROUP_TYPE_CATEGORY;
 			break;
 		case 'ordWc':
-			$OrderBy = "EnWChair {$OrderDir}, EnDivision, EnClass ASC, EnFirstName collate {$_SESSION['COLLATION']} ASC,EnName collate {$_SESSION['COLLATION']} ASC ";
+			$OrderBy = "EnWChair {$OrderDir}, EnDivision, EnClass ASC, EnFirstName {$Collation} ASC,EnName {$Collation} ASC ";
 			$GroupType=GROUP_TYPE_CATEGORY;
 			break;
 		case 'ordAgeCl':
-			$OrderBy = "EnAgeClass {$OrderDir}, EnDivision ASC, EnFirstName collate {$_SESSION['COLLATION']} ASC,EnName collate {$_SESSION['COLLATION']} ASC ";
+			$OrderBy = "EnAgeClass {$OrderDir}, EnDivision ASC, EnFirstName {$Collation} ASC,EnName {$Collation} ASC ";
 			$GroupType=GROUP_TYPE_CATEGORY;
 			break;
 		case 'ordCl':
-			$OrderBy = "EnClass {$OrderDir}, EnDivision ASC, EnFirstName collate {$_SESSION['COLLATION']} ASC,EnName collate {$_SESSION['COLLATION']} ASC ";
+			$OrderBy = "EnClass {$OrderDir}, EnDivision ASC, EnFirstName {$Collation} ASC,EnName {$Collation} ASC ";
 			$GroupType=GROUP_TYPE_CATEGORY;
 			break;
 		case 'ordSubCl':
-			$OrderBy = "EnSubClass {$OrderDir}, EnDivision ASC, EnClass ASC, EnFirstName collate {$_SESSION['COLLATION']} ASC,EnName collate {$_SESSION['COLLATION']} ASC ";
+			$OrderBy = "EnSubClass {$OrderDir}, EnDivision ASC, EnClass ASC, EnFirstName {$Collation} ASC,EnName {$Collation} ASC ";
 			$GroupType=GROUP_TYPE_NOGROUP;
 			break;
 	}

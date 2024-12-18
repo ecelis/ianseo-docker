@@ -3,29 +3,19 @@
 															- MakeTeams.php -
 	Genera le squadre
 */
+require_once(dirname(dirname(__FILE__)) . '/config.php');
+require_once('Qualification/Fun_Qualification.local.inc.php');
 
-	define('debug',false);	// settare a true per l'output di debug
-	require_once(dirname(dirname(__FILE__)) . '/config.php');
-	require_once('Qualification/Fun_Qualification.local.inc.php');
-    checkACL(AclQualification, AclReadWrite, false);
+$JSON=[
+    'error'=>1,
+    'msg'=>get_text('Error','Errors'),
+];
 
-	$Errore=0;
+if(!hasACL(AclQualification, AclReadWrite) or IsBlocked(BIT_BLOCK_QUAL)) {
+    JsonOut($JSON);
+}
 
-	if (!IsBlocked(BIT_BLOCK_QUAL))	{
-		$Errore	= MakeTeams(NULL, NULL);
-	}
-	else
-		$Errore=1;
+$JSON['error'] = MakeTeams(NULL, NULL);
+$JSON['msg'] = get_text('ResultSqClass','Tournament') . ($JSON['error'] ? get_text('MakeTeamsError','Tournament') : get_text('MakeTeamsOk','Tournament')) ;
 
-	// produco l'xml di ritorno
-
-	if (!debug)
-		header('Content-Type: text/xml');
-
-	print '<response>';
-	print '<error>' . $Errore . '</error>';
-	print '<msg><![CDATA[' . get_text('ResultSqClass','Tournament') . ($Errore==1 ? get_text('MakeTeamsError','Tournament') : get_text('MakeTeamsOk','Tournament')) . ']]></msg>';
-	print '</response>';
-
-
-?>
+JsonOut($JSON);

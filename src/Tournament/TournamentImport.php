@@ -28,7 +28,20 @@ if($_FILES and !empty($_FILES['Gara']['tmp_name'])){
     }
 
     if($CFG->USERAUTH AND !empty($_SESSION['AUTH_ENABLE']) AND empty($_SESSION['AUTH_ROOT'])) {
-        if(!in_array($importedToCode,$_SESSION["AUTH_COMP"])){
+        $compInList = false;
+        if($CFG->USERAUTH AND !empty($_SESSION['AUTH_ENABLE']) AND empty($_SESSION['AUTH_ROOT'])) {
+            foreach ($_SESSION["AUTH_COMP"] as $comp) {
+                if($importedToCode===$comp) {
+                    $compInList = true;
+                } else {
+                    $pattern = str_replace('%', '.*', preg_quote($comp,'/'));
+                    if(preg_match("/^{$pattern}$/i", $importedToCode)) {
+                        $compInList = true;
+                    }
+                }
+            }
+        }
+        if(!$compInList){
             CD_redirect($CFG->ROOT_DIR);
             exit;
         }

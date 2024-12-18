@@ -33,7 +33,6 @@ $oldSession=0;
 
 $Ath4Target=0;
 
-//$fotow=min(200,intval($_SESSION['WINHEIGHT']/6)*4/3); // redefined later
 include_once('Common/CheckPictures.php');
 CheckPictures($TourCode);
 
@@ -75,7 +74,7 @@ while($MyRow=safe_fetch($Rs))
 		$ses=GetSessions('Q',true,$MyRow->Session.'_Q', $TourId);
 		$Ath4Target=$ses[0]->SesAth4Target;
 
-		$fotow=min(200,intval($_SESSION['WINWIDTH']/$Ath4Target));
+		$fotow=($Ath4Target <=2 ? 30 : ($Ath4Target == 3 ? 50 : 75));
 
 		// crea l'header della gara
 		$tmp = '';
@@ -121,7 +120,11 @@ while($MyRow=safe_fetch($Rs))
 
 	// recupera se si tratta di A, B, eccetera
 	$Num=substr($MyRow->TargetNo,-1);
-	$tab[0][$Num] = '<img class="athletephoto" src="Photos/'.$TourCode.'-En-'.$MyRow->EnId.'.jpg" width="'.$fotow.'" alternate=""/>';
+    $Photo='';
+    if(is_file(__DIR__.'/'.($pic="Photos/{$TourCode}-En-{$MyRow->EnId}.jpg"))) {
+        $Photo='<img class="athletephoto" src="'.$pic.'" width="'.$fotow.'" alternate=""/>';
+    }
+	$tab[0][$Num] = $Photo;
 	$tab[1][$Num] = $MyRow->TargetNo . '&nbsp;&nbsp;' . $MyRow->DivCode . '&nbsp;&nbsp;' . $MyRow->ClassCode;
 	$tab[2][$Num] = $MyRow->FirstName . ' ' . ($TVsettings->TVPNameComplete==0 ? FirstLetters($MyRow->Name) : $MyRow->Name);
 	$tab[3][$Num] = $MyRow->NationCode . ' ' . ($TVsettings->TVPViewNationName==1 ? ($MyRow->Nation) : '');

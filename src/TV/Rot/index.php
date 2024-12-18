@@ -12,6 +12,10 @@ if(empty($JS_SCRIPT)) {
 $JS_SCRIPT[]=phpVars2js(array('Rule' => $Rule, 'TourCode' => $IsCode, 'DirRoot'=>$CFG->ROOT_DIR));
 $JS_SCRIPT[]='<script type="text/javascript" src="'.$CFG->ROOT_DIR.'TV/Rot/rot.js"></script>';
 $JS_SCRIPT[]='<link href="'.$CFG->ROOT_DIR.'TV/Rot/rot.css" media="screen" rel="stylesheet" type="text/css">';
+// check if there is a specific FONT module for this comeptition
+if(is_file($CFG->INCLUDE_PATH.'/Modules/FontManagement/fonts/'.$IsCode.'.css')) {
+    $JS_SCRIPT[]='<link href="'.$CFG->ROOT_DIR.'Modules/FontManagement/fonts/'.$IsCode.'.css" media="screen" rel="stylesheet" type="text/css">';
+}
 
 // gets the main CSS ruleset
 $JS_SCRIPT[]=getCss($TourId, $Rule);

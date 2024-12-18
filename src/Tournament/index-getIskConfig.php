@@ -8,13 +8,6 @@ $ISKMode=getModuleParameter('ISK', 'Mode', '');
 $JSON=array('html' => '');
 
 switch($_REQUEST['api']) {
-	case 'lite':
-	case 'pro':
-		$JSON['html'].=getConfigString($CFG->DOCUMENT_PATH.'Api/ISK/ApiConfig.php');
-		break;
-	case 'live':
-		$JSON['html'].=getConfigString($CFG->DOCUMENT_PATH.'Api/ISK-Live/ApiConfig.php');
-		break;
     case 'ng-lite':
     case 'ng-pro':
     case 'ng-live':

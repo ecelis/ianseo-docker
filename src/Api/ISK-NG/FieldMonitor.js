@@ -188,7 +188,7 @@ function devicesRenderer(data) {
                         window.sessionStorage.setItem('selectedGroups',JSON.stringify(selectedGroups));
                     }
                     let tmpRow = $('<tr ref="' + gElement.gId + '" id="grpRow_' + gElement.gId + '"></tr>');
-                    tmpRow.append('<th class="deviceGroupSmaller">' + gElement.gName + '</th>');
+                    tmpRow.append('<th class="deviceGroupSmaller"><i class="fa-solid fa-down-left-and-up-right-to-center mr-3" id="btnViewS_' + gElement.gId + '" onclick="setViewSize(' + gElement.gId + ',false)"></i>' + gElement.gName + '<i class="fa-solid fa-up-right-and-down-left-from-center ml-3"  id="btnViewL_' + gElement.gId + '"  onclick="setViewSize(' + gElement.gId + ',true)"></i></th>');
                     tmpRow.append('<td><input type="checkbox" class="groupSelector mr-2" id="chkGrp_' + gElement.gId + '" onclick="loadDevices('+gElement.gId+')" ' + (SelectedGroup ? 'checked="checked"' : '') + '><span class="sessionName">' + gElement.gSession + '</span></td>');
                     // we need to select the distance, which is now an array!
                     let distances = '';
@@ -257,7 +257,7 @@ function devicesRenderer(data) {
                     if ($('#deviceTable_' + block.group).length == 0) {
                         let zoomClass = window.sessionStorage.getItem('viewSize'+block.group) || '';
                         $('#DeviceGroupsContainers').append('<table class="Tabella" ref="' + block.group + '" id="deviceTable_' + block.group + '">' +
-                            '<tr><th class="deviceGroup w-5">' + gName + '</th><td id="deviceList_' + block.group + '" class="w-95 sizeS2"></td></tr>' +
+                            '<tr><th class="deviceGroup w-5">' + gName + '</th><td id="deviceList_' + block.group + '" class="w-95 zoomClass"></td></tr>' +
                             '</table>');
                     }
                     somethingChanged = true;
@@ -366,4 +366,19 @@ function devicesRenderer(data) {
         }
     }
     timeOutSetting();
+}
+
+function setViewSize(grpId, increase) {
+    let newClass = '';
+    newClass = $('#deviceList_'+grpId).hasClass('size') ? (increase ? 'sizeL0' : 'sizeS0') : newClass;
+    newClass = $('#deviceList_'+grpId).hasClass('sizeS0') ? (increase ? 'size' : 'sizeS1') : newClass;
+    newClass = $('#deviceList_'+grpId).hasClass('sizeS1') ? (increase ? 'sizeS0' : 'sizeS2') : newClass;
+    newClass = $('#deviceList_'+grpId).hasClass('sizeS2') ? (increase ? 'sizeS1' : 'sizeS2') : newClass;
+    newClass = $('#deviceList_'+grpId).hasClass('sizeL0') ? (increase ? 'sizeL1' : 'size') : newClass;
+    newClass = $('#deviceList_'+grpId).hasClass('sizeL1') ? (increase ? 'sizeL2' : 'sizeL0') : newClass;
+    newClass = $('#deviceList_'+grpId).hasClass('sizeL2') ? (increase ? 'sizeL2' : 'sizeL1') : newClass;
+    newClass = (newClass === '' ? (increase ? 'sizeL0' : 'sizeS0') : newClass);
+
+    $('#deviceList_'+grpId).removeClass('size sizeS0 sizeS1 sizeS2 sizeL0 sizeL1 sizeL2').addClass(newClass);
+    window.sessionStorage.setItem('viewSize'+grpId, newClass);
 }

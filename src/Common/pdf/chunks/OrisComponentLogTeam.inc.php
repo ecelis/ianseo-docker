@@ -1,6 +1,6 @@
 <?php
 
-$pdf->setDocUpdate($PdfData->LastUpdate);
+$pdf->setDocUpdate($PdfData->LastUpdate ?? $PdfData->Timestamp ?? '');
 $pdf->setPhase($PdfData->Description);
 
 $First=true;
