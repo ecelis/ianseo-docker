@@ -38,6 +38,7 @@ if(!empty($TourId) && !empty($Address)) {
 	registerJack("FinArrUpdate", "API-JSON", dirname(__FILE__).'/JackInclude.php', 'JackRunUpdate_MatchUpdate(\'@Event\', @Team, @MatchNo, @TourId);',$TourId);
 	registerJack("FinLiveUpdate", "API-JSON", dirname(__FILE__).'/JackInclude.php', 'JackRunUpdate_LiveUpdate(\'@Event\', @Team, @MatchNo, @TourId);',$TourId);
 	registerJack("FinConfirmEnd", "API-JSON", dirname(__FILE__).'/JackInclude.php', 'JackRunUpdate_MatchUpdate(\'@Event\', @Team, @MatchNo, @TourId);',$TourId);
+    registerJack("MatchFinished", "API-JSON", dirname(__FILE__).'/JackInclude.php', 'JackRunUpdate_MatchUpdate(\'@Event\', @Team, @MatchNo, @TourId);',$TourId);
 	registerJack("FinShootingFirst", "API-JSON", dirname(__FILE__).'/JackInclude.php', 'JackRunUpdate_MatchUpdate(\'@Event\', @Team, @MatchNo, @TourId);',$TourId);
 	registerJack("FinRankUpdate", "API-JSON", dirname(__FILE__).'/JackInclude.php', 'JackRunUpdate_RankUpdate(\'@Event\', @Team, @TourId);',$TourId);
     registerJack("QRRankUpdate", "API-JSON", dirname(__FILE__).'/JackInclude.php', 'JackRunUpdate_QRRankUpdate(\'@Event\', @Team, @TourId);',$TourId);

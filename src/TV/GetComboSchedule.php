@@ -7,7 +7,9 @@
 
 	$teamEvent = (!empty($_REQUEST["teamEvent"]) && $_REQUEST["teamEvent"]==1 ? 1 : 0);
 
-	$xml='';
+    $Today=getToday();
+
+    $xml='';
 	$error=0;
 
 	$Select
@@ -15,13 +17,13 @@
 		. "FROM Tournament INNER JOIN FinSchedule ON ToId=FSTournament "
 		. (isset($_REQUEST["useHHT"]) && $_REQUEST["useHHT"] ? "INNER JOIN HhtEvents on HeTournament=ToId and HeFinSchedule=concat(FSScheduledDate, ' ', FSScheduledTime) and HeTeamEvent=FsTeamEvent " : "")
 		. "WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " and FSScheduledDate>0 and FSTeamEvent=0 "
-		. (isset($_REQUEST["onlyToday"]) && $_REQUEST["onlyToday"] ? "AND date(convert_tz(FSScheduledDate, ToTimeZone, '+00:00'))=UTC_DATE()" : "")
+		. (isset($_REQUEST["onlyToday"]) && $_REQUEST["onlyToday"] ? "AND FSScheduledDate='$Today'" : "")
 		.") UNION ALL "
 		. "(SELECT DISTINCT CONCAT(FSScheduledDate,' ',FSScheduledTime) AS MyDate,FSTeamEvent "
 		. "FROM Tournament INNER JOIN FinSchedule ON ToId=FSTournament "
 		. (isset($_REQUEST["useHHT"]) && $_REQUEST["useHHT"] ? "inner join HhtEvents on HeTournament=ToId and HeFinSchedule=concat(FSScheduledDate, ' ', FSScheduledTime) and HeTeamEvent=FsTeamEvent  " : "")
 		. "WHERE ToId=" . StrSafe_DB($_SESSION['TourId']) . " and FSScheduledDate>0 and FSTeamEvent!=0 "
-		. (isset($_REQUEST["onlyToday"]) && $_REQUEST["onlyToday"] ? "AND date(convert_tz(FSScheduledDate, ToTimeZone, '+00:00'))=UTC_DATE()" : "")
+		. (isset($_REQUEST["onlyToday"]) && $_REQUEST["onlyToday"] ? "AND FSScheduledDate='$Today'" : "")
 		. ") ORDER BY MyDate ASC ";
 
 	$Rs=safe_r_sql($Select);

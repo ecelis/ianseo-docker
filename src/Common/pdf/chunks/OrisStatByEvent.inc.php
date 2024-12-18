@@ -2,6 +2,7 @@
 
 $pdf->SetDataHeader($PdfData->Header, $PdfData->HeaderWidth);
 $pdf->setPhase('');
+$pdf->setDocUpdate($PdfData->LastUpdate ?? $PdfData->Timestamp ?? '');
 
 $pdf->setOrisCode($PdfData->Code, $PdfData->Description);
 $pdf->AddPage();

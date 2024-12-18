@@ -7,4 +7,5 @@ $lang['Cert-Level3']='كورس متقدم';
 $lang['Cert-Level4']='كورس الخبير';
 $lang['Cert-Level5']='فريق عمل Ianseo';
 $lang['CertificateManagement']='إدارة الشهادة';
+$lang['GenerateFile']='إنشاء ملف';
 ?>

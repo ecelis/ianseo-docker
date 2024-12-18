@@ -169,106 +169,104 @@
 </form>
 <br>
 <?php
-		if (isset($_REQUEST['Command']) && $_REQUEST['Command']=='OK' && $_REQUEST['x_Session']!=-1 && $_REQUEST['x_Dist']!=-1)
-		{
-			if(!empty($_REQUEST['x_Target'])) {
-				$TargetFilter = "AND QuTargetNo ='" . $_REQUEST['x_Target'] . "' ";
-			} else {
-				$TargetFilter = "AND QuTargetNo >='" . $_REQUEST['x_Session'] . str_pad($_REQUEST['x_From'],TargetNoPadding,'0',STR_PAD_LEFT) . "A' AND QuTargetNo<='" . $_REQUEST['x_Session'] . str_pad($_REQUEST['x_To'],TargetNoPadding,'0',STR_PAD_LEFT) . "Z' ";
-			}
-
-			/*$Select
-				= "SELECT EnId,EnCode,EnName,EnFirstName,EnTournament,EnDivision,EnClass,EnCountry,CoCode, (EnStatus <=1) AS EnValid,EnStatus, "
-				. "QuTargetNo, SUBSTRING(QuTargetNo,2) AS Target,"
-				. "QuD" . $_REQUEST['x_Dist'] . "Score AS SelScore,QuD" . $_REQUEST['x_Dist'] . "Hits AS SelHits,QuD" . $_REQUEST['x_Dist'] . "Gold AS SelGold,QuD" . $_REQUEST['x_Dist'] . "Xnine AS SelXNine, "
-				. "QuScore, QuHits,	QuGold,	QuXnine, "
-				. "ToId,ToType,TtNumDist "
-				. "FROM Entries INNER JOIN Countries ON EnCountry=CoId "
-				. "INNER JOIN Qualifications ON EnId=QuId "
-				. "RIGHT JOIN AvailableTarget ON QuTargetNo=AtTargetNo AND AtTournament=" . StrSafe_DB($_SESSION['TourId']) . " "
-				. "INNER JOIN Tournament ON EnTournament=ToId AND ToId=" . StrSafe_DB($_SESSION['TourId']) . " "
-				. "INNER JOIN Tournament*Type ON ToType=TtId "
-				. "WHERE EnAthlete=1 AND QuSession<>0 AND QuTargetNo<>'' AND QuSession=" . StrSafe_DB($_REQUEST['x_Session']) . " "
-				. $TargetFilter . " "
-				. "ORDER BY QuTargetNo ASC ";*/
-
-			$Select = "SELECT EnId,EnCode,EnName,EnFirstName,EnTournament,EnDivision,EnClass,EnCountry,CoCode, (EnStatus <=1) AS EnValid,EnStatus,
-                    QuTargetNo, SUBSTRING(QuTargetNo,2) AS Target,
-                    QuD" . $_REQUEST['x_Dist'] . "Score AS SelScore,QuD" . $_REQUEST['x_Dist'] . "Hits AS SelHits,QuD" . $_REQUEST['x_Dist'] . "Gold AS SelGold,QuD" . $_REQUEST['x_Dist'] . "Xnine AS SelXNine,
-                    QuScore, QuHits,	QuGold,	QuXnine, QuClRank, QuIrmType, IrmType,
-                    ToId,ToType,ToNumDist AS TtNumDist
-			    FROM Entries
-			    INNER JOIN Countries ON EnCountry=CoId
-			    INNER JOIN Qualifications ON EnId=QuId
-			    INNER JOIN IrmTypes ON IrmId=QuIrmType
-			    RIGHT JOIN AvailableTarget ON QuTargetNo=AtTargetNo AND AtTournament=" . StrSafe_DB($_SESSION['TourId']) . "
-			    INNER JOIN Tournament ON EnTournament=ToId AND ToId=" . StrSafe_DB($_SESSION['TourId']) . "
-			    WHERE EnAthlete=1 AND QuSession<>0 AND QuTargetNo<>'' AND QuSession=" . StrSafe_DB($_REQUEST['x_Session']) . " "
-				. $TargetFilter . "
-				ORDER BY QuTargetNo ASC ";
-
-			$Rs=safe_r_sql($Select);
-			//print $Select;
-		// form elenco persone
-			if (safe_num_rows($Rs)>0)
-			{
-?>
-<form name="Frm" method="POST" action="">
-<table class="Tabella">
-<tr>
-<td class="Title w-5" nowrap="nowrap"><?php echo get_text('IrmStatus', 'Tournament') ?></td>
-<td class="Title w-5"><?php print get_text('Target');?></td>
-<td class="Title w-5"><?php print get_text('Code','Tournament');?></td>
-<td class="Title w-20"><?php print get_text('Archer');?></td>
-<td class="Title w-5"><?php print get_text('Div');?></td>
-<td class="Title w-5"><?php print get_text('Cl');?></td>
-<td class="Title w-5"><?php print get_text('Country');?></td>
-<td class="Title w-5">Score (<?php print $_REQUEST['x_Dist']; ?>)</td>
-<td class="Title w-5"><a class="LinkRevert" href="javascript:ChangeGoldXNine('OK');"><?php print $RowTour->TtGolds . ' (' . $_REQUEST['x_Dist'] . ')'; ?></a></td>
-<td class="Title w-5"><a class="LinkRevert" href="javascript:ChangeGoldXNine('OK');"><?php print $RowTour->TtXNine . ' (' . $_REQUEST['x_Dist'] . ')'; ?></a></td>
-<td class="Title w-5"><a class="LinkRevert" href="javascript:ChangeArrows('OK');"><?php print get_text('Arrows','Tournament') . ' (' . $_REQUEST['x_Dist'] . ')'; ?></a></td>
-<td class="Title w-5">Score</td>
-<td class="Title w-5"><?php print $RowTour->TtGolds; ?></td>
-<td class="Title w-5"><?php print $RowTour->TtXNine; ?></td>
-</tr>
-<?php
-$CurTarget = 'xx';
-$TarStyle='';	// niene oppure warning se $RowStyle==''
-// elenco persone
-while ($MyRow=safe_fetch($Rs)) {
-    $RowStyle='';	// NoShoot oppure niente
-    if(!$MyRow->EnValid) {
-        $RowStyle='NoShoot';
-    }
-
-    if ($CurTarget!='xx') {
-        if ($CurTarget!=substr($MyRow->Target,0,-1) ) {
-            if ($TarStyle=='') {
-                $TarStyle='warning';
-            } elseif($TarStyle=='warning') {
-                $TarStyle='';
-            }
-        }
-    }
-
-    echo '<tr id="Row_'.$MyRow->EnId.'" class="'.$TarStyle.' '.$RowStyle.' Irm-'.$MyRow->QuIrmType.'">';
-    echo '<td class="Center" nowrap="nowrap" id="TD_'.$MyRow->EnId.'">';
-    if($MyRow->QuIrmType) {
-        echo '<div class="btn" onclick="IrmSet(this)" ref="'.$MyRow->QuIrmType.'">'.get_text('CmdUnset', 'Tournament', $MyRow->IrmType).'</div>';
+if (isset($_REQUEST['Command']) && $_REQUEST['Command']=='OK' && $_REQUEST['x_Session']!=-1 && $_REQUEST['x_Dist']!=-1) {
+    if(!empty($_REQUEST['x_Target'])) {
+        $TargetFilter = "AND QuTargetNo ='" . $_REQUEST['x_Target'] . "' ";
     } else {
-        echo '<div class="btn" onclick="IrmSet(this)" ref="'.$MyRow->QuIrmType.'">'.get_text('CmdSet', 'Tournament').'</div>';
+        $TargetFilter = "AND QuTargetNo >='" . $_REQUEST['x_Session'] . str_pad($_REQUEST['x_From'],TargetNoPadding,'0',STR_PAD_LEFT) . "A' AND QuTargetNo<='" . $_REQUEST['x_Session'] . str_pad($_REQUEST['x_To'],TargetNoPadding,'0',STR_PAD_LEFT) . "Z' ";
     }
 
+
+    $Select = "SELECT QuArrow, EnId,EnCode,EnName,EnFirstName,EnTournament,EnDivision,EnClass,EnCountry,CoCode, (EnStatus <=1) AS EnValid,EnStatus,
+            QuTargetNo, SUBSTRING(QuTargetNo,2) AS Target,
+            QuD" . $_REQUEST['x_Dist'] . "Score AS SelScore,QuD" . $_REQUEST['x_Dist'] . "Hits AS SelHits,QuD" . $_REQUEST['x_Dist'] . "Gold AS SelGold,QuD" . $_REQUEST['x_Dist'] . "Xnine AS SelXNine,
+            QuScore, QuHits,	QuGold,	QuXnine, QuClRank, QuIrmType, IrmType,
+            ToId,ToType,ToNumDist AS TtNumDist
+        FROM Entries
+        INNER JOIN Countries ON EnCountry=CoId
+        INNER JOIN Qualifications ON EnId=QuId
+        INNER JOIN IrmTypes ON IrmId=QuIrmType
+        RIGHT JOIN AvailableTarget ON QuTargetNo=AtTargetNo AND AtTournament=" . StrSafe_DB($_SESSION['TourId']) . "
+        INNER JOIN Tournament ON EnTournament=ToId AND ToId=" . StrSafe_DB($_SESSION['TourId']) . "
+        WHERE EnAthlete=1 AND QuSession<>0 AND QuTargetNo<>'' AND QuSession=" . StrSafe_DB($_REQUEST['x_Session']) . " "
+        . $TargetFilter . "
+        ORDER BY QuTargetNo ASC ";
+
+    $Rs=safe_r_sql($Select);
+    // form elenco persone
+    if (safe_num_rows($Rs)>0) {
+        echo '<form name="Frm" method="POST" action="">';
+        echo '<table class="Tabella">';
+        echo '<tr>';
+        echo '<td class="Title w-5" nowrap="nowrap">'.get_text('IrmStatus', 'Tournament').'</td>';
+        echo '<td class="Title w-5">'.get_text('Target').'</td>';
+        echo '<td class="Title w-5">'.get_text('Code','Tournament').'</td>';
+        echo '<td class="Title w-20">'.get_text('Archer').'</td>';
+        echo '<td class="Title w-5">'.get_text('Div').'</td>';
+        echo '<td class="Title w-5">'.get_text('Cl').'</td>';
+        echo '<td class="Title w-5">'.get_text('Country').'</td>';
+        echo '<td class="Title w-5">Score ('.$_REQUEST['x_Dist'].')</td>';
+        if($_SESSION['TourType']=='50') {
+            echo '<td class="Title w-5">'.get_text('TargetsHit', 'RunArchery').'</td>';
+        }
+        echo '<td class="Title w-5"><a class="LinkRevert" href="javascript:ChangeGoldXNine(\'OK\');">'.$RowTour->TtGolds . ' (' . $_REQUEST['x_Dist'] . ')'.'</a></td>';
+        echo '<td class="Title w-5"><a class="LinkRevert" href="javascript:ChangeGoldXNine(\'OK\');">'.$RowTour->TtXNine . ' (' . $_REQUEST['x_Dist'] . ')'.'</a></td>';
+        echo '<td class="Title w-5"><a class="LinkRevert" href="javascript:ChangeArrows(\'OK\');">'.get_text('Arrows','Tournament') . ' (' . $_REQUEST['x_Dist'] . ')'.'</a></td>';
+        echo '<td class="Title w-5">Score</td>';
+        echo '<td class="Title w-5">'.$RowTour->TtGolds.'</td>';
+        echo '<td class="Title w-5">'.$RowTour->TtXNine.'</td>';
+        echo '</tr>';
+
+        $CurTarget = 'xx';
+        $TarStyle='';	// niene oppure warning se $RowStyle==''
+        // elenco persone
+        while ($MyRow=safe_fetch($Rs)) {
+            $RowStyle='';	// NoShoot oppure niente
+            if(!$MyRow->EnValid) {
+                $RowStyle='NoShoot';
+            }
+
+            if ($CurTarget!='xx') {
+                if ($CurTarget!=substr($MyRow->Target,0,-1) ) {
+                    if ($TarStyle=='') {
+                        $TarStyle='warning';
+                    } elseif($TarStyle=='warning') {
+                        $TarStyle='';
+                    }
+                }
+            }
+
+            echo '<tr id="Row_'.$MyRow->EnId.'" class="'.$TarStyle.' '.$RowStyle.' Irm-'.$MyRow->QuIrmType.'">';
+            echo '<td class="Center" nowrap="nowrap" id="TD_'.$MyRow->EnId.'">';
+            if($MyRow->QuIrmType) {
+                echo '<div class="btn" onclick="IrmSet(this)" ref="'.$MyRow->QuIrmType.'">'.get_text('CmdUnset', 'Tournament', $MyRow->IrmType).'</div>';
+            } else {
+                echo '<div class="btn" onclick="IrmSet(this)" ref="'.$MyRow->QuIrmType.'">'.get_text('CmdSet', 'Tournament').'</div>';
+            }
+
+            echo '</td>';
+            echo '<td>'.$MyRow->Target.'</td>';
+            echo '<td>'.$MyRow->EnCode.'</td>';
+            echo '<td>'.$MyRow->EnFirstName . ' ' . $MyRow->EnName.'</td>';
+            echo '<td class="Center">'.$MyRow->EnDivision.'</td>';
+            echo '<td class="Center">'.$MyRow->EnClass.'</td>';
+            echo '<td>'.$MyRow->CoCode.'</td>';
+            echo '<td class="Center"><input type="text" size="4" maxlength="5" name="d_QuD' . $_REQUEST['x_Dist'] . 'Score_' . $MyRow->EnId . '" id="d_QuD' . $_REQUEST['x_Dist'] . 'Score_' . $MyRow->EnId . '" value="' . $MyRow->SelScore . '" onBlur="javascript:UpdateQuals(\'d_QuD' . $_REQUEST['x_Dist'] . 'Score_' . $MyRow->EnId . '\');"' . ($MyRow->EnValid ? '' : 'disabled') .'></td>';
+            if($_SESSION['TourType']=='50') {
+                echo '<td class="Center"><input type="text" size="4" maxlength="5" name="d_QuArrow_' . $MyRow->EnId . '" id="d_QuArrow_' . $MyRow->EnId . '" value="' . $MyRow->QuArrow . '" onBlur="javascript:UpdateQuals(\'d_QuArrow_' . $MyRow->EnId . '\');"' . ($MyRow->EnValid ? '' : 'disabled') .'></td>';
+            }
+            echo '<td class="Center">';
+            echo '';
 ?>
-</td>
-<td><?php print $MyRow->Target; ?></td>
-<td><?php print $MyRow->EnCode; ?></td>
-<td><?php print $MyRow->EnFirstName . ' ' . $MyRow->EnName;?></td>
-<td class="Center"><?php print $MyRow->EnDivision; ?></td>
-<td class="Center"><?php print $MyRow->EnClass; ?></td>
-<td><?php print $MyRow->CoCode; ?></td>
-<td class="Center"><?php print '<input type="text" size="4" maxlength="5" name="d_QuD' . $_REQUEST['x_Dist'] . 'Score_' . $MyRow->EnId . '" id="d_QuD' . $_REQUEST['x_Dist'] . 'Score_' . $MyRow->EnId . '" value="' . $MyRow->SelScore . '" onBlur="javascript:UpdateQuals(\'d_QuD' . $_REQUEST['x_Dist'] . 'Score_' . $MyRow->EnId . '\');"' . ($MyRow->EnValid ? '' : 'disabled') .'>';?></td>
-<td class="Center">
+
+
+
+
+
+
+
+
+
 <?php
 	if (isset($_REQUEST['x_Gold']) && $_REQUEST['x_Gold']==1)
 		print '<input type="text" size="4" maxlength="5" name="d_QuD' . $_REQUEST['x_Dist'] . 'Gold_' . $MyRow->EnId . '" id="d_QuD' . $_REQUEST['x_Dist'] . 'Gold_' . $MyRow->EnId . '" value="' . $MyRow->SelGold . '" onBlur="javascript:UpdateQuals(\'d_QuD' . $_REQUEST['x_Dist'] . 'Gold_' . $MyRow->EnId . '\');"' . ($MyRow->EnValid ? '' : 'disabled') .'>';

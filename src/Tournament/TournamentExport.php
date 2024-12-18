@@ -16,7 +16,22 @@
 	}
 
     if($CFG->USERAUTH AND !empty($_SESSION['AUTH_ENABLE']) AND empty($_SESSION['AUTH_ROOT'])) {
-        if(!in_array(getCodeFromId($TourId),$_SESSION["AUTH_COMP"])){
+        $AuthFiler = array();
+        if($CFG->USERAUTH AND !empty($_SESSION['AUTH_ENABLE']) AND empty($_SESSION['AUTH_ROOT'])) {
+            $compList = array();
+            foreach ($_SESSION["AUTH_COMP"] as $comp) {
+                if(preg_match('/%/',$comp)) {
+                    $AuthFiler[] = 'ToCode LIKE ' . StrSafe_DB($comp);
+                } else {
+                    $compList[] = $comp;
+                }
+            }
+            if(count($compList)) {
+                $AuthFiler[] = 'FIND_IN_SET(ToCode, \'' . implode(',', $compList) . '\') != 0 ';
+            }
+        }
+        $q = safe_r_SQL("SELECT ToId FROM Tournament WHERE ToId=" .$TourId . ' AND (' . (count($AuthFiler) ? implode(' OR ', $AuthFiler) : 'FALSE'). ')');
+        if(safe_num_rows($q)!=1){
             CD_redirect($CFG->ROOT_DIR);
             exit;
         }

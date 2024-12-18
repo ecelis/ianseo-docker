@@ -139,12 +139,13 @@ if (!IsBlocked(BIT_BLOCK_QUAL))	{
                             QuGold=QuD1Gold+QuD2Gold+QuD3Gold+QuD4Gold+QuD5Gold+QuD6Gold+QuD7Gold+QuD8Gold,
                             QuXnine=QuD1Xnine+QuD2Xnine+QuD3Xnine+QuD4Xnine+QuD5Xnine+QuD6Xnine+QuD7Xnine+QuD8Xnine,
                             QuHits=QuD1Hits+QuD2Hits+QuD3Hits+QuD4Hits+QuD5Hits+QuD6Hits+QuD7Hits+QuD8Hits,
-                            QuTimestamp=" . StrSafe_DB(date('Y-m-d H:i:s')) . "
+                            QuTimestamp=QuTimestamp,
+                            QuArrow=length(replace(concat(trim(QuD1ArrowString),trim(QuD2ArrowString),trim(QuD3ArrowString),trim(QuD4ArrowString),trim(QuD5ArrowString),trim(QuD6ArrowString),trim(QuD7ArrowString),trim(QuD8ArrowString)), 'A', ''))
                             WHERE QuId={$QuId}";
                         $RsUp=safe_w_sql($Update);
-                        $Updated=safe_w_affected_rows();
+                        if($Updated=safe_w_affected_rows()) {
+                            safe_w_SQL("UPDATE Qualifications SET QuTimestamp=" . StrSafe_DB(date('Y-m-d H:i:s')) . " where QuId={$QuId}");
 
-                        if(!$MustUpdateZeroValue) {
                             runJack("QualArrUpdate", $_SESSION['TourId'], array("Dist"=>$Dist ,"Index"=>$_REQUEST['Index'] ,"Id"=>$QuId ,"Point"=>$_REQUEST['Point'] ,"TourId"=>$_SESSION['TourId']));
 
                             if ($Updated AND $OldValue != $CurScore) {

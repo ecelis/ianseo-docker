@@ -47,28 +47,28 @@ switch($_REQUEST['act']) {
 			$Where[1][]="LueName like '%".StrSafe_DB($_REQUEST['GivenName'], true)."%'";
 			$Where[0][]="EnName like '%".StrSafe_DB($_REQUEST['GivenName'], true)."%'";
 		}
-		if(!empty($_REQUEST['Gender'])) {
-			$Where[1][]="LueSex like '%".StrSafe_DB($_REQUEST['Gender'], true)."%'";
-			$Where[0][]="EnSex like '%".StrSafe_DB($_REQUEST['Gender'], true)."%'";
+		if(isset($_REQUEST['Gender']) and preg_match("/^[01]$/",$_REQUEST['Gender'])) {
+			$Where[1][]="LueSex = ".intval($_REQUEST['Gender']);
+			$Where[0][]="EnSex = ".intval($_REQUEST['Gender']);
 		}
-		if(!empty($_REQUEST['CoCode'])) {
-			$Where[1][]="LueCountry like '%".StrSafe_DB($_REQUEST['CoCode'], true)."%'";
-			$Where[0][]="CoCode like '%".StrSafe_DB($_REQUEST['CoCode'], true)."%'";
+		if(!empty($_REQUEST['CountryCode'])) {
+			$Where[1][]="LueCountry like '%".StrSafe_DB($_REQUEST['CountryCode'], true)."%'";
+			$Where[0][]="CoCode like '%".StrSafe_DB($_REQUEST['CountryCode'], true)."%'";
 		}
-		if(!empty($_REQUEST['CoName'])) {
-			$Where[1][]="LueCoShort like '%".StrSafe_DB($_REQUEST['CoName'], true)."%'";
-			$Where[0][]="CoName like '%".StrSafe_DB($_REQUEST['CoName'], true)."%'";
+		if(!empty($_REQUEST['CountryName'])) {
+			$Where[1][]="LueCoShort like '%".StrSafe_DB($_REQUEST['CountryName'], true)."%'";
+			$Where[0][]="CoName like '%".StrSafe_DB($_REQUEST['CountryName'], true)."%'";
 		}
 		if(!$Where[0]) {
 			JsonOut($JSON);
 		}
 		$q=safe_r_sql("("
-			."select '1' as LUE, LueCode as Code, LueFamilyName as FamName, LueName as GivName, LueSex as Gender, LueCountry as CoCode, LueCoShort as CoName, if(LueCtrlCode=0,'',LueCtrlCode) as DOB 
+			."SELECT '1' as LUE, LueCode as Code, LueFamilyName as FamName, LueName as GivName, LueSex as Gender, LueCountry as CoCode, LueCoShort as CoName, if(LueCtrlCode=0,'',LueCtrlCode) as DOB 
 				from LookUpEntries 
 			    inner join Tournament on ToId={$_SESSION['TourId']} and ToIocCode=LueIocCode 
 				where ".implode(' and ', $Where[1])
 			.") union ("
-			."select '0' as LUE, EnCode as Code, EnFirstName as FamName, EnName as GivName, EnSex as Gender, CoCode, CoName, if(EnDob=0,'',EnDob) as DOB 
+			."SELECT '0' as LUE, EnCode as Code, EnFirstName as FamName, EnName as GivName, EnSex as Gender, CoCode, CoName, if(EnDob=0,'',EnDob) as DOB 
 				from Entries 
 			    inner join Countries on CoId=EnCountry and CoTournament=EnTournament 
 				where EnTournament={$_SESSION['TourId']} and ".implode(' and ', $Where[0])."
@@ -76,9 +76,8 @@ switch($_REQUEST['act']) {
 			order by FamName, GivName, LUE");
 
 		while($r=safe_fetch($q)) {
-			$JSON['rows'][]=$r;
+			$JSON['rows'][$r->Code]=$r;
 		}
-
 		break;
 }
 

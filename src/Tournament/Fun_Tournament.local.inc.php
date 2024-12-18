@@ -107,10 +107,9 @@ require_once('Common/Fun_Phases.inc.php');
 	Occorre fare il controllo di non sofrapposione degli anni
 	******************
 */
-	function CheckClassAge($ClId, $Age, $FromTo='From', $ClDivAllowed = '')
-	{
+	function CheckClassAge($ClId, $Age, $FromTo='From', $ClDivAllowed = ''){
 		$Start=0;
-		$End=0;
+		$End=999;
 		$Sex=-1;
 		/*
 		$Select
@@ -126,46 +125,49 @@ require_once('Common/Fun_Phases.inc.php');
 		$Select = "";
 
 		if ($FromTo=='From') {
-			$Start=$Age;
-			$Select
-				= "SELECT ClAgeTo,ClSex  FROM Classes WHERE ClId=" . StrSafe_DB($ClId)
-				. " AND ClTournament=" . StrSafe_DB($_SESSION['TourId']) . " "
+			$Start=intval($Age);
+			$Select = "SELECT ClAgeTo, ClSex, ClAthlete
+				FROM Classes 
+				WHERE ClTournament={$_SESSION['TourId']} and ClId=" . StrSafe_DB($ClId)
 				. ($ClDivAllowed ? " AND ClDivisionsAllowed=" . StrSafe_DB($ClDivAllowed) . " " : '');
 			$Rs=safe_r_sql($Select);
-
-			//print $Select . '<br>';
-			if (safe_num_rows($Rs)==1)
-			{
-				$Row=safe_fetch($Rs);
+			if ($Row=safe_fetch($Rs)) {
+				// non athlete classes do not have check
+				if(!$Row->ClAthlete) {
+					return true;
+				}
 				$End=$Row->ClAgeTo;
 				$Sex=$Row->ClSex;
 			}
 		} elseif ($FromTo=='To') {
-			$End=$Age;
-			$Select
-				= "SELECT ClAgeFrom,ClSex FROM Classes WHERE ClId=" . StrSafe_DB($ClId)
-				. " AND ClTournament=" . StrSafe_DB($_SESSION['TourId']) . " "
+			$End=intval($Age);
+			$Select = "SELECT ClAgeFrom, ClSex, ClAthlete
+				FROM Classes WHERE ClTournament={$_SESSION['TourId']} and ClId=" . StrSafe_DB($ClId)
 				. ($ClDivAllowed ? " AND ClDivisionsAllowed=" . StrSafe_DB($ClDivAllowed) . " " : '');
 			//print $Select . '<br>';
 			$Rs=safe_r_sql($Select);
-			if (safe_num_rows($Rs)==1)
-			{
-				$Row=safe_fetch($Rs);
+			if($Row=safe_fetch($Rs)) {
+				// non athlete classes do not have check
+				if(!$Row->ClAthlete) {
+					return true;
+				}
 				$Start=$Row->ClAgeFrom;
 				$Sex=$Row->ClSex;
 			}
 		}
 
-		$Select
-			= "SELECT ClId FROM Classes "
-			. "WHERE (ClId<>" . StrSafe_DB($ClId)
-				. ($ClDivAllowed ? " AND ClDivisionsAllowed=" . StrSafe_DB($ClDivAllowed) : '')
-				. " AND ClSex=" . StrSafe_DB($Sex)
-				. " AND ClTournament=" . StrSafe_DB($_SESSION['TourId'])
-				. " AND ClAthlete=1 "
-				. ") "
-			. " AND ((ClAgeFrom<=" . StrSafe_DB($Start) . " AND ClAgeTo>=" . StrSafe_DB($End) . ") OR "
-			. "(ClAgeFrom<=" . StrSafe_DB($End) . " AND ClAgeTo>=" . StrSafe_DB($End) . ")) ";
+		if($Start>$End) {
+			return false;
+		}
+
+		$Select = "SELECT ClId 
+			FROM Classes
+			WHERE ClTournament={$_SESSION['TourId']} 
+				AND ClAthlete=1
+				AND ClSex={$Sex} 
+				AND ((ClAgeFrom<={$Start} AND ClAgeTo>={$End}) OR (ClAgeFrom<={$End} AND ClAgeTo>={$End}))
+				AND ClId<>" . StrSafe_DB($ClId)
+				. ($ClDivAllowed ? " AND ClDivisionsAllowed=" . StrSafe_DB($ClDivAllowed) : '');
 		$Rs=safe_r_sql($Select);
 
 		return (safe_num_rows($Rs)==0);
@@ -177,29 +179,23 @@ require_once('Common/Fun_Phases.inc.php');
 	Ritorna la stringa
 
 */
-	function CreateValidClass($ClId,$ClList)
-	{
-		// mi assicuro che ci sia anche la classe id --NO, tolto per mettere i GM forzati a RM
-		//$StrList=(strpos($ClList,$ClId)===false ? $ClId . ',' : '') . $ClList;
+	function CreateValidClass($ClId,$ClList) {
+		$ret=[];
+		$ClList=trim($ClList);
+		$ClId=trim($ClId);
+		// if $ClList is empty, set it as $ClId
+		$StrList = ($ClList ?: $ClId);
 
-		//mi assicuro che se vuoto, ci sia almeno la ClId
-		$StrList = (strlen(trim($ClList)) ? $ClList : $ClId);
+		$Arr_List = preg_split('/[, ]+/',$StrList);
 
-
-		$Arr_List = explode(',',$StrList);
-
-	// paddo a due le eventuali classi con una lettera
-		//foreach ($Arr_List as $Key => $Value)
-		for ($i=0;$i<count($Arr_List);++$i)
-			if (strlen(trim($Arr_List[$i]))<=6 && trim($Arr_List[$i])!='')
-				$Arr_List[$i]=$Arr_List[$i];
-			else	// se l'elemento non va bene, lo tolgo
-				array_splice($Arr_List,$i,1);
-
-
-	// rigenero la lista
-		$StrList = implode(',',$Arr_List);
-		return $StrList;
+		foreach ($Arr_List as $CL) {
+			$CL=trim($CL);
+			if ($CL and strlen($CL)<=6) {
+				$ret[]=$CL;
+			}
+		}
+		sort($ret);
+		return implode(',', $ret);
 	}
 
 
@@ -212,7 +208,7 @@ require_once('Common/Fun_Phases.inc.php');
 	function CreateValidDivision($ClList) {
 		if(empty($ClList)) return '';
 
-		$ClList=explode(',', $ClList);
+		$ClList=preg_split('/[ ,]+/', $ClList);
 		sort($ClList);
 		$Arr_List = array();
 		$q=safe_r_sql("select distinct DivId from Divisions where DivTournament={$_SESSION['TourId']} and DivId in ('".implode("','", $ClList)."') order by DivId");

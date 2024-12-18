@@ -1,4 +1,5 @@
 <?php
+$lang['Accepted']='Aceptado';
 $lang['ArrowsShot']='Flechas tiradas';
 $lang['CallTime']='Tiempo para llamada {$a}';
 $lang['CallTimeToRoom']='Cámara de llamadas para {$a}';

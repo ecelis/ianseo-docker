@@ -1,6 +1,17 @@
 function gotoShootOff(evCode, onlyPending) {
     var toBeSolved = $('#ev_'+evCode).attr('toBeSolved');
-    if(!onlyPending || toBeSolved==1) {
+    var canBeSolved = $('#ev_'+evCode).attr('canBeSolved');
+    if(canBeSolved == 0) {
+        $.alert({
+            content:MsgInitFinalGridsRunningError,
+            boxWidth: '50%',
+            type: 'red',
+            useBootstrap: false,
+            title:evCode,
+            escapeKey: true,
+            backgroundDismiss: true
+        });
+    } else if(!onlyPending || toBeSolved==1) {
         if(toBeSolved!=1) {
             $.confirm({
                 content:MsgInitFinalGridsError,

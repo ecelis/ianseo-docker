@@ -58,7 +58,6 @@ $lang['Optimal value']='Optimális érték';
 $lang['Parameter']='Paraméter';
 $lang['Password']='Jelszó';
 $lang['PHP settings']='PHP beállítások';
-$lang['PHP too old']='A PHP telepítésed túl régi! Az IANSEO futtatásához legalább PHP 5.0 szükséges.';
 $lang['PHP version']='PHP verzió';
 $lang['php.ini file']='php.ini fájl';
 $lang['Prepare']='Adatok előkészítése a frissítéshez';

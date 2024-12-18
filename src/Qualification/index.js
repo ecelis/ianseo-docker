@@ -32,7 +32,7 @@ function IrmSet(obj) {
 				text: TxtIrmDnf,
 				btnClass: 'btn-green', // class for the button
 				action: function () {
-					$.getJSON('index-action.php?act=dnf&id='+$(obj).closest('tr').attr('id').substr(4), function(data) {
+					$.getJSON('index-action.php?act=dnf&d='+$('#x_Dist').val()+'&id='+$(obj).closest('tr').attr('id').substr(4), function(data) {
 						if(data.error==0) {
 							$(obj).closest('tr').removeClass('Irm-0 Irm-5 Irm-7 Irm-10 Irm-15 Irm-20').addClass(data.class);
 							$(obj).html(data.btn);
@@ -46,7 +46,7 @@ function IrmSet(obj) {
 				text: TxtIrmDnfNoRank,
 				btnClass: 'btn-green', // class for the button
 				action: function () {
-					$.getJSON('index-action.php?act=dnfnr&id='+$(obj).closest('tr').attr('id').substr(4), function(data) {
+					$.getJSON('index-action.php?act=dnfnr&d='+$('#x_Dist').val()+'&id='+$(obj).closest('tr').attr('id').substr(4), function(data) {
 						if(data.error==0) {
 							$(obj).closest('tr').removeClass('Irm-0 Irm-5 Irm-7 Irm-10 Irm-15 Irm-20').addClass(data.class);
 							$(obj).html(data.btn);
@@ -67,7 +67,7 @@ function IrmSet(obj) {
 				text: TxtIrmUnset,
 				btnClass: 'btn-dark', // class for the button
 				action: function () {
-					$.getJSON('index-action.php?act=unset&id='+$(obj).closest('tr').attr('id').substr(4), function(data) {
+					$.getJSON('index-action.php?act=unset&d='+$('#x_Dist').val()+'&id='+$(obj).closest('tr').attr('id').substr(4), function(data) {
 						if(data.error==0) {
 							$(obj).closest('tr').removeClass('Irm-0 Irm-5 Irm-7 Irm-10 Irm-15 Irm-20').addClass(data.class);
 							$(obj).html(data.btn);

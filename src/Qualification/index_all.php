@@ -27,10 +27,12 @@
             'MsgBackFromHome' => get_text('BackFromHome', 'Tournament'),
             'MsgSetDSQ' => get_text('Set-DSQ', 'Tournament'),
             'MsgUnsetDSQ' => get_text('Unset-DSQ', 'Tournament'),
-			'TxtIrmDns' => get_text('DNS', 'Tournament'),
-			'TxtIrmDnf' => get_text('DNF', 'Tournament'),
-			'TxtIrmUnset' => get_text('CmdUnset', 'Tournament', ''),
-			'TxtCancel' => get_text('CmdCancel'),
+            'TxtIrmTitle' => get_text('IrmStatus', 'Tournament'),
+            'TxtIrmDns' => get_text('IRM-10', 'Tournament'),
+            'TxtIrmDnf' => get_text('IRM-5', 'Tournament'),
+            'TxtIrmDnfNoRank' => get_text('IRM-7', 'Tournament'),
+            'TxtIrmUnset' => get_text('CmdUnset', 'Tournament', ''),
+            'TxtCancel' => get_text('CmdCancel'),
 			)),
 	);
 

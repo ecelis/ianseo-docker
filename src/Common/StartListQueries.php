@@ -5,7 +5,7 @@ function getStatEntriesByEventQuery($Type='QR') {
 			$Sql="Select count(*) Quanti, count(distinct EnCountry) Countries, EvCode, EvEventName, EvTeamEvent, EvProgr, EvFirstQualified, EvNumQualified,
 				concat(DvMajVersion, '.', DvMinVersion) as DocVersion,
 				date_format(DvPrintDateTime, '%e %b %Y %H:%i UTC') as DocVersionDate,
-				DvNotes as DocNotes
+				DvNotes as DocNotes, max(EnTimestamp) as EnTimestamp
 				from Entries
 				inner join Individuals on IndId=EnId and IndTournament=EnTournament
 				inner join Events on EvCode=IndEvent and EvTournament=EnTournament and EvTeamEvent=0
@@ -18,7 +18,7 @@ function getStatEntriesByEventQuery($Type='QR') {
 			$Sql = "SELECT EvCode as Code, EvEventName as EventName, EvFinalFirstPhase as FirstPhase, COUNT(EnId) as Quanti, count(distinct EnCountry) Countries,
 				concat(DvMajVersion, '.', DvMinVersion) as DocVersion, EvFirstQualified, EvNumQualified,
 				date_format(DvPrintDateTime, '%e %b %Y %H:%i UTC') as DocVersionDate,
-				DvNotes as DocNotes
+				DvNotes as DocNotes, max(EnTimestamp) as EnTimestamp
 				FROM Events
 				INNER JOIN Individuals ON EvCode=IndEvent AND EvTournament=IndTournament
 				INNER JOIN Entries ON EnId=IndId AND EnTournament=IndTournament 
@@ -41,7 +41,7 @@ function getStatEntriesByEventQuery($Type='QR') {
 			$Sql = "SELECT EnDivision as Divisione, EnClass as Classe, SUM(EnIndClEvent) as QuantiInd, IFNULL(numTeam,0) AS QuantiSq,
 				concat(DvMajVersion, '.', DvMinVersion) as DocVersion,
 				date_format(DvPrintDateTime, '%e %b %Y %H:%i UTC') as DocVersionDate,
-				DvNotes as DocNotes
+				DvNotes as DocNotes, max(EnTimestamp) as EnTimestamp
 				FROM Entries
 				inner join Divisions on EnDivision=DivId and DivAthlete=1 and DivTournament=" . StrSafe_DB($_SESSION['TourId']) . "
 				inner join Classes on EnClass=ClId and ClAthlete=1 and ClTournament=" . StrSafe_DB($_SESSION['TourId']) . "
@@ -86,7 +86,7 @@ function getStatEntriesByCountriesQuery($ORIS=false, $Athletes=false) {
 				CoCode as NationCode, CoName as NationName,
 				concat(DvMajVersion, '.', DvMinVersion) as DocVersion,
 				date_format(DvPrintDateTime, '%e %b %Y %H:%i UTC') as DocVersionDate,
-				DvNotes as DocNotes
+				DvNotes as DocNotes, max(EnTimestamp) as EnTimestamp
 			FROM Entries
 			INNER JOIN Countries ON EnCountry = CoId
 			LEFT JOIN DocumentVersions on EnTournament=DvTournament AND DvFile = 'EN'
@@ -114,7 +114,7 @@ function getStatEntriesByCountriesQuery($ORIS=false, $Athletes=false) {
 		$Sql .= "CoCode as NationCode, CoName as NationName,
 				concat(DvMajVersion, '.', DvMinVersion) as DocVersion,
 				date_format(DvPrintDateTime, '%e %b %Y %H:%i UTC') as DocVersionDate,
-				DvNotes as DocNotes
+				DvNotes as DocNotes, max(EnTimestamp) as EnTimestamp
 			FROM Entries
 			INNER JOIN Countries ON EnCountry = CoId
 			LEFT JOIN DocumentVersions on EnTournament=DvTournament AND DvFile = 'EN'
@@ -628,11 +628,11 @@ function getCountryList() {
 		$TmpWhere = substr($TmpWhere,0,-3);
 	}
 
-	$MyQuery = "SELECT DISTINCT
+	$MyQuery = "SELECT
 			upper(CoCode) AS NationCode, CoNameComplete AS Nation,
 			concat(DvMajVersion, '.', DvMinVersion) as DocVersion,
 			date_format(DvPrintDateTime, '%e %b %Y %H:%i UTC') as DocVersionDate,
-				DvNotes as DocNotes
+				DvNotes as DocNotes, max(EnTimestamp) as EnTimestamp
 			FROM Entries AS e
 			INNER JOIN Countries AS c ON e.EnCountry=c.CoId AND e.EnTournament=c.CoTournament
 			INNER JOIN Qualifications AS q ON e.EnId=q.QuId
@@ -644,7 +644,8 @@ function getCountryList() {
 	if($TmpWhere != "") {
 		$MyQuery .= "AND (" . $TmpWhere . ")";
 	}
-	$MyQuery.= "ORDER BY CoCode";
+	$MyQuery.= "group by CoCode
+		ORDER BY CoCode";
 
 	return $MyQuery;
 }
@@ -678,11 +679,12 @@ function getStartListCountryQuery($ORIS=false, $Athletes=false, $orderByName=fal
 				concat(upper(EnFirstName), ' ', EnName) AS Athlete, DATE_FORMAT(EnDob,'%d %b %Y') as DOB, QuSession AS Session, SUBSTRING(QuTargetNo,2) AS TargetNo,
 				upper(CoCode) AS NationCode, upper(CoName) AS Nation, if(CoNameComplete!='', CoNameComplete, CoName) AS NationComplete,
 				IFNULL(GROUP_CONCAT(EvEventName SEPARATOR ', '), if(DivAthlete and ClAthlete, CONCAT('|',DivDescription, '| |', ClDescription), ClDescription)) as EventName,
-				IFNULL(GROUP_CONCAT(RankRanking order by EvProgr SEPARATOR ', '), '') as Ranking,
+				IFNULL(GROUP_CONCAT(DISTINCT RankRanking order by EvProgr SEPARATOR ', '), '') as Ranking,
 				cNumber, PhPhoto is not null as HasPhoto, EnBadgePrinted>0 as HasAccreditation, PhToRetake, PhEnId, 
 				concat(DvMajVersion, '.', DvMinVersion) as DocVersion,
 				date_format(DvPrintDateTime, '%e %b %Y %H:%i UTC') as DocVersionDate,
-				DvNotes as DocNotes, edmail.EdEmail, edmail.EdExtra, edbib.EdExtra as Bib2, EnDob, '' as TfName
+				DvNotes as DocNotes, edmail.EdEmail, edmail.EdExtra, edbib.EdExtra as Bib2, EnDob, '' as TfName,
+				EnTimestamp
 			FROM Entries AS e
 			INNER JOIN Countries AS c ON e.EnCountry=c.CoId AND e.EnTournament=c.CoTournament
 			INNER JOIN Qualifications AS q ON e.EnId=q.QuId
@@ -757,7 +759,7 @@ function getStartListCountryQuery($ORIS=false, $Athletes=false, $orderByName=fal
             . ", GROUP_CONCAT(EvCodeParent order by EvProgr SEPARATOR '')  as EvCodeParent"
             . ", GROUP_CONCAT(RankRanking) as Ranking"
         	. ", IF(EnCountry2=0,0,1) as secTeam "
-			. ", TfName, PhPhoto is not null as HasPhoto, edmail.EdEmail, edmail.EdExtra, edbib.EdExtra as Bib2, EnDob ";
+			. ", TfName, EnTimestamp, PhPhoto is not null as HasPhoto, edmail.EdEmail, edmail.EdExtra, edbib.EdExtra as Bib2, EnDob ";
 	$MyQuery.= "FROM Entries AS e ";
 	$MyQuery.= "inner JOIN Tournament ON ToId=EnTournament ";
 	$MyQuery.= "LEFT JOIN Individuals ON IndId=EnId and IndTournament=EnTournament ";
@@ -820,7 +822,7 @@ function getStartListCountryQuery($ORIS=false, $Athletes=false, $orderByName=fal
             . ", GROUP_CONCAT(EvCodeParent order by EvProgr SEPARATOR '')  as EvCodeParent"
             . ", GROUP_CONCAT(RankRanking) as Ranking"
             . ", 2 as secTeam "
-			. ", TfName, PhPhoto is not null as HasPhoto, edmail.EdEmail, edmail.EdExtra, edbib.EdExtra as Bib2, EnDob ";
+			. ", TfName, EnTimestamp, PhPhoto is not null as HasPhoto, edmail.EdEmail, edmail.EdExtra, edbib.EdExtra as Bib2, EnDob ";
 	$MyQuery.= "FROM Entries AS e ";
 	$MyQuery.= "inner JOIN Tournament ON ToId=EnTournament ";
 	$MyQuery.= "LEFT JOIN Individuals ON IndId=EnId and IndTournament=EnTournament ";
@@ -884,7 +886,7 @@ function getStartListCountryQuery($ORIS=false, $Athletes=false, $orderByName=fal
             . ", GROUP_CONCAT(EvCodeParent order by EvProgr SEPARATOR '')  as EvCodeParent"
             . ", GROUP_CONCAT(RankRanking) as Ranking"
             . ", 3 as secTeam "
-			. ", TfName, PhPhoto is not null as HasPhoto, edmail.EdEmail, edmail.EdExtra, edbib.EdExtra as Bib2, EnDob ";
+			. ", TfName, EnTimestamp, PhPhoto is not null as HasPhoto, edmail.EdEmail, edmail.EdExtra, edbib.EdExtra as Bib2, EnDob ";
 	$MyQuery.= "FROM Entries AS e ";
 	$MyQuery.= "inner JOIN Tournament ON ToId=EnTournament ";
 	$MyQuery.= "LEFT JOIN Individuals ON IndId=EnId and IndTournament=EnTournament ";
@@ -1083,7 +1085,7 @@ function getBrokenRecordsQuery($ORIS=true) {
 	return "(".implode(') UNION (', $SQL).") order by TeamEvent, ReArBitLevel desc, OrderBy, Phase, SubPhase, RtRecDistance desc, NewRecord desc";
 }
 
-function getStartListAlphaQuery($ORIS=false) {
+function getStartListAlphaQuery($ORIS=false, $Athlete=false) {
 	$TmpWhere="";
 	if(isset($_REQUEST["ArcherName"]) && preg_match("/^[-,0-9A-Z]*$/i",str_replace(" ","",$_REQUEST["ArcherName"]))) {
 		foreach(explode(",",$_REQUEST["ArcherName"]) as $Value) {
@@ -1097,7 +1099,8 @@ function getStartListAlphaQuery($ORIS=false) {
 		$TmpWhere = substr($TmpWhere,0,-3);
 	}
 
-	$Collation = ($_SESSION['TourCollation'] ? "COLLATE utf8_{$_SESSION['TourCollation']}_ci" : '');
+//	$Collation = ($_SESSION['TourCollation'] ? "COLLATE utf8_{$_SESSION['TourCollation']}_ci" : '');
+	$Collation = '';
 
 	$MyQuery = "SELECT distinct 
 			upper(substr(EnFirstname $Collation,1,1)) as FirstLetter, 
@@ -1121,11 +1124,11 @@ function getStartListAlphaQuery($ORIS=false) {
 			EnIndFEvent AS `IF`, 
 			EnTeamFEvent as `TF`, 
 			EnTeamMixEvent as `TM`, 
-			EvCode, 
+			EvCode, EnTimestamp,
 			IFNULL(EvCode,CONCAT(TRIM(EnDivision),TRIM(EnClass))) as EventCode, 
 			DATE_FORMAT(EnDob,'%d %b %Y') as DOB, 
 			IFNULL(GROUP_CONCAT(EvEventName order by EvProgr SEPARATOR ', '), if(DivAthlete and ClAthlete, CONCAT('|',DivDescription, '| |', ClDescription), ClDescription)) as EventName , 
-			IFNULL(GROUP_CONCAT(RankRanking order by EvProgr SEPARATOR ', '), '') as Ranking , 
+			IFNULL(GROUP_CONCAT(DISTINCT RankRanking order by EvProgr SEPARATOR ', '), '') as Ranking , 
 			TfName, 
 			concat(DvMajVersion, '.', DvMinVersion) as DocVersion, 
 			date_format(DvPrintDateTime, '%e %b %Y %H:%i UTC') as DocVersionDate, 
@@ -1168,6 +1171,9 @@ function getStartListAlphaQuery($ORIS=false) {
 		WHERE EnTournament = " . StrSafe_DB($_SESSION['TourId']) ;
 	if(isset($_REQUEST["Session"]) and is_numeric($_REQUEST["Session"])) $MyQuery .= " AND QuSession = " . StrSafe_DB($_REQUEST["Session"]) ;
 	if(!empty($_REQUEST["Divisions"])) $MyQuery .= " AND concat(EnDivision, EnClass) like '{$_REQUEST["Divisions"]}'";
+	if($Athlete) {
+		$MyQuery .= " AND DivAthlete=1 and ClAthlete=1";
+	}
 	if($TmpWhere) $MyQuery .= " AND (" . $TmpWhere . ")";
 	$MyQuery.= " GROUP BY FirstLetter, SesName, Bib, Athlete, Session, TargetNo, NationCode, Nation, NationCode2, Nation2, NationCode3, Nation3,
 		DivDescription, ClDescription, EnSubTeam, ClassCode, DivCode, IsAthlete, AgeClass, SubClass, Status, `IC`, `TC`, `IF`, `TF`, `TM`,
@@ -1189,7 +1195,8 @@ function getStartListCategoryQuery($ORIS=false, $orderByTeam=0, $Events=array())
 		$TmpWhere=" EvCode in (".implode(',', StrSafe_DB($Events)).") ";
 	}
 
-	$Collation = ($_SESSION['TourCollation'] ? "COLLATE utf8_{$_SESSION['TourCollation']}_ci" : '');
+//	$Collation = ($_SESSION['TourCollation'] ? "COLLATE utf8_{$_SESSION['TourCollation']}_ci" : '');
+	$Collation = '';
 
 	$MyQuery = "SELECT distinct
 			" . ($ORIS ? ' EvCode as EventCode ' :" IFNULL(EvCode,CONCAT(TRIM(EnDivision),TRIM(EnClass))) as EventCode") . ", 
@@ -1232,7 +1239,7 @@ function getStartListCategoryQuery($ORIS=false, $orderByTeam=0, $Events=array())
 			DATE_FORMAT(EnDob,'%d %b %Y') as DOB, 
 			IFNULL(GROUP_CONCAT(EvEventName order by EvProgr SEPARATOR ', '),CONCAT('|',DivDescription, '| |', ClDescription)) as EventName , 
 			TfName, 
-			cNumber, 
+			cNumber, EnTimestamp,
 			ifnull(GROUP_CONCAT(RankRanking order by EvProgr SEPARATOR ', '), '') as Ranking
 		FROM Entries AS e
 		INNER JOIN Tournament on EnTournament=ToId

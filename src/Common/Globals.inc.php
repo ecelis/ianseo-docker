@@ -15,7 +15,7 @@
 
 
 define ("ProgramName","Ianseo");	// Nome del programma
-define ("ProgramVersion","2023-01-10"); // "Remembering Er Salustro. Ciao Giggi 💔"
+define ("ProgramVersion","2024-12-08"); // "Experience is the teacher of all things (Gaius Iulius Caesar)"
 
 define ("TargetNoPadding",3);		// Padding del targetno
 
@@ -89,8 +89,8 @@ $ERROR_REPORT = true;
 
 session_start();
 
-if(empty($_SESSION['WINHEIGHT'])) $_SESSION['WINHEIGHT'] = '';
-if(empty($_SESSION['WINWIDTH']))  $_SESSION['WINWIDTH']  = '';
+if(empty($_SESSION['WINHEIGHT'])) $_SESSION['WINHEIGHT'] = 0;
+if(empty($_SESSION['WINWIDTH']))  $_SESSION['WINWIDTH'] = 0;
 if(empty($_SESSION['COLLATION'])) set_collation();
 
 /*
@@ -117,6 +117,13 @@ if(empty($_SESSION['COLLATION'])) set_collation();
 		header("Location: " . $_SERVER['PHP_SELF'] . go_get('SetLanguage','',true));
 	}
 
+function getToday($Date='now', $Format='Y-m-d') {
+    $Today=new DateTimeImmutable($Date);
+    if(!empty($_SESSION['TourTimezone'])){
+        $Today=new DateTimeImmutable($Date, new DateTimeZone($_SESSION['TourTimezone']));
+    }
+    return $Today->format($Format);
+}
 // funzione per l'internazionalizzazione
 function get_text($text, $module='Common', $a=null, $translate=false, $force=false, $ForceLang='', $Verbose=true) {
 	static $_LANG;
@@ -318,6 +325,11 @@ function define_session_flags($ConstToStore=array()) {
 	foreach($ConstToStore as $k => $v) {
 		$_SESSION[$k]=$v;
 	}
+    // adjust the timezone of the database to the timezone of the competition.
+    if(!empty($_SESSION['TourTimezone'])) {
+        safe_r_SQL( "SET session time_zone = '".$_SESSION['TourTimezone']."'");
+        safe_w_SQL( "SET session time_zone = '".$_SESSION['TourTimezone']."'");
+    }
 }
 
 /**
@@ -438,9 +450,10 @@ function InfoTournament()
  * @return true se ci riesce e false altrimenti
  */
 function CreateTourSession($TourId) {
+    global $CFG;
 	require_once('Common/CheckPictures.php');
 	$TourId=intval($TourId);
-	$Select = "SELECT Tournament.*, ElimTypes, TeamEvents,
+	$Select = "SELECT Tournament.*, ElimTypes, TeamEvents,ToTimeZone,
 		UNIX_TIMESTAMP(ToWhenFrom) AS ToWhenFromUTS, DATE_FORMAT(ToWhenFrom,'" . get_text('DateFmtDB') . "') AS DtFrom, UNIX_TIMESTAMP(ToWhenTo) AS ToWhenToUTS, 
 		DATE_FORMAT(ToWhenTo,'" . get_text('DateFmtDB') . "') AS DtTo, ToTypeName AS TtName, ToElimination AS TtElimination
 		FROM Tournament
@@ -452,13 +465,22 @@ function CreateTourSession($TourId) {
 	{
 		$debug = $_SESSION['debug'];
 		$debmode= (!empty($_SESSION['debug-mode']) ? $_SESSION['debug-mode'] : '');
+        $tmpAuthUser = (!empty($_SESSION['AUTH_User']) ? $_SESSION['AUTH_User'] : null);
+        $tmpAuthPwd = (!empty($_SESSION['AUTH_Pwd']) ? $_SESSION['AUTH_Pwd'] : null);
 
 		$_SESSION=Array();
 
 		$_SESSION['debug'] = $debug;
 		$_SESSION['debug-mode'] = $debmode;
+        if($CFG->USERAUTH and !is_null($tmpAuthUser) ) {
+            $_SESSION['AUTH_User'] = $tmpAuthUser;
+            $_SESSION['AUTH_Pwd'] = $tmpAuthPwd;
+        }
 
 		$MyRow=safe_fetch($Rs);
+        $dateTimeZone = new DateTimeZone($MyRow->ToTimeZone);
+        $dateTimeZone->getOffset(new DateTime("now", new DateTimeZone('UTC')));
+
 		$_SESSION['TourId']=$MyRow->ToId;
 		$_SESSION['TourPrintLang']=$MyRow->ToPrintLang;
 		$_SESSION['TourType']=$MyRow->ToType;
@@ -467,15 +489,17 @@ function CreateTourSession($TourId) {
 		$_SESSION['TourField3D']=($MyRow->ToElabTeam==1 ? 'FIELD' : ($MyRow->ToElabTeam==2 ? '3D' : ''));
 		$_SESSION['TourCode']=$MyRow->ToCode;
 		$_SESSION['TourCodeSafe']=preg_replace('/[^a-z0-9_.-]+/sim', '', $MyRow->ToCode);
-		$_SESSION['TourCollation']=$MyRow->ToCollation;
+//		$_SESSION['TourCollation']=$MyRow->ToCollation;
+		$_SESSION['TourCollation']='';
 		$_SESSION['TourName']=$MyRow->ToName;
 		$_SESSION['TourWhere']=$MyRow->ToWhere;
 		$_SESSION['TourRealWhenFrom']=$MyRow->ToWhenFrom;
 		$_SESSION['TourRealWhenTo']=$MyRow->ToWhenTo;
 		$_SESSION['TourWhenFrom']=$MyRow->DtFrom;
 		$_SESSION['TourWhenTo']=$MyRow->DtTo;
-		$_SESSION['ToWhenFromUTS']=$MyRow->ToWhenFromUTS;
-		$_SESSION['ToWhenToUTS']=$MyRow->ToWhenToUTS;
+		$_SESSION['TourTimezone']=$MyRow->ToTimeZone;
+		$_SESSION['ToWhenFromUTS']=$MyRow->ToWhenFromUTS+$dateTimeZone->getOffset(new DateTime("now", new DateTimeZone('UTC')));
+		$_SESSION['ToWhenToUTS']=$MyRow->ToWhenToUTS+$dateTimeZone->getOffset(new DateTime("now", new DateTimeZone('UTC')));
 		$_SESSION['ToPaper']=$MyRow->ToPrintPaper;
 		// RoundRobinEvents...
 		$_SESSION['HasRobin']=(strstr($MyRow->ElimTypes??'', '5') ? 1 : 0);
@@ -488,9 +512,10 @@ function CreateTourSession($TourId) {
 		$_SESSION['TargetPadding']=2;
 
 		// sets the collation for the tournament
-		set_collation($MyRow->ToCollation);
+//		set_collation($MyRow->ToCollation);
 		// if a collation is set for a tournament, this will be the default whatever language is chosen
-		$_SESSION['COLLATION-LOCK']=($MyRow->ToCollation!='');
+//		$_SESSION['COLLATION-LOCK']=($MyRow->ToCollation!='');
+		$_SESSION['COLLATION-LOCK']=false;
 
 		// Defines if a tournament is ORIS compliant or not
 		$_SESSION['ISORIS']=$MyRow->ToIsORIS;
@@ -554,8 +579,22 @@ function CreateTourSession($TourId) {
 	Distrugge la sessione per il torneo attivo
 */
 function EraseTourSession() {
-	$_SESSION=array();
-	$_SESSION['TourId']=-1;
+    global $CFG;
+    $debug = $_SESSION['debug'];
+    $debmode= (!empty($_SESSION['debug-mode']) ? $_SESSION['debug-mode'] : '');
+    $tmpAuthUser = (!empty($_SESSION['AUTH_User']) ? $_SESSION['AUTH_User'] : null);
+    $tmpAuthPwd = (!empty($_SESSION['AUTH_Pwd']) ? $_SESSION['AUTH_Pwd'] : null);
+
+    $_SESSION=Array();
+
+    $_SESSION['debug'] = $debug;
+    $_SESSION['debug-mode'] = $debmode;
+    if($CFG->USERAUTH and !is_null($tmpAuthUser) ) {
+        $_SESSION['AUTH_User'] = $tmpAuthUser;
+        $_SESSION['AUTH_Pwd'] = $tmpAuthPwd;
+    }
+
+    $_SESSION['TourId']=-1;
 	$_SESSION['TourCode']='';
 	$_SESSION['TourName']='';
 	$_SESSION['TourWhere']='';
@@ -820,6 +859,8 @@ function CheckHelp() {
 }
 
 function set_collation($Col='') {
+    // removed until solved for multiple database versions
+    return;
 	static $Collations=array(
 		'czech',
 		'danish',
@@ -1018,4 +1059,243 @@ function insertLog($Type, $Message, $Title='', $Entry=0, $TourId=0) {
 		LogMessage=".StrSafe_DB($Message).",
 		LogTimestamp='".date('Y-m-d H:i:s.u')."',
 		LogIP='".$_SERVER['REMOTE_ADDR']."'");
+}
+
+function checkCompetitionAnomalies() {
+    global $CFG;
+    $Ret=[
+        'EC'=>[
+            'Cats'=>[],
+            'Msg'=>get_text('EntriesNoCountry', 'Errors'),
+            'Lnk'=>$CFG->ROOT_DIR.'Partecipants/',
+        ],
+        'ED'=>[
+            'Cats'=>[],
+            'Msg'=>get_text('EntriesNoCategory', 'Errors'),
+            'Lnk'=>$CFG->ROOT_DIR.'Partecipants/',
+        ],
+        'ES'=>[
+            'Cats'=>[],
+            'Msg'=>get_text('CategoresNotDefined', 'Errors'),
+            'Lnk'=>$CFG->ROOT_DIR.'Tournament/ManDivClass.php',
+        ],
+        'D0'=>[
+            'Cats'=>[],
+            'Msg'=>get_text('NoDistancesSet', 'Errors'),
+            'Lnk'=>$CFG->ROOT_DIR.'Tournament/ManDistances.php',
+        ],
+        'D1'=>[
+            'Cats'=>[],
+            'Msg'=>get_text('TooManyDistancesMatch', 'Errors'),
+            'Lnk'=>$CFG->ROOT_DIR.'Tournament/ManDistances.php',
+        ],
+        'Tgt'=>[
+            'Cats'=>[],
+            'Msg'=>get_text('NoTargetSet', 'Errors'),
+            'Lnk'=>$CFG->ROOT_DIR.'Tournament/ManTargets.php',
+        ],
+        'Id'=>[
+            'Cats'=>[],
+            'Msg'=>get_text('EventIncompleteSetting', 'Errors', get_text('IndFinEvent', 'Tournament')),
+            'Lnk'=>$CFG->ROOT_DIR.'Final/Individual/ListEvents.php',
+        ],
+        'Td'=>[
+            'Cats'=>[],
+            'Msg'=>get_text('EventIncompleteSetting', 'Errors', get_text('TeamFinEvent', 'Tournament')),
+            'Lnk'=>$CFG->ROOT_DIR.'Final/Team/ListEvents.php',
+        ],
+        'I'=>[
+            'Cats'=>[],
+            'Msg'=>get_text('EndsArrowsMisMatch', 'Errors', get_text('IndFinEvent', 'Tournament')),
+            'Lnk'=>$CFG->ROOT_DIR.'Final/PhaseDetails.php?act=get&team=0&option=ArrowPhase',
+        ],
+        'T'=>[
+            'Cats'=>[],
+            'Msg'=>get_text('EndsArrowsMisMatch', 'Errors', get_text('TeamFinEvent', 'Tournament')),
+            'Lnk'=>$CFG->ROOT_DIR.'Final/PhaseDetails.php?act=get&team=1&option=ArrowPhase',
+        ],
+    ];
+    // check Missing Countries
+    $q=safe_r_sql("select EnCode
+        from Entries
+        where EnTournament={$_SESSION['TourId']} and EnCountry=0
+        order by EnCode
+        ");
+    while($r=safe_fetch($q)) {
+        $Ret['EC']['Cats'][]=$r->EnCode;
+    }
+
+    // check Category Inconsistency
+    $q=safe_r_sql("select distinct concat(EnDivision, EnClass) as EnCat
+        from Entries
+        left join Divisions on DivId=EnDivision and DivTournament=EnTournament
+        left join Classes on ClId=EnClass and ClTournament=EnTournament and (ClDivisionsAllowed='' or find_in_set(EnDivision, ClDivisionsAllowed))
+        where EnTournament={$_SESSION['TourId']} and EnDivision!='' and EnClass!='' and (DivId is null or ClId is null)
+        order by EnCode
+        ");
+    while($r=safe_fetch($q)) {
+        $Ret['ES']['Cats'][]=$r->EnCat;
+    }
+
+    // check Category Inconsistency
+    $q=safe_r_sql("select distinct EnCode as EnCat
+        from Entries
+        where EnTournament={$_SESSION['TourId']} and (EnDivision='' or EnClass='')
+        order by EnCode
+        ");
+    while($r=safe_fetch($q)) {
+        $Ret['ED']['Cats'][]=$r->EnCat;
+    }
+
+    // check distances anomalies
+    $q=safe_r_sql("select Category, count(*) as Distances, TdTournament is null as NoDistances
+        from (select concat(DivId,ClId) as Category, DivViewOrder, ClViewOrder, ToType
+              from Divisions 
+              inner join Classes on ClTournament=DivTournament and (ClDivisionsAllowed='' or find_in_set(DivId,ClDivisionsAllowed)) and ClAthlete=1
+              inner join Tournament on ToId=DivTournament
+              where DivTournament={$_SESSION['TourId']} and DivAthlete=1) as AllCats
+        left join TournamentDistances on TdTournament={$_SESSION['TourId']} and TdType=ToType and Category like TdClasses
+        group by Category
+        having Distances!=1 or NoDistances=1
+        order by DivViewOrder, ClViewOrder");
+    while($r=safe_fetch($q)) {
+        $Ret[$r->NoDistances ? 'D0' : 'D1']['Cats'][]=$r->Category;
+    }
+
+    // check targets anomalies
+    $q=safe_r_sql("select Category, TfTournament is null as NoTarget
+        from (select concat(DivId,ClId) as Category, DivViewOrder, ClViewOrder
+              from Divisions 
+              inner join Classes on ClTournament=DivTournament and (ClDivisionsAllowed='' or find_in_set(DivId,ClDivisionsAllowed)) and ClAthlete=1
+              where DivTournament={$_SESSION['TourId']} and DivAthlete=1) as AllCats
+        left join TargetFaces on TfTournament={$_SESSION['TourId']} and if(TfRegExp!='', Category regexp TfRegExp, Category like TfClasses)
+        group by Category
+        having NoTarget=1
+        order by DivViewOrder, ClViewOrder
+        ");
+    while($r=safe_fetch($q)) {
+        $Ret['Tgt']['Cats'][]=$r->Category;
+    }
+
+    // check events Setup anomalies
+    $q=safe_r_sql("select EvCode, if(EvTeamEvent=1,'Td','Id') as TeamEvent
+        from Events
+        left join (select if(EcTeamEvent=0,0,1) as EcTeamEvent, EcCode from EventClass where EcTournament={$_SESSION['TourId']} group by if(EcTeamEvent=0,0,1), EcCode) EventClass on EcTeamEvent=EvTeamEvent and EcCode=EvCode
+        where EvTournament={$_SESSION['TourId']} and EvCodeParent='' and EcCode is null
+        order by EvTeamEvent,EvProgr");
+
+    while($r=safe_fetch($q)) {
+        $Ret[$r->TeamEvent]['Cats'][]='<a href="'.$CFG->ROOT_DIR.'Final/Individual/SetEventRules.php?EvCode='.$r->EvCode.'">'.$r->EvCode.'</a>';
+    }
+
+    // check events End/Arrows anomalies
+    $q=safe_r_sql("select EvCode, if(EvTeamEvent=1,'T','I') as TeamEvent
+        from Events
+        where EvTournament={$_SESSION['TourId']} and (EvElimEnds=0 or EvFinEnds=0 or EvElimArrows=0 or EvFinArrows=0) and EvFinalFirstPhase!=0
+        order by EvTeamEvent,EvProgr");
+
+    while($r=safe_fetch($q)) {
+        $Ret[$r->TeamEvent]['Cats'][]=$r->EvCode;
+    }
+
+    $RetResult=[];
+    foreach($Ret as $k=>$v) {
+        if(!$v['Cats']) {
+            continue;
+        }
+        $RetResult[$k]=$v;
+    }
+    return $RetResult;
+}
+
+function checkPhpVersion($complete=false) {
+    $Ret='';
+    if(PHP_MAJOR_VERSION<8) {
+        $Ret = '<div class="alert alert-danger bold">'.get_text('PhpOutdated', 'Errors', '8.0.0').'</div>';
+        if($complete) {
+            $Ret.='<div class="alert alert-warning bold">
+                <div>'.get_text('BackupTournaments', 'Errors').'</div>
+                <div class="Button mt-3" onclick="exportAllCompetitions()">'.get_text('ExportAllComps', 'Install').'</div>
+            </div>';
+        }
+    }
+    return $Ret;
+}
+
+function UpdateToInnoDb($Apply=true) {
+    global $CFG;
+    $Ret=checkPhpVersion();
+    $q1=safe_r_sql("show character SET like 'utf8mb4'");
+    $q2=safe_r_sql("show variables like 'innodb_file_per_table'");
+    if(!safe_num_rows($q1) or !safe_num_rows($q2) or ($r=safe_fetch($q2) and $r->Value!='ON')) {
+        $Ret.= '<div class="alert alert-danger bold">'.get_text('MysqlUpdateNeeded', 'Errors').'</div>';
+    }
+
+    if($Ret) {
+        return $Ret;
+    }
+
+    // start setting all tables to innodb engine
+    $q=safe_r_sql("SELECT  CONCAT('ALTER TABLE ', table_name, ' ENGINE=InnoDB;') AS sql_statements
+        FROM    information_schema.tables AS tb
+        WHERE   table_schema = '{$CFG->DB_NAME}'
+        AND     ENGINE = 'MyISAM'
+        AND     TABLE_TYPE = 'BASE TABLE'
+        ORDER BY table_name DESC;");
+
+    if($Apply) {
+        while($r=safe_fetch($q)) {
+            safe_w_sql($r->sql_statements);
+        }
+    } else {
+        if(safe_num_rows($q)) {
+            return true;
+        }
+    }
+
+    // update all tables to utf8mb4
+    //Check if collection is available and choose which to aplly
+    $newCollation = 'utf8mb4_0900_as_ci';
+    $q=safe_r_sql("SHOW COLLATION WHERE Collation='$newCollation';");
+    if(!safe_num_rows($q)) {
+        $newCollation = 'utf8mb4_general_ci';
+        $q=safe_r_sql("SHOW COLLATION WHERE Collation='$newCollation';");
+        if(!safe_num_rows($q)) {
+            $newCollation = '';
+        }
+    }
+
+    if(!empty($newCollation)) {
+        $SQL = "SELECT 'SET FOREIGN_KEY_CHECKS = 0' AS alter_statement 
+        UNION 
+        SELECT CONCAT('ALTER DATABASE `', SCHEMA_NAME,'` CHARACTER SET utf8mb4 COLLATE $newCollation') AS alter_statement 
+        FROM information_schema.SCHEMATA 
+        WHERE (DEFAULT_CHARACTER_SET_NAME!='utf8mb4' or DEFAULT_COLLATION_NAME!='$newCollation') AND SCHEMA_NAME = '{$CFG->DB_NAME}'
+        UNION 
+        SELECT DISTINCT CONCAT('ALTER TABLE `',TABLE_NAME, '` CONVERT TO CHARACTER SET utf8mb4 COLLATE $newCollation') AS alter_statement 
+        FROM (
+            SELECT TABLE_NAME
+            FROM information_schema.COLUMNS 
+            WHERE TABLE_SCHEMA = '{$CFG->DB_NAME}' AND CHARACTER_SET_NAME IS NOT NULL AND (CHARACTER_SET_NAME!='utf8mb4' or COLLATION_NAME!='$newCollation')
+            UNION 
+            SELECT TABLE_NAME
+            FROM information_schema.TABLES AS T
+            JOIN information_schema.`COLLATION_CHARACTER_SET_APPLICABILITY` AS C ON C.collation_name = T.table_collation
+            WHERE (CHARACTER_SET_NAME!='utf8mb4' or COLLATION_NAME!='$newCollation') AND TABLE_SCHEMA = '{$CFG->DB_NAME}'
+        ) AS TABLE_UPDATES
+        UNION 
+        SELECT 'SET FOREIGN_KEY_CHECKS = 1' AS alter_statement";
+        $q = safe_r_sql($SQL);
+        if ($Apply) {
+            while ($r = safe_fetch($q)) {
+                safe_w_sql($r->alter_statement);
+            }
+        } else {
+            if (safe_num_rows($q) > 2) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }

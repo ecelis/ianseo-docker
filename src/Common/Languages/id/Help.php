@@ -1,4 +1,5 @@
 <?php
+$lang['AuthTourCode']='Daftar kode turnamen yang dipisahkan koma yang dapat dikelola oleh pengguna.<br>Karakter pengganti yang diizinkan: "%"';
 $lang['AutoCheckinAlreadyDone']='Anda sudah check-in<br>Jika Anda perlu mengubah informasi apa pun, lanjutkan ke meja akreditasi';
 $lang['AutoCheckinConfirm']='Jika semua detail sudah benar, tekan CONFIRM CHECK-IN<br> Jika tidak, tekan CANCEL dan lanjutkan ke meja akreditasi';
 $lang['AutoCheckinSearch']='Scan Kode QR yang Anda terima atau ketik nama Anda';
@@ -14,6 +15,11 @@ $lang['ChangeComponents']='<p>Untuk melanjutkan perubahan, hapus dulu atlet yang
 &#9655&nbsp;Skor tidak termasuk dalam total babak kualifikasi tim';
 $lang['CombiCompList']='Daftar Kode Kompetisi, dipisahkan koma';
 $lang['FlightsManagement']='<b>Ke kategori penerbangan</b> <ul> <li>Pilih Ujung mana - Total Jarak - Total Penuh hitung penerbangan;</li> <li>Pilih ukuran potongan penerbangan awal berdasarkan kategori. Sistem memuat tabel penerbangan standar NFAA ketika kompetisi mengizinkannya;</li> <li>Pratinjau Pengelompokan Penerbangan akan menghitung SEMUA KATEGORI, tekan tombol muat ulang di sisi ukuran potongan penerbangan untuk memaksa penghitungan satu kategori; </li> <li>Penerbangan yang ditandai oranye hanyalah indikator perbedaan antara penerbangan yang dipratinjau dan tabel peraturan. Ini TIDAK mempengaruhi divisi penerbangan.</li> <li>Gunakan perintah drop - split - merge untuk menyesuaikan info penerbangan. Harap dicatat, setelah menjalankan pratinjau penuh atau penyegaran kategori, semua perubahan pada penerbangan akan hilang.</li> </ul> <b>Catatan</b> <ul> <li>Kategori dengan peserta yang terlalu sedikit tidak termasuk dari terbang. Penerbangan dapat dipaksa dengan menunjukkan jumlah pemotongan penerbangan;</li> <li>Jika suatu kategori dianggap diterbangkan, gunakan \'-1\' sebagai potongan untuk secara eksplisit mengecualikan dari penerbangan</li> <li>Profesional dan/atau Kejuaraan sebagai dikecualikan dari penerbangan dan berwarna abu-abu</li> </ul>';
+$lang['FontFamily']='Nama huruf untuk digunakan di CSS';
+$lang['FontFile']='Lokasi file di disk';
+$lang['FontName']='Nama huruf sebenarnya';
+$lang['FontStyle']='Gaya huruf pada CSS';
+$lang['FontWeight']='Tebal huruf pada CSS';
 $lang['GetBarcodeSeparator']='Setelah mencetak lembar referensi barcode, baca «SEPARATOR» barcode untuk mengaktifkan item pembaca yang benar.';
 $lang['HomePage']='Halaman ini tempat Anda dapat memilih atau membuat turnamen.';
 $lang['ISK-LockedSessionHelp']='{$a} ikon menunjukkan apakah aplikasi dapat memproses skor atau tidak dalam sesi yang dimaksud';
@@ -25,6 +31,7 @@ $lang['QrCodePortrait']='bidang ini mampu membaca HTML. Jika Anda menyisipkan se
 $lang['ScoreBarCodeShortcuts']='Baca Barcode yang tercetak di kartu skor.<br/>
 Memasukkan # secara manual diikuti dengan nama atlet mencari database untuk menemukan atlet tersebut<br/>
 Memasukkan @ diikuti dengan nomor target akan mencari target tersebut. Jarak HARUS diatur. Sesi harus ditentukan (digit pertama) dan target diisi 0 hingga 3 digit.';
+$lang['ScoreboardFreetext-Texts']='Insert {{date}} to insert the date in english format (ie: january 4, 2024).<br> Insert {{date-lang}} to insert a date in local language (ie: {{date-de}} to have 4. Januar 2024)<br> Insert {{time}} to have the ticking time in ISO format (ie: 15:03:23)<br> Insert {{time-am}} to have ticking time in AM/PM format (ie: 3:03:23 PM)<br> Insert {{counter-datetime}} to have a full date countdown (ie: [[[days:]hours:]minutes:]seconds layout, where datetime is the time to reach in ISO format 2024-12-04T09:00:00 for local time)<br> There can only be one of these fields in a text';
 $lang['TargetRequests-Printout']='Mencetak QrCode dari target yang diminta agar perangkat pribadi dapat dengan cepat ditetapkan ulang ke target yang benar.<br> Pilih grup perangkat mana yang ingin Anda cetak dan rentang sasaran target:<br> 1-10 mencetak QrCOde dari target 1 hingga 10<br> 1,7,12-15 mencetak QrCOde target 1, 7 dan dari 12 hingga 15';
 $lang['TargetScoring-Printout']='Mencetak QrCode dari target yang diminta untuk proses skoring pada Jarak Target Sesi yang diperlukan dengan ISK NG Lite. Ini adalah kode QR yang sama yang dapat Anda temukan di scorecard<br> Pilih sesi mana yang ingin Anda cetak dan rentang target sasaran:<br> 1-10 mencetak QrCOde dari target 1 hingga 10<br> 1 ,7,12-15 mencetak QrCOde target 1, 7 dan dari 12 hingga 15';
 $lang['TV-ChannelSetup']='= Pengaturan Saluran =
@@ -67,5 +74,7 @@ $lang['TV-RotList']='<div>Ini adalah daftar halaman presentasi yang tersedia unt
 <li>versi lanjutan yang menggunakan kemampuan HTML5 browser modern</li>
 </ul>
 <div>Untuk membuat konten baru, masukkan nama untuk konten tersebut dan tekan tombol.</div>';
+$lang['UserName']='Harus unik dalam sistem. Panjang minimal: 6 karakter';
+$lang['UserPassword']='Biarkan kosong untuk mempertahankan password yang sekarang';
 $lang['ZeroBased']='Nomor berbasis nol';
 ?>

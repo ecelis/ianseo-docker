@@ -16,7 +16,7 @@ if(!CheckTourSession() or !hasACL(AclSpeaker, AclReadOnly) or !$act or is_null($
 
 switch($act) {
 	case 'getSchedule':
-		$Today=date('Y-m-d');
+        $Today=getToday();
 		$OnlyToday='';
 		$SelectedEvent="''";
 		$JSON['onlytoday']=0;
@@ -30,8 +30,18 @@ switch($act) {
 
 		if($IskSequence=getModuleParameter('ISK', 'Sequence') OR $IskSequence=getModuleParameter('ISK-NG', 'Sequence')) {
 			if(!isset($IskSequence['session'])) {
-				$IskSequence=current($IskSequence);
-			}
+                //  cycle through the sequences and fetches the most recent
+                $ToKeep=current($IskSequence);
+                $OldSession='';
+                foreach($IskSequence as $k => $i) {
+                    if($k) {
+                        if($i['session']>$OldSession);
+                        $ToKeep=$i;
+                    }
+                    $OldSession=$i['session'];
+                }
+                $IskSequence=$ToKeep;
+            }
 			// get the running sequence
 			$SelectedEvent="concat(RrMatchScheduledDate,RrMatchScheduledTime) = '{$IskSequence['session']}'";
 			$JSON['running']=$IskSequence['session'];
@@ -95,9 +105,19 @@ switch($act) {
 		$time=$tmp[1];
 
 		if($IskSequence=getModuleParameter('ISK', 'Sequence') OR $IskSequence=getModuleParameter('ISK-NG', 'Sequence')) {
-			if(!isset($IskSequence['session'])) {
-				$IskSequence=current($IskSequence);
-			}
+            if(!isset($IskSequence['session'])) {
+                //  cycle through the sequences and fetches the most recent
+                $ToKeep=current($IskSequence);
+                $OldSession='';
+                foreach($IskSequence as $k => $i) {
+                    if($k) {
+                        if($i['session']>$OldSession);
+                        $ToKeep=$i;
+                    }
+                    $OldSession=$i['session'];
+                }
+                $IskSequence=$ToKeep;
+            }
 			// get the running sequence
 			$JSON['newdata']=($IskSequence['session']==$tmp[0].$tmp[1] ? '' : 'newdata');
 		}
@@ -147,9 +167,19 @@ switch($act) {
 		$row=safe_fetch($rs);
 		$JSON['serverdate']=$row->serverDate;
 		if($IskSequence=getModuleParameter('ISK', 'Sequence') OR $IskSequence=getModuleParameter('ISK-NG', 'Sequence')) {
-			if(!isset($IskSequence['session'])) {
-				$IskSequence=current($IskSequence);
-			}
+            if(!isset($IskSequence['session'])) {
+                //  cycle through the sequences and fetches the most recent
+                $ToKeep=current($IskSequence);
+                $OldSession='';
+                foreach($IskSequence as $k => $i) {
+                    if($k) {
+                        if($i['session']>$OldSession);
+                        $ToKeep=$i;
+                    }
+                    $OldSession=$i['session'];
+                }
+                $IskSequence=$ToKeep;
+            }
 			$tmp=str_replace(' ', '', $schedule);
 			// get the running sequence
 			$JSON['newdata']=($IskSequence['session']==$tmp ? '' : 'newdata');

@@ -76,7 +76,7 @@ echo '<tr><th colspan="2">'.get_text('GetCredentials','Tournament').'</th></tr>
     <tr><td class="Right Bold">'.get_text('To','Tournament').'</td><td id="ToWhenTo">'.$MyRow->ToWhenTo.'</td></tr>';
 
 $Countries=get_Countries();
-echo '<tr><td class="Right Bold">'.get_text('Nation').'</td><td style="background-color:pink">';
+echo '<tr><td class="Right Bold">'.get_text('Natl-Nation','Tournament').'</td><td style="background-color:pink">';
 if($MyRow->ToCountry && !empty($Countries[$MyRow->ToCountry])) {
     echo '<input type="hidden" name="ToNation" id="ToNation" value="'.$MyRow->ToCountry.'">'.$MyRow->ToCountry.'-'.$Countries[$MyRow->ToCountry].'';
 } else {

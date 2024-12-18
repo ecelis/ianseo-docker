@@ -17,7 +17,6 @@ $lang['Optimal value']='Optimaalne väärtus';
 $lang['Parameter']='Parameeter';
 $lang['Password']='Salasõna';
 $lang['PHP settings']='PHP seaded';
-$lang['PHP too old']='Teie PHP versioon on liiga vana. Minimaalne versioon IANSEO kasutamiseks on 5.0';
 $lang['SetSE_WaDist']='WA Distantsid';
 $lang['Status']='Staatus';
 $lang['stdValue']='Väärtus';

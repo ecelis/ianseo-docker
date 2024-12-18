@@ -151,25 +151,36 @@
             $defArrowTotW = $ScoreWidth*(6/$NumUnits);
 
             if(empty($_REQUEST["Blank"]) AND  empty($_REQUEST["IncEmpty"]) && (empty($MyRow->EnId) || empty($MyRow->OppEnId))) {
-				// se è vuoto uno dei due arcieri e non è selezionata l'inclusione
-				$EnIds=array();
-				if(($MyRow->EnId or $MyRow->OppEnId) and $MyRow->EvElimType==4) {
-					// 3D and Field rounds, get the opponent(s) of previous matches
-					if(empty($MyRow->EnId)) {
-						$EnIds=get_winner($MyRow->MatchNo, $MyRow->Event);
-						$MyRow->EnId=$EnIds;
-					}
-					if(empty($MyRow->OppEnId)) {
-						$EnIds=get_winner($MyRow->OppMatchNo, $MyRow->Event);
-						$MyRow->OppEnId=$EnIds;
-					}
-				}
-				// salta al prossimo record
-				if(empty($EnIds)) {
-					continue;
-				}
-				$pdf->ScoreCellHeight=min(9, ($pdf->getPageHeight()-105-4.5*max(is_array($MyRow->EnId) ? count($MyRow->EnId) : 1, is_array($MyRow->OppEnId) ? count($MyRow->OppEnId) : 1))/(4+($MyRow->FinElimChooser ? $MyRow->EvElimEnds : $MyRow->EvFinEnds)));
-			}
+                // if at least one of the archer is missing and the include all names is set and not a blank scorecard and not include also empty scorecards
+                $EnIds=array();
+                if(!empty($_REQUEST["IncAllNames"])) {
+                    if(empty($MyRow->EnId)) {
+                        $EnIds=get_winner($MyRow->MatchNo, $MyRow->Event);
+                        $MyRow->EnId=$EnIds;
+                    }
+                    if(empty($MyRow->OppEnId)) {
+                        $EnIds=get_winner($MyRow->OppMatchNo, $MyRow->Event);
+                        $MyRow->OppEnId=$EnIds;
+                    }
+                }
+                // salta al prossimo record
+                if(empty($EnIds)) {
+                    continue;
+                }
+                if(is_array($MyRow->EnId) and is_array($MyRow->OppEnId)) {
+                    while(count($MyRow->EnId)<count($MyRow->OppEnId)) {
+                        $MyRow->EnId[]=' ';
+                    }
+                    while(count($MyRow->OppEnId)<count($MyRow->EnId)) {
+                        $MyRow->OppEnId[]=' ';
+                    }
+                }
+            }
+            if(!empty($_REQUEST["Blank"]) and !empty($_REQUEST['Rows'])) {
+                $pdf->ScoreCellHeight = min(9, intval(($pdf->getPageHeight() - 120 - 4.5) / (4 + intval($_REQUEST['Rows']??5))));
+            } else {
+                $pdf->ScoreCellHeight = min(9, intval(($pdf->getPageHeight() - 120 - 4.5 * (is_array($MyRow->EnId) ? count($MyRow->EnId) : 1)) / (4 + ($MyRow->FinElimChooser ?? 0 ? $MyRow->EvElimEnds ?? 5 : $MyRow->EvFinEnds ?? 5))));
+            }
 
 			// disegna lo score di sinistra
 			DrawScore($pdf, $MyRow, 'L');
@@ -308,7 +319,7 @@ function DrawScore(&$pdf, $MyRow, $Side='L') {
 	$pdf->SetFont($pdf->FontStd,'B',10);
 	$pdf->Cell($ScoreWidth-20-2*$TotalW,6, get_text($MyRow->EventDescr,'','',true), 'B', 0, 'L', 0);
 	$pdf->SetFont($pdf->FontStd,'B',10);
-	$pdf->Cell($TotalW,6, (get_text('Target')) . ' ' . ltrim($MyRow->{$Prefix.'Target'},'0'), '1', 1, 'C', 1);
+	$pdf->Cell($TotalW,6, (get_text('Target')) . ' ' . ltrim($MyRow->{$Prefix.'Target'}??'','0'), '1', 1, 'C', 1);
 
 	// Rank number
 	$pdf->SetXY($ScoreWidth-$TotalW+$WhereStartX[$WhichScore], 35);
@@ -538,10 +549,18 @@ function DrawScore(&$pdf, $MyRow, $Side='L') {
 
 function get_winner($MatchNo, $Event) {
 	$ret=array();
-	$q=safe_r_sql("select concat(ucase(EnFirstName), ' ', EnName, ' - ', CoCode) as Athlete, EnId, FinMatchNo, FinWinLose 
+    $Bronze=($MatchNo==2 or $MatchNo==3);
+    if($MatchNo<2) {
+        $MatchNo+=2;
+    }
+	$q=safe_r_sql("select concat('(#', IndRank, ') ', ucase(EnFirstName), ' ', EnName, ' - ', CoCode) as Athlete, EnId, FinMatchNo, FinWinLose 
 		from Finals 
-	    left join Entries on EnId=FinAthlete and FinEvent='$Event' and EnTournament=FinTournament
-		left join Countries on CoId=EnCountry and CoTournament=FinTournament
+	    left join (select EnId, EnTournament, EnFirstName, EnName, CoCode, IndRank
+            from Entries 
+            inner join Countries on CoId=EnCountry and CoTournament=EnTournament
+            inner join Individuals on IndTournament=EnTournament and IndEvent='$Event' and IndId=EnId
+            where EnTournament={$_SESSION['TourId']}
+            ) Entries on EnId=FinAthlete and EnTournament=FinTournament
 		where FinMatchNo in (".($MatchNo*2).", ".($MatchNo*2 + 1).") and FinEvent='$Event' and FinTournament={$_SESSION['TourId']} order by FinWinLose desc");
 	while($r=safe_fetch($q)) {
 		if($r->FinWinLose) {
@@ -553,6 +572,11 @@ function get_winner($MatchNo, $Event) {
 			$ret[]=$r->Athlete;
 		}
 	}
+    $ret=array_unique($ret);
+    if($Bronze and count($ret)==1) {
+        // if the semifinals are with only one contender, then no bronze are done!
+        $ret=[' '];
+    }
 	return $ret;
 }
 

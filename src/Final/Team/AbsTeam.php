@@ -49,6 +49,7 @@ if(!empty($_REQUEST["RESET"]) AND intval($_REQUEST["RESET"])==(count($EventCodes
 $JS_SCRIPT = array( phpVars2js(array(
         'ROOT_DIR'=>$CFG->ROOT_DIR,
         'MsgInitFinalGridsError'=>get_text('MsgInitFinalGridsError'),
+        'MsgInitFinalGridsRunningError'=>get_text('MsgInitFinalGridsRunningError'),
         'MsgAttentionFinReset'=>get_text('MsgAttentionFinReset'),
         'CmdCancel' => get_text('CmdCancel'),
         'CmdConfirm' => get_text('Confirm', 'Tournament'),
@@ -184,7 +185,7 @@ if(count($EventCodes) != 0) {
             }
 
             // Team Components
-            $now = date('Y-m-d H:i:s');
+            $now = getToday('now', 'Y-m-d H:i:s');
             safe_w_SQL("INSERT INTO TeamFinComponent (TfcCoId, TfcSubTeam, TfcTournament, TfcEvent, TfcId, TfcOrder, TfcTimeStamp) 
 				SELECT TcCoId, TcSubTeam, TcTournament, TcEvent, TcId, TcOrder, '{$now}'
 				FROM TeamComponent 
@@ -331,7 +332,7 @@ if(count($EventCodes) != 0) {
         }
     }
 } else {
-    $Sql = "SELECT EvCode, EvEventName, EvNumQualified, EvShootOff, GROUP_CONCAT(DISTINCT itemNo) as SoCt " .
+    $Sql = "SELECT EvCode, EvEventName, EvNumQualified, EvShootOff, EvRunning, GROUP_CONCAT(DISTINCT itemNo) as SoCt " .
         "FROM Events " .
         "LEFT JOIN (
             SELECT TeEvent, CONCAT_WS('|', COUNT(*), TeSO) as itemNo 
@@ -353,12 +354,16 @@ if(count($EventCodes) != 0) {
     echo '<tr><th colspan="3">'.get_text('Event').'</th><th></th><th>'.get_text('ShotOff', 'Tournament').'</th><th>'.get_text('CoinToss', 'Tournament').'</th><th></th></tr>';
     while ($r=safe_fetch($q)) {
         $toBesolved = false;
+        $canBesolved = true;
         $status = '';
         if($r->EvShootOff==0) {
             $toBesolved = true;
         }
-        echo '<tr class="rowHover"  id="ev_'.$r->EvCode.'" toBeSolved="'.intval($toBesolved).'">'.
-            '<th class="smallContainer" onclick="gotoShootOff(\''.$r->EvCode.'\',true)"><div class="so-status'.($toBesolved ? ' notsolved':'').'">&nbsp;</div></th>'.
+        if($r->EvRunning==1) {
+            $canBesolved = false;
+        }
+        echo '<tr class="rowHover"  id="ev_'.$r->EvCode.'" toBeSolved="'.intval($toBesolved).'" canBeSolved="'.intval($canBesolved).'" >'.
+            '<th class="smallContainer" onclick="gotoShootOff(\''.$r->EvCode.'\',true)"><div class="so-status'.($canBesolved ? ($toBesolved ? ' notsolved':''):' notsolvable').'">&nbsp;</div></th>'.
             '<td class="evCodeContainer" onclick="gotoShootOff(\''.$r->EvCode.'\',true)">'.$r->EvCode.'</td>'.
             '<td class="evContainer" onclick="gotoShootOff(\''.$r->EvCode.'\',true)">'.$r->EvEventName.'</td>';
         $so=array();

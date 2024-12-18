@@ -92,6 +92,9 @@ $lang['RasIpAddress']='IP adrese';
 $lang['RasLastSeen']='Pēdējā pieslēgšanās';
 $lang['RaspControl']='Raspberry Pārvaldība';
 $lang['RaspDevice']='Ierīce';
+$lang['ScorecardsEmpty']='Tukši protokli';
+$lang['ScorecardsFull']='Protokoli ar bultu vērtībām';
+$lang['UsePersonalDevices-Print']='Drukāt vairoga pieprasījuma QR kodu uz protokoliem';
 $lang['WAToolbox-MissingParams']='Trūkst parametri';
 $lang['WAToolbox-NoCompCode']='Trūkst sacensību kods';
 ?>

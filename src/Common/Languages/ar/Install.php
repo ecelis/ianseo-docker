@@ -1,4 +1,5 @@
 <?php
+$lang['Database name']='إسم قاعدة البيانات';
 $lang['SetKidClass']='مراحل الشباب فقط';
 $lang['SetOneClass']='مرحلة واحدة للجميع';
 $lang['SetOrdinary']='بطولة عادية';

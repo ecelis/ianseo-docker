@@ -25,6 +25,7 @@ $IncludeJquery=true;
 $PAGE_TITLE=get_text('ManDistances','Tournament');
 
 $JS_SCRIPT = array(
+    '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/js/Fun_JS.inc.js"></script>',
     '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Tournament/ManDistances.js"></script>',
     '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Tournament/ManDistancesSessions.js"></script>',
 	phpVars2js(array(

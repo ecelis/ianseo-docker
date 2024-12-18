@@ -1,6 +1,7 @@
 <?php
 $lang['AutoUpdate']='Atjaunot automātiski';
 $lang['BarRecord']='Rādīt Vidējo Rekorda Slieksni';
+$lang['BrokenRecords']='Pārspētie rekordi';
 $lang['ByClub']='Pēc valsts/kluba';
 $lang['ByEvent']='Pēc sacensību veida';
 $lang['ByName']='Pēc vārda';
@@ -62,11 +63,15 @@ $lang['Record-GR-WAAM-CG']='PanAmerican spēļu rekords';
 $lang['Record-GR-WAAM-CG-avg']='PanAmerican spēļu rekorda vidējais';
 $lang['Record-GR-WAE-CG']='Eiropas spēļu rekords';
 $lang['Record-GR-WAE-CG-avg']='Eiropas spēļu rekords, vid.';
+$lang['Record-OR-avg']='Olimpiskais rekords vidēji';
 $lang['Record-OR-WA']='Olimpiskais rekords';
 $lang['Record-OR-WA-avg']='Olimpiskais rekords vid.';
+$lang['Record-WAE-CR-avg']='Eiropas rekords vidēji';
+$lang['Record-WR-avg']='Pasaules rekords vidēji';
 $lang['Record-WR-WA']='Pasaules rekords';
 $lang['Record-WR-WA-avg']='Pasaules rekords vid.';
 $lang['RR_Score']='RR rezultāts';
+$lang['StandingRecords']='Aktuālie rekordi';
 $lang['Teams']='Komandas';
 $lang['TypeName']='Ierakstiet vārdu, kuru meklējat';
 $lang['ViewIndividualResults']='Apskatīt individuālos rezultātus';

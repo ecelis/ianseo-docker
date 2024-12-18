@@ -1,8 +1,10 @@
 <?php
 $lang['ErrArcherCodeExists']='ID Arquero ya Existe';
+$lang['ErrArcherCodeFree']='ID Arquero Disponible';
 $lang['ErrArcherCodeTooLong']='ID Arquero es Demasiado Largo';
 $lang['ErrArcherDobWrong']='Formato incorrecto Fecha de Nacimiento del Arquero';
 $lang['ErrArcherGivenLong']='Nombre Arquero Demasiado Largo';
+$lang['ErrArcherNoCode']='Arquero Sin Número de ID';
 $lang['ErrArcherNoDob']='Falta fecha de nacimiento del arquero';
 $lang['ErrArcherNoGiven']='Falta Nombre del Arquero';
 $lang['ErrArcherRegDateWrong']='Formato Incorrecto de la Fecha de Registro del Arquero';
@@ -10,6 +12,7 @@ $lang['ErrClassNotFound']='Clase No Encontrada';
 $lang['ErrClubCodeExists']='Código Club Ya Existe';
 $lang['ErrClubFullNameTooLong']='Nombre del Club Demasiado Largo';
 $lang['ErrClubId']='Club Inválido';
+$lang['ErrClubRegDateWrong']='Formato Fecha de Registro Errónea';
 $lang['ErrClubShortNameTooLong']='Nombre Corto del Club es Demasiado Largo';
 $lang['ErrDate']='Fecha inválida';
 $lang['ErrDivision']='División Incorrecta';
@@ -25,5 +28,6 @@ $lang['ErrPassDoNotMatch']='La contraseña no coincide';
 $lang['ErrPassToSet']='Ingrese nueva contraseña';
 $lang['ErrSubClass']='Sub Clase inválida';
 $lang['ErrSubClassNotFound']='Subclase No Encontrada';
+$lang['InvalidData']='Información Inválida';
 $lang['WrongType']='Tipo Incorrecto';
 ?>

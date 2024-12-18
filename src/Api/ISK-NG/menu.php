@@ -12,6 +12,9 @@ if ($acl[AclISKServer] == AclReadWrite) {
         $ret['API'][] = MENU_DIVIDER;
     }
     $ret['API'][] = get_text('ISK-AppQrCode', 'Api') . '|' . $CFG->ROOT_DIR . 'Api/ISK-NG/QRcodes.php|||QrCode';
+    if ($_SESSION['UseApi'] == ISK_NG_LIVE_CODE and module_exists('ISK-NG_Live')) {
+        $ret['API'][] = get_text('ISK-GetQRData') . '|' . $CFG->ROOT_DIR . 'Api/ISK-NG/ManualDataDownload.php';
+    }
     if($_SESSION['UseApi']!=ISK_NG_LITE_CODE and getModuleParameter('ISK-NG', 'UsePersonalDevices')) {
         $ret['API'][] = get_text('TargetRequests-Printout', 'Api') . '|' . $CFG->ROOT_DIR . 'Api/ISK-NG/TargetRequests.php';
     } else if ($_SESSION['UseApi']==ISK_NG_LITE_CODE) {

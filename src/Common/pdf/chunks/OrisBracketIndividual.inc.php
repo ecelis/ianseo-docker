@@ -136,8 +136,8 @@ foreach($rankData['sections'] as $Event => $section) {
 
 			$Obj1->ScheduledDate = ($ShowSchedule ? $item['scheduledDate'] : '');
 			$Obj1->ScheduledTime = ($ShowSchedule ? $item['scheduledTime'] : '');
-			$Obj1->Saved = ($item['oppPosition'] and $item['oppPosition']<=$section['meta']['numSaved']) ? $PdfData->rankData['meta']['saved'] : '';
-			$Obj1->DrawMatch=$DrawMatch;
+			$Obj1->Saved = ($PhaseNum>=32 AND $item['oppPosition'] and $item['oppPosition']<=$section['meta']['numSaved']) ? $PdfData->rankData['meta']['saved'] : '';
+            $Obj1->DrawMatch=$DrawMatch;
 			$Obj1->ToDo = ($DrawMatch or $item['saved']);
 
 			// second athlete of match
@@ -174,8 +174,8 @@ foreach($rankData['sections'] as $Event => $section) {
 			$Obj2->FSTarget = ($ShowTargetNo ? $item['oppTarget'] : '');
 			$Obj2->ScheduledDate = ($ShowSchedule ? $item['scheduledDate'] : '');
 			$Obj2->ScheduledTime = ($ShowSchedule ? $item['scheduledTime'] : '');
-			$Obj2->Saved = ($item['position'] and $item['position']<=$section['meta']['numSaved']) ? $PdfData->rankData['meta']['saved'] : '';
-			$Obj2->DrawMatch=$DrawMatch;
+			$Obj2->Saved = ($PhaseNum>=32 AND $item['position'] and $item['position']<=$section['meta']['numSaved']) ? $PdfData->rankData['meta']['saved'] : '';
+            $Obj2->DrawMatch=$DrawMatch;
 			$Obj2->ToDo = ($DrawMatch or $item['oppSaved']);
 
 			// what exactly has to print as "score" for side A...

@@ -154,6 +154,7 @@ echo '<tr>';
 echo '<td colspan="2" class="Left">';
 echo '<input name="ScoreFilled" type="checkbox" value="1">&nbsp;' . get_text('ScoreFilled') . '<br>';
 echo '<input name="IncEmpty" type="checkbox" value="1">&nbsp;' . get_text('ScoreIncEmpty') . '<br>';
+echo '<input name="IncAllNames" type="checkbox" value="1">&nbsp;' . get_text('ScoreIncAllNames') . '<br>';
 echo '<input name="ScoreFlags" type="checkbox" value="1">&nbsp;' . get_text('ScoreFlags','Tournament') . '<br>';
 if(module_exists("Barcodes"))
     echo '<input name="Barcode" type="checkbox" checked value="1">&nbsp;' . get_text('ScoreBarcode','Tournament') . '<br>';

@@ -32,7 +32,6 @@ $lang['CancelAcc']='Tühista akrediteering';
 $lang['CannotDelete']='Seda ei ole võimalik kustutada';
 $lang['CatDos']='Vilekohtunik';
 $lang['CatJudge']='Kohtunikud';
-$lang['ChairmanJudge']='Peakohtunik';
 $lang['CheckScorecards']='Kontrolli arvestuskaarte';
 $lang['Classes']='Vanuseklassid';
 $lang['ClickToMailRequest']='Kliki, et avada eeltäidetud e-kiri';

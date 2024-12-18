@@ -29,7 +29,8 @@
   "homepage": "https://github.com/ecelis/ianseo-docker#readme",
   "devDependencies": {
     "husky": "^8.0.0",
-    "standard-version": "^9.5.0"
+    "standard-version": "^9.5.0",
+    "unzipper": "^0.12.3"
   },
   "dependencies": {
     "@commitlint/cli": "^17.2.0",

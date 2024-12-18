@@ -11,6 +11,7 @@ $pdf->pushMargins();
 
 $pdf->SetLineWidth(0.125);
 $pdf->setCellPaddings(0.5,0,0.5,0);
+$pdf->setDocUpdate($PdfData->LastUpdate ?? '');
 
 //Costanti
 $PaginaUtile=$pdf->GetPageHeight()-56; // 35 top margin + 20 bottom margin
@@ -222,7 +223,7 @@ foreach($rankData['sections'] as $Event => $section) {
 				$pdf->SetXY($LineXstart,$OrgY);
 			}
 
-			if($ShowSchedule and $Match['scheduledTime']!='00:00' and $Match['scheduledDate']!='00-00-0000' and (trim($Match['scheduledTime']) or trim($Match['scheduledDate'])) and !($Match['score'] or $Match['setScore']) and !($Match['oppScore'] or $Match['oppSetScore']) and !$Match['tie'] and !$Match['oppTie']) {
+			if($ShowSchedule and $Match['scheduledTime']!='00:00' and $Match['scheduledDate']!='00-00-0000' and (trim($Match['scheduledTime']??'') or trim($Match['scheduledDate']??'')) and !($Match['score'] or $Match['setScore']) and !($Match['oppScore'] or $Match['oppSetScore']) and !$Match['tie'] and !$Match['oppTie']) {
 				if($FirstPhase && $section['meta']['firstPhase']<24) {
 					$pdf->SetY($OrgY-3, false);
 					$pdf->SetFont($pdf->FontStd,'I',6);

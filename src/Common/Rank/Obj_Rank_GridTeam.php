@@ -446,7 +446,7 @@ require_once('Common/Lib/Fun_PrintOuts.php');
 						'elimMaxScore' => $myRow->EvElimArrows*10,
 						'targetType' => $myRow->TarDescr,
 						'targetTypeId' => $myRow->TarId,
-						'targetTypeValues' => GetTarget($this->tournament, $myRow->TarDescr),
+						'targetTypeValues' => GetTarget($this->tournament, $myRow->TarDescr, true),
 						'targetSize' => $myRow->TargetSize,
 						'distance' => $myRow->Distance,
 						'version' => $myRow->DocVersion,

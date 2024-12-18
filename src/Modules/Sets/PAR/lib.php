@@ -272,8 +272,8 @@ function InsertStandardEvents($TourId, $SubRule, $Outdoor=true) {
         InsertClassEvent($TourId, 1, 3, 'CU21M', 'C', 'U21M');
         InsertClassEvent($TourId, 1, 3, 'CU21W', 'C', 'U21W');
     }
-	InsertClassEvent($TourId, 1, 2, 'MW1', 'W1', 'U21M');
-	InsertClassEvent($TourId, 1, 2, 'WW1', 'W1', 'U21W');
+	InsertClassEvent($TourId, 1, 2, 'MW1', 'W1', 'M');
+	InsertClassEvent($TourId, 1, 2, 'WW1', 'W1', 'W');
 	InsertClassEvent($TourId, 1, 2, 'U21MW1', 'W1', 'U21M');
 	InsertClassEvent($TourId, 1, 2, 'U21WW1', 'W1', 'U21W');
 	if($Outdoor) {

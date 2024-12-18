@@ -430,6 +430,12 @@ include('Common/Templates/tail.php');
 
 function getFieldPos($r) {
 	global $CFG, $CardType, $CardNumber, $CardFile;
+    static $Fonts='';
+    if(empty($Fonts)) {
+        foreach(getFonts() as $file => $font) {
+            $Fonts.='<option value="'.$file.'">'.$font['name'].'</option>';
+        }
+    }
 	$ret='<tr icetype="'.$r->IceType.'" iceorder="'.$r->IceOrder.'">
 		<th><a href="?delete='.$r->IceOrder.'&CardType='.$CardType.'&CardNumber='.$CardNumber.'" onclick="return(confirm(\''.get_text('MsgAreYouSure').'\'))"><img src="'.$CFG->ROOT_DIR.'Common/Images/drop.png"></a></th>
 		<th><input type="hidden" id="Content['.$r->IceOrder.'][Type]" value="'.$r->IceType.'">
@@ -540,6 +546,7 @@ function getFieldPos($r) {
                 $txt='<select onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Ranking]">
                     <option value="Cardinal"'   .($r->IceContent=='Cardinal'   ?' selected':'').'>'.get_text('RnkCardinalEN',    'BackNumbers').'</option>
                     <option value="Ordinal"'   .($r->IceContent=='Ordinal'   ?' selected':'').'>'.get_text('RnkOrdinal',    'BackNumbers').'</option>
+					<option value="Roman"'   .($r->IceContent=='Roman'   ?' selected':'').'>'.get_text('RnkRoman',    'BackNumbers').'</option>
                 </select>';
             }
 		case 'FinalRanking':
@@ -547,6 +554,7 @@ function getFieldPos($r) {
                 $txt='<select onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][FinalRanking]">
                     <option value="Cardinal"'   .($r->IceContent=='Cardinal'   ?' selected':'').'>'.get_text('RnkCardinalEN',    'BackNumbers').'</option>
                     <option value="Ordinal"'   .($r->IceContent=='Ordinal'   ?' selected':'').'>'.get_text('RnkOrdinal',    'BackNumbers').'</option>
+					<option value="Roman"'   .($r->IceContent=='Roman'   ?' selected':'').'>'.get_text('RnkRoman',    'BackNumbers').'</option>
                 </select>';
             }
         case 'WRank':
@@ -625,31 +633,7 @@ function getFieldPos($r) {
 					<br/><input size="6" type="text" class="jscolor {hash:true,required:false} jscolor-active" id="Content['.$r->IceOrder.'][Options][BackCol]" onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Options][BackCol]" value="' . $Options['BackCol'] . '"></td>
 				<td><br/><input type="checkbox" onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Options][BackCat]"'.(empty($Options['BackCat']) ? '' : ' checked="checked"').'></td>
 				<td><select onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Options][Font]">
-					<option value="arial"' . ($Options['Font']=='arial' ? ' selected' : '') . '>Arial</option>
-					<option value="arialbd"' . ($Options['Font']=='arialbd' ? ' selected' : '') . '>Arial Bold</option>
-					<option value="ariali"' . ($Options['Font']=='ariali' ? ' selected' : '') . '>Arial Italic</option>
-					<option value="arialbi"' . ($Options['Font']=='arialbi' ? ' selected' : '') . '>Arial Bold Italic</option>
-					<option value="helveticaneueltpro"' . ($Options['Font'] == 'helveticaneueltpro' ? ' selected' : '') . '>Helvetica Neue LT Pro</option>
-					<option value="helveticaneueltprob"' . ($Options['Font'] == 'helveticaneueltprob' ? ' selected' : '') . '>Helvetica Neue LT Pro Bold</option>
-					<option value="helveticaneueltproi"' . ($Options['Font'] == 'helveticaneueltproi' ? ' selected' : '') . '>Helvetica Neue LT Pro Italic</option>
-					<option value="helveticaneueltprobi"' . ($Options['Font'] == 'helveticaneueltprobi' ? ' selected' : '') . '>Helvetica Neue LT Pro Bold Italic</option>
-					<option value="helveticaneueltprocn"' . ($Options['Font'] == 'helveticaneueltprocn' ? ' selected' : '') . '>Helvetica Neue LT Pro Condensed</option>
-					<option value="helveticaneueltprocnb"' . ($Options['Font'] == 'helveticaneueltprocnb' ? ' selected' : '') . '>Helvetica Neue LT Pro Condensed Bold</option>
-					<option value="helveticaneueltprocni"' . ($Options['Font'] == 'helveticaneueltprocni' ? ' selected' : '') . '>Helvetica Neue LT Pro Condensed Italic</option>
-					<option value="helveticaneueltprocnbi"' . ($Options['Font'] == 'helveticaneueltprocnbi' ? ' selected' : '') . '>Helvetica Neue LT Pro Condensed Bold Italic</option>
-					<option value="helveticacondensed"' . ($Options['Font']=='helveticacondensed' ? ' selected' : '') . '>Helvetica Condensed</option>
-					<option value="helveticacondensedbold"' . ($Options['Font']=='helveticacondensedbold' ? ' selected' : '') . '>Helvetica Condensed Bold</option>
-					<option value="times"' . ($Options['Font']=='times' ? ' selected' : '') . '>Times</option>
-					<option value="timesbd"' . ($Options['Font']=='timesbd' ? ' selected' : '') . '>Times Bold</option>
-					<option value="timesi"' . ($Options['Font']=='timesi' ? ' selected' : '') . '>Times Italic</option>
-					<option value="timesbi"' . ($Options['Font']=='timesbi' ? ' selected' : '') . '>Times Bold Italic</option>
-					<option value="cour"' . ($Options['Font']=='cour' ? ' selected' : '') . '>Courier</option>
-					<option value="courbd"' . ($Options['Font']=='courbd' ? ' selected' : '') . '>Courier Bold</option>
-					<option value="couri"' . ($Options['Font']=='couri' ? ' selected' : '') . '>Courier Italic</option>
-					<option value="courbi"' . ($Options['Font']=='courbi' ? ' selected' : '') . '>Courier Bold Italic</option>
-					<option value="FreeSans"' . ($Options['Font']=='FreeSans' ? ' selected' : '') . '>'.get_text('PrintCyrillic', 'Tournament').'</option>
-					<option value="DroidSansFallback"' . ($Options['Font']=='DroidSansFallback' ? ' selected' : '') . '>'.get_text('PrintChinese', 'Tournament').'</option>
-					<option value="arialuni"' . ($Options['Font']=='arialuni' ? ' selected' : '') . '>'.get_text('PrintJapanese', 'Tournament').'</option>
+				    '.preg_replace('/value="'.$Options['Font'].'(.ttf)*"/','$0 selected="selected"', $Fonts).'
 					</select></td>
 				<td><input size="3" type="text" onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Options][Size]" value="' . $Options['Size'] . '"></td>
 				<td><select onchange="UpdateRowContent(this)" id="Content['.$r->IceOrder.'][Options][Just]">

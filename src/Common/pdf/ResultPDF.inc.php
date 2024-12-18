@@ -192,7 +192,7 @@ class ResultPDF extends IanseoPdf {
 		global $Arr_StrStatus;
 	//Legenda per la possibilit� di partecipazione (STATUS)
 		$this->SetXY(10,$this->GetY()+10);
-		if(!$this->SamePage(5+ceil(count($Arr_StrStatus)/2)*4))
+		if(!$this->SamePage(5+ceil(count($Arr_StrStatus??[])/2)*4))
 			$this->AddPage();
 	   	$this->SetFont($this->FontStd,'B',$this->FontSizeLines);
 		$this->Cell(190, 5, $this->LegendStatus, 1, 1, 'C', 1);
@@ -748,7 +748,7 @@ class ResultPDF extends IanseoPdf {
 			$this->Cell(8, 4,  $a['subclass'], 1, ($running ? 1 : 0), 'C', 0);
 			$this->SetFont($this->FontFix,'',$this->FontSizeHead);
 			if(!$running) {
-				$this->Cell(9, 4, number_format($a['quscore'], 0, '', $this->NumberThousandsSeparator), 1, 1, 'R', 0);
+				$this->Cell(9, 4, number_format(intval($a['quscore']), 0, '', $this->NumberThousandsSeparator), 1, 1, 'R', 0);
 			}
 			$this->SetX(72 - ($running ? 5 : 0));
 		}

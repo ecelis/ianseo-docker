@@ -98,9 +98,9 @@ function devicesRenderer(data) {
                     somethingChanged = true;
                     if(selectedGroups && selectedGroups['g' + gElement.gId] && (selectedGroups['g' + gElement.gId].seq != gElement.gSequence || selectedGroups['g' + gElement.gId].d != SelectedDistance)) {
                         // it is a new sequence so resets the selections
-                        SelectedDistance=(gElement.gDistances.length>1 ? 0 : gElement.gDistances[0].value);
+                        SelectedDistance=(gElement.gDistances.length>1 ? 0 : (gElement.gDistances[0] ? gElement.gDistances[0].value : 0));
                         SelectedEnd=1;
-                        selectedGroups['g' + gElement.gId].d=(gElement.gDistances.length>1 ? 0 : gElement.gDistances[0].value);
+                        selectedGroups['g' + gElement.gId].d=(gElement.gDistances.length>1 ? 0 : (gElement.gDistances[0] ? gElement.gDistances[0].value : 0));
                         selectedGroups['g' + gElement.gId].e=1;
                         selectedGroups['g' + gElement.gId].seq=gElement.gSequence;
                         window.sessionStorage.setItem('selectedGroups',JSON.stringify(selectedGroups));
@@ -548,7 +548,9 @@ function runPartialDone(gId, d, e, doForce = false) {
                 id: catList,
                 status: selectedGroups
             }
-            notifyControllers(BCastPartialImport, {importPartial: catList, g: gId, d: d, e: e });
+            if(isLive) {
+                notifyControllers(BCastPartialImport, {importPartial: catList, g: gId, d: d, e: e });
+            }
             $.post('Results-action.php', form, (data) => {
                 devicesRenderer(data);
                 if (isLive) {
@@ -574,7 +576,9 @@ function partialImport(obj) {
         status: selectedGroups
     }
     curPartialInput.set(form.id+'|'+form.g+'|'+form.d+'|'+form.e, Date.now())
-    notifyControllers(BCastPartialImport, {importPartial: [form.id], g: gId, d: form.d, e: form.e });
+    if(isLive) {
+        notifyControllers(BCastPartialImport, {importPartial: [form.id], g: gId, d: form.d, e: form.e});
+    }
     $.post('Results-action.php', form, (data) => {
          devicesRenderer(data);
          if(isLive) {
@@ -787,7 +791,9 @@ function removeDetails(obj) {
             $.get('Devices-action.php', form, (data2) => {
                 if (!data2.error) {
                     notifyDevices(data2.json);
-                    notifyControllers();
+                    if(isLive) {
+                        notifyControllers();
+                    }
                 }
             });
         }
@@ -831,7 +837,7 @@ function setDns(obj, archerID, doSet) {
                     "deviceId": $(obj).closest('div.resTarget').attr('dev'),
                 }
                 $.get('Devices-action.php', form, (data2) => {
-                    if (!data2.error) {
+                    if (!data2.error && isLive) {
                         notifyControllers();
                     }
                 });
@@ -862,7 +868,7 @@ function setDnf(obj, archerID, doSet) {
                     "deviceId": $(obj).closest('div.resTarget').attr('dev'),
                 }
                 $.get('Devices-action.php', form, (data2) => {
-                    if (!data2.error) {
+                    if (!data2.error && isLive) {
                         notifyControllers();
                     }
                 });

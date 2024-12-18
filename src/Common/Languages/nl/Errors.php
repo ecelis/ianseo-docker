@@ -1,5 +1,10 @@
 <?php
+$lang['AllFieldsMandatory']='Alle velden zijn verplicht';
+$lang['AllMailsRedirect']='Alle meldingen worden verstuurd aan';
 $lang['Anomalies']='Afwijkingen';
+$lang['BarCodeSession']='Er is een fout in de instellingen: herstel een sessie';
+$lang['BarCodeSettings']='Er is een fout in de instellingen';
+$lang['CategoresNotDefined']='categorie definities missen';
 $lang['DirectoryNotWriteable']='De map $a mag niet beschreven worden door de web-server. Wijzig de autorisatie zodat de map beschreven kan worden.';
 $lang['ErrCodeExists']='Code bestaat al';
 $lang['ErrCommitteeError']='Ongeldige code of omschrijving';

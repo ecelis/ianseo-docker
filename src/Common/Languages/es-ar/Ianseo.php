@@ -7,4 +7,5 @@ $lang['Cert-Level3']='Curso Avanzado';
 $lang['Cert-Level4']='Curso de Maestría';
 $lang['Cert-Level5']='Equipo de Ianseo';
 $lang['CertificateManagement']='Gestión de Certificados';
+$lang['GenerateFile']='Crear Archivo';
 ?>

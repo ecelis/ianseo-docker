@@ -61,6 +61,10 @@ switch($_REQUEST['act']) {
         $IN_PHP=true;
         require_once('./UpdateIanseo.php');
         break;
+    case 'updateInnoDb':
+        $JSON['msg']=UpdateToInnoDb(true);
+        $JSON['error']=($JSON['msg']?1:0);
+        break;
 }
 
 JsonOut($JSON);

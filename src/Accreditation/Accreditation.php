@@ -1,6 +1,4 @@
 <?php
-define('debug',false);	// settare a true per l'output di debug
-
 require_once(dirname(dirname(__FILE__)) . '/config.php');
 checkACL(AclAccreditation, AclReadWrite);
 require_once('Common/Fun_Number.inc.php');

@@ -250,6 +250,7 @@ if(!empty($_REQUEST['Id']) and isset($_REQUEST['RuleId'])) {
 			require_once('Common/Lib/Fun_Phases.inc.php');
 			$Cols[]='BYE';
 			$Cols[]='ENDS';
+			$Cols[]='SCHED';
 
 			$Select
 				= "SELECT MAX(greatest(PhId, PhLevel)) AS Phase FROM Events INNER JOIN Phases on PhId=EvFinalFirstPhase and (PhIndTeam & pow(2,EvTeamEvent))=1 where EvTeamEvent=0 and EvTournament={$_SESSION['TourId']}";
@@ -483,6 +484,7 @@ if(!empty($_REQUEST['Id']) and isset($_REQUEST['RuleId'])) {
 			$Cols[]='BYE';
 			$Cols[]='X9';
 			$Cols[]='ENDS';
+            $Cols[]='SCHED';
 		case 'BLABS':
 			$Select =  "SELECT MAX(EvFinalFirstPhase) AS Phase FROM Events where EvTeamEvent=1 and EvTournament={$_SESSION['TourId']}";
 			$Rs=safe_r_sql($Select);

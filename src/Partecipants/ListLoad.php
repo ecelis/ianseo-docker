@@ -310,7 +310,7 @@ if($DataSource) {
 					INNER JOIN `TargetFaces` ON EnTournament=TfTournament
 					WHERE EnCode=".StrSafe_DB($tmpString[1])." AND EnTournament={$_SESSION['TourId']}
 					AND EnClass=".StrSafe_DB($tmpString[3])." AND EnDivision=".StrSafe_DB($tmpString[2])."
-					AND (CONCAT(EnDivision,EnClass) like TfClasses OR if(TfRegExp!='', CONCAT(EnDivision,EnClass) REGEXP TfRegExp, true))
+					AND (CONCAT(EnDivision,EnClass) like TfClasses OR if(TfRegExp!='', CONCAT(EnDivision,EnClass) REGEXP TfRegExp, false))
 					ORDER BY TfId
 					LIMIT " . $tmpString[4] . ",1";
 				$q=safe_r_SQL($Sql);

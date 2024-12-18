@@ -40,7 +40,7 @@ switch($CardType) {
                 $SQL="update Entries set EnBadgePrinted='000-00-00', EnTimestamp=EnTimestamp where EnId in ($ENIDS)";
                 if($_SESSION['AccBooth']) {
                     // we need to log every single Entry...
-                    $q=safe_r_sql("select EnCode, EnIocCode, EnDivision, ToCode from Entries inner join Tournament on EnTournament=ToId where EnId in (($ENIDS)");
+                    $q=safe_r_sql("select EnCode, EnIocCode, EnDivision, ToCode from Entries inner join Tournament on EnTournament=ToId where EnId in ($ENIDS)");
                     while($r=safe_fetch($q)) {
                         LogAccBoothQuerry("update Entries
 						set EnBadgePrinted='0000-00-00', EnTimestamp=EnTimestamp

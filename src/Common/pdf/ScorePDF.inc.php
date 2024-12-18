@@ -600,7 +600,7 @@ class ScorePDF extends IanseoPdf {
 		global $CFG;
 		static $ArrowEnds=array();
 
-        if($FillWithArrows=$this->FillWithArrows) {
+        if($FillWithArrows=$this->FillWithArrows and $this->IsRedding) {
             if($CurDist>1) {
                 foreach(range(1, $CurDist-1) as $k) {
                     if(strlen(trim(str_replace(' ', '', $Data['Arr'.$k])))!=$Data['NumArrows'.$k]) {

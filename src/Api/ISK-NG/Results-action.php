@@ -66,7 +66,7 @@ if(empty($_REQUEST) OR !empty($_REQUEST['isUpdate']) OR !empty($_REQUEST['autoIm
             $_REQUEST['groups']['g'.$Group]['s'] = $Sequence['session'];
             $_REQUEST['groups']['g'.$Group]['seq'] = $Sequence['IskKey'];
             if(!in_array('d', $_REQUEST['groups']['g'.$Group]) OR !in_array($_REQUEST['groups']['g'.$Group]['d'], $Sequence['distance'])) {
-                $_REQUEST['groups']['g' . $Group]['d'] = $Sequence['distance'][0];
+                $_REQUEST['groups']['g' . $Group]['d'] = ($Sequence['distance'][0]??[]);
             }
         }
     }
@@ -94,7 +94,6 @@ if($isRW) {
         case 'setDNF':
             $EnId = intval($_REQUEST['archerId'] ?? 0);
             // get the max hits for that distance
-            $QuHits = 0;
             $QuDistHits = 0;
             $Dist = intval($_REQUEST['d'] ?? 1);
             $q = safe_r_sql("select DiEnds*DiArrows as MaxArrows 
@@ -103,7 +102,6 @@ if($isRW) {
             inner join DistanceInformation on DiTournament=EnTournament and DiSession=QuSession and DiDistance={$Dist}
             where QuId={$EnId}");
             if ($r = safe_fetch($q)) {
-                $QuHits = $r->TotalArrows;
                 $QuDistHits = $r->MaxArrows;
             }
             safe_w_sql("update Qualifications set QuIrmType=5, QuD{$Dist}Hits=$QuDistHits, QuHits=QuD1Hits+QuD2Hits+QuD3Hits+QuD4Hits+QuD5Hits+QuD6Hits+QuD7Hits+QuD8Hits where QuId={$EnId}");

@@ -43,8 +43,8 @@ class OrisPDF extends IanseoPdf {
         }
 		$this->Title=$DocTitle;
 		$this->Number=$DocNumber;
-		$this->Event='';
-		$this->EvPhase='';
+		/*$this->Event='';
+		$this->EvPhase='';*/
 		if(isset($_REQUEST["ReportCreated"]) && preg_match("/^[0-9]{12}$/i", $_REQUEST["ReportCreated"])) {
             $this->utsReportCreated = mktime(substr($_REQUEST["ReportCreated"], 8, 2), substr($_REQUEST["ReportCreated"], 10, 2), 0, substr($_REQUEST["ReportCreated"], 4, 2), substr($_REQUEST["ReportCreated"], 6, 2), substr($_REQUEST["ReportCreated"], 0, 4));
         } else {
@@ -60,6 +60,12 @@ class OrisPDF extends IanseoPdf {
 	}
 
 	public function setDocUpdate($newDate) {
+        if(!$newDate) {
+            return;
+        }
+        if(strlen($newDate)==10) {
+            $newDate.=' 00:00:00';
+        }
 		$this->utsReportCreated = mktime(substr($newDate,11,2),substr($newDate,14,2),0,substr($newDate,5,2),substr($newDate,8,2),substr($newDate,0,4));
 	}
 
@@ -395,7 +401,10 @@ class OrisPDF extends IanseoPdf {
 	}
 
 	function setOrisCode($newCode='', $newTitle='', $force=false) {
-		if($newCode != '' or $force) {
+        // should print the correct Oris Code BEFORE opening the new page
+        $this->endPage();
+
+        if($newCode != '' or $force) {
 			$this->Number=$newCode;
 		}
 		if($newTitle != '' or $force) {
@@ -557,10 +566,10 @@ class OrisPDF extends IanseoPdf {
 	    //After: Coach?
         if(!empty($Data['coach']) OR !empty($Data['oppCoach'])) {
             $this->Cell($HeadWidthTitle, $CellHeight, $Meta['fields']['coach'] . ':');
-            $this->Cell($HeadWidthData, $CellHeight, $Data['coach']);
+            $this->Cell($HeadWidthData, $CellHeight, $Data['coach'] . ($Data['countryCode']!=$Data['coachCountry'] ? ' ('.$Data['coachCountry'].')' : '' ));
             $this->Cell($InterspaceWidth, $CellHeight, '');
             $this->Cell($HeadWidthTitle, $CellHeight, $Meta['fields']['coach'] . ':');
-            $this->Cell($HeadWidthData, $CellHeight, $Data['oppCoach']);
+            $this->Cell($HeadWidthData, $CellHeight, $Data['oppCoach'] . ($Data['oppCountryCode']!=$Data['oppCoachCountry'] ? ' ('.$Data['oppCoachCountry'].')' : '' ));
             $this->ln();
         }
 	    // empty line

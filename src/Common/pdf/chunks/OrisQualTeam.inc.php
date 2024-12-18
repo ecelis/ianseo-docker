@@ -101,19 +101,20 @@ if(count($rankData['sections'])) {
 					}
 					$dataRow[] = trim($tmpNote);
 
-					if($item['so']>0) {
-						$dataRow[] = "T. " . $item['gold'] . ";" . $item['xnine'];
-						$dataRow[] = $item['tiebreakDecoded'] ? $pdf->ShotOffShort . ' ' . $item['tiebreakDecoded'] : $pdf->ShotOffShort;
-
-					} elseif ($item['ct']>1) {
-						$dataRow[] = "T. " . $item['gold'] . ";" . $item['xnine'];
-						$dataRow[] = $pdf->CoinTossShort;
-					} elseif ($item['tie']) {
-						$dataRow[] = "T. " . $item['gold'] . ";" . $item['xnine'];
-						$dataRow[] = " ";
-					} else {
-						$dataRow[]=" ";
-						$dataRow[]=" ";
+					if($item['irm']<10) {
+						if ($item['so'] > 0) {
+							$dataRow[] = "T. " . $item['gold'] . ";" . $item['xnine'];
+							$dataRow[] = $item['tiebreakDecoded'] ? $pdf->ShotOffShort . ' ' . $item['tiebreakDecoded'] : $pdf->ShotOffShort;
+						} elseif ($item['ct'] > 1) {
+							$dataRow[] = "T. " . $item['gold'] . ";" . $item['xnine'];
+							$dataRow[] = $pdf->CoinTossShort;
+						} elseif ($item['tie']) {
+							$dataRow[] = "T. " . $item['gold'] . ";" . $item['xnine'];
+							$dataRow[] = " ";
+						} else {
+							$dataRow[] = " ";
+							$dataRow[] = " ";
+						}
 					}
 
 				} else {

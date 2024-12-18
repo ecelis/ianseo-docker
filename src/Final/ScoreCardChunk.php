@@ -217,7 +217,7 @@ for($m=1;$m<=2;++$m) {
 			$myReview=safe_fetch($rs);
 
 			$out.='<tr><td colspan="' . (5+$cols). '" class="Center">' . get_text($m==1 ? 'RevMainLang' : 'RevSecLang') . '</td></tr>' . "\n";
-			$out.='<tr><td colspan="' . (5+$cols). '" class="Center"><textarea style="width:' . ($_SESSION["WINWIDTH"]*0.45). 'px; height:' . ($_SESSION["WINHEIGHT"]*0.45). 'px;"  id="Lang' . $m . '">' . ($myReview ? $myReview->{'RevLanguage'.$m} : '') . '</textarea></td></tr>' . "\n";
+			$out.='<tr><td colspan="' . (5+$cols). '" class="Center"><textarea style="width: 45%; height:45%" id="Lang' . $m . '">' . ($myReview ? $myReview->{'RevLanguage'.$m} : '') . '</textarea></td></tr>' . "\n";
 		}
 		$out.='</table>' . "\n";
 		$scores[$m]=$out;

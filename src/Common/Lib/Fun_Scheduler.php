@@ -353,8 +353,8 @@ Class Scheduler {
 				inner join Tournament on ToId=SchTournament
 				where SchTournament=$this->TourId
 					and SchDay>0 and SchStart>0
-					".($this->SingleDay ? " and date(convert_tz(SchDay, ToTimeZone, '+00:00'))='$this->SingleDay'" : '')."
-					".($this->FromDay ? " and date(convert_tz(SchDay, ToTimeZone, '+00:00'))>='$this->FromDay'" : '')."
+					".($this->SingleDay ? " and SchDay='$this->SingleDay'" : '')."
+					".($this->FromDay ? " and SchDay>='$this->FromDay'" : '')."
 					";
 		}
 
@@ -426,14 +426,14 @@ Class Scheduler {
 					
 					where DiTournament=$this->TourId
 						and DiDay>0 and (DiStart>0 or DiWarmStart>0)
-						" .($this->SingleDay ? " and date(convert_tz(DiDay, ToTimeZone, '+00:00'))='$this->SingleDay'" : '') ."
-						" .($this->FromDay ? " and date(convert_tz(DiDay, ToTimeZone, '+00:00'))>='$this->FromDay'" : '') ."
+						" .($this->SingleDay ? " and DiDay='$this->SingleDay'" : '') ."
+						" .($this->FromDay ? " and DiDay>='$this->FromDay'" : '') ."
 						" .(strlen($this->SesFilter) ? " and DiSession='$this->SesFilter'" : '') ."  
 					group by DiDistance, DiSession, DiType 
 					order by DiDay, DiStart, DiWarmStart, DiSession, DiDistance";
 			} else {
 				for($i=1; $i<=8; $i++) {
-					$DistanceNames.=" left join (select TdTournament as Td{$i}Tournament, group_concat(distinct Td{$i} separator '£££') as Td{$i}, QuSession as Td{$i}Session from TournamentDistances inner join Entries on EnTournament=TdTournament and concat(EnDivision,EnClass) like TdClasses inner join Qualifications on QuId=EnId where TdTournament={$this->TourId} group by Td{$i}, Td{$i}Session) Td{$i} on Td{$i}Tournament=DiTournament and DiDistance={$i} and Td{$i}Session=DiSession \n";
+					$DistanceNames.=" left join (select TdTournament as Td{$i}Tournament, group_concat(distinct Td{$i} order by Td{$i} desc separator '£££') as Td{$i}, QuSession as Td{$i}Session from TournamentDistances inner join Entries on EnTournament=TdTournament and concat(EnDivision,EnClass) like TdClasses inner join Qualifications on QuId=EnId where TdTournament={$this->TourId} group by Td{$i}Session) Td{$i} on Td{$i}Tournament=DiTournament and DiDistance={$i} and Td{$i}Session=DiSession \n";
 				}
 
 				$SQL[]="select distinct
@@ -468,8 +468,8 @@ Class Scheduler {
 					$DistanceNames
 					where DiTournament=$this->TourId
 						and DiDay>0 and (DiStart>0 or DiWarmStart>0)
-						".($this->SingleDay ? " and date(convert_tz(DiDay, ToTimeZone, '+00:00'))='$this->SingleDay'" : '')."
-						".($this->FromDay ? " and date(convert_tz(DiDay, ToTimeZone, '+00:00'))>='$this->FromDay'" : '')."
+						".($this->SingleDay ? " and DiDay='$this->SingleDay'" : '')."
+						".($this->FromDay ? " and DiDay>='$this->FromDay'" : '')."
 						".(strlen($this->SesFilter) ? " and DiSession='$this->SesFilter'" : '')."
 					order by DiDay, DiStart, DiWarmStart, DiSession, DiDistance";
 			}
@@ -511,8 +511,8 @@ Class Scheduler {
 				inner join DistanceInformation on SesTournament=DiTournament and SesOrder=DiSession and ElElimPhase=DiDistance and DiType='E'
 				where DiTournament=$this->TourId
 					and DiDay>0 and (DiStart>0 or DiWarmStart>0)
-					".($this->SingleDay ? " and date(convert_tz(DiDay, ToTimeZone, '+00:00'))='$this->SingleDay'" : '')."
-					".($this->FromDay ? " and date(convert_tz(DiDay, ToTimeZone, '+00:00'))>='$this->FromDay'" : '')."
+					".($this->SingleDay ? " and DiDay='$this->SingleDay'" : '')."
+					".($this->FromDay ? " and DiDay>='$this->FromDay'" : '')."
 				order by DiDay, DiStart, DiWarmStart, DiSession, DiDistance";
 		}
 
@@ -587,8 +587,8 @@ Class Scheduler {
 				where SesTournament=$this->TourId
 					and SesName!=''
 					and SesDtStart>0
-					".($this->SingleDay ? " and date(convert_tz(SesDtStart, ToTimeZone, '+00:00'))='$this->SingleDay'" : '')."
-					".($this->FromDay ? " and date(convert_tz(SesDtStart, ToTimeZone, '+00:00'))>='$this->FromDay'" : '')."
+					".($this->SingleDay ? " and date(SesDtStart)='$this->SingleDay'" : '')."
+					".($this->FromDay ? " and date(SesDtStart)>='$this->FromDay'" : '')."
 				order by SesDtStart";
 
 			$SQL[]="select distinct
@@ -625,8 +625,8 @@ Class Scheduler {
 				left join FinWarmup on FsEvent=FwEvent and FsTeamEvent=FwTeamEvent and FsTournament=FwTournament and FsScheduledDate=FwDay and FsScheduledTime=FwMatchTime
 				where FsTournament=$this->TourId
 					and FsScheduledDate>0 and (FsScheduledTime>0 or FwTime>0)
-					".($this->SingleDay ? " and date(convert_tz(FsScheduledDate, ToTimeZone, '+00:00'))='$this->SingleDay'" : '')."
-					".($this->FromDay ? " and date(convert_tz(FsScheduledDate, ToTimeZone, '+00:00'))>='$this->FromDay'" : '')."
+					".($this->SingleDay ? " and FSScheduledDate='$this->SingleDay'" : '')."
+					".($this->FromDay ? " and FSScheduledDate>='$this->FromDay'" : '')."
 				group by /*if(EvElimType>=3, FsMatchNo, 0), */FsTeamEvent, FsScheduledDate, FsScheduledTime, Locations, if(EvWinnerFinalRank>1, EvWinnerFinalRank*100-GrPhase, GrPhase), FwTime
 				order by FsTeamEvent, FsScheduledDate, FsScheduledTime, EvFirstRank, GrPhase, FwTime
 				";
@@ -637,9 +637,9 @@ Class Scheduler {
 			$LocationFields=sprintf($LocField, 'RrMatchTarget*1');
 			$Date="RrMatchScheduledDate>0";
 			if($this->SingleDay) {
-				$Date="date(convert_tz(RrMatchScheduledDate, ToTimeZone, '+00:00'))='$this->SingleDay'";
+				$Date="RRMatchScheduledDate='$this->SingleDay'";
 			} elseif($this->FromDay) {
-				$Date="date(convert_tz(RrMatchScheduledDate, ToTimeZone, '+00:00'))>='$this->FromDay'";
+				$Date="RRMatchScheduledDate>='$this->FromDay'";
 			}
 			$SQL[]="select distinct
                 concat_ws('-',group_concat(distinct RrMatchEvent order by EvProgr separator '-'), (RrMatchLevel*1000000)+(RrMatchGroup*10000)+(RrMatchRound*100), sum(RrMatchMatchNo)) as UID,
@@ -685,9 +685,9 @@ Class Scheduler {
 			$LocationFields=sprintf($LocField, '0');
 			$Date="RarStartlist>0";
 			if($this->SingleDay) {
-				$Date="date(convert_tz(RarStartlist, ToTimeZone, '+00:00'))='$this->SingleDay'";
+				$Date="date(RarStartlist)='$this->SingleDay'";
 			} elseif($this->FromDay) {
-				$Date="date(convert_tz(RarStartlist, ToTimeZone, '+00:00'))>='$this->FromDay'";
+				$Date="date(RarStartlist)>='$this->FromDay'";
 			}
 			$SQL[]="select distinct
                 concat_ws('-', RarTeam, RarEvent, RarPhase, RarPool, RarGroup) as UID,
@@ -778,7 +778,7 @@ Class Scheduler {
 								.'|'.$Time
 								.'|'.$Session
 								.'|'.$Distance
-								.'|'.round($Item->Order, 4);
+								.'|'.round((float) $Item->Order, 4);
 							if($Item->Comments) {
 								$SingleKey="{$Item->Duration}-{$Item->Title}-{$Item->SubTitle}-{$Item->Comments}";
 								if(in_array($SingleKey, $Singles)) continue;
@@ -910,11 +910,19 @@ Class Scheduler {
                                                     if($Item->Text!=$OldText) {
                                                         $txt=$Item->Text.'<br/>'.$txt;
                                                     }
-												} elseif($Item==@end(end(end(end($this->Groups[$Item->Type][$Session]))))) {
-													$txt=$Item->DistanceName.implode('<br/>', $lnk);
+//												} elseif($Item==@end(end(end(end($this->Groups[$Item->Type][$Session]))))) {
 												} else {
-													$txt=$Item->DistanceName;
-													// more distances defined so format is different...
+                                                    $txt=$Item->DistanceName;
+                                                    foreach($this->Groups[$Item->Type][$Session] as $k1=>$v1) {
+                                                        if(!empty($v1[$Date][$Time])) {
+                                                            foreach($v1[$Date][$Time] as $tmp) {
+                                                                if($tmp==$Item) {
+                                                                    $txt.='<br/>'.implode('<br/>', $lnk);
+                                                                    break 2;
+                                                                }
+                                                            }
+                                                        }
+                                                    }
 												}
 
                                                 if($Item->RowLocation) {

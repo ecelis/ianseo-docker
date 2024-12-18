@@ -26,6 +26,7 @@ function move2NextPhase($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, $NoR
 
 //Verifico la situazione tiebreak
 	$Confirmed=array();
+    $movedCoaches=array();
 	$Select = "SELECT f.FinEvent, EvMatchMode as MatchMode, 
             EvCheckGolds, EvCheckXNines, if(EvGoldsChars!='', EvGoldsChars, ToGoldsChars) as GoldChars, if(EvXNineChars!='', EvXNineChars, ToXNineChars) as XNineChars, 
             f.FinMatchNo as MatchNo, f2.FinMatchNo as OppMatchNo,  EvFinalFirstPhase,
@@ -83,14 +84,14 @@ function move2NextPhase($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, $NoR
                     $SqlUpdate = "UPDATE Finals SET FinTie=2, FinWinLose=1, FinDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " WHERE FinEvent=" . StrSafe_DB($MyRow->FinEvent) . " AND FinMatchNo=" . StrSafe_DB($MyRow->MatchNo) . " AND FinTournament=" . StrSafe_DB($TourId);
                     safe_w_sql($SqlUpdate);
                 }
-            } elseif($MyRow->FollowBye) {
-                if($MyRow->Athlete!= 0 and $MyRow->OppAthlete==0 and $MyRow->Score == 0 and $MyRow->OppScore==0) {
+            } elseif($MyRow->FollowBye and $MyRow->Score == 0 and $MyRow->OppScore==0 and (($MyRow->Athlete!= 0 and $MyRow->OppAthlete==0) or ($MyRow->Athlete== 0 and $MyRow->OppAthlete!=0))) {
+                if($MyRow->Athlete!= 0 and $MyRow->OppAthlete==0) {
                     //Se uno dei due ATLETI è ZERO ed ENTRAMBI GLI SCORES sono a ZERO imposto il Bye
                     $SqlUpdate = "UPDATE Finals SET FinTie=0, FinWinLose=0, FinDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " WHERE FinEvent=" . StrSafe_DB($MyRow->FinEvent) . " AND FinMatchNo=". StrSafe_DB($MyRow->OppMatchNo) . " AND FinTournament=" . StrSafe_DB($TourId);
                     safe_w_sql($SqlUpdate);
                     $SqlUpdate = "UPDATE Finals SET FinTie=2, FinWinLose=1, FinDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " WHERE FinEvent=" . StrSafe_DB($MyRow->FinEvent) . " AND FinMatchNo=". StrSafe_DB($MyRow->MatchNo) . " AND FinTournament=" . StrSafe_DB($TourId);
                     safe_w_sql($SqlUpdate);
-                } elseif($MyRow->Athlete== 0 and $MyRow->OppAthlete!=0 and $MyRow->Score == 0 and $MyRow->OppScore==0) {
+                } elseif($MyRow->Athlete== 0 and $MyRow->OppAthlete!=0) {
                     $SqlUpdate = "UPDATE Finals SET FinTie=0, FinWinLose=0, FinDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " WHERE FinEvent=" . StrSafe_DB($MyRow->FinEvent) . " AND FinMatchNo=". StrSafe_DB($MyRow->MatchNo) . " AND FinTournament=" . StrSafe_DB($TourId);
                     safe_w_sql($SqlUpdate);
                     $SqlUpdate = "UPDATE Finals SET FinTie=2, FinWinLose=1, FinDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " WHERE FinEvent=" . StrSafe_DB($MyRow->FinEvent) . " AND FinMatchNo=". StrSafe_DB($MyRow->OppMatchNo) . " AND FinTournament=" . StrSafe_DB($TourId);
@@ -107,36 +108,35 @@ function move2NextPhase($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, $NoR
                     $OppScore=0;
                     $AthWin=0;
                     $OppWin=0;
-                    if(count($AthSets) == count($OppSets)) {
-                        for($i=0;$i<count($AthSets);$i++) {
-                            if(intval($AthSets[$i])>intval($OppSets[$i])) {
-                                $AthScore += 2;
-                                $AthWin++;
-                                $AthSpBe[]=2;
-                                $OppSpBe[]=0;
-                            } elseif(intval($AthSets[$i])<intval($OppSets[$i])) {
-                                $OppScore += 2;
-                                $OppWin++;
-                                $AthSpBe[]=0;
-                                $OppSpBe[]=2;
-                            } elseif(intval($AthSets[$i])!=0 and intval($OppSets[$i])!=0) {
-                                $AthScore += 1;
-                                $OppScore += 1;
-                                $AthSpBe[]=1;
-                                $OppSpBe[]=1;
-                            }
+                    $NumSets=min(count($AthSets), count($OppSets));
+                    for($i=0;$i<$NumSets;$i++) {
+                        if(intval($AthSets[$i])>intval($OppSets[$i])) {
+                            $AthScore += 2;
+                            $AthWin++;
+                            $AthSpBe[]=2;
+                            $OppSpBe[]=0;
+                        } elseif(intval($AthSets[$i])<intval($OppSets[$i])) {
+                            $OppScore += 2;
+                            $OppWin++;
+                            $AthSpBe[]=0;
+                            $OppSpBe[]=2;
+                        } elseif(intval($AthSets[$i])!=0 and intval($OppSets[$i])!=0) {
+                            $AthScore += 1;
+                            $OppScore += 1;
+                            $AthSpBe[]=1;
+                            $OppSpBe[]=1;
                         }
-                        if($AthScore > $MyRow->FinEnds+2 or $OppScore > $MyRow->FinEnds+2) {
-                            $AthScore=0;
-                            $OppScore=0;
-                        }
-                        $SqlUpdate = "UPDATE Finals SET FinWinLose=".($AthScore>$MyRow->FinEnds ? 1 : 0).", FinSetPointsByEnd='".implode('|', $AthSpBe)."', FinSetScore=" . StrSafe_DB($AthScore) . ", FinWinnerSet=" . StrSafe_DB($AthWin) . ", FinDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " WHERE FinEvent=" . StrSafe_DB($MyRow->FinEvent) . " AND FinMatchNo=" . StrSafe_DB($MyRow->MatchNo) . " AND FinTournament=" . StrSafe_DB($TourId);
-                        safe_w_sql($SqlUpdate);
-                        $MyRow->Score=$AthScore;
-                        $SqlUpdate = "UPDATE Finals SET FinWinLose=".($OppScore>$MyRow->FinEnds ? 1 : 0).", FinSetPointsByEnd='".implode('|', $OppSpBe)."', FinSetScore=" . StrSafe_DB($OppScore) . ", FinWinnerSet=" . StrSafe_DB($OppWin) . ", FinDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " WHERE FinEvent=" . StrSafe_DB($MyRow->FinEvent) . " AND FinMatchNo=" . StrSafe_DB($MyRow->OppMatchNo) . " AND FinTournament=" . StrSafe_DB($TourId);
-                        safe_w_sql($SqlUpdate);
-                        $MyRow->OppScore=$OppScore;
                     }
+                    if($AthScore > $MyRow->FinEnds+2 or $OppScore > $MyRow->FinEnds+2) {
+                        $AthScore=0;
+                        $OppScore=0;
+                    }
+                    $SqlUpdate = "UPDATE Finals SET FinWinLose=".($AthScore>$MyRow->FinEnds ? 1 : 0).", FinSetPointsByEnd='".implode('|', $AthSpBe)."', FinSetScore=" . StrSafe_DB($AthScore) . ", FinWinnerSet=" . StrSafe_DB($AthWin) . ", FinDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " WHERE FinEvent=" . StrSafe_DB($MyRow->FinEvent) . " AND FinMatchNo=" . StrSafe_DB($MyRow->MatchNo) . " AND FinTournament=" . StrSafe_DB($TourId);
+                    safe_w_sql($SqlUpdate);
+                    $MyRow->Score=$AthScore;
+                    $SqlUpdate = "UPDATE Finals SET FinWinLose=".($OppScore>$MyRow->FinEnds ? 1 : 0).", FinSetPointsByEnd='".implode('|', $OppSpBe)."', FinSetScore=" . StrSafe_DB($OppScore) . ", FinWinnerSet=" . StrSafe_DB($OppWin) . ", FinDateTime=" . StrSafe_DB(date('Y-m-d H:i:s')) . " WHERE FinEvent=" . StrSafe_DB($MyRow->FinEvent) . " AND FinMatchNo=" . StrSafe_DB($MyRow->OppMatchNo) . " AND FinTournament=" . StrSafe_DB($TourId);
+                    safe_w_sql($SqlUpdate);
+                    $MyRow->OppScore=$OppScore;
                 }
             }
 
@@ -336,6 +336,9 @@ function move2NextPhase($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, $NoR
 						// update FinOdfTiming data
 						if(safe_w_affected_rows()) {
 							updateOdfTiming('S', $TourId, $MyRow->Event, 0, $MyRow->NextMatchNo);
+                            if($MyRow->Coach!=0) {
+                                $movedCoaches[]=array('event' => $MyRow->Event, 'matchno' => $MyRow->NextMatchNo);
+                            }
 						}
 
 						$AthProp=$MyRow->Athlete;
@@ -352,6 +355,9 @@ function move2NextPhase($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, $NoR
 							// update FinOdfTiming data
 							if(safe_w_affected_rows()) {
 								updateOdfTiming('S', $TourId, $MyRow->Event, 0, $MyRow->NextMatchNo+2);
+                                if($MyRow->OppCoach!=0) {
+                                    $movedCoaches[]=array('event' => $MyRow->Event, 'matchno' => $MyRow->NextMatchNo+2);
+                                }
 							}
 						}
 					}
@@ -378,6 +384,9 @@ function move2NextPhase($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, $NoR
 						// update FinOdfTiming data
 						if(safe_w_affected_rows()) {
 							updateOdfTiming('S', $TourId, $MyRow->Event, 0, $ShowMatchWinner);
+                            if($MyRow->OppCoach!=0) {
+                                $movedCoaches[]=array('event' => $MyRow->Event, 'matchno' => $ShowMatchWinner);
+                            }
 						}
 
 						$MyUpQuery = "UPDATE Finals SET
@@ -389,6 +398,9 @@ function move2NextPhase($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, $NoR
 						// update FinOdfTiming data
 						if(safe_w_affected_rows()) {
 							updateOdfTiming('S', $TourId, $MyRow->Event, 0, $ShowMatchLoser);
+                            if($MyRow->Coach!=0) {
+                                $movedCoaches[]=array('event' => $MyRow->Event, 'matchno' => $ShowMatchLoser);
+                            }
 						}
 					} else {
 						$MyUpQuery = "UPDATE Finals SET
@@ -400,6 +412,9 @@ function move2NextPhase($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, $NoR
 						// update FinOdfTiming data
 						if(safe_w_affected_rows()) {
 							updateOdfTiming('S', $TourId, $MyRow->Event, 0, $MyRow->NextMatchNo);
+                            if($MyRow->OppCoach!=0) {
+                                $movedCoaches[]=array('event' => $MyRow->Event, 'matchno' => $MyRow->NextMatchNo);
+                            }
 						}
 
 						$AthProp=$MyRow->OppAthlete;
@@ -415,6 +430,9 @@ function move2NextPhase($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, $NoR
 							// update FinOdfTiming data
 							if(safe_w_affected_rows()) {
 								updateOdfTiming('S', $TourId, $MyRow->Event, 0, $MyRow->NextMatchNo+2);
+                                if($MyRow->Coach!=0) {
+                                    $movedCoaches[]=array('event' => $MyRow->Event, 'matchno' => $MyRow->NextMatchNo+2);
+                                }
 							}
 						}
 					}
@@ -544,6 +562,9 @@ function move2NextPhase($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, $NoR
 	foreach($Confirmed as $Item) {
 		runJack("MatchConfirmed", $TourId, array("Event"=>$Item['event'], "Team"=>0, "MatchNo"=>$Item['matchno'], "TourId"=>$TourId));
 	}
+    foreach ($movedCoaches as $Item) {
+        runJack("CoachAssigned", $TourId, array("Event"=>$Item['event'], "Team"=>0, "MatchNo"=>$Item['matchno'], "TourId"=>$TourId));
+    }
 
 	return $AthPropTs;
 }
@@ -560,6 +581,7 @@ function move2NextPhaseTeam($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, 
 
 //Verifico la situazione tiebreak
 	$Confirmed=array();
+    $movedCoaches=array();
 	$Select = "SELECT EvMatchMode as MatchMode, tf.TfEvent, tf.TfMatchNo as MatchNo, tf2.TfMatchNo as OppMatchNo, tf.TfTbClosest Closest, tf2.TfTbClosest OppClosest,
             EvCheckGolds, EvCheckXNines, if(EvGoldsChars!='', EvGoldsChars, ToGoldsChars) as GoldChars, if(EvXNineChars!='', EvXNineChars, ToXNineChars) as XNineChars, 
 			tf.TfTeam AS Team, tf.TfSubteam AS SubTeam, tf2.TfTeam AS OppTeam, tf2.TfSubTeam AS OppSubTeam, tf.TfConfirmed as IsConfirmed, 
@@ -788,6 +810,9 @@ function move2NextPhaseTeam($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, 
 					// update FinOdfTiming data
 					if(safe_w_affected_rows()) {
 						updateOdfTiming('S', $TourId, $MyRow->Event, 1, $MyRow->NextMatchNo);
+                        if($MyRow->Coach!=0) {
+                            $movedCoaches[]=array('event' => $MyRow->Event, 'matchno' => $MyRow->NextMatchNo);
+                        }
 					}
 
 					$AthProp=$MyRow->Team;
@@ -807,6 +832,9 @@ function move2NextPhaseTeam($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, 
 						if(safe_w_affected_rows()) {
 							// update FinOdfTiming data
 							updateOdfTiming('S', $TourId, $MyRow->Event, 1, $MyRow->NextMatchNo+2);
+                            if($MyRow->OppCoach!=0) {
+                                $movedCoaches[]=array('event' => $MyRow->Event, 'matchno' => $MyRow->NextMatchNo+2);
+                            }
 						}
 					}
 				}
@@ -823,6 +851,9 @@ function move2NextPhaseTeam($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, 
 					if(safe_w_affected_rows()) {
 						// update FinOdfTiming data
 						updateOdfTiming('S', $TourId, $MyRow->Event, 1, $MyRow->NextMatchNo);
+                        if($MyRow->OppCoach!=0) {
+                            $movedCoaches[]=array('event' => $MyRow->Event, 'matchno' => $MyRow->NextMatchNo);
+                        }
 					}
 
 					$AthProp=$MyRow->OppTeam;
@@ -842,6 +873,9 @@ function move2NextPhaseTeam($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, 
 						if(safe_w_affected_rows()) {
 							// update FinOdfTiming data
 							updateOdfTiming('S', $TourId, $MyRow->Event, 1, $MyRow->NextMatchNo+2);
+                            if($MyRow->Coach!=0) {
+                                $movedCoaches[]=array('event' => $MyRow->Event, 'matchno' => $MyRow->NextMatchNo+2);
+                            }
 						}
 					}
 				}
@@ -920,6 +954,9 @@ function move2NextPhaseTeam($Phase=NULL, $Event=NULL, $MatchNo=NULL, $TourId=0, 
 	foreach($Confirmed as $Item) {
 		runJack("MatchConfirmed", $TourId, array("Event"=>$Item['event'], "Team"=>1, "MatchNo"=>$Item['matchno'], "TourId"=>$TourId));
 	}
+    foreach ($movedCoaches as $Item) {
+        runJack("CoachAssigned", $TourId, array("Event"=>$Item['event'], "Team"=>1, "MatchNo"=>$Item['matchno'], "TourId"=>$TourId));
+    }
 
 	return $AthPropTs;
 }

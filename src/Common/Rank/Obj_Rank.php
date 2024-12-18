@@ -77,7 +77,7 @@
 				$this->tournament=$_SESSION['TourId'];
 			}
 
-			$q=safe_r_sql("select ToTimeZone, ToOptions, ToCode, year(ToWhenTo) as ToYear, ToBlock & 1024 as Flighted, RecAreas.* 
+			$q=safe_r_sql("select ToTimeZone, ToOptions, ToCode, year(ToWhenTo) as ToYear, ((ToBlock & 1024) AND ToLocRule='NFAA')  as Flighted, RecAreas.* 
 				from Tournament 
 			    left join (select distinct RecAreas.*, TrTournament from RecAreas inner join TourRecords on TrRecCode=ReArCode and TrTournament=$this->tournament) RecAreas on TrTournament=ToId 
 				where ToId=$this->tournament");

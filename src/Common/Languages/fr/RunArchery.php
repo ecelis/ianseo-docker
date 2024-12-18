@@ -64,6 +64,7 @@ $lang['SpareArrows']='Flèches de rechange';
 $lang['StartTime']='Horaire de départ';
 $lang['StartType']='Décalage au départ';
 $lang['TargetGroupShort']='Cible/Groupe';
+$lang['TargetsHit']='Cibles touchés';
 $lang['TargetToHit']='Cibles à toucher';
 $lang['TeamAlreadySetError']='L\'équipe a déjà tous ses membres';
 $lang['TimeSheetImportedFailure']='Il y a eu des erreurs en lecture de la feuille des temps! La page sera actualisée pour mettre à jour les données importées : contrôle que tout soit correct !';

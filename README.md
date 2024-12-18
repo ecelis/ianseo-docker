@@ -1,34 +1,64 @@
-# i@nseo
+# Ianseo Docker container
 
-i@nseo is a software for managing archery tournaments results
+Ianseo is a software for managing archery tournaments results
 
 This is an un-official repository, the official site for this software
 is http://www.ianseo.net/
 
-##### Ernesto Celis notes
+## How to use with compose
 
-Mine is a fork from Brian Nelson's `brian-nelson/ianseo` repository but
-mixed with the official release, since Brian's repository seems
-unmaintained.
-
-This fork goal is running i@anseo in Docker containers. Docker setup is
-out of scope.
-
-## How to use this image
-
-Copy `sample.env` to `.env` and edit to suit your requirements.
+`compose.yaml`
 
 ```
-cp sample.env .env`
+services:
+  ianseodb:
+    image: mariadb:lts
+    environment:
+      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD:-ianseo}
+      - MARIADB_USER=${MARIADB_USER:-ianseo}
+      - MARIADB_DATABASE=${MARIADB_DATABASE:-ianseo}
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD:-ianseo}
+    restart: always
+  ianseo:
+    image: arqueria/ianseo
+    ports:
+      - "8080:80"
+    depends_on:
+      - ianseodb
+    restart: always
 ```
 
-### Run withDocker compose
+Start the services in the background
 
 ```
 docker compose up -d
 ```
 
-### Run from command line, step by step
+Browse to http://localhost:8080 and follow the instructions to
+finish the installation.
+
+⚠️ In the **Step 2: Database connection data** of ianseo has a default of
+`localhost` for Database host, change it for the name of the MariaDB
+container, `ianseodb` in the example above.
+
+⚠️ Fill in the field for the **ADMIN Password to create users and databases**
+with the value of the variable `MARIADB_ROOT_PASSWORD` of the MariaDB
+container, `ianseo` in the example above.
+
+### Run step by step
+
+The following procedure assumes you created an `.env` file to store the required
+environment variables values.
+
+`.env`
+
+```
+MARIADB_ROOT_PASSWORD=ianseo
+MARIADB_USER=ianseo
+MARIADB_DATABASE=ianseo
+MARIADB_PASSWORD=ianseo
+
+```
 
 First launch a MariaDB container.
 
@@ -45,14 +75,6 @@ docker run -d --name ianseo --link ianseodb:mysql -p 8080:80 arqueria/ianseo
 Browse to http://127.0.0.1:8080 and follow the instructions to
 finish the installation.
 
-⚠️  In the **Step 2: Database connection data** of i@anseo has a default of
-`localhost` for Database host, change it for the name of the MariaDB
-container, `ianseodb` in the example above.
-
-⚠️  Fill the field for the **ADMIN Password to create users and databases**
-with the value of the variable `MARIADB_ROOT_PASSWORD` of the MAriaDB
-container, `ianseo` in the example above.
-
 ## Environment Variables
 
 One of `MARIADB_ROOT_PASSWORD`, `MARIADB_ALLOW_EMPTY_ROOT_PASSWORD`, or
@@ -62,7 +84,7 @@ variables are optional.
 **MARIADB_ROOT_PASSWORD / MYSQL_ROOT_PASSWORD**
 
 This specifies the password that will be set for the MariaDB root
-superuser account. In the above example, it was set to my-secret-pw.
+superuser account. In the above example, it was set to `ianseo`.
 
 **MARIADB_ALLOW_EMPTY_ROOT_PASSWORD / MYSQL_ALLOW_EMPTY_PASSWORD**
 
@@ -97,7 +119,26 @@ by the `MARIADB_ROOT_PASSWORD` / `MYSQL_ROOT_PASSWORD` variable.
 Refer to the MariaDB official repository for deeper information about
 variable environments https://hub.docker.com/_/mariadb
 
-## Fetch newer i@nseo releases
+### .env file
+
+You can use an `.env` file to store the required environment variables values.
+Copy `sample.env` to `.env` and edit to suit your requirements.
+
+```
+cp sample.env .env`
+```
+
+## NodeJS development dependency
+
+NodeJS is used to support some tasks related to maitaining the docker image. NodeJS is **NOT REQUIRED** to run ianseo in docker.
+
+If you plan to contribute to this repository install NodeJS and required modules first.
+
+```
+npm install
+```
+
+## Fetch a newer ianseo releases
 
 ```
 npm run ianseo:fetch <YYYYMMDD>
@@ -105,29 +146,38 @@ npm run ianseo:fetch <YYYYMMDD>
 
 ## Build the docker image
 
-To only build the i@anseo image for the current CPU architechture run:
+To build the ianseo image only for the current CPU architecture run:
 
 ```
 npm run ianseo:build
 ```
 
-To build images for both x86_64, aarch64 and arm7, run:
+To build images for x86_64, aarch64 and arm7, run:
 
 ```
 npm run ianseo:build:multi
 ```
 
-## Relase and Publish images to Docker registries
+## Release and Publish images to Docker registries
 
 There are github actions wired to this repository, after mergin a branch into
 `main` you must tag the commit to publish with semantic versioning.
-Ex: v2022.01.01.1 vYEAR.MONTH.DAY.REVISION. Official I@anseo versioning has
-integers as REVISION, however docker releases may add an alphabetic charater to
-the REVISION integer to support my own releases linked to official ones.
+Ex: v2022.01.01.1 `vYEAR.MONTH.DAY.REVISION`. Official Ianseo versioning has
+integers as **REVISION**, however docker releases may add an alphabetic character
+to the **REVISION** integer to support docker releases linked to official ones.
 
 ```
-git checkout master
+git checkout main
 git pull
 git tag v<YYYY>.<mm>.<dd>.<REVISION>
 git push origin v<YYYY>.<mm>.<dd>.<REVISION>
 ```
+
+##### Ernesto Celis notes
+
+Mine is a fork from Brian Nelson's `brian-nelson/ianseo` repository but
+mixed with the official release, since Brian's repository seems
+unmaintained.
+
+This fork goal is running ianseo in Docker containers. Docker setup is
+out of scope.

@@ -48,7 +48,7 @@ while($r=safe_fetch($q)) {
 				<td class="Center d-none advanced"><input size="4" maxlength="3" type="text" name="shoot['.$r->SesOrder.']['.$dist.']" onchange="ChangeInfo(this)" value="'.$DistInfo[$r->SesOrder][$dist][2].'"></td>
 				<td class="Center d-none advanced"><input size="4" maxlength="3" type="text" name="offset['.$r->SesOrder.']['.$dist.']" onchange="ChangeInfo(this)" value="'.$DistInfo[$r->SesOrder][$dist][3].'"></td>
 				<td class="Center"><input size="10" maxlength="10" type="date" name="startday['.$r->SesOrder.']['.$dist.']" onblur="ChangeInfo(this)" value="'.$DistInfo[$r->SesOrder][$dist][4].'"></td>
-				<td class="Center"><input size="5" maxlength="3" type="text" name="warmtime['.$r->SesOrder.']['.$dist.']" onchange="ChangeInfo(this)" value="'.$DistInfo[$r->SesOrder][$dist][7].'"></td>
+				<td class="Center"><input size="6" maxlength="5" type="time" name="warmtime['.$r->SesOrder.']['.$dist.']" onchange="ChangeInfo(this)" value="'.$DistInfo[$r->SesOrder][$dist][7].'"></td>
 				<td class="Center"><input size="4" maxlength="3" type="text" name="warmduration['.$r->SesOrder.']['.$dist.']" onchange="ChangeInfo(this)" value="'.$DistInfo[$r->SesOrder][$dist][8].'"></td>
 				<td class="Center"><input size="6" maxlength="5" type="time" name="starttime['.$r->SesOrder.']['.$dist.']" onblur="ChangeInfo(this)" value="'.$DistInfo[$r->SesOrder][$dist][5].'"></td>
 				<td class="Center"><input size="5" maxlength="3" type="text" name="duration['.$r->SesOrder.']['.$dist.']" onchange="ChangeInfo(this)" value="'.$DistInfo[$r->SesOrder][$dist][6].'"></td>

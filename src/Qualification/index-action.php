@@ -20,10 +20,24 @@ if(!safe_num_rows($q)) {
 
 switch($_REQUEST['act']) {
     case 'dnf':
+        $QuDistHits = 0;
+        $Dist = intval($_REQUEST['d'] ?? 0);
+        if($Dist>0) {
+            $q = safe_r_sql("select DiEnds*DiArrows as MaxArrows 
+            from Qualifications
+            inner join Entries on EnId=QuId
+            inner join DistanceInformation on DiTournament=EnTournament and DiSession=QuSession and DiDistance={$Dist}
+            where QuId={$EnId}");
+            if ($r = safe_fetch($q)) {
+                $QuDistHits = $r->MaxArrows;
+            }
+            safe_w_sql("update Qualifications set QuIrmType=5, QuD{$Dist}Hits=$QuDistHits, QuHits=QuD1Hits+QuD2Hits+QuD3Hits+QuD4Hits+QuD5Hits+QuD6Hits+QuD7Hits+QuD8Hits where QuId={$EnId}");
+        } else {
+            safe_w_sql("update Qualifications set QuIrmType=5 where QuId={$EnId}");
+        }
+        safe_w_sql("update Individuals set IndIrmType=5 where IndId={$EnId}");
         $JSON['class']='Irm-5';
         $JSON['btn']=get_text('CmdUnset', 'Tournament', 'DNF');
-        safe_w_sql("update Qualifications set QuIrmType=5 where QuId=$EnId");
-        safe_w_sql("update Individuals set IndIrmType=5 where IndId=$EnId");
         break;
     case 'dnfnr':
         $JSON['class']='Irm-7';
@@ -40,8 +54,14 @@ switch($_REQUEST['act']) {
     case 'unset':
         $JSON['class']='Irm-0';
         $JSON['btn']=get_text('CmdSet', 'Tournament');
-        safe_w_sql("update Qualifications set QuIrmType=0 where QuId=$EnId");
+        $Dist = intval($_REQUEST['d'] ?? 0);
+        if($Dist>0) {
+            safe_w_sql("update Qualifications set QuIrmType=0, QuConfirm=QuConfirm & (255-" . pow(2, $Dist) . "), QuD{$Dist}Hits=length(trim(QuD{$Dist}Arrowstring)), QuHits=QuD1Hits+QuD2Hits+QuD3Hits+QuD4Hits+QuD5Hits+QuD6Hits+QuD7Hits+QuD8Hits where QuId=$EnId");
+        } else {
+            safe_w_sql("update Qualifications set QuIrmType=0, QuConfirm=QuConfirm & (255-" . pow(2, $Dist) . ") where QuId=$EnId");
+        }
         safe_w_sql("update Individuals set IndIrmType=0 where IndId=$EnId");
+
         break;
     default:
         JsonOut($JSON);

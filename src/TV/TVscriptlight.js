@@ -54,10 +54,13 @@ function init() {
 }
 
 function start_scroll() {
-	if(TimeCounter-- > 0) return;
+	if(TimeCounter-- > 0) {
+		return;
+	}
 	StartingPoint = StartingPoint + PixelScroll;
 	if(StartingPoint>altezza) {
 		// reload page
+		TimeCounter=TimeToWait;
 		window.location.assign(NextRule);
 		StartingPoint=0;
 	}

@@ -1,4 +1,7 @@
 <?php
+$lang['ArcClassified']='Mauvaise classification';
+$lang['ArcNative']='Mauvaise équipe nationale';
+$lang['ArcPara']='Mauvaise catégorie Para';
 $lang['ErrArcherCodeExists']='L\'ID de l\'archer existe déjà';
 $lang['ErrArcherCodeFree']='Le numéro ID de l\'archer est libre';
 $lang['ErrArcherCodeTooLong']='Le numéro ID de l\'archer est trop long';
@@ -49,5 +52,7 @@ $lang['ErrPassToSet']='Indiquez un nouveau mot depasse';
 $lang['ErrSubClass']='Sous-classe invalide';
 $lang['ErrSubClassNotFound']='sous-classe non trouvée';
 $lang['ErrWronglevel']='Club / Archer mauvais niveau';
+$lang['InvalidData']='Donnés invalides';
 $lang['LoginTooManyArchers']='Plus d\'un archer utilise cet E-Mail. Veuillez utiliser l\'ID membre';
+$lang['WrongType']='Mauvais catégorie';
 ?>

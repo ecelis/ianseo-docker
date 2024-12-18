@@ -58,8 +58,10 @@ function writeGroupHeaderPrnIndividualAbs(&$pdf, $section, $distSize, $addSize, 
 		$pdf->Cell($distSize, 4, $pdf->TotalShort, 1, 0, 'C', 1);
 		$pdf->setXY($pdf->GetX(),$TmpY);
 	}
-	if(!$running)
-		$pdf->Cell(12, 4 * ($double ? 2 : 1),  $section['fields']['score'], 1, 0, 'C', 1);
+	if(!$running) {
+        $pdf->Cell(8, 4 * ($double ? 2 : 1),  'Hon.', 1, 0, 'C', 1);
+        $pdf->Cell(12, 4 * ($double ? 2 : 1),  $section['fields']['score'], 1, 0, 'C', 1);
+    }
 	if($pdf->ShowTens)
 		$pdf->Cell(6, 4 * ($double ? 2 : 1),  $section['fields']['gold'], 1, 0, 'C', 1);
 	$pdf->Cell(6 * ($pdf->ShowTens?1:2), 4 * ($double ? 2 : 1),  $section['fields']['xnine'], 1, 0, 'C', 1);
@@ -190,10 +192,10 @@ function writeDataRowPrnIndividualAbs(&$pdf, $item, $distSize, $addSize, $runnin
 	$pdf->SetFont($pdf->FontFix,'B',$pdf->FontSizeLines);
 	if(!$running)
 	{
-		if($snapDistance==0)
-			$pdf->Cell(12, 4 * ($double ? 2 : 1), number_format($item['score'],0,'',$pdf->NumberThousandsSeparator), $border.'LR', 0, 'R', 0);
-		else
-		{
+		if($snapDistance==0) {
+            $pdf->Cell(8, 4 * ($double ? 2 : 1), number_format($item['hits']-$item['miss'], 0, '', $pdf->NumberThousandsSeparator), $border . 'LR', 0, 'R', 0);
+            $pdf->Cell(12, 4 * ($double ? 2 : 1), number_format($item['score'], 0, '', $pdf->NumberThousandsSeparator), $border . 'LR', 0, 'R', 0);
+        } else {
 			$pdf->Cell(6, 4 * ($double ? 2 : 1), number_format($item['scoreSnap'],0,'',$pdf->NumberThousandsSeparator), $border.'L', 0, 'R', 0);
 			$pdf->SetFont($pdf->FontFix,'',$pdf->FontSizeHead);
 			$pdf->Cell(6, 4 * ($double ? 2 : 1), ($item['score']==$item['scoreSnap'] ? '' : '(' . number_format($item['score'],0,'',$pdf->NumberThousandsSeparator) . ')'), $border.'R', 0, 'R', 0);
@@ -237,6 +239,8 @@ function writeDataRowPrnIndividualAbs(&$pdf, $item, $distSize, $addSize, $runnin
 
 				}
 				$pdf->Cell(8, 4 * ($double ? 2 : 1),  ($pdf->ShotOffShort . $tmpArr), $border.'LR', 1, 'L', 1);
+			} elseif(!empty($item['tiebreakDecoded'])) {
+				$pdf->Cell(8, 4 * ($double ? 2 : 1),  'T.'.$item['tiebreakDecoded'], $border.'LR', 1, 'L', 1);
 			} elseif(!empty($item['ct']) &&  $item['ct']>1) {
 				$pdf->Cell(8, 4 * ($double ? 2 : 1),  $pdf->CoinTossShort, $border.'LR', 1, 'L', 0);
 			} else {

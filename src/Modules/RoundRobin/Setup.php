@@ -27,9 +27,9 @@ $Teams='';
 $q=safe_r_SQL("select distinct EvTeamEvent from Events where EvElimType=5 and EvTournament={$_SESSION['TourId']} order by EvTeamEvent");
 while($r=safe_fetch($q)) {
 	if($r->EvTeamEvent) {
-		$Teams='<option value="1"'.($Team==1 ? ' selected="selected"' : '').'>'.get_text('Team').'</option>';
+		$Teams.='<option value="1"'.($Team==1 ? ' selected="selected"' : '').'>'.get_text('Team').'</option>';
 	} else {
-		$Teams='<option value="0"'.($Team==0 ? ' selected="selected"' : '').'>'.get_text('Individual').'</option>';
+		$Teams.='<option value="0"'.($Team==0 ? ' selected="selected"' : '').'>'.get_text('Individual').'</option>';
 	}
 }
 if($Teams) {

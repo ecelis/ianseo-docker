@@ -3,6 +3,7 @@ $lang['Arrows']='الأسهم';
 $lang['BadFormat']='صيغة خاطئة';
 $lang['CmdImport']='استيراد';
 $lang['Country']='الدولة';
+$lang['DateTime']='التاريخ/الوقت';
 $lang['Distance']='المسافة';
 $lang['EndReport']='التقرير النهائي';
 $lang['File']='ملف';

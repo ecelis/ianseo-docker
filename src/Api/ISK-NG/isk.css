@@ -73,7 +73,7 @@ input[type=button] {margin: 0.2rem}
 .charging {background-color: lightgreen;}
 .fullCharged {font-weight: bold; color: darkgreen; font-size: 125%}
 .charging.fullCharged {font-weight: bold; background-color: darkgreen; color: white; font-size: 125%}
-.emptyBattery {background-color: orange;}
+.emptyBattery, .versionTooLow {background-color: orange;}
 
 /** Socket **/
 #ctrConnStatus {

@@ -131,15 +131,104 @@ if($version<'2024-05-13 15:25:00') {
     db_save_version('2024-05-13 15:25:00');
 }
 
+if($version<'2024-06-08 15:25:00') {
+    safe_w_sql("alter table RoundRobinMatches add index (RrMatchTournament, RrMatchTeam, RrMatchEvent), add index (RrMatchTournament, RrMatchScheduledDate, RrMatchScheduledTime)", false, array(1146, 1060));
+    db_save_version('2024-06-08 15:25:00');
+}
+
+if($version<'2024-08-26 07:00:02') {
+    safe_w_sql("UPDATE `LookUpPaths` SET `LupPath` = 'https://dirigeant.ffta.fr/ianseo/download/parametres_ianseo.ffta' WHERE `LookUpPaths`.`LupIocCode` = 'FRA'");
+    safe_w_sql("REPLACE INTO `LookUpPaths` (`LupIocCode`, `LupOrigin`, `LupPath`, `LupPhotoPath`, `LupFlagsPath`, `LupLastUpdate`, `LupRankingPath`, `LupClubNamesPath`, `LupRecordsPath`) VALUES ('SWE', 'SWE', '', 'https://resultat.bagskytte.se/Archer/GetIanseoImage', 'https://resultat.bagskytte.se/Club/GetIanseoImage', '0000-00-00 00:00:00', '', '', '')");
+    safe_w_sql("ALTER TABLE `TournamentInvolved` ADD `TiTimeStamp` DATETIME NOT NULL AFTER `TiGender`;", false, array(1146, 1060));
+    safe_w_sql("UPDATE  `TournamentInvolved` INNER JOIN `Tournament` ON `TiTournament`=`ToId` SET  `TiTimeStamp`=`ToWhenFrom` WHERE `TiTimeStamp`='0000-00-00'");
+    db_save_version('2024-08-26 07:00:02');
+}
+
+if($version<'2024-09-20 08:00:07') {
+    safe_w_sql("DROP TABLE IF EXISTS `AclFeatures`");
+    safe_w_sql("ALTER TABLE `AclDetails` ADD `AclDtSubFeature` TINYINT NOT NULL AFTER `AclDtFeature`", false, array(1146, 1060));
+    safe_w_sql("ALTER TABLE `AclDetails` DROP PRIMARY KEY, ADD PRIMARY KEY (`AclDtTournament`, `AclDtIP`, `AclDtFeature`, `AclDtSubFeature`) USING BTREE;", false, array(1146, 1060));
+    safe_w_sql("CREATE TABLE `AclTemplates` (
+        `AclTeTournament` INT NOT NULL , 
+        `AclTePattern` VARCHAR(150) NOT NULL , 
+        `AclTeNick` VARCHAR(50) NOT NULL ,
+        `AclTeFeatures` TEXT NOT NULL ,  
+        `AclTeEnabled` TINYINT NOT NULL , 
+        PRIMARY KEY (`AclTeTournament`, `AclTePattern`)) ENGINE = InnoDB",false,array(1146, 1050, 1060));
+    safe_w_sql("CREATE TABLE `AclUsers` (
+        `AclUsUser` VARCHAR(16) NOT NULL , 
+        `AclUsName` VARCHAR(100) NOT NULL , 
+        `AclUsPwd` VARCHAR(64) NOT NULL , 
+        `AclUsEnabled` TINYINT NOT NULL , 
+        `AclUsAuthAdmin` TINYINT NOT NULL,
+        PRIMARY KEY (`AclUsUser`)) ENGINE = InnoDB",false,array(1146, 1050, 1060));
+
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=22 where `AclDtFeature`=9");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=23 where `AclDtFeature`=2");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=24 where `AclDtFeature`=7");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=25 where `AclDtFeature`=3");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=26 where `AclDtFeature`=4");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=27 where `AclDtFeature`=16");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=28 where `AclDtFeature`=5");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=29 where `AclDtFeature`=6");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=30 where `AclDtFeature`=13");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=31 where `AclDtFeature`=14");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=32 where `AclDtFeature`=11");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=33 where `AclDtFeature`=12");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=34 where `AclDtFeature`=8");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=35 where `AclDtFeature`=10");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=36 where `AclDtFeature`=15");
+    safe_w_sql("UPDATE `AclDetails` set `AclDtFeature`=`AclDtFeature`-20 where `AclDtFeature`>20");
+
+    safe_w_sql("INSERT IGNORE INTO AclTemplates (`AclTeTournament`, `AclTePattern`, `AclTeNick`, `AclTeFeatures`, `AclTeEnabled`)
+        SELECT `AclTournament`, `AclIP`, `AclNick`, GROUP_CONCAT(CONCAT_WS('|', AclDtFeature, AclDtSubFeature, AclDtLevel) ORDER BY AclDtFeature, AclDtSubFeature SEPARATOR '#') as `Features`, AclEnabled
+        FROM `ACL` 
+        INNER JOIN AclDetails on AclTournament=AclDTTournament and AclIP=AclDtIP
+        WHERE `AclIP` LIKE '%*%' 
+        GROUP BY  `AclTournament`, `AclIP`",false,array(1146, 1060));
+    safe_w_sql("DELETE FROM `ACL` WHERE `AclIP` LIKE '%*%'",false,array(1146, 1060));
+    safe_w_sql("INSERT IGNORE INTO AclTemplates (`AclTeTournament`, `AclTePattern`, `AclTeNick`, `AclTeFeatures`, `AclTeEnabled`)
+        SELECT `AclTournament`, `AclNick`, 'REGEXP', GROUP_CONCAT(CONCAT_WS('|', AclDtFeature, AclDtSubFeature, AclDtLevel) ORDER BY AclDtFeature, AclDtSubFeature SEPARATOR '#') as `Features`, AclEnabled
+        FROM `ACL` 
+        INNER JOIN AclDetails on AclTournament=AclDTTournament and AclIP=AclDtIP
+        WHERE `AclIP` LIKE '0.0.0.%'
+        GROUP BY  `AclTournament`, `AclIP`",false,array(1146, 1060));
+    safe_w_sql("DELETE FROM `ACL` WHERE `AclIP` LIKE '0.0.0.%'",false,array(1146, 1060));
+    db_save_version('2024-09-20 08:00:07');
+}
+
+if($version<'2024-09-22 10:00:04') {
+    safe_w_sql("DROP TABLE IF EXISTS `AclUserFeatures`",false,array(1051));
+    safe_w_sql("CREATE TABLE `AclUserFeatures` (
+        `AclUFUser` VARCHAR(16) NOT NULL ,
+        `AclUFPattern` VARCHAR(150) NOT NULL , 
+        `AclUFFeature` TEXT NOT NULL , 
+        PRIMARY KEY (`AclUFUser`, `AclUFPattern`)) ENGINE = InnoDB",false,array(1146, 1050, 1060));
+    $userList = getParameter("AuthUsers", false, array(), true);
+    foreach ($userList as $user) {
+        safe_w_sql("INSERT INTO AclUsers (`AclUsUser`, `AclUsName`, `AclUsPwd`, `AclUsEnabled`, `AclUsAuthAdmin`) 
+            VALUES (".StrSafe_DB($user["u"]).", ".StrSafe_DB($user["d"]).", '".hash("sha256",$user["p"])."', ".intval($user["e"]).", ".intval($user["r"]).")
+            ON DUPLICATE KEY UPDATE  `AclUsName`=".StrSafe_DB($user["d"]).", `AclUsPwd`='".hash("sha256",$user["p"])."', `AclUsEnabled`=".intval($user["e"]).", `AclUsAuthAdmin`=".intval($user["r"]),false,array(1146, 1050, 1060));
+        foreach ($user["c"] as $comp) {
+            safe_w_sql("INSERT INTO `AclUserFeatures` (`AclUFUser`, `AclUFPattern`, `AclUFFeature`) VALUES (".StrSafe_DB($user["u"]).", ".StrSafe_DB($comp).", '')
+                ON DUPLICATE KEY UPDATE `AclUFPattern`=".StrSafe_DB($comp).", `AclUFFeature`=''",false,array(1146, 1050, 1060));
+        }
+    }
+    safe_w_sql("DELETE FROM Parameters WHERE ParId=" . StrSafe_DB("AuthUsers"),false,array(1146, 1050, 1060));
+
+
+    db_save_version('2024-09-22 10:00:04');
+}
+
 /*
 
 // TEMPLATE
 IMPORTANT: InfoSystem related things MUST be changed in the lib.php file!!!
 REMEMBER TO CHANGE ALSO Common/Lib/UpdateTournament.inc.php!!!
 
-if($version<'2024-04-13 15:25:00') {
-    safe_w_sql("alter table Parameters change ParId ParId varchar(32) not null");
-	db_save_version('2024-04-13 15:25:00');
+if($version<'2024-06-08 15:25:00') {
+    safe_w_sql("alter table RoundRobinMatches add index (RrMatchTournament, RrMatchTeam, RrMatchEvent)");
+	db_save_version('2024-06-08 15:25:00');
 }
 
 */

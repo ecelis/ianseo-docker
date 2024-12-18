@@ -9,6 +9,7 @@ function tour_delete($TourId) {
 		"AccEntries" => "AETournament",
 		"AccPrice" => "APTournament",
 		"AclDetails" => 'AclDtTournament',
+        "AclTemplates" => 'AclTeTournament ',
 		"AvailableTarget" => "AtTournament",
 		"Awarded" => "AwTournament",
 		"Awards" => "AwTournament",
@@ -138,6 +139,7 @@ function tour_import($filename, $isString=false) {
 		'AccPrice' => 'AP',
 		'ACL' => 'Acl',
 		'AclDetails' => 'AclDt',
+        'AclTemplates' => 'AclTe',
 		'AvailableTarget' => 'At',
 		'Awards' => 'Aw',
 		'Awarded' => 'Aw',
@@ -267,6 +269,7 @@ function tour_import($filename, $isString=false) {
 		'AccColors',
 		'AccPrice',
 		'ACL',
+        'AclTemplates',
 		'AclDetails',
 		'AvailableTarget',
 		'Awards',
@@ -310,7 +313,6 @@ function tour_import($filename, $isString=false) {
 		'TargetGroups',
 		'TeamDavis',
 		'TournamentDistances',
-        //'TournamentInvolved',
 		'TourRecords' ,
 		'TVContents',
 		'TVParams',
@@ -345,7 +347,7 @@ function tour_import($filename, $isString=false) {
 	$Gara=UpdateTournament($Gara);
 
 	// CONTROLLA SE C'E' UN TORNEO CON LO STESSO CODICE E LO SEGA!
-	$q=safe_r_sql("select ToId from Tournament where ToCode=" . strsafe_db($Gara['Tournament']['ToCode']));
+	$q=safe_r_sql("select `ToId` from `Tournament` where `ToCode`=" . strsafe_db($Gara['Tournament']['ToCode']));
 	if($r=safe_fetch($q) ){
 		// esiste un tournament con lo stesso codice... ranzo tutto!
 		tour_delete($r->ToId);
@@ -355,13 +357,17 @@ function tour_import($filename, $isString=false) {
 	RemoveMedia($Gara['Tournament']['ToCode']);
 
 	// Insert competition
-	$quer=array();
+    $query=array();
 	foreach($Gara['Tournament'] as $key=>$val) {
 		if($key!='ToId'){
-			$quer[]="$key=" . strsafe_db($val);
+            if(!is_null($val)) {
+                $query[] = "`$key` = " . strsafe_db($val);
+            } else {
+                $query[] = "`$key` = NULL";
+            }
 		}
 	}
-	safe_w_sql("Insert into Tournament set ".implode(', ', $quer));
+	safe_w_sql("Insert into `Tournament` set ".implode(', ', $query));
 	$TourId=safe_w_last_id();
 
 	// adjust ToId in all arrays...
@@ -379,9 +385,13 @@ function tour_import($filename, $isString=false) {
 			foreach($Gara[$tab] as $record) {
 				$query=array();
 				foreach($record as $key=>$val) {
-					$query[]="$key = " . strsafe_db($val) ;
+                    if(!is_null($val)) {
+                        $query[] = "`$key` = " . strsafe_db($val);
+                    } else {
+                        $query[] = "`$key` = NULL";
+                    }
 				}
-				safe_w_sql("insert into $tab set ". implode(', ', $query). " on duplicate key update ". implode(', ', $query));
+				safe_w_sql("insert into `$tab` set ". implode(', ', $query). " on duplicate key update ". implode(', ', $query));
 			}
 		}
 	}
@@ -393,27 +403,31 @@ function tour_import($filename, $isString=false) {
 			$query=array();
 			foreach($record as $key=>$val) {
 				if($key!='CoId' and $key!='CoFlag' and $key!='CoMail' and $key!='CoNoPrint'){
-					$query[]="$key = " . strsafe_db($val) ;
+                    if(!is_null($val)) {
+                        $query[] = "`$key` = " . strsafe_db($val);
+                    } else {
+                        $query[] = "`$key` = NULL";
+                    }
 				}
 			}
-			safe_w_sql("insert into Countries set ". implode(', ', $query));
+			safe_w_sql("insert into `Countries` set ". implode(', ', $query));
 			$Countries[$record['CoId']]=safe_w_last_id();
 		}
 	}
 	//aggiorna CoParent1 della Countries stessa
-	$tmpSql = "SELECT DISTINCT CoParent1 FROM Countries WHERE CoTournament=" . $TourId . " AND CoParent1!=0";
+	$tmpSql = "SELECT DISTINCT `CoParent1` FROM `Countries` WHERE `CoTournament`=" . $TourId . " AND CoParent1!=0";
 	$tmpRs = safe_r_sql($tmpSql);
 	if(safe_num_rows($tmpRs)!=0) {
 		while($tmpRow=safe_fetch($tmpRs))
-			safe_w_sql("UPDATE Countries SET CoParent1=". $Countries[$tmpRow->CoParent1] . " WHERE CoParent1=" . $tmpRow->CoParent1 . " AND CoTournament=" . $TourId);
+			safe_w_sql("UPDATE `Countries` SET `CoParent1`=". $Countries[$tmpRow->CoParent1] . " WHERE `CoParent1`=" . $tmpRow->CoParent1 . " AND `CoTournament`=" . $TourId);
 		safe_free_result($tmpRs);
 	}
 	//aggiorna CoParent2 della Countries stessa
-	$tmpSql = "SELECT DISTINCT CoParent2 FROM Countries WHERE CoTournament=" . $TourId . " AND CoParent2!=0";
+	$tmpSql = "SELECT DISTINCT `CoParent2` FROM `Countries` WHERE `CoTournament`=" . $TourId . " AND CoParent2!=0";
 	$tmpRs = safe_r_sql($tmpSql);
 	if(safe_num_rows($tmpRs)!=0) {
 		while($tmpRow=safe_fetch($tmpRs))
-		safe_w_sql("UPDATE Countries SET CoParent2=". $Countries[$tmpRow->CoParent2] . " WHERE CoParent2=" . $tmpRow->CoParent2 . " AND CoTournament=" . $TourId);
+		safe_w_sql("UPDATE `Countries` SET `CoParent2`=". $Countries[$tmpRow->CoParent2] . " WHERE `CoParent2`=" . $tmpRow->CoParent2 . " AND `CoTournament`=" . $TourId);
 		safe_free_result($tmpRs);
 	}
 
@@ -442,10 +456,14 @@ function tour_import($filename, $isString=false) {
                 $query = array();
                 foreach ($record as $key => $val) {
                     if ($key != 'TiId') {
-                        $query[] = "$key = " . strsafe_db($val);
+                        if(!is_null($val)) {
+                            $query[] = "`$key` = " . strsafe_db($val);
+                        } else {
+                            $query[] = "`$key` = NULL";
+                        }
                     }
                 }
-                safe_w_sql("insert into TournamentInvolved set " . implode(', ', $query));
+                safe_w_sql("insert into `TournamentInvolved` set " . implode(', ', $query));
                 $TiEntries[$record['TiId']] = safe_w_last_id();
             }
         }
@@ -476,10 +494,14 @@ function tour_import($filename, $isString=false) {
 			$query=array();
 			foreach($record as $key=>$val) {
 				if($key!='EnId' and $key!='EnWorldRank'){
-					$query[]="$key = " . strsafe_db($val) ;
+                    if(!is_null($val)) {
+                        $query[] = "`$key` = " . strsafe_db($val);
+                    } else {
+                        $query[] = "`$key` = NULL";
+                    }
 				}
 			}
-			safe_w_sql("insert into Entries set ". implode(', ', $query));
+			safe_w_sql("insert into `Entries` set ". implode(', ', $query));
 			$Entries[$record['EnId']]=safe_w_last_id();
 		}
 	}
@@ -545,13 +567,17 @@ function tour_import($filename, $isString=false) {
 			foreach($Gara[$tab] as $record) {
 				$query=array();
 				foreach($record as $key=>$val) {
-					$query[]="$key = " . strsafe_db($val) ;
+                    if(!is_null($val)) {
+                        $query[] = "`$key` = " . strsafe_db($val);
+                    } else {
+                        $query[] = "`$key` = NULL";
+                    }
 				}
 
 				// attenzione: questa query era "commentata" per non far apparirer errori:
 				// se questo comportamento è desiderato, chiamare la funzione safe_w_sql passando
 				// come terzo parametro un array con gli errori numerici ammessi
-				safe_w_sql("REPLACE INTO $tab set ". implode(', ', $query));
+				safe_w_sql("REPLACE INTO `$tab` set ". implode(', ', $query));
 			}
 		}
 	}
@@ -563,9 +589,13 @@ function tour_import($filename, $isString=false) {
 				$record['FlTournament']=$TourId;
 			$query=array();
 			foreach($record as $key=>$val) {
-				$query[]="$key = " . strsafe_db($val) ;
+                if(!is_null($val)) {
+                    $query[] = "`$key` = " . strsafe_db($val);
+                } else {
+                    $query[] = "`$key` = NULL";
+                }
 			}
-			safe_w_sql("insert into Flags set ". implode(', ', $query). " on duplicate key update ". implode(', ', $query));
+			safe_w_sql("insert into `Flags` set ". implode(', ', $query). " on duplicate key update ". implode(', ', $query));
 		}
 	}
 
@@ -574,9 +604,13 @@ function tour_import($filename, $isString=false) {
 		foreach($Gara['RecAreas'] as $record) {
 			$query=array();
 			foreach($record as $key=>$val) {
-				$query[]="$key = " . strsafe_db($val) ;
+                if(!is_null($val)) {
+                    $query[] = "`$key` = " . strsafe_db($val);
+                } else {
+                    $query[] = "`$key` = NULL";
+                }
 			}
-			safe_w_sql("insert into RecAreas set ". implode(', ', $query). " on duplicate key update ". implode(', ', $query));
+			safe_w_sql("insert into `RecAreas` set ". implode(', ', $query). " on duplicate key update ". implode(', ', $query));
 		}
 	}
 
@@ -591,7 +625,7 @@ function tour_import($filename, $isString=false) {
 
 	// if for accreditation, inserts all the LocCodes!
 	if(!empty($_REQUEST['Accreditation'])) {
-		safe_w_sql("insert ignore into ExtraData (select EnId, 'Z', '', concat(EnCode, '-', EnIocCode, '-', EnDivision) from Entries where EnTournament=$TourId)");
+		safe_w_sql("insert ignore into `ExtraData` (select `EnId`, 'Z', '', concat(`EnCode`, '-', `EnIocCode`, '-', `EnDivision`) from `Entries` where `EnTournament`=$TourId)");
 	}
 
 	// RECREATES ALL MEDIA
@@ -603,7 +637,7 @@ function tour_import($filename, $isString=false) {
 		// delete all the log files of this competition...
 		deleteAccLogs($Gara['Tournament']['ToCode']);
 		// track info for this competition in all servers ready to track
-		$q=safe_r_sql("select distinct SsApi, SsName from ianseo_Accreditation.SyncServers where SsStatus=1");
+		$q=safe_r_sql("select distinct `SsApi`, `SsName` from `ianseo_Accreditation`.`SyncServers` where SsStatus=1");
 		while ($r=safe_fetch($q)) {
 			startAccTrack($Gara['Tournament']['ToCode'], $r->SsName, $r->SsApi);
 		}

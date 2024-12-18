@@ -46,6 +46,7 @@ if(!empty($_REQUEST["RESET"]) AND intval($_REQUEST["RESET"])==(count($EventCodes
 $JS_SCRIPT = array( phpVars2js(array(
         'ROOT_DIR'=>$CFG->ROOT_DIR,
         'MsgInitFinalGridsError'=>get_text('MsgInitFinalGridsError'),
+        'MsgInitFinalGridsRunningError'=>get_text('MsgInitFinalGridsRunningError'),
         'MsgAttentionFinReset'=>get_text('MsgAttentionFinReset'),
         'CmdCancel' => get_text('CmdCancel'),
         'CmdConfirm' => get_text('Confirm', 'Tournament'),
@@ -99,7 +100,7 @@ if(count($EventCodes) != 0) {
                     if (array_sum($existingRanks) < min(count($EnIds),$r->EvNumQualified)) {
                         $cantResolve = true;
                     }
-                } else {
+                } else if(!$advMode) {
                     $cantResolve = true;
                 }
             }
@@ -324,7 +325,7 @@ if(count($EventCodes) != 0) {
         }
     }
 } else {
-    $Sql = "SELECT EvCode, EvEventName, EvFinalFirstPhase, EvNumQualified, EvShootOff, EvE1ShootOff, EvE2ShootOff, EvElimType, EvElim1, EvElim2, GROUP_CONCAT(DISTINCT itemNo) as SoCt, GROUP_CONCAT(DISTINCT itemNo1) as SoCt1, GROUP_CONCAT(DISTINCT itemNo2) as SoCt2
+    $Sql = "SELECT EvCode, EvEventName, EvFinalFirstPhase, EvNumQualified, EvRunning, EvShootOff, EvE1ShootOff, EvE2ShootOff, EvElimType, EvElim1, EvElim2, GROUP_CONCAT(DISTINCT itemNo) as SoCt, GROUP_CONCAT(DISTINCT itemNo1) as SoCt1, GROUP_CONCAT(DISTINCT itemNo2) as SoCt2
     	FROM Events
     	LEFT JOIN (
             SELECT IndEvent, CONCAT_WS('|', COUNT(*), IndSO) as itemNo 
@@ -362,15 +363,19 @@ if(count($EventCodes) != 0) {
     echo '<tr><th colspan="3">'.get_text('Event').'</th><th colspan="2"></th><th>'.get_text('ShotOff', 'Tournament').'</th><th>'.get_text('CoinToss', 'Tournament').'</th><th></th></tr></thead><tbody>';
     while ($r=safe_fetch($q)) {
         $toBesolved = true;
+        $canBesolved = true;
         $status = '';
         if($r->EvShootOff==1) {
             $toBesolved = false;
         }
+        if($r->EvRunning==1) {
+            $canBesolved = false;
+        }
 
 
         $rowspan = ($r->EvElimType==2 ? 3:($r->EvElimType==1 ? 2:1)) - ($r->EvFinalFirstPhase==0 ? 1:0);
-        echo '<tr class="EventLine" grEvent="'.$r->EvCode.'"  id="ev_'.$r->EvCode.'" toBeSolved="'.intval($toBesolved).'" So0="'.intval($r->EvShootOff).'" So1="'.intval($r->EvE1ShootOff).'" So2="'.intval($r->EvE2ShootOff).'">'.
-            '<th rowspan="'.$rowspan.'" class="smallContainer" '. ($r->EvElimType==0 ? 'onclick="gotoShootOff(\''.$r->EvCode.'\',true)"':'').'><div class="so-status'.($toBesolved ? ' notsolved':'').'">&nbsp;</div></th>'.
+        echo '<tr class="EventLine" grEvent="'.$r->EvCode.'"  id="ev_'.$r->EvCode.'" toBeSolved="'.intval($toBesolved).'" canBeSolved="'.intval($canBesolved).'" So0="'.intval($r->EvShootOff).'" So1="'.intval($r->EvE1ShootOff).'" So2="'.intval($r->EvE2ShootOff).'">'.
+            '<th rowspan="'.$rowspan.'" class="smallContainer" '. ($r->EvElimType==0 ? 'onclick="gotoShootOff(\''.$r->EvCode.'\',true)"':'').'><div class="so-status'.($canBesolved ? ($toBesolved ? ' notsolved':''):' notsolvable').'">&nbsp;</div></th>'.
             '<td rowspan="'.$rowspan.'" class="evCodeContainer" '. ($r->EvElimType==0 ? 'onclick="gotoShootOff(\''.$r->EvCode.'\',true)"':'').'>'.$r->EvCode.'</td>'.
             '<td rowspan="'.$rowspan.'" class="evContainer" '. ($r->EvElimType==0 ? 'onclick="gotoShootOff(\''.$r->EvCode.'\',true)"':'').'>'.$r->EvEventName.'</td>';
 	    if($r->EvElimType==5) {

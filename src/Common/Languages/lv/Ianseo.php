@@ -7,4 +7,6 @@ $lang['Cert-Level3']='Paplašinātais kurss';
 $lang['Cert-Level4']='Meistaru kurss';
 $lang['Cert-Level5']='IANSEO komanda';
 $lang['CertificateManagement']='Sertifikātu pārvaldība';
+$lang['GenerateFile']='Izveidot failu';
+$lang['ResetSessions']='Apstiprināt atiestatīšanu';
 ?>

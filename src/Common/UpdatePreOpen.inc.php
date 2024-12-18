@@ -177,6 +177,16 @@ function UpdatePreOpen($TournamentID) {
         to_save_version($TournamentID, '2024-01-14 12:55:00');
     }
 
+    if($version<'2024-08-26 07:00:02') {
+        updateTournamentInvolvedTS_20240826($TournamentID);
+        to_save_version($TournamentID, '2024-08-26 07:00:02');
+    }
+
+    if($version<'2024-09-20 08:00:07') {
+        updateAclTemplates_20240920($TournamentID);
+        to_save_version($TournamentID, '2024-09-20 08:00:07');
+    }
+
     to_save_version($TournamentID, $DbVersion);
 }
 

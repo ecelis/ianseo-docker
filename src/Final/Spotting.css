@@ -19,6 +19,7 @@
 .Scorecard input, .CmdRow input,
 .Scorecard select, .CmdRow select {font-size:2vmin;}
 .Scorecard input[onfocus] {width:4ch;}
+#Spotting input[type="text"]:read-only {background-color: lightgrey}
 
 .Target {text-align: center; border:1vmin solid white;cursor: crosshair;}
 .TargetL {border-color:#00e0e0;}

@@ -7,4 +7,6 @@ $lang['Cert-Level3']='Curso Avançado';
 $lang['Cert-Level4']='Curso Master';
 $lang['Cert-Level5']='Equipe Ianseo';
 $lang['CertificateManagement']='Gestão de certificados';
+$lang['GenerateFile']='Criar arquivo';
+$lang['ShuffleResults']='Embaralhar resultados';
 ?>

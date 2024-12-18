@@ -23,10 +23,10 @@ CreateStandardClasses($TourId, $SubRule);
 // default Distances
 switch($TourType) {
 	case 11:
-		CreateDistanceNew($TourId, $TourType, '%', array(array('Kurs',0)));
+		CreateDistanceNew($TourId, $TourType, '%', array(array('Runde',0)));
 		break;
 	case 13:
-		CreateDistanceNew($TourId, $TourType, '%', array(array('Kurs 1',0), array('Kurs 2',0)));
+		CreateDistanceNew($TourId, $TourType, '%', array(array('Runde 1',0), array('Runde 2',0)));
 		break;
 }
 
@@ -50,8 +50,8 @@ switch($TourType) {
             case 3:
                 CreateTargetFace($TourId, 1, 'Weiß', 'REG-^BU13|^BU15|^LU13|^LU15|^TU13|^TU15', '1', TGT_3D, 0);
                 CreateTargetFace($TourId, 2, 'Blau', 'REG-^RU13|^RU15|^CU13|^CU15', '1', TGT_3D, 0);
-                CreateTargetFace($TourId, 3, 'Blau', 'REG-^BU18|^BU21|^B50|^B65|^B[M|W]$|^LU18|^LU21|^L50|^L65|^L[M|W]$|^TU18|^TU21|^T50|^T65|^T[M|W]$', '1', TGT_3D, 0);
-                CreateTargetFace($TourId, 4, 'Rot', 'REG-^RU18|^RU21|^R50|^R65|^R[M|W]$|^CU18|^CU21|^C50|^C65|^C[M|W]$', '1', TGT_3D, 0);
+                CreateTargetFace($TourId, 3, 'Blau', 'REG-^BU18|^BU21|^B60|^B[M|W]$|^LU18|^LU21|^L60|^L[M|W]$|^TU18|^TU21|^T60|^T[M|W]$', '1', TGT_3D, 0);
+                CreateTargetFace($TourId, 4, 'Rot', 'REG-^RU18|^RU21|^R60|^R[M|W]$|^CU18|^CU21|^C60|^C[M|W]$', '1', TGT_3D, 0);
                 break;
             case 2:
             case 4:
@@ -66,8 +66,8 @@ switch($TourType) {
             case 3:
                 CreateTargetFace($TourId, 1, 'Weiß', 'REG-^BU13|^BU15|^LU13|^LU15|^TU13|^TU15', '1', TGT_3D, 0, TGT_3D, 0);
                 CreateTargetFace($TourId, 2, 'Blau', 'REG-^RU13|^RU15|^CU13|^CU15', '1', TGT_3D, 0, TGT_3D, 0);
-                CreateTargetFace($TourId, 3, 'Blau', 'REG-^BU18|^BU21|^B50|^B65|^B[M|W]$|^LU18|^LU21|^L50|^L65|^L[M|W]$|^TU18|^TU21|^T50|^T65|^T[M|W]$', '1', TGT_3D, 0, TGT_3D, 0);
-                CreateTargetFace($TourId, 4, 'Rot', 'REG-^RU18|^RU21|^R50|^R65|^R[M|W]$|^CU18|^CU21|^C50|^C65|^C[M|W]$', '1', TGT_3D, 0, TGT_3D, 0);
+                CreateTargetFace($TourId, 3, 'Blau', 'REG-^BU18|^BU21|^B60|^B[M|W]$|^LU18|^LU21|^L60|^L[M|W]$|^TU18|^TU21|^T60|^T[M|W]$', '1', TGT_3D, 0, TGT_3D, 0);
+                CreateTargetFace($TourId, 4, 'Rot', 'REG-^RU18|^RU21|^R60|^R[M|W]$|^CU18|^CU21|^C60|^C[M|W]$', '1', TGT_3D, 0, TGT_3D, 0);
                 break;
             case 2:
             case 4:

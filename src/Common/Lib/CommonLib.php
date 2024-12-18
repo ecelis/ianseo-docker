@@ -530,8 +530,8 @@ function get_photo_ianseo($r, $h=0, $side=false, $Extra='', $force=false, $direc
  				$startY=(($WorkH - (count($texts)*$WorkH/5))/2)+$WorkH/7;
  				foreach($texts as $i=>$t) {
  					$dim=imagettfbbox($WorkH/10, 12, $font, $t);
- 					$x=($w+$dim[0]-$dim[2])/2;
- 					$y=$startY+$i*$WorkH/5;
+ 					$x=intval(($w+$dim[0]-$dim[2])/2);
+ 					$y=intval($startY+$i*$WorkH/5);
 	 				imagettftext($im, $WorkH/10, 12, $x, $y, $blue, $font, $t);
  				}
 				ob_start();
@@ -646,6 +646,8 @@ function getApiScheduledSessions($ScheduleOptions=[]) {
 		$Options->TOURID=$_SESSION['TourId'];
 	}
 
+    $Today=getToday();
+
 	$ret=array();
 	$aSQL=[];
 	if(!$Options->TYPE or in_array('Q', $Options->TYPE)) {
@@ -671,7 +673,7 @@ function getApiScheduledSessions($ScheduleOptions=[]) {
 			LEFT JOIN DistanceInformation on DiTournament=SesTournament and DiType=SesType and DiSession=SesOrder
 			LEFT JOIN Scheduler ON SchTournament=SesTournament AND SchSesType=SesType AND SchSesOrder=SesOrder
 			WHERE SesTournament={$Options->TOURID} AND SesType='Q' $SubQuery
-			" . ($Options->ONLYTODAY ? " AND (date(convert_tz(SchDay, ToTimeZone, '+00:00'))=UTC_DATE() or date(convert_tz(DiDay, ToTimeZone, '+00:00'))=UTC_DATE())" : "") ."
+			" . ($Options->ONLYTODAY ? " AND (SchDay='$Today' or DiDay='$Today')" : "") ."
 			GROUP BY SesOrder, SesType";
     }
 
@@ -687,7 +689,7 @@ function getApiScheduledSessions($ScheduleOptions=[]) {
 			left JOIN Session on EvTournament=SesTournament and ElSession=SesOrder AND SesType='E'
 			LEFT JOIN Scheduler ON SchTournament=EvTournament AND SchSesType='E' AND SchSesOrder=ElSession
 			WHERE EvTournament={$Options->TOURID}
-			" . ($Options->ONLYTODAY ? "AND date(convert_tz(SchDay, ToTimeZone, '+00:00'))=UTC_DATE()" : "") ."
+			" . ($Options->ONLYTODAY ? "AND SchDay='$Today'" : "") ."
 			" . ($Options->UNFINISHED ? "AND EvE1ShootOff=0" : "") ."
 			GROUP BY EvCode";
 
@@ -702,7 +704,7 @@ function getApiScheduledSessions($ScheduleOptions=[]) {
 			left JOIN Session on SesTournament=ElTournament and ElSession=SesOrder AND SesType='E'
 			LEFT JOIN Scheduler ON SchTournament=EvTournament AND SchSesType='E' AND SchSesOrder=ElSession
 			WHERE EvTournament={$Options->TOURID}
-			" . ($Options->ONLYTODAY ? "AND date(convert_tz(SchDay, ToTimeZone, '+00:00'))=UTC_DATE()" : "") ."
+			" . ($Options->ONLYTODAY ? "AND SchDay='$Today'" : "") ."
 			" . ($Options->UNFINISHED ? "AND EvE2ShootOff=0" : "") ."
 			GROUP BY EvCode";
 	}
@@ -718,7 +720,7 @@ function getApiScheduledSessions($ScheduleOptions=[]) {
                 inner join Events on EvTournament=f1.FinTournament and EvCode=f1.FinEvent and EvTeamEvent=0
 				inner join Grids on GrMatchNo=f1.FinMatchNo
 				where f1.FinTournament={$Options->TOURID} and f1.FinMatchNo%2=0 and 
-				((greatest(f1.FinAthlete, f2.FinAthlete)=0 and GrPhase<EvFinalFirstPhase) OR (greatest(f1.FinWinLose,f2.FinWinLose, f1.FinTie, f2.FinTie)=0 and greatest(f1.FinAthlete,f2.FinAthlete)>0))
+				((greatest(f1.FinAthlete, f2.FinAthlete)=0 and GrPhase<=EvFinalFirstPhase) OR (greatest(f1.FinWinLose,f2.FinWinLose, f1.FinTie, f2.FinTie)=0 and greatest(f1.FinAthlete,f2.FinAthlete)>0))
 				group by f1.FinEvent, f1.FinMatchNo 
 				)";
 		}
@@ -731,7 +733,7 @@ function getApiScheduledSessions($ScheduleOptions=[]) {
 			inner join Grids on GrMatchNo=FsMatchNo
 			inner join Events on EvCode=FsEvent and EvTournament=FsTournament and EvTeamEvent=FsTeamEvent $SubQuery
 			WHERE FSTournament={$Options->TOURID} and FSScheduledDate>0 and FsTeamEvent=0 "
-            . ($Options->ONLYTODAY ? "AND date(convert_tz(FSScheduledDate, ToTimeZone, '+00:00'))=utc_date() " : "")
+            . ($Options->ONLYTODAY ? "AND FSScheduledDate='$Today' " : "")
             . ($Options->TYPE=='I' ? "AND EvTeamEvent=0 " : "")
             ."GROUP BY CONCAT('I', FSScheduledDate, FSScheduledTime)";
 	}
@@ -747,7 +749,7 @@ function getApiScheduledSessions($ScheduleOptions=[]) {
 				inner join Events on EvTournament=f1.tfTournament and EvCode=f1.tfEvent and EvTeamEvent=1
 				inner join Grids on GrMatchNo=f1.tfMatchNo
 				where f1.tfTournament={$Options->TOURID} and f1.TfMatchNo%2=0 and 
-				((greatest(f1.TfTeam, f2.TfTeam)=0 and GrPhase<EvFinalFirstPhase) OR (greatest(f1.TfWinLose,f2.TfWinLose, f1.TfTie, f2.TfTie)=0 and greatest(f1.TfTeam, f2.TfTeam)>0)) 
+				((greatest(f1.TfTeam, f2.TfTeam)=0 and GrPhase<=EvFinalFirstPhase) OR (greatest(f1.TfWinLose,f2.TfWinLose, f1.TfTie, f2.TfTie)=0 and greatest(f1.TfTeam, f2.TfTeam)>0)) 
 				group by f1.TfEvent, f1.TfMatchNo
 				)";
 		}
@@ -760,7 +762,7 @@ function getApiScheduledSessions($ScheduleOptions=[]) {
 			inner join Grids on GrMatchNo=FsMatchNo
 			inner join Events on EvCode=FsEvent and EvTournament=FsTournament and EvTeamEvent=FsTeamEvent $SubQuery
 			WHERE FSTournament={$Options->TOURID} and FSScheduledDate>0 and FsTeamEvent=1
-			" . ($Options->ONLYTODAY ? "AND date(convert_tz(FSScheduledDate, ToTimeZone, '+00:00'))=UTC_DATE()" : "") ."
+			" . ($Options->ONLYTODAY ? "AND FSScheduledDate='$Today'" : "") ."
 			" . ($Options->TYPE=='T' ? "AND EvTeamEvent=1" : "") ."
 			GROUP BY CONCAT('T', FSScheduledDate, FSScheduledTime)";
 	}
@@ -780,6 +782,7 @@ function getApiScheduledSessions($ScheduleOptions=[]) {
 		           and f2.RrMatchTournament=f1.RrMatchTournament
 		           and f2.RrMatchMatchNo=f1.RrMatchMatchNo+1 
 				where f1.RrMatchTournament={$Options->TOURID} and f1.RrMatchMatchNo%2=0 and greatest(f1.RrMatchWinLose,f2.RrMatchWinLose, f1.RrMatchTie, f2.RrMatchTie)=0 and greatest(f1.RrMatchAthlete, f2.RrMatchAthlete)>0
+                " . ($Options->ONLYTODAY ? "AND f1.RRMatchScheduledDate='$Today'" : "") ."
 				group by f1.RrMatchTeam, f1.RrMatchEvent
 				)";
 		}
@@ -793,7 +796,7 @@ function getApiScheduledSessions($ScheduleOptions=[]) {
 			inner join RoundRobinLevel on RrLevTournament=RrMatchTournament and RrLevTeam=RrMatchTeam and RrLevLevel=RrMatchLevel
 			inner join Events on EvCode=RrMatchEvent and EvTournament=RrMatchTournament and EvTeamEvent=RrMatchTeam
 			WHERE RrMatchTournament={$Options->TOURID} and RrMatchScheduledDate>0 $SubQuery
-			" . ($Options->ONLYTODAY ? "AND date(convert_tz(RRMatchScheduledDate, ToTimeZone, '+00:00'))=UTC_DATE()" : "") ."
+			" . ($Options->ONLYTODAY ? "AND RRMatchScheduledDate='$Today'" : "") ."
 			GROUP BY RrMatchScheduledDate, RRMatchScheduledTime";
 	}
 
@@ -1483,195 +1486,229 @@ function CheckCredentials($OnlineId, $OnlineAuth, $Return, $LicenseVoucher='') {
 function get_Countries() {
 	// get list from WA Countries
 	$Flags=array(
-		'AFG' => 'Afghanistan',
-		'ALB' => 'Albania',
-		'ALG' => 'Algeria',
-		'AND' => 'Andorra',
-		'ARG' => 'Argentina',
-		'ARM' => 'Armenia',
-		'ARU' => 'Aruba',
-		'ASA' => 'American Samoa',
-		'AUS' => 'Australia',
-		'AUT' => 'Austria',
-		'AZE' => 'Azerbaijan',
-		'BAH' => 'Bahamas',
-		'BAN' => 'Bangladesh',
-		'BAR' => 'Barbados',
-		'BEL' => 'Belgium',
-		'BEN' => 'Benin',
-		'BER' => 'Bermuda',
-		'BHU' => 'Bhutan',
-		'BIH' => 'Bosnia and Herzegovina',
-		'BLR' => 'Belarus',
-		'BOL' => 'Bolivia',
-		'BRA' => 'Brazil',
-		'BUL' => 'Bulgaria',
-		'BUR' => 'Burkina Faso',
-		'CAF' => 'Central African Republic',
-		'CAM' => 'Cambodia',
-		'CAN' => 'Canada',
-		'CHA' => 'Chad',
-		'CHI' => 'Chile',
-		'CHN' => 'PR China',
-		'CIV' => 'Cote d Ivoire',
-		'CMR' => 'Cameroon',
-		'COD' => 'DR Congo',
-		'COL' => 'Colombia',
-		'COM' => 'Comoros',
-		'CRC' => 'Costa Rica',
-		'CRO' => 'Croatia',
-		'CUB' => 'Cuba',
-		'CYP' => 'Cyprus',
-		'CZE' => 'Czech Republic',
-		'DEN' => 'Denmark',
-		'DJI' => 'Djibouti',
-		'DMA' => 'Dominica',
-		'DOM' => 'Dominican Republic',
-		'ECU' => 'Ecuador',
-		'EGY' => 'Egypt',
-		'ERI' => 'Eritrea',
-		'ESA' => 'El Salvador',
-		'ESP' => 'Spain',
-		'EST' => 'Estonia',
-		'FIJ' => 'Fiji',
-		'FIN' => 'Finland',
-		'FLK' => 'Falkland Island',
-		'FPO' => 'Tahiti',
-		'FRA' => 'France',
-		'FRO' => 'Faroe Islands',
-		'GAB' => 'Gabon',
-		'GBR' => 'Great Britain',
-		'GEO' => 'Georgia',
-		'GER' => 'Germany',
-		'GHA' => 'Ghana',
-		'GLP' => 'Guadalupe',
-		'GRE' => 'Greece',
-		'GUA' => 'Guatemala',
-		'GUI' => 'Guinea',
-		'GUM' => 'Guam',
-		'GUY' => 'Guyana',
-		'HAI' => 'Haiti',
-		'HKG' => 'Hong Kong, China',
-		'HON' => 'Honduras',
-		'HUN' => 'Hungary',
-		'INA' => 'Indonesia',
-		'IND' => 'India',
-		'IOA' => 'Int. Olympic Archer',
-		'IPA' => 'Int. Paralympic Archer',
-		'IRI' => 'IR Iran',
-		'IRL' => 'Ireland',
-		'IRQ' => 'Iraq',
-		'ISL' => 'Iceland',
-		'ISR' => 'Israel',
-		'ISV' => 'Virgin Islands, US',
-		'ITA' => 'Italy',
-		'IVB' => 'British Virgin Islands',
-		'JOR' => 'Jordan',
-		'JPN' => 'Japan',
-		'KAZ' => 'Kazakhstan',
-		'KEN' => 'Kenya',
-		'KGZ' => 'Kyrgyzstan',
-		'KIR' => 'Kiribati',
-		'KOR' => 'Korea',
-		'KOS' => 'Kosovo',
-		'KSA' => 'Saudi Arabia',
-		'KUW' => 'Kuwait',
-		'LAO' => 'Laos',
-		'LAT' => 'Latvia',
-		'LBA' => 'Libya',
-		'LBR' => 'Liberia',
-		'LES' => 'Lesotho',
-		'LIB' => 'Lebanon',
-		'LIE' => 'Liechtenstein',
-		'LTU' => 'Lithuania',
-		'LUX' => 'Luxembourg',
-		'MAC' => 'Macau, China',
-		'MAD' => 'Madagascar',
-		'MAR' => 'Morocco',
-		'MAS' => 'Malaysia',
-		'MAW' => 'Malawi',
-		'MDA' => 'Moldova',
-		'MEX' => 'Mexico',
-		'MGL' => 'Mongolia',
-		'MKD' => 'North Macedonia',
-		'MLI' => 'Mali',
-		'MLT' => 'Malta',
-		'MNE' => 'Montenegro',
-		'MON' => 'Monaco',
-		'MRI' => 'Mauritius',
-		'MTN' => 'Mauritania',
-		'MTQ' => 'Martinique',
-		'MYA' => 'Myanmar',
-		'NAM' => 'Namibia',
-		'NCA' => 'Nicaragua',
-		'NCL' => 'New Caledonia',
-		'NED' => 'Netherlands',
-		'NEP' => 'Nepal',
-		'NFK' => 'Norfolk Island',
-		'NGR' => 'Nigeria',
-		'NIG' => 'Niger',
-		'NIU' => 'Niue',
-		'NMI' => 'Northern Mariana Islands',
-		'NOR' => 'Norway',
-		'NZL' => 'New Zealand',
-		'PAK' => 'Pakistan',
-		'PAN' => 'Panama',
-		'PAR' => 'Paraguay',
-		'PER' => 'Peru',
-		'PHI' => 'Philippines',
-		'PLW' => 'Palau',
-		'PNG' => 'Papua New Guinea',
-		'POL' => 'Poland',
-		'POR' => 'Portugal',
-		'PRK' => 'DPR Korea',
-		'PUR' => 'Puerto Rico',
-		'QAT' => 'Qatar',
-		'ROU' => 'Romania',
-		'RSA' => 'South Africa',
-		'RUS' => 'Russia',
-		'RWA' => 'Rwanda',
-		'SAM' => 'Samoa',
-		'SCG' => 'Serbia and Montenegro',
-		'SEN' => 'Senegal',
-		'SGP' => 'Singapore',
-		'SKN' => 'Saint Kitts and Nevis',
-		'SLE' => 'Sierra Leone',
-		'SLO' => 'Slovenia',
-		'SMR' => 'San Marino',
-		'SOL' => 'Solomon Islands',
-		'SOM' => 'Somalia',
-		'SRB' => 'Serbia',
-		'SRI' => 'Sri Lanka',
-		'SUD' => 'Sudan',
-		'SUI' => 'Switzerland',
-		'SUN' => 'USSR',
-		'SUR' => 'Suriname',
-		'SVK' => 'Slovakia',
-		'SWE' => 'Sweden',
-		'SYR' => 'Syria',
-		'TGA' => 'Tonga',
-		'THA' => 'Thailand',
-		'TJK' => 'Tajikistan',
-		'TKM' => 'Turkmenistan',
-		'TOG' => 'Togo',
-		'TPE' => 'Chinese Taipei',
-		'TTO' => 'Trinidad and Tobago',
-		'TUN' => 'Tunisia',
-		'TUR' => 'Turkey',
-		'UAE' => 'UAE',
-		'UGA' => 'Uganda',
-		'UKR' => 'Ukraine',
-		'URU' => 'Uruguay',
-		'USA' => 'USA',
-		'UZB' => 'Uzbekistan',
-		'VAN' => 'Vanuatu',
-		'VEN' => 'Venezuela',
-		'VIE' => 'Vietnam',
-		'VIN' => 'St Vincent and the Grenadines',
-		'YEM' => 'Yemen',
-		'YUG' => 'Yugoslavia',
-		'ZAM' => 'Zambia',
-		'ZIM' => 'Zimbabwe',
+        'AFG' => 'Afghanistan',
+        'ALB' => 'Albania',
+        'ALG' => 'Algeria',
+        'AND' => 'Andorra',
+        'ANG' => 'Angola',
+        'ANT' => 'Antigua and Barbuda',
+        'ARG' => 'Argentina',
+        'ARM' => 'Armenia',
+        'ARU' => 'Aruba',
+        'ASA' => 'American Samoa',
+        'AUS' => 'Australia',
+        'AUT' => 'Austria',
+        'AZE' => 'Azerbaijan',
+        'BAH' => 'Bahamas',
+        'BAN' => 'Bangladesh',
+        'BAR' => 'Barbados',
+        'BDI' => 'Burundi',
+        'BEL' => 'Belgium',
+        'BEN' => 'Benin',
+        'BER' => 'Bermuda',
+        'BHU' => 'Bhutan',
+        'BIH' => 'Bosnia and Herzegovina',
+        'BIZ' => 'Belize',
+        'BLR' => 'Belarus',
+        'BOL' => 'Bolivia',
+        'BOT' => 'Botswana',
+        'BRA' => 'Brazil',
+        'BRN' => 'Bahrain',
+        'BRU' => 'Brunei',
+        'BUL' => 'Bulgaria',
+        'BUR' => 'Burkina Faso',
+        'CAF' => 'Central African Republic',
+        'CAM' => 'Cambodia',
+        'CAN' => 'Canada',
+        'CAY' => 'Cayman Islands',
+        'CGO' => 'Republic of the Congo',
+        'CHA' => 'Chad',
+        'CHI' => 'Chile',
+        'CHN' => 'PR China',
+        'CIV' => 'Côte d\'Ivoire',
+        'CMR' => 'Cameroon',
+        'COD' => 'Democratic Republic of the Congo',
+        'COK' => 'Cook Islands',
+        'COL' => 'Colombia',
+        'COM' => 'Comoros',
+        'CPV' => 'Cape Verde',
+        'CRC' => 'Costa Rica',
+        'CRO' => 'Croatia',
+        'CUB' => 'Cuba',
+        'CYP' => 'Cyprus',
+        'CZE' => 'Czechia',
+        'DEN' => 'Denmark',
+        'DJI' => 'Djibouti',
+        'DMA' => 'Dominica',
+        'DOM' => 'Dominican Republic',
+        'ECU' => 'Ecuador',
+        'EGY' => 'Egypt',
+        'ERI' => 'Eritrea',
+        'ESA' => 'El Salvador',
+        'ESP' => 'Spain',
+        'EST' => 'Estonia',
+        'ETH' => 'Ethiopia',
+        'FIJ' => 'Fiji',
+        'FIN' => 'Finland',
+        'FRA' => 'France',
+        'FSM' => 'Federated States of Micronesia',
+        'GAB' => 'Gabon',
+        'GAM' => 'The Gambia',
+        'GBR' => 'Great Britain',
+        'GBS' => 'Guinea-Bissau',
+        'GEO' => 'Georgia',
+        'GEQ' => 'Equatorial Guinea',
+        'GER' => 'Germany',
+        'GHA' => 'Ghana',
+        'GRE' => 'Greece',
+        'GRN' => 'Grenada',
+        'GUA' => 'Guatemala',
+        'GUI' => 'Guinea',
+        'GUM' => 'Guam',
+        'GUY' => 'Guyana',
+        'HAI' => 'Haiti',
+        'HKG' => 'Hong Kong, China',
+        'HON' => 'Honduras',
+        'HUN' => 'Hungary',
+        'INA' => 'Indonesia',
+        'IND' => 'India',
+        'IRI' => 'IR Iran',
+        'IRL' => 'Ireland',
+        'IRQ' => 'Iraq',
+        'ISL' => 'Iceland',
+        'ISR' => 'Israel',
+        'ISV' => 'Virgin Islands, US',
+        'ITA' => 'Italy',
+        'IVB' => 'British Virgin Islands',
+        'JAM' => 'Jamaica',
+        'JOR' => 'Jordan',
+        'JPN' => 'Japan',
+        'KAZ' => 'Kazakhstan',
+        'KEN' => 'Kenya',
+        'KGZ' => 'Kyrgyzstan',
+        'KIR' => 'Kiribati',
+        'KOR' => 'South Korea',
+        'KOS' => 'Kosovo',
+        'KSA' => 'Saudi Arabia',
+        'KUW' => 'Kuwait',
+        'LAO' => 'Laos',
+        'LAT' => 'Latvia',
+        'LBA' => 'Libya',
+        'LBN' => 'Lebanon',
+        'LBR' => 'Liberia',
+        'LCA' => 'Saint Lucia',
+        'LES' => 'Lesotho',
+        'LIE' => 'Liechtenstein',
+        'LTU' => 'Lithuania',
+        'LUX' => 'Luxembourg',
+        'MAD' => 'Madagascar',
+        'MAR' => 'Morocco',
+        'MAS' => 'Malaysia',
+        'MAW' => 'Malawi',
+        'MDA' => 'Moldova',
+        'MDV' => 'Maldives',
+        'MEX' => 'Mexico',
+        'MGL' => 'Mongolia',
+        'MHL' => 'Marshall Islands',
+        'MKD' => 'North Macedonia',
+        'MLI' => 'Mali',
+        'MLT' => 'Malta',
+        'MNE' => 'Montenegro',
+        'MON' => 'Monaco',
+        'MOZ' => 'Mozambique',
+        'MRI' => 'Mauritius',
+        'MTN' => 'Mauritania',
+        'MYA' => 'Myanmar',
+        'NAM' => 'Namibia',
+        'NCA' => 'Nicaragua',
+        'NED' => 'Netherlands',
+        'NEP' => 'Nepal',
+        'NGR' => 'Nigeria',
+        'NIG' => 'Niger',
+        'NOR' => 'Norway',
+        'NRU' => 'Nauru',
+        'NZL' => 'New Zealand',
+        'OMA' => 'Oman',
+        'PAK' => 'Pakistan',
+        'PAN' => 'Panama',
+        'PAR' => 'Paraguay',
+        'PER' => 'Peru',
+        'PHI' => 'Philippines',
+        'PLE' => 'Palestine',
+        'PLW' => 'Palau',
+        'PNG' => 'Papua New Guinea',
+        'POL' => 'Poland',
+        'POR' => 'Portugal',
+        'PRK' => 'DPR Korea',
+        'PUR' => 'Puerto Rico',
+        'QAT' => 'Qatar',
+        'ROU' => 'Romania',
+        'RSA' => 'South Africa',
+        'RUS' => 'Russia',
+        'RWA' => 'Rwanda',
+        'SAM' => 'Samoa',
+        'SEN' => 'Senegal',
+        'SEY' => 'Seychelles',
+        'SGP' => 'Singapore',
+        'SKN' => 'Saint Kitts and Nevis',
+        'SLE' => 'Sierra Leone',
+        'SLO' => 'Slovenia',
+        'SMR' => 'San Marino',
+        'SOL' => 'Solomon Islands',
+        'SOM' => 'Somalia',
+        'SRB' => 'Serbia',
+        'SRI' => 'Sri Lanka',
+        'SSD' => 'South Sudan',
+        'STP' => 'São Tomé and Príncipe',
+        'SUD' => 'Sudan',
+        'SUI' => 'Switzerland',
+        'SUR' => 'Suriname',
+        'SVK' => 'Slovakia',
+        'SWE' => 'Sweden',
+        'SWZ' => 'Eswatini',
+        'SYR' => 'Syria',
+        'TAN' => 'Tanzania',
+        'TGA' => 'Tonga',
+        'THA' => 'Thailand',
+        'TJK' => 'Tajikistan',
+        'TKM' => 'Turkmenistan',
+        'TLS' => 'East Timor',
+        'TOG' => 'Togo',
+        'TPE' => 'Chinese Taipei',
+        'TTO' => 'Trinidad and Tobago',
+        'TUN' => 'Tunisia',
+        'TUR' => 'Türkiye',
+        'TUV' => 'Tuvalu',
+        'UAE' => 'United Arab Emirates',
+        'UGA' => 'Uganda',
+        'UKR' => 'Ukraine',
+        'URU' => 'Uruguay',
+        'USA' => 'United States of America',
+        'UZB' => 'Uzbekistan',
+        'VAN' => 'Vanuatu',
+        'VEN' => 'Venezuela',
+        'VIE' => 'Vietnam',
+        'VIN' => 'Saint Vincent and the Grenadines',
+        'YEM' => 'Yemen',
+        'ZAM' => 'Zambia',
+        'ZIM' => 'Zimbabwe',
+// Kept for Historical reason
+        'FLK' => 'Falkland Island',
+        'FPO' => 'Tahiti',
+        'FRO' => 'Faroe Islands',
+        'GLP' => 'Guadalupe',
+        'IOA' => 'Int. Olympic Archer',
+        'IPA' => 'Int. Paralympic Archer',
+        'LIB' => 'Lebanon',
+        'MAC' => 'Macau, China',
+        'MTQ' => 'Martinique',
+        'NCL' => 'New Caledonia',
+        'NFK' => 'Norfolk Island',
+        'NIU' => 'Niue',
+        'NMI' => 'Northern Mariana Islands',
+        'SCG' => 'Serbia and Montenegro',
+        'SUN' => 'USSR',
+        'YUG' => 'Yugoslavia',
 	);
 	return $Flags;
 }
@@ -1751,4 +1788,103 @@ function OdfCapitalise($Name, $Type='A') {
 	}
 
 	return $Name;
+}
+
+function ordinal($number) {
+    $ends = array('th','st','nd','rd','th','th','th','th','th','th');
+    if ((($number % 100) >= 11) && (($number%100) <= 13))
+        return $number. 'th';
+    else
+        return $number. $ends[$number % 10];
+}
+
+function intToRoman($num) {
+	// This function takes integer as input and return a string with roman representation of given integer. If integer not in between 1 and 3999 return given integer because there is no roman representation of number outside of that range
+	$num=intval($num);
+    if(!$num) {
+        return '';
+    }
+    if($num>3999){
+		return $num;
+	}
+
+	if($num<=0){
+		return $num;
+	}
+
+    // Define an array mapping integers to their Roman numeral counterparts
+    $map = [
+        'M'  => 1000,
+        'CM' => 900,
+        'D'  => 500,
+        'CD' => 400,
+        'C'  => 100,
+        'XC' => 90,
+        'L'  => 50,
+        'XL' => 40,
+        'X'  => 10,
+        'IX' => 9,
+        'V'  => 5,
+        'IV' => 4,
+        'I'  => 1
+    ];
+
+    $result = '';
+
+    // Loop through the map and append the Roman numeral while reducing the integer
+    foreach ($map as $roman => $value) {
+        // While the current value can be subtracted from num
+        while ($num >= $value) {
+            $result .= $roman;
+            $num -= $value;
+        }
+    }
+
+    return $result;
+}
+
+/**
+ * @param $Type one of the following: <ul><li>A[ll]: (default) returns all available fonts</li><li>S[ystem]: returns the fonts located in tcpdf/fonts</li><li>E[xtra]: returns the extra fonts located in module, if present </li></ul>
+ * @return void
+ */
+function getFonts($Type='All') {
+    global $CFG;
+    require_once('Common/Lib/FontMeta.php');
+    require_once('Common/Lib/FontInfo.php');
+    $aFonts=array();
+    $Type=strtoupper($Type[0]);
+    if($Type=='A' or $Type=='S') {
+        foreach(glob($CFG->FONT_PATH.'*.ttf') as $f) {
+//            $ff=new FontMeta($f);
+//            $aFonts[basename($f)]=['name'=>ucfirst($ff->getPostscriptName()), 'file'=>$f];
+            $ff=new FontInfo($f);
+            $aFonts[basename($f)]=['name'=>ucfirst($ff->getFontName()), 'file'=>$f, 'type'=>'S'];
+        }
+        foreach(glob($CFG->INCLUDE_PATH.'/Modules/FontManagement/fonts/*.otf') as $f) {
+//            $ff=new FontMeta($f);
+//            $aFonts[basename($f)]=['name'=>ucfirst($ff->getPostscriptName()), 'file'=>$f];
+            $ff=new FontInfo($f);
+            $aFonts[basename($f)]=['name'=>ucfirst($ff->getFontName()), 'file'=>$f, 'type'=>'E'];
+        }
+    }
+
+    if($Type=='A' or ($Type=='E' and is_dir($CFG->INCLUDE_PATH.'/Modules/FontManagement'))) {
+        foreach(glob($CFG->INCLUDE_PATH.'/Modules/FontManagement/fonts/*.ttf') as $f) {
+//            $ff=new FontMeta($f);
+//            $aFonts[basename($f)]=['name'=>ucfirst($ff->getPostscriptName()), 'file'=>$f];
+            $ff=new FontInfo($f);
+            $aFonts[basename($f)]=['name'=>ucfirst($ff->getFontName()), 'file'=>$f, 'type'=>'E'];
+        }
+        foreach(glob($CFG->INCLUDE_PATH.'/Modules/FontManagement/fonts/*.otf') as $f) {
+//            $ff=new FontMeta($f);
+//            $aFonts[basename($f)]=['name'=>ucfirst($ff->getPostscriptName()), 'file'=>$f];
+            $ff=new FontInfo($f);
+            $aFonts[basename($f)]=['name'=>ucfirst($ff->getFontName()), 'file'=>$f, 'type'=>'E'];
+        }
+    }
+
+    uasort($aFonts, function($a, $b) {
+        return $a['name'] <=> $b['name'];
+    });
+    return $aFonts;
 }

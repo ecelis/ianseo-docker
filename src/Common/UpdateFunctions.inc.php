@@ -861,3 +861,44 @@ function updateSevereBug_20240114($ToId) {
         SET TfGolds='', TfGoldsChars=''
         WHERE  TfTournament=$ToId AND `TfGolds` LIKE '11' AND `TfXNine` = '' AND `TfGoldsChars` LIKE 'M' AND `TfXNineChars` = ''",false,array(1146, 1060));
 }
+
+function updateTournamentInvolvedTS_20240826($ToId) {
+    safe_w_sql("UPDATE `TournamentInvolved` 
+        INNER JOIN `Tournament` ON `TiTournament`=`ToId` 
+        SET `TiTimeStamp`=`ToWhenFrom` 
+        WHERE `ToId`=$ToId AND `TiTimeStamp`='0000-00-00'");
+}
+
+function updateAclTemplates_20240920($ToId) {
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=22 where `AclDtFeature`=9 AND `AclDtTournament`=$ToId");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=23 where `AclDtFeature`=2 AND `AclDtTournament`=$ToId");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=24 where `AclDtFeature`=7 AND `AclDtTournament`=$ToId");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=25 where `AclDtFeature`=3 AND `AclDtTournament`=$ToId");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=26 where `AclDtFeature`=4 AND `AclDtTournament`=$ToId");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=27 where `AclDtFeature`=16 AND `AclDtTournament`=$ToId");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=28 where `AclDtFeature`=5 AND `AclDtTournament`=$ToId");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=29 where `AclDtFeature`=6 AND `AclDtTournament`=$ToId");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=30 where `AclDtFeature`=13 AND `AclDtTournament`=$ToId");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=31 where `AclDtFeature`=14 AND `AclDtTournament`=$ToId");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=32 where `AclDtFeature`=11 AND `AclDtTournament`=$ToId");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=33 where `AclDtFeature`=12 AND `AclDtTournament`=$ToId");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=34 where `AclDtFeature`=8 AND `AclDtTournament`=$ToId");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=35 where `AclDtFeature`=10 AND `AclDtTournament`=$ToId");
+    safe_w_sql("update `AclDetails` set `AclDtFeature`=36 where `AclDtFeature`=15 AND `AclDtTournament`=$ToId");
+    safe_w_sql("UPDATE `AclDetails` set `AclDtFeature`=`AclDtFeature`-20 where `AclDtFeature`>20 AND `AclDtTournament`=$ToId");
+
+    safe_w_sql("INSERT IGNORE INTO AclTemplates (`AclTeTournament`, `AclTePattern`, `AclTeNick`, `AclTeFeatures`, `AclTeEnabled`)
+        SELECT `AclTournament`, `AclIP`, `AclNick`, GROUP_CONCAT(CONCAT_WS('|', AclDtFeature, AclDtSubFeature, AclDtLevel) ORDER BY AclDtFeature, AclDtSubFeature SEPARATOR '#') as `Features`, AclEnabled
+        FROM `ACL` 
+        INNER JOIN AclDetails on AclTournament=AclDTTournament and AclIP=AclDtIP
+        WHERE `AclTournament`=$ToId AND `AclIP` LIKE '%*%'  
+        GROUP BY  `AclTournament`, `AclIP`",false,array(1146, 1060));
+    safe_w_sql("DELETE FROM `ACL` WHERE `AclTournament`=$ToId AND `AclIP` LIKE '%*%'",false,array(1146, 1060));
+    safe_w_sql("INSERT IGNORE INTO AclTemplates (`AclTeTournament`, `AclTePattern`, `AclTeNick`, `AclTeFeatures`, `AclTeEnabled`)
+        SELECT `AclTournament`, `AclNick`, 'REGEXP', GROUP_CONCAT(CONCAT_WS('|', AclDtFeature, AclDtSubFeature, AclDtLevel) ORDER BY AclDtFeature, AclDtSubFeature SEPARATOR '#') as `Features`, AclEnabled
+        FROM `ACL` 
+        INNER JOIN AclDetails on AclTournament=AclDTTournament and AclIP=AclDtIP
+        WHERE `AclTournament`=$ToId AND `AclIP` LIKE '0.0.0.%'
+        GROUP BY  `AclTournament`, `AclIP`",false,array(1146, 1060));
+    safe_w_sql("DELETE FROM `ACL` WHERE `AclTournament`=$ToId AND `AclIP` LIKE '0.0.0.%'",false,array(1146, 1060));
+}

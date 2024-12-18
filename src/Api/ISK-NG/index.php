@@ -1,6 +1,6 @@
 <?php
 $SKIP_AUTH=true;
-require_once(dirname(__FILE__) . '/config.php');
+require_once(__DIR__ . '/config.php');
 const MAX_API_VERSION = 1;
 
 $Json=array('error'=>true);
@@ -25,13 +25,10 @@ $Json['responses'] = [];
 // This is in case we have several responses to manage as the result of a single call!
 $MultipleRes=[];
 
-if($CFG->DEBUG??false) {
-	if(is_dir(__DIR__.'/log') and is_writable(__DIR__.'/log')) {
-		$ErrorLog=__DIR__.'/log/messages-'.date('Y-m-d').'.log';
-		error_log(json_encode(['time'=>date('Y-m-d H:i:s'), 'mode'=>'GET', 'data' => $data])."\n", 3, $ErrorLog);
-		error_log(json_encode(['time'=>date('Y-m-d H:i:s'), 'mode'=>'HEADERS', 'data' => apache_request_headers()])."\n", 3, $ErrorLog);
-		chmod($ErrorLog, 0666);
-	}
+if(NG_DEBUG_LOG) {
+    error_log(json_encode(['time'=>date('Y-m-d H:i:s'), 'mode'=>'GET', 'data' => $data])."\n", 3, NG_DEBUG_LOGFILE);
+    error_log(json_encode(['time'=>date('Y-m-d H:i:s'), 'mode'=>'HEADERS', 'data' => apache_request_headers()])."\n", 3, NG_DEBUG_LOGFILE);
+    chmod(NG_DEBUG_LOGFILE, 0666);
 }
 
 try {
@@ -98,29 +95,23 @@ try {
         $Json['responses'][] = $altRes;
     }
 } catch(Throwable $exception) {
-	if($CFG->DEBUG??false) {
-		if(is_dir(__DIR__.'/log') and is_writable(__DIR__.'/log')) {
-			error_log(json_encode(['time'=>date('Y-m-d H:i:s'), 'mode'=>'ERROR', 'data' => $exception->getMessage()])."\n", 3, $ErrorLog);
-		}
+	if(NG_DEBUG_LOG) {
+        error_log(json_encode(['time'=>date('Y-m-d H:i:s'), 'mode'=>'ERROR', 'data' => $exception->getMessage()])."\n", 3, NG_DEBUG_LOGFILE);
 	}
 
 	$Json['error'] = true;
 	$Json['errorMsg'] = 'Throwable error!';
 } catch(Error $exception) {
-	if($CFG->DEBUG??false) {
-		if(is_dir(__DIR__.'/log') and is_writable(__DIR__.'/log')) {
-			error_log(json_encode(['time'=>date('Y-m-d H:i:s'), 'mode'=>'ERROR', 'data' => $exception->getMessage()])."\n", 3, $ErrorLog);
-		}
+	if(NG_DEBUG_LOG) {
+        error_log(json_encode(['time'=>date('Y-m-d H:i:s'), 'mode'=>'ERROR', 'data' => $exception->getMessage()])."\n", 3, NG_DEBUG_LOGFILE);
 	}
 
 	$Json['error'] = true;
 	$Json['errorMsg'] = 'Fatal error!';
 }
 
-if($CFG->DEBUG??false) {
-	if(is_dir(__DIR__.'/log') and is_writable(__DIR__.'/log')) {
-		error_log(json_encode(['time'=>date('Y-m-d H:i:s'), 'mode'=>'SEND', 'data' => $Json])."\n", 3, $ErrorLog);
-	}
+if(NG_DEBUG_LOG) {
+    error_log(json_encode(['time'=>date('Y-m-d H:i:s'), 'mode'=>'SEND', 'data' => $Json])."\n", 3, NG_DEBUG_LOGFILE);
 }
 
 safe_close();

@@ -5,6 +5,11 @@ require_once('Common/Lib/Fun_Modules.php');
 require_once('Common/Lib/CommonLib.php');
 require_once(__DIR__.'/config_defines.php');
 
+const reqAppVersion = '1.4.1';
+
+define('NG_DEBUG_LOG', ($CFG->DEBUG??false) and is_dir(__DIR__.'/log') and is_writable(__DIR__.'/log'));
+define('NG_DEBUG_LOGFILE', __DIR__.'/log/messages-'.date('Y-m-d').'.log');
+
 function getQrConfig($DEVICE, $cachedData=false, $Lightmode=false, $Force=false) {
 	if(!$cachedData) {
 		// rebuild and stores the specific configuration for this device

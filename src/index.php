@@ -19,6 +19,7 @@ $JS_SCRIPT[]='<script>
 
 include('Common/Templates/head.php');
 
+echo checkPhpVersion(true);
 
 ?>
 <table class="Tabella">
@@ -56,27 +57,44 @@ if(empty($_SESSION['TourCode']) and ProgramRelease!='HEAD') {
 <tr><td colspan="6"><a class="Link" href="<?php echo $CFG->ROOT_DIR ?>Tournament/index.php?New="><?php print get_text('NewTour', 'Tournament');?></a></td></tr>
 <tr class="Divider"><td colspan="6"></td></tr>
 <?php
-/*$Select
-    = "SELECT ToId,ToType,ToCode,ToName,ToCommitee,ToComDescr,ToWhere,DATE_FORMAT(ToWhenFrom,'" . get_text('DateFmtDB') . "') AS DtFrom, "
-    . "DATE_FORMAT(ToWhenTo,'" . get_text('DateFmtDB') . "') AS DtTo,TtName,TtNumDist "
-    . "FROM Tournament LEFT JOIN Tournament*Type ON ToType=TtId "
-    . "ORDER BY ToWhenTo DESC, ToWhenFrom DESC, ToCode ASC";*/
+$AuthFiler = array();
+if($CFG->USERAUTH){
+    if(empty($_SESSION['AUTH_User'])) {
+        echo '<tr><th colspan="6"><a class="Link" href="'.$CFG->ROOT_DIR .'Modules/Authentication/LogIn.php">'.get_text('Login', 'Tournament').'</a></th></tr>';
+        echo '<tr class="Divider"><td colspan="6"></td></tr>';
+    }
+    if(!empty($_SESSION['AUTH_ENABLE']) AND empty($_SESSION['AUTH_ROOT'])) {
+        $compList = array();
+        foreach (($_SESSION["AUTH_COMP"] ?? array()) as $comp) {
+            if (str_contains($comp, '%')) {
+                $AuthFiler[] = 'ToCode LIKE ' . StrSafe_DB($comp);
+            } else {
+                $compList[] = $comp;
+            }
+        }
+        if (count($compList)) {
+            $AuthFiler[] = 'FIND_IN_SET(ToCode, \'' . implode(',', $compList) . '\') != 0 ';
+        } else {
+            $AuthFiler[] = "ToCode IS NULL ";
+        }
+    }
+}
 $Select
     = "SELECT ToId,ToType,ToCode,ToName,ToCommitee,ToComDescr,ToWhere,DATE_FORMAT(ToWhenFrom,'" . get_text('DateFmtDB') . "') AS DtFrom, "
     . "DATE_FORMAT(ToWhenTo,'" . get_text('DateFmtDB') . "') AS DtTo,ToTypeName AS TtName,ToNumDist AS TtNumDist "
     . "FROM Tournament "
-    . (($CFG->USERAUTH AND !empty($_SESSION['AUTH_ENABLE']) AND empty($_SESSION['AUTH_ROOT'])) ? 'WHERE FIND_IN_SET(ToCode, \'' . implode(',',$_SESSION["AUTH_COMP"]) . '\') != 0 ' : '')
+    . (count($AuthFiler) ? 'WHERE ' . implode(' OR ', $AuthFiler) : '')
     . "ORDER BY ToWhenTo DESC, ToWhenFrom DESC, ToCode ASC";
 $Rs=safe_r_sql($Select);
 //print $Select;
 if (safe_num_rows($Rs)>0) {
     echo '<tr>
-        <th class="Title" width="5%">&nbsp;</th>
-        <th class="Title" width="10%">'.get_text('TourCode','Tournament').'</th>
-        <th class="Title" width="30%">'.get_text('TourName','Tournament').'</th>
-        <th class="Title" width="20%">'.get_text('TourCommitee','Tournament').'</th>
-        <th class="Title" width="18%">'.get_text('TourWhere','Tournament').'</th>
-        <th class="Title" width="17%">'.get_text('TourWhen','Tournament').'</th>
+        <th class="Title w-5">&nbsp;</th>
+        <th class="Title w-10">'.get_text('TourCode','Tournament').'</th>
+        <th class="Title w-30">'.get_text('TourName','Tournament').'</th>
+        <th class="Title w-20">'.get_text('TourCommitee','Tournament').'</th>
+        <th class="Title w-20">'.get_text('TourWhere','Tournament').'</th>
+        <th class="Title w-15">'.get_text('TourWhen','Tournament').'</th>
         </tr>';
     while ($MyRow=safe_fetch($Rs)) {
         print '<tr>';
@@ -88,8 +106,6 @@ if (safe_num_rows($Rs)>0) {
         print '<td>' . get_text('From','Tournament') . ' ' . $MyRow->DtFrom . ' ' . get_text('To','Tournament') . ' ' . $MyRow->DtTo . '</td>';
         print '</tr>' . "\n";
     }
-} else {
-    echo '<tr><td colspan="6" class="Bold Center">'.get_text('NoTourExists', 'Tournament').'</td></tr>';
 }
 
 echo '</table>';

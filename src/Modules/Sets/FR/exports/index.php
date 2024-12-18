@@ -16,7 +16,7 @@ if(!empty($_REQUEST['lev'])) {
 	$File=array();
 
 	// Version
-	$File[]="VERSION : \t9.01\t";
+	$File[]=sprintf("VERSION : \t%s.%s\t", defined('ProgramRelease') ? ProgramRelease : 'unknown', defined('ProgramBuild') ? preg_replace('/\D/', '', ProgramBuild) : 'unknown');
 
 	// get the judges
 	$Select="SELECT TiCode Judges 
@@ -52,11 +52,11 @@ if(!empty($_REQUEST['lev'])) {
 				$Discipline='E';
 			}
 			if($COMP->ToWhenFrom>='2019-01-01') {
-				$Discipline='T';
+                $_REQUEST['lev']=='SP' ? 'H' : 'T';
 			}
 			break;
 		case 2:
-			$Discipline='S';
+            $Discipline= $_REQUEST['lev']=='SP' ? 'I' : 'S';
 			break;
 		case 4:
 			$Discipline='C';
@@ -84,19 +84,19 @@ if(!empty($_REQUEST['lev'])) {
 	$q=safe_r_sql("select EnIocCode, EnCode, ucase(EnFirstName) as EnFirstName, ucase(EnName) as EnName, EnDivision, EnAgeClass, EnClass, EnSex, 
 			ifnull(IndEvent,'-') as IndEvent, EnId, 
 			ucase(CoName) as CoName, CoCode, 
-			QuScore, QuSession, QuD1Score, QuD2Score, QuD3Score, QuD4Score, QuHits, QuGold, QuXnine, 
+			QuScore, QuSession, QuD1Score, QuD2Score, QuD3Score, QuD4Score, QuHits, QuGold, QuXnine, QuD1Arrowstring,
 			MaxArrows, MaxDistance, MaxTargetFace, 
 			IndRank, QuClRank, IndRankFinal 
 		from Qualifications
 		inner join Entries on EnId=QuId
-        inner join Divisions on DivId=EnDivision $Filter
+        inner join Divisions on DivId=EnDivision and DivTournament=EnTournament $Filter
 		inner join Countries on CoId=EnCountry and CoTournament=EnTournament
 		inner join (select TfId, greatest(TfW1, TfW2, TfW3, TfW4, TfW5, TfW6, TfW7, TfW8) as MaxTargetFace from TargetFaces where TfTournament={$_SESSION['TourId']}) TargetFaces on TfId=EnTargetFace
 		inner join (select DiSession, sum(DiEnds*DiArrows) as MaxArrows from DistanceInformation where DiTournament={$_SESSION['TourId']} group by DiSession) DistanceArrows on DiSession=QuSession
 		inner join (select TdClasses, greatest(Td1+0, Td2+0, Td3+0, Td4+0, Td5+0, Td6+0, Td7+0, Td8+0) as MaxDistance from TournamentDistances where TdTournament={$_SESSION['TourId']}) Distances on concat(EnDivision,EnClass) like TdClasses
 		left join Individuals on IndId=EnId
 		where EnTournament={$_SESSION['TourId']}
-		order by QuSession");
+		order by EnFirstName, QuSession");
 	$EnCodes=array();
 	while($r=safe_fetch($q)) {
         if($r->EnClass[0]=='D') {
@@ -104,10 +104,11 @@ if(!empty($_REQUEST['lev'])) {
             continue;
         }
 
-		if(empty($EnCodes["{$r->EnCode}-{$r->EnDivision}"])) {
-            $EnCodes["{$r->EnCode}-{$r->EnDivision}"]=0;
-        }
-		$EnCodes["{$r->EnCode}-{$r->EnDivision}"]++;
+        if (0 == $r->QuScore && '' == trim($r->QuD1Arrowstring)) {
+			// Do not send archer in the txt file if score is 0 and no arrows recorded
+			continue;
+		}
+
 
 		// check the age class
         $AgeClass=substr($r->EnAgeClass,0,-1);
@@ -160,12 +161,23 @@ if(!empty($_REQUEST['lev'])) {
                 break;
             case 'SU1':
             case 'SU2':
-                $r->EnDivision='CL';
                 $Class=$r->EnDivision;
+                $r->EnDivision='CL';
                 break;
         }
 
-		$Archers[$r->IndEvent][$r->EnId]=array_fill(0, 51, '');
+        if(empty($EnCodes["{$r->EnCode}-{$r->EnDivision}"])) {
+            $EnCodes["{$r->EnCode}-{$r->EnDivision}"]=0;
+        }
+        $EnCodes["{$r->EnCode}-{$r->EnDivision}"]++;
+
+		// Remove rank from archers shooting more than one session
+		if ($EnCodes["{$r->EnCode}-{$r->EnDivision}"] > 1) {
+			$r->QuClRank = null;
+			$r->IndRankFinal = null;
+		}
+
+        $Archers[$r->IndEvent][$r->EnId]=array_fill(0, 51, '');
 		$Archers[$r->IndEvent][$r->EnId][0] = $Discipline;
 		$Archers[$r->IndEvent][$r->EnId][1] = $_REQUEST['lev'];
 		$Archers[$r->IndEvent][$r->EnId][2] = 'I'; // E if team
@@ -185,7 +197,7 @@ if(!empty($_REQUEST['lev'])) {
 		$Archers[$r->IndEvent][$r->EnId][17] = $r->MaxDistance;
 		$Archers[$r->IndEvent][$r->EnId][18] = $r->MaxTargetFace;
 		$Archers[$r->IndEvent][$r->EnId][19] = date('d/m/Y', strtotime($COMP->ToWhenFrom));
-		$Archers[$r->IndEvent][$r->EnId][20] = str_replace(["\n","\r"], ' / ', trim($COMP->ToWhere));
+		$Archers[$r->IndEvent][$r->EnId][20] = str_replace(["\n","\r"], ' / ', trim($COMP->ToVenue));
 		$Archers[$r->IndEvent][$r->EnId][21] = $r->QuClRank;
 		$Archers[$r->IndEvent][$r->EnId][22] = $r->QuD1Score ? $r->QuD1Score : '';
 		$Archers[$r->IndEvent][$r->EnId][23] = $r->QuD2Score ? $r->QuD2Score : '';

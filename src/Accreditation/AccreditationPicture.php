@@ -3,6 +3,7 @@ require_once(dirname(__FILE__) . '/config.php');
 checkACL(AclAccreditation, AclReadWrite);
 require_once('Common/Lib/CommonLib.php');
 require_once('Common/Fun_Modules.php');
+require_once('Common/Fun_Sessions.inc.php');
 
 CheckTourSession(true);
 
@@ -14,10 +15,21 @@ if(file_exists($CFG->DOCUMENT_PATH."Modules/Accreditation/includeAccreditationPi
 $TourIds = ((isset($_SESSION['AccreditationTourIds']) and !empty($_SESSION['AccreditationTourIds'])) ? $_SESSION['AccreditationTourIds'] : $_SESSION['TourId']);
 // loads how many accreditation types there are
 $Accreditations=array();
+$Sessions=array();
 foreach (explode(',',$TourIds) as $ToId) {
-    $q = safe_r_sql("select IcTournament, IcNumber, IcName from IdCards where IcTournament={$ToId} and IcType='A' order by IcNumber");
+    $q = safe_r_sql("select IcTournament, IcNumber, IcName, ToCode
+        FROM IdCards
+        INNER JOIN Tournament on IcTournament = ToId 
+        where IcTournament={$ToId} and IcType='A' order by IcNumber");
     while ($r = safe_fetch($q)) {
-        $Accreditations[$r->IcTournament . "|" . $r->IcNumber] = $r->IcName;
+        $Accreditations[$r->IcTournament . "|" . $r->IcNumber] = $r->ToCode . ' - ' . $r->IcName;
+    }
+    $tmpSess = GetSessions('Q', false, null, $ToId);
+    foreach ($tmpSess as $sess) {
+        if(!array_key_exists($sess->SesOrder, $Sessions)) {
+            $Sessions[$sess->SesOrder] = array();
+        }
+        $Sessions[$sess->SesOrder][$sess->SesTournament] = $sess->SesName;
     }
 }
 
@@ -39,7 +51,10 @@ $JS_SCRIPT[] = phpVars2js(array('ROOT_DIR' => $CFG->ROOT_DIR, 'AreYouSure'=>get_
 $JS_SCRIPT[] = '<script type="text/javascript" src="'.$CFG->ROOT_DIR.'Common/ajax/ObjXMLHttpRequest.js"></script>';
 $JS_SCRIPT[] = '<script type="text/javascript" src="./Fun_AJAX_AccreditationPicture.js"></script>';
 $JS_SCRIPT[] = phpVars2js($param);
-$JS_SCRIPT[] = '<script type="text/javascript">let cardsByCat='.json_encode($SpecificCards).'</script>';
+$JS_SCRIPT[] = '<script type="text/javascript">
+    let cardsByCat='.json_encode($SpecificCards).';
+    let sessByToId='.json_encode($Sessions).';
+    </script>';
 if($param["source"]==0) {
 	$JS_SCRIPT[] = '<script type="text/javascript" src="./TakePicture.js"></script>';
 } else {
@@ -76,8 +91,8 @@ include('Common/Templates/head' . (isset($_REQUEST["showMenu"]) ? '': '-min') . 
 <tbody id="options">
 
 <tr>
-<th class="Title" width="50%"><?php echo get_text('Options', 'Tournament');?></th>
-<th class="Title" width="50%"><?php echo get_text('FilterRules');?></th>
+<th class="Title w-30"><?php echo get_text('Options', 'Tournament');?></th>
+<th class="Title w-70"><?php echo get_text('FilterRules');?></th>
 </tr>
 
 <tr>
@@ -88,18 +103,18 @@ if($param["source"]==0) {
 	echo get_text('Camera', 'Tournament');
 	echo '<select id="videoSource"></select><br>';
 }
-echo '<input type="checkbox" id="showMenu" ' . (isset($_REQUEST["showMenu"]) ? 'checked' : '') .
-	' onClick="document.location=\'' . $_SERVER["PHP_SELF"]. (isset($_REQUEST["showMenu"]) ? '' : '?showMenu') . '\';">'.get_text('ShowIanseoMenu', 'Tournament');
+echo '<div class="mb-2"><input type="checkbox" id="showMenu" ' . (isset($_REQUEST["showMenu"]) ? 'checked' : '') .
+	' onClick="document.location=\'' . $_SERVER["PHP_SELF"]. (isset($_REQUEST["showMenu"]) ? '' : '?showMenu') . '\';">'.get_text('ShowIanseoMenu', 'Tournament').'<div>';
 if(file_exists($CFG->DOCUMENT_PATH."Modules/Accreditation/AccreditationPictureParameters.php") and empty($_SESSION['ShortMenu']['ACCR'])) {
-	echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="'.$CFG->ROOT_DIR.'Modules/Accreditation/AccreditationPictureParameters.php">'.get_text('AdvancedParams', 'Tournament'). '</a>';
-	echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span onclick="window.BigPicture=window.open(\''.$CFG->ROOT_DIR.'Modules/Accreditation/BigPicture.php\', \'picture\', \'height=1024,width=1024\')">'.get_text('OpenPictureScreen', 'BackNumbers'). '</span>';
+	echo '<br><span class="mx-2"><a href="'.$CFG->ROOT_DIR.'Modules/Accreditation/AccreditationPictureParameters.php">'.get_text('AdvancedParams', 'Tournament'). '</a></span>';
+	echo '<span class="mx-2"><a onclick="window.BigPicture=window.open(\''.$CFG->ROOT_DIR.'Modules/Accreditation/BigPicture.php\', \'picture\', \'height=1024,width=1024\')">'.get_text('OpenPictureScreen', 'BackNumbers'). '</a></span>';
 }
 ?>
 </td>
 <td class="Center">
 <input type="text" name="x_Search" id="x_Search" style="width: 80%;" maxlength="50" onBlur="searchAthletes();" onkeyup="searchAthletes();"><br>
 <input type="checkbox" id="x_Country" name="x_Country" value="1" checked onChange="searchAthletes();"><?php echo get_text('Country') ?>&nbsp;&nbsp;&nbsp;
-<input type="checkbox" id="x_Athlete" name="x_Athlete" value="1" checked onChange="searchAthletes();"> <?php echo get_text('Athlete') ?><br>
+<input type="checkbox" id="x_Athlete" name="x_Athlete" value="1" checked onChange="searchAthletes();"> <?php echo get_text('Name', 'Tournament') ?><br>
 <?php
 
 $TourId=$_SESSION['TourId'];
@@ -107,7 +122,7 @@ if($_SESSION['AccreditationTourIds']) {
 	echo '<br/>';
 	foreach(explode(',', $_SESSION['AccreditationTourIds']) as $id) {
 		$Code=getCodeFromId($id);
-		echo '<input type="checkbox" class="x_Tours" id="x_Tour['.$id.']" value="'.$Code.'" onChange="searchAthletes();">'.$Code.'&nbsp;&nbsp;&nbsp;';
+		echo '<input type="checkbox" class="x_Tours" tourid="'.$id.'" id="x_Tour['.$id.']" value="'.$Code.'" onChange="searchAthletes();">'.$Code.'&nbsp;&nbsp;&nbsp;';
 	}
 	$TourId=$_SESSION['AccreditationTourIds'];
 }
@@ -116,12 +131,14 @@ echo '<br/>';
 echo '<input type="checkbox" class="x_Sessions" id="x_Sessions[0]" onChange="searchAthletes();">'.get_text('Session').' 0&nbsp;&nbsp;&nbsp;';
 $q=safe_r_sql("select distinct SesOrder from Session where SesTournament in ($TourId) and SesType='Q' order by SesOrder");
 while($r=safe_fetch($q)) {
-	echo '<input type="checkbox" class="x_Sessions" id="x_Sessions['.$r->SesOrder.']" onChange="searchAthletes();">'.get_text('Session').' '.$r->SesOrder.'&nbsp;&nbsp;&nbsp;';
+	echo '<span id="sesBlock'.$r->SesOrder.'"><input type="checkbox" class="x_Sessions" id="x_Sessions['.$r->SesOrder.']" onChange="searchAthletes();">'.get_text('Session').' '.$r->SesOrder.'<span id="lblSess'.$r->SesOrder.'"></span>&nbsp;&nbsp;&nbsp;</span>';
 }
-echo '<div class="Flex-line w-100 mt-2"><div class="w-25"><input type="radio" id="x_All" name="PhotoStatus" onChange="searchAthletes();">'. get_text('AllEntries','Tournament'). '</div>'.
-    '<div class="w-25"><input type="radio" id="x_noPhoto" name="PhotoStatus" onChange="searchAthletes();">'.get_text('OnlyWithoutPhoto', 'Tournament'). '</div>'.
-    '<div class="w-25"><input type="radio" id="x_NoPrint" name="PhotoStatus" onChange="searchAthletes();">'.get_text('OnlyPhoto', 'Tournament'). '</div>'.
-    '<div class="w-25"><input type="radio" id="x_noAcc" name="PhotoStatus" checked onChange="searchAthletes();">'.get_text('OnlyWithoutAcc','Tournament'). '</div>'.
+echo '<div class="Flex-line w-100 mt-2">'.
+    '<div class="w-20"><input type="checkbox" id="x_2BPrinted" name="ToBePrinted" onChange="searchAthletes();">'. get_text('BadgeOnlyNotPrinted', 'Tournament'). '</div>'.
+    '<div class="w-20"><input type="radio" id="x_All" name="PhotoStatus" onChange="searchAthletes();">'. get_text('AllEntries','Tournament'). '</div>'.
+    '<div class="w-20"><input type="radio" id="x_noPhoto" name="PhotoStatus" onChange="searchAthletes();">'.get_text('OnlyWithoutPhoto', 'Tournament'). '</div>'.
+    '<div class="w-20"><input type="radio" id="x_NoPrint" name="PhotoStatus" onChange="searchAthletes();">'.get_text('OnlyPhoto', 'Tournament'). '</div>'.
+    '<div class="w-20"><input type="radio" id="x_noAcc" name="PhotoStatus" checked onChange="searchAthletes();">'.get_text('OnlyWithoutAcc','Tournament'). '</div>'.
     '</div>';
 ?>
 </td>
@@ -131,9 +148,9 @@ echo '<div class="Flex-line w-100 mt-2"><div class="w-25"><input type="radio" id
 
 <table class="Tabella Speaker">
 	<tr>
-		<th class="Title" width="35%"><?php echo get_text('Camera', 'Tournament');?></th>
-		<th class="Title" width="35%"><?php echo get_text('Photo', 'Tournament');?></th>
-		<th class="Title" width="30%"><?php echo get_text('MenuLM_Partecipant List');?> <span id="missingPhotos"></span></th>
+		<th class="Title w-35"><?php echo get_text('Camera', 'Tournament');?></th>
+		<th class="Title w-30"><?php echo get_text('Photo', 'Tournament');?></th>
+		<th class="Title w-35"><?php echo get_text('MenuLM_Partecipant List');?> <span id="missingPhotos"></span></th>
 	</tr>
 <tbody id="tbody">
 	<tr>
@@ -166,7 +183,9 @@ echo '<div class="Flex-line w-100 mt-2"><div class="w-25"><input type="radio" id
 			<br><img id="athPic" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" width="150">
 			<div id="ManBlock" style="display: none;">
 			<div class="mt-2 mb-3"><input type="button" id="delete-button" value="<?php echo get_text('PhotoDelete', 'Tournament')?>" onClick="deletePicture();" ></div>
-			<?php
+            </div>
+            <div id="PrnBlock" style="display: none;">
+                <?php
 
             if($Accreditations) {
 				if(count($Accreditations)>1) {
@@ -181,6 +200,15 @@ echo '<div class="Flex-line w-100 mt-2"><div class="w-25"><input type="radio" id
 					}
 				}
 				echo '<input type="button" id="print-button" class="m-2" value="'.get_text('Print', 'Tournament').'" onClick="printAccreditation()" >';
+                if(module_exists('Automator')) {
+                    $AccPrinters = getModuleParameter('Automator', 'AutomatorAccPrint','');
+                    if(!empty($AccPrinters)) {
+                        foreach(explode(',', $AccPrinters) as $kPrn => $printer) {
+                            $tmp=explode('|',$printer);
+                            echo '<br><input type="button" id="prnAuto'.$kPrn.'" class="m-2" value="'.$tmp[0].'" onClick="printAccreditationAuto(\''.$tmp[1].'\')" >';
+                        }
+                    }
+                }
 			}
 
 			?>
@@ -192,9 +220,11 @@ echo '<div class="Flex-line w-100 mt-2"><div class="w-25"><input type="radio" id
 		<td style="vertical-align: top;">
 			<table class="Tabella" id="List">
 			<thead><tr>
-				<th colspan="2"><?php echo get_text('Athlete')?></th>
+				<th colspan="2"><?php echo get_text('Name','Tournament')?></th>
+                <th><?php echo get_text('Code','Tournament'); ?></th>
 				<th><?php echo get_text('DivisionClass'); ?></th>
-				<th><?php echo get_text('Country')?></th></tr></thead>
+				<th><?php echo get_text('Country')?></th>
+                <th colspan="3"><?php echo 	get_text('TourCode', 'Tournament'); ?></th></tr></thead>
 			<tbody id="ListBody"></tbody>
 			</table>
 		</td>

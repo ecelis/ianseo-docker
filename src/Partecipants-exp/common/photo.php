@@ -52,24 +52,24 @@
 						if ($oldW>=$oldH)
 						{
 							$newW=$val;
-							$newH=$newW*($oldH/$oldW);
+							$newH=intval($newW*($oldH/$oldW));
 						}
 						else
 						{
 							$newH=$val;
-							$newW=$newH*($oldW/$oldH);
+							$newW=intval($newH*($oldW/$oldH));
 						}
 						break;
 
 					case 'x':
 						$newW=$val;
-						$newH=$newW*($oldH/$oldW);
+						$newH=intval($newW*($oldH/$oldW));
 						break;
 
 					case 'y':
 					//	print 'qui';exit;
 						$newH=$val;
-						$newW=$newH*($oldW/$oldH);
+						$newW=intval($newH*($oldW/$oldH));
 						break;
 				}
 

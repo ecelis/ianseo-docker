@@ -147,12 +147,12 @@ if(count($rankData['sections'])) {
 				$dataRow[] = '';
 			} else {
 				$tmpNote = '';
-				if($item['so']>0) { //Spareggio
+				if(($item['so']??0)>0) { //Spareggio
 					$tmpNote .=  $pdf->ShotOffShort;
 					if(strlen(trim($item['tiebreak']))) {
 						$tmpNote .= ' ' . $item['tiebreakDecoded'];
 					}
-				} else if($item['rank'] < $section['meta']['qualifiedNo']+$section['meta']['firstQualified'] AND $item['ct']>1) {
+				} else if($item['rank'] < $section['meta']['qualifiedNo']+$section['meta']['firstQualified'] AND ($item['ct']??0)>1) {
 					$tmpNote .=  $pdf->CoinTossShort;
 				}
 				if($item['notes']) {

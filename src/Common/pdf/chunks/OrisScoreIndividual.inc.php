@@ -9,7 +9,7 @@ foreach($rankData['sections'] as $Event => $section) {
 	$pdf->setEvent($section['meta']['eventName']);
 	$pdf->Records=array(); // $section['records'];
 	$pdf->setPhase($PdfData->ScorePhase);
-	$pdf->setDocUpdate($PdfData->LastUpdate);
+//	$pdf->setDocUpdate($PdfData->LastUpdate);
 	$pdf->setDataHeader(array(),array());
 
 	if($section['meta']['version']) {
@@ -29,12 +29,15 @@ foreach($rankData['sections'] as $Event => $section) {
 
 	$CurPlace=0;
 	ksort($section['phases']);
+    $ScoreLastUpdate='';
 	foreach($section['phases'] as $PhaseNum => $Phase) {
 		foreach($Phase['items'] as $item) {
 			if(!($item['bib'] and $item['oppBib'])) {
 				continue;
 			}
 
+            $pdf->setDocUpdate(max($ScoreLastUpdate, $item['lastUpdated'] ?? ''));
+            $ScoreLastUpdate = $item['lastUpdated'];
 			if($AddPage and !$CurPlace) {
 				$pdf->AddPage('P');
 			}

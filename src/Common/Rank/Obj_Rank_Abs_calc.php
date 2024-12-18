@@ -117,12 +117,17 @@
 					set $sql
 					where IndTournament={$this->tournament}");
 
-			$q="SELECT
-					IndId AS `athId`,IndEvent AS `EventCode`,
-					Qu{$dd}Score AS Score,Qu{$dd}Gold AS Gold,Qu{$dd}Xnine AS XNine, Qu{$dd}Hits AS Hits, IndRank as actualRank,
-					EvFinalFirstPhase, EvElim1, EvElim2, EvElimType,
-					IF(EvFinalFirstPhase=0,999999,coalesce(RrQualified, IF(EvElimType=0, EvNumQualified, IF(EvElim1=0,EvElim2,EvElim1)))) as QualifiedNo, EvFirstQualified
-				FROM Events
+			$q="SELECT IndId AS `athId`,IndEvent AS `EventCode`, IndRank as actualRank, EvFinalFirstPhase, EvElim1, EvElim2, EvElimType,
+                IF(EvFinalFirstPhase=0,999999,coalesce(RrQualified, IF(EvElimType=0, EvNumQualified, IF(EvElim1=0,EvElim2,EvElim1)))) as QualifiedNo, EvFirstQualified, ";
+            if($this->opts['dist']==0) {
+                $q .= "IF(EvRunning=1,IFNULL(ROUND(QuScore/QuHits,3),0),QuScore) AS Score, 
+                IF(EvRunning=1,IFNULL(ROUND(QuGold/QuHits,3),0),QuGold) AS Gold,
+                IF(EvRunning=1,IFNULL(ROUND(QuXnine/QuHits,3),0),QuXnine) AS XNine,
+                QuHits AS Hits ";
+            } else {
+                $q .= "Qu{$dd}Score AS Score, Qu{$dd}Gold AS Gold, Qu{$dd}Xnine AS XNine, Qu{$dd}Hits AS Hits ";
+            }
+            $q .= "FROM Events
 				INNER JOIN Individuals ON EvCode=IndEvent AND EvTournament=IndTournament AND EvTeamEvent=0
 			    inner join IrmTypes on IrmId=IndIrmType and IrmShowRank=1
 				INNER JOIN Qualifications ON IndId=QuId
@@ -132,8 +137,7 @@
 			        AND (QuScore != 0 OR QuHits !=0) 
 					{$filter}
 				ORDER BY
-					IndEvent,Qu{$dd}Score DESC,Qu{$dd}Gold DESC,Qu{$dd}Xnine DESC
-			";
+					IndEvent, Score DESC, Gold DESC, XNine DESC";
 				//print $q.'<br><br>';
 			$r=safe_r_sql($q);
 

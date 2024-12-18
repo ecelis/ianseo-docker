@@ -7,7 +7,7 @@
 define('debug',false);
 
 require_once(dirname(dirname(__FILE__)) . '/config.php');
-$JSON=array('error' => 1, 'which' => '#');
+$JSON=array('error' => 1);
 
 /*
 	- $Arr_Tables
@@ -26,17 +26,36 @@ if(checkACL(AclCompetition, AclReadWrite, false)!=AclReadWrite
 		or defined('dontEditClassDiv')
 		or empty($_REQUEST['Tab'])
 		or empty($_REQUEST['Field'])
+		or empty($_REQUEST['Id'])
 		or !isset($_REQUEST['Value'])
 		or !array_key_exists($_REQUEST['Tab'],$Arr_Tables)
 		) {
 	JsonOut($JSON);
 }
 
-$Key=$_REQUEST['Field'];
+$Id=$_REQUEST['Id'];
+$Field=$_REQUEST['Field'];
 $Value=$_REQUEST['Value'];
 
-if (substr($Key,0,2)!='d_') {
-	JsonOut($JSON);
+switch($Field) {
+    case 'DivDescription':
+    case 'DivIsPara':
+    case 'DivAthlete':
+    case 'DivViewOrder':
+    case 'ClSex':
+    case 'ClDescription':
+    case 'ClIsPara':
+    case 'ClAthlete':
+    case 'ClViewOrder':
+    case 'ScDescription':
+    case 'ScViewOrder':
+//    case '':
+//    case '':
+//    case '':
+//    case '':
+        break;
+    default:
+        JsonOut($JSON);
 }
 
 $tt=$Arr_Tables[$_REQUEST['Tab']][0];	// tabella su cui fare l'update
@@ -45,18 +64,12 @@ $kk2=$Arr_Tables[$_REQUEST['Tab']][2];	// campo 2 da usare come chiave per l'upd
 $kk3=$Arr_Tables[$_REQUEST['Tab']][3];	// campo 3 da usare come chiave per l'update
 $kk4=$Arr_Tables[$_REQUEST['Tab']][4];	// campo 4 per resettare info del default
 
-$Field='';
-$Id='';
 $ClDivAllowed='';
 
-$tmp=explode('_',$Key);
-$Field=$tmp[1];
-$Id=$tmp[2];
-if(!empty($tmp[3])) $ClDivAllowed=$tmp[3];
-
-if(!preg_match('/^[0-9a-z_]+$/i', $Field)) {
-	JsonOut($JSON);
-}
+//$tmp=explode('_',$Key);
+//$Field=$tmp[1];
+//$Id=$tmp[2];
+//if(!empty($tmp[3])) $ClDivAllowed=$tmp[3];
 
 $Update
 	= "UPDATE " . $tt . " SET "
@@ -72,12 +85,12 @@ if(safe_w_affected_rows() and (($Field=='ClAthlete' or $Field=='DivAthlete'))) {
 		if($Field=='ClAthlete') safe_w_sql("Update Entries left join Divisions on EnTournament=DivTournament and EnDivision=DivId set EnAthlete=DivAthlete+0 where EnTournament={$_SESSION['TourId']} and EnClass='$Id'");
 		elseif($Field=='DivAthlete') safe_w_sql("Update Entries left join Classes on EnTournament=ClTournament and EnClass=ClId set EnAthlete=ClAthlete+0 where EnTournament={$_SESSION['TourId']} and EnDivision='$Id'");
 	} else {
-		if($Field=='ClAthlete') safe_w_sql("Update Entries set EnAthlete='' where EnTournament={$_SESSION['TourId']} and EnClass='$Id'");
-		elseif($Field=='DivAthlete') safe_w_sql("Update Entries set EnAthlete='' where EnTournament={$_SESSION['TourId']} and EnDivision='$Id'");
+		if($Field=='ClAthlete') safe_w_sql("Update Entries set EnAthlete=0 where EnTournament={$_SESSION['TourId']} and EnClass='$Id'");
+		elseif($Field=='DivAthlete') safe_w_sql("Update Entries set EnAthlete=0 where EnTournament={$_SESSION['TourId']} and EnDivision='$Id'");
 	}
 }
 
 $JSON['error']=0;
-$JSON['which']=$Key;
+$JSON['value']=$Value;
 
 JsonOut($JSON);

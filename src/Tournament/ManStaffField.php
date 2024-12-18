@@ -24,15 +24,15 @@ while ($RowSel = safe_fetch($RsSel)) {
 }
 
 $Genders ='<option value="">---</option>';
-$Genders.='<option value="0">'.get_text('ShortMale', 'Tournament').'</option>';
-$Genders.='<option value="1">'.get_text('ShortFemale', 'Tournament').'</option>';
+$Genders.='<option value="0">'.get_text('GenderShort0').'</option>';
+$Genders.='<option value="1">'.get_text('GenderShort1').'</option>';
 
 $JS_SCRIPT = array(
     phpVars2js(array(
         'NoEmptyField' => get_text('AllFieldsMandatory','Errors'),
         'AreYouSure' => get_text('MsgAreYouSure'),
-        'Gender0' => get_text('ShortMale', 'Tournament'),
-        'Gender1' => get_text('ShortFemale', 'Tournament'),
+        'Gender0' => get_text('GenderShort0'),
+        'Gender1' => get_text('GenderShort1'),
         'TitCode' => get_text('Code', 'Tournament'),
         'TitFName' => get_text('FamilyName', 'Tournament'),
         'TitGName' => get_text('GivenName', 'Tournament'),

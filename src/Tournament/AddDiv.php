@@ -5,7 +5,7 @@ require_once(dirname(dirname(__FILE__)) . '/config.php');
 require_once('Common/Fun_FormatText.inc.php');
 require_once('Tournament/Fun_Tournament.local.inc.php');
 
-$JSON=array('error' => 1);
+$JSON=array('error' => 1, 'errormsg'=>get_text('MissingData','Errors'));
 
 if(checkACL(AclCompetition, AclReadWrite, false)!=AclReadWrite
 		or !CheckTourSession()
@@ -16,6 +16,11 @@ if(checkACL(AclCompetition, AclReadWrite, false)!=AclReadWrite
 		or defined('dontEditClassDiv')
 		) {
 	JsonOut($JSON);
+}
+
+if(preg_match('/[^a-z0-9]/i', $_REQUEST['New_DivId'])) {
+    $JSON['errormsg']=get_text('InvalidCharacters','Errors', '<span class="text-danger">a-z A-Z 0-9</span>');
+    JsonOut($JSON);
 }
 
 $IsAthlete=empty($_REQUEST['New_DivAthlete']) ? 0 : 1;

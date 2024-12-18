@@ -43,7 +43,7 @@ $Delete
 $Rs=safe_w_sql($Delete);
 
 $JSON['which']=$Arr_Tables[$_REQUEST['Tab']][3].$_REQUEST['Id'];
-$JSON['error']=0;
+$JSON['error']=safe_w_affected_rows()==0 ? 1 : 0;
 $JSON['tab']=$_REQUEST['Tab'];
 
 JsonOut($JSON);

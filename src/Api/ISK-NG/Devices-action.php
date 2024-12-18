@@ -26,8 +26,8 @@ if(isset($_REQUEST['Action']) && preg_match("/^(tSendMessage|tPersonal|tSendQrSe
             }
         }
     }
-    if(isset($_REQUEST['groupId']) && preg_match("/^[0-9A-Z]{1}$/i",$_REQUEST['groupId'],$tmpGrp)) {
-        $GROUPID = $tmpGrp[0];
+    if(isset($_REQUEST['groupId']) && is_numeric($_REQUEST['groupId'])) {
+        $GROUPID = intval($_REQUEST['groupId']);
 	    $SEQTYPE=($storeSeq[$GROUPID]['type'][0] ?? '');
         $SQL = "SELECT IskDvDevice FROM IskDevices WHERE IskDvTournament=".$_SESSION["TourId"] ." AND IskDvGroup={$GROUPID}";
         $q = safe_r_SQL($SQL);
@@ -35,8 +35,11 @@ if(isset($_REQUEST['Action']) && preg_match("/^(tSendMessage|tPersonal|tSendQrSe
             $tmpDevices[] = $r->IskDvDevice;
         }
     }
-    if(isset($_REQUEST['newGrp']) && preg_match("/^[0-9A-Z]{1}$/i",$_REQUEST['newGrp'])) {
-	    $SEQTYPE=($storeSeq[$_REQUEST['newGrp']]['type'][0] ?? '');
+    if(isset($_REQUEST['newGrp']) && is_numeric($_REQUEST['newGrp'])) {
+        $NewGroup=intval($_REQUEST['newGrp']);
+        if($NewGroup>=0 and $NewGroup<26) {
+            $SEQTYPE=($storeSeq[$_REQUEST['newGrp']]['type'][0] ?? '');
+        }
     }
     $SQL = array();
 	$NeedChanges=true;
@@ -259,8 +262,8 @@ if(isset($_REQUEST['Action']) && preg_match("/^(tSendMessage|tPersonal|tSendQrSe
     }
 }
 
-$SQL = "SELECT IskDevices.*, if(IskDvLastSeen=0, 0, TIMESTAMPDIFF(second,IskDvLastSeen,now())) as Seconds, 	
-	least(3, round(TIMESTAMPDIFF(second,IskDvLastSeen,now())/65)) as Difference
+$SQL = "SELECT IskDevices.*, if(IskDvLastSeen=0, 0, TIMESTAMPDIFF(second,CONVERT_TZ(IskDvLastSeen,'+00:00','{$_SESSION['TourTimezone']}'),now())) as Seconds, 	
+	least(3, round(TIMESTAMPDIFF(second,CONVERT_TZ(IskDvLastSeen,'+00:00','{$_SESSION['TourTimezone']}'),now())/65)) as Difference
 	FROM IskDevices
 	ORDER BY IskDvGroup, IskDvTournament={$_SESSION['TourId']} desc, IskDvTarget+0, IskDvProActive desc, IskDvAppVersion desc, IskDvProConnected desc, IskDvTargetReq, IskDvCode";
 $q=safe_r_sql($SQL);

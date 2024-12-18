@@ -1,6 +1,7 @@
 <?php
 
 $pdf->HideCols = $PdfData->HideCols;
+$pdf->setDocUpdate($PdfData->Timestamp ?? $PdfData->LastUpdate ?? '');
 
 $ShowStatusLegend = false;
 $OldHeader='';

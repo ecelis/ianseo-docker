@@ -8,6 +8,7 @@ $OldEvent='#@#@#';
 $targetNo=-1;
 
 $OldMatchPhase=-1;
+$pdf->setDocUpdate($PdfData->LastUpdate ?? $PdfData->Timestamp ?? '');
 
 $First=true;
 foreach($PdfData->Data['Items'] as $EvCode => $MyRows) {

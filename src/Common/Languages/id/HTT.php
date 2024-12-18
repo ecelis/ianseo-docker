@@ -49,7 +49,7 @@ $lang['Mode']='Mode';
 $lang['Name']='Nama';
 $lang['OfficeMode']='Mode Office';
 $lang['OpenFile']='Buka Berkas';
-$lang['OvrErrSelectSession']='Tidak ada Rambahan dipilih!';
+$lang['OvrErrSelectSession']='Tidak ada Seri dipilih!';
 $lang['Port']='Port';
 $lang['QualSession']='Kual. Ses.';
 $lang['Report']='Laporan';
@@ -73,6 +73,6 @@ $lang['TeamMode']='Mode Tim';
 $lang['Terminal']='HTT';
 $lang['TerminalMode']='Mode Terminal';
 $lang['TotaleScore']='Total';
-$lang['Volee']='Rambahan';
-$lang['VoleeIsPresent']='RAMBAHAN ini sudah ada';
+$lang['Volee']='Seri';
+$lang['VoleeIsPresent']='SERI ini sudah ada';
 ?>

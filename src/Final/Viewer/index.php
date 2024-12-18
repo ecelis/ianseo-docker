@@ -50,8 +50,8 @@ include('Common/Templates/head-BS.php');
 	<div class="card-body p-0">
 		<table id="MainTable" class="w-100">
 			<tr class="text-center align-top" >
-                <td id="TgtLeft" class="w-45"><svg class="SVGTarget"></svg></td>
-                <td rowspan="2" class="w-10" id="spotMenu">
+                <td id="TgtLeft" class="w-45"></td>
+                <td class="w-10" id="spotMenu">
                     <div class="btn-group-vertical btn-group mt-2" role="group">
                         <button type="button" class="btn btn-info btnViewMenu" id="btnPresentation" onclick="setView('Presentation')">[Presentation]</button>
                         <button type="button" class="btn btn-info btnViewMenu" id="btnBiography" onclick="setView('Biography')">[Biography]</button>
@@ -65,18 +65,23 @@ include('Common/Templates/head-BS.php');
                         <button type="button" class="btn btn-info btnViewMenu" id="bntSelectMatch" onclick="selectMatch()">[Select Match]</button>
                         <button type="button" class="btn btn-danger btnViewMenu" id="bntGoToLive" onclick="goToLive()">[Live Match]</button>
                     </div>
-
                     <div class="btn-group-vertical btn-group mt-3" role="group" id="EndSelector"></div>
-
                 </td>
-				<td id="TgtRight" class="w-45"><svg class="SVGTarget"></svg></td>
-			</tr>
-			<tr class="text-center">
-				<td id="ScoreLeft"><div class="badge badge-info">ScoreLeft</div></td>
-				<td id="ScoreRight"><div class="badge badge-info">ScoreRight</div></td>
+				<td id="TgtRight" class="w-45"></td>
 			</tr>
 		</table>
 	</div>
+    <div class="card-footer p-0 bg-white">
+        <div class="d-flex justify-content-center align-items-center">
+            <div id="ScoreLeftContainer" class="text-center">
+                <div id="ScoreLeft"><div class="badge badge-info">Score Left</div></div>
+            </div>
+            <div id="VoidContainer">&nbsp;</div>
+            <div id="ScoreRightContainer" class="text-center">
+                <div id="ScoreRight"><div class="badge badge-info">Score Right</div></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <?php

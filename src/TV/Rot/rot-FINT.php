@@ -23,6 +23,7 @@ function rotFint($TVsettings, $RULE) {
 	$ViewAths=(in_array('ATHL', $Columns) or in_array('ALL', $Columns));
 	$ViewByes=(in_array('BYE', $Columns) or in_array('ALL', $Columns));
 	$ViewEnds=(in_array('ENDS', $Columns) or in_array('ALL', $Columns));
+    $ViewSchedule=(in_array('SCHED', $Columns));
 	$Title2Rows=(in_array('TIT2ROWS', $Columns) ? '<br/>' : ': ');
 
 	$options=array();
@@ -247,61 +248,67 @@ function rotFint($TVsettings, $RULE) {
 					$tmp2 .= '</div>';
 				}
 
-				if($ViewEnds) {
-					$ends1=explode('|', $item['setPoints']);
-					$ends2=explode('|', $item['oppSetPoints']);
-					if(count($ends1)==count($ends2)) {
-						while($ends1 and end($ends1)==0 and end($ends2)==0) {
-							array_pop($ends1);
-							array_pop($ends2);
-						}
-					}
+                if($ViewSchedule) {
+                    // overrides all the following options
+                    $tmp1.='<div class="Schedule">'.($item['scheduledKey']=='0000-00-00 00:00:00' ? '' : date('j M H:i', strtotime($item['scheduledKey']))).'</div>';
+                    $tmp2.='<div class="Schedule"></div>';
+                } else {
+                    if($ViewEnds) {
+                        $ends1=explode('|', $item['setPoints']);
+                        $ends2=explode('|', $item['oppSetPoints']);
+                        if(count($ends1)==count($ends2)) {
+                            while($ends1 and end($ends1)==0 and end($ends2)==0) {
+                                array_pop($ends1);
+                                array_pop($ends2);
+                            }
+                        }
 
-					if($item['tiebreakDecoded']) {
-						$ends1[]='- '.$item['tiebreakDecoded'];
-					}
-					if($item['oppTiebreakDecoded']) {
-						$ends2[]='- '.$item['oppTiebreakDecoded'];
-					}
+                        if($item['tiebreakDecoded']) {
+                            $ends1[]='- '.$item['tiebreakDecoded'];
+                        }
+                        if($item['oppTiebreakDecoded']) {
+                            $ends2[]='- '.$item['oppTiebreakDecoded'];
+                        }
 
-					$tmp1.='<div class="EndPoints">'.implode(' ', $ends1).'</div>';
-					$tmp2.='<div class="EndPoints">'.implode(' ', $ends2).'</div>';
-				}
+                        $tmp1.='<div class="EndPoints">'.implode(' ', $ends1).'</div>';
+                        $tmp2.='<div class="EndPoints">'.implode(' ', $ends2).'</div>';
+                    }
 
-				if($item['tie']==2) {
-					// it is a bye
-					$Score=$rankData['meta']['fields']['bye'];
-				} elseif($item['countryName']) {
-					// archer is there
-					if($section['meta']['matchMode']) {
-						// sets
-						$Score = $item['setScore'];
-					} else {
-						// cumulative
-						$Score = $item['score'] . ($item['tie']==1 ? '*' : '<tt>&nbsp;</tt>' );
-					}
-				} else {
-					// it is the bye's opponent?
-					$Score='';
-				}
-				$tmp1.='<div class="Score">'.$Score.'</div>';
+                    if($item['tie']==2) {
+                        // it is a bye
+                        $Score=$rankData['meta']['fields']['bye'];
+                    } elseif($item['countryName']) {
+                        // archer is there
+                        if($section['meta']['matchMode']) {
+                            // sets
+                            $Score = $item['setScore'];
+                        } else {
+                            // cumulative
+                            $Score = $item['score'] . ($item['tie']==1 ? '*' : '<tt>&nbsp;</tt>' );
+                        }
+                    } else {
+                        // it is the bye's opponent?
+                        $Score='';
+                    }
+                    $tmp1.='<div class="Score">'.$Score.'</div>';
 
-				if($item['oppTie']==2) {
-					// it is a bye
-					$Score=$rankData['meta']['fields']['bye'];
-				} elseif($item['oppCountryName']) {
-					// archer is there
-					if($section['meta']['matchMode']) {
-						// set system
-						$Score= $item['oppSetScore'];
-					} else {
-						$Score= $item['oppScore'] . ($item['oppTie']==1 ? '*' : '<tt>&nbsp;</tt>' );
-					}
-				} else {
-					// it is the bye's opponent?
-					$Score='';
-				}
-				$tmp2.='<div class="Score">'.$Score.'</div>';
+                    if($item['oppTie']==2) {
+                        // it is a bye
+                        $Score=$rankData['meta']['fields']['bye'];
+                    } elseif($item['oppCountryName']) {
+                        // archer is there
+                        if($section['meta']['matchMode']) {
+                            // set system
+                            $Score= $item['oppSetScore'];
+                        } else {
+                            $Score= $item['oppScore'] . ($item['oppTie']==1 ? '*' : '<tt>&nbsp;</tt>' );
+                        }
+                    } else {
+                        // it is the bye's opponent?
+                        $Score='';
+                    }
+                    $tmp2.='<div class="Score">'.$Score.'</div>';
+                }
 
 				$tmp1.='</div>';
 				$tmp2.='</div>';
@@ -370,6 +377,7 @@ function getPageDefaults(&$RMain) {
 		'Target' => 'flex: 0 0 6vw; text-align:right;margin-right:0.5em;',
 		'Athlete' => 'flex: 1 1 20vw;font-size:0.5em;white-space:nowrap;overflow:hidden;',
 		'CountryDescr' => 'flex: 1 1 25vw;white-space:nowrap;overflow:hidden;',
+        'Schedule' => 'flex: 1 0 12vw; text-align:left; white-space:nowrap; font-size:1.1em;margin-right:0.5rem;',
 		'Arrows' => 'flex: 0 0 5vw; text-align:right; font-size:1em;margin-right:0.5rem;',
 		'DistScore' => 'flex: 0 0 5vw; text-align:right; font-size:0.8em;',
 		'DistPos' => 'flex: 0 0 3vw; text-align:left; font-size:0.7em;',
