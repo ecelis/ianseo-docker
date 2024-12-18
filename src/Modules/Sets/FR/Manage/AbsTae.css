@@ -1,0 +1,35 @@
+.w-3ch {width:3ch;}
+.w-5ch {width:5ch;}
+.w-7ch {width:7ch;}
+.w-10ch {width:10ch;}
+.w-15ch {width:15ch;}
+
+input[type="text"] {width:100%}
+
+.updated {
+    background-color: transparent;
+    animation-name: updated;
+    animation-duration: 3s;
+}
+.error {
+    background-color: transparent;
+    animation-name: error;
+    animation-duration: 3s;
+}
+
+.px-2 {padding:0 0.5em !important;}
+
+@keyframes updated {
+    0%   {background-color: #00bb00;}
+    70%   {background-color: #00aa00;}
+    80%   {background-color: #00ff00;}
+    90%   {background-color: #00aa00;}
+    100% {background-color: transparent;}
+}
+@keyframes error {
+    0%   {background-color: #cc0000;}
+    70%   {background-color: #bb0000;}
+    80%   {background-color: #ff0000;}
+    90%   {background-color: #cc0000;}
+    100% {background-color: transparent;}
+}
